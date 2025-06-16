@@ -13,10 +13,30 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="ソース ファイル\Framework">
+      <UniqueIdentifier>{d0aaa46f-c9d8-4ca0-b1d6-5555d308f146}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Framework\Utils">
+      <UniqueIdentifier>{21dafe52-0800-4309-a6ea-ad80c5cb44ef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Framework\Core">
+      <UniqueIdentifier>{04b21f0c-b05c-4d37-abf3-0e4bc7b47bad}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Framework\main.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="src\Framework\Core\WindowsSystem.cpp">
+      <Filter>ソース ファイル\Framework\Core</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Framework\Utils\NonCopyable.h">
+      <Filter>ソース ファイル\Framework\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Framework\Core\WindowSystem.h">
+      <Filter>ソース ファイル\Framework\Core</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

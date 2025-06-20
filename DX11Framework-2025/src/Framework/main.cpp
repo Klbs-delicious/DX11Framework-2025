@@ -1,5 +1,5 @@
-/**	@file	main.cpp
-*	@brief 	ƒGƒ“ƒgƒŠƒ|ƒCƒ“ƒg
+ï»¿/**	@file	main.cpp
+*	@brief 	ã‚¨ãƒ³ãƒˆãƒªãƒã‚¤ãƒ³ãƒˆ
 *	@date	2025/06/12
 */
 
@@ -17,8 +17,8 @@ int main()
 #if defined(DEBUG) || defined(_DEBUG)
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 #else
-    HWND consoleWindow = GetConsoleWindow();    // ƒRƒ“ƒ\[ƒ‹ƒEƒBƒ“ƒhƒE‚Ìƒnƒ“ƒhƒ‹‚ğæ“¾
-    ShowWindow(consoleWindow, SW_HIDE);         // ƒRƒ“ƒ\[ƒ‹ƒEƒBƒ“ƒhƒE‚ğ”ñ•\¦‚É‚·‚é
+    HWND consoleWindow = GetConsoleWindow();    // ã‚³ãƒ³ã‚½ãƒ¼ãƒ«ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ãƒãƒ³ãƒ‰ãƒ«ã‚’å–å¾—
+    ShowWindow(consoleWindow, SW_HIDE);         // ã‚³ãƒ³ã‚½ãƒ¼ãƒ«ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’éè¡¨ç¤ºã«ã™ã‚‹
 #endif//defined(DEBUG) || defined(_DEBUG)
     !WindowSystem::Initialize(500, 300);
     D3D11System::Initialize();

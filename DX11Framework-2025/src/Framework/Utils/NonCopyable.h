@@ -1,25 +1,25 @@
-/**	@file	NonCopyable.h
+﻿/**	@file	NonCopyable.h
 *	@date	2025/06/12
 */
 #pragma once
 
 /**@class	NonCopyable
- * @brief	�R�s�[���֎~����
+ * @brief	コピーを禁止する
  */
 class NonCopyable 
 {
 public:
-    /**@brief �f�t�H���g�R���X�g���N�^
+    /**@brief デフォルトコンストラクタ
      */
     NonCopyable() = default;
 
-    /**@brief �R�s�[�R���X�g���N�^���폜����
-     * @details ���̃N���X�̃I�u�W�F�N�g�̃R�s�[�͋�����Ă��Ȃ����߁A�R�s�[�R���X�g���N�^�͍폜����Ă���
+    /**@brief コピーコンストラクタを削除する
+     * @details このクラスのオブジェクトのコピーは許可されていないため、コピーコンストラクタは削除されている
      */
     NonCopyable(const NonCopyable&) = delete;
 
-    /**@brief �R�s�[������Z�q���폜����
-     * @details ���̃N���X�̃I�u�W�F�N�g�̑���͋�����Ă��Ȃ����߁A�R�s�[������Z�q�͍폜����Ă���
+    /**@brief コピー代入演算子を削除する
+     * @details このクラスのオブジェクトの代入は許可されていないため、コピー代入演算子は削除されている
      */
     NonCopyable& operator=(const NonCopyable&) = delete;
 };

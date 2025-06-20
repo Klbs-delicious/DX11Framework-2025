@@ -1,4 +1,4 @@
-/**	@file	D3D11System.h
+ï»¿/**	@file	D3D11System.h
 *	@date	2025/06/16
 */
 #pragma once
@@ -6,53 +6,53 @@
 #include <d3d11.h>
 #include"Framework/Utils/NonCopyable.h"
 
-// ƒŠƒ“ƒN‚·‚×‚«ŠO•”ƒ‰ƒCƒuƒ‰ƒŠ
+// ãƒªãƒ³ã‚¯ã™ã¹ãå¤–éƒ¨ãƒ©ã‚¤ãƒ–ãƒ©ãƒª
 #pragma comment(lib,"directxtk.lib")
 #pragma comment(lib,"d3d11.lib")
 
 using Microsoft::WRL::ComPtr;
 
 /**@class	D3D11System
- * @brief	D3D11‚Ì‰Šú‰»AŒãn––‚ğs‚¤ƒNƒ‰ƒX
- * @details	‚±‚ÌƒNƒ‰ƒX‚ÍƒRƒs[A‘ã“ü‚ğ‹Ö~‚µ‚Ä‚¢‚é
+ * @brief	D3D11ã®åˆæœŸåŒ–ã€å¾Œå§‹æœ«ã‚’è¡Œã†ã‚¯ãƒ©ã‚¹
+ * @details	ã“ã®ã‚¯ãƒ©ã‚¹ã¯ã‚³ãƒ”ãƒ¼ã€ä»£å…¥ã‚’ç¦æ­¢ã—ã¦ã„ã‚‹
  */
 class D3D11System :private NonCopyable
 {
 public:
-	/** @brief	ƒRƒ“ƒXƒgƒ‰ƒNƒ^
+	/** @brief	ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
 	*/
 	D3D11System();
 
-	/** @brief	ƒfƒXƒgƒ‰ƒNƒ^
+	/** @brief	ãƒ‡ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
 	*/
 	~D3D11System();
 
-	/** @brief	DX11‚Ì‰Šú‰»
+	/** @brief	DX11ã®åˆæœŸåŒ–
 	*/
 	static void Initialize();
 
-	/** @brief	DX11‚ÌI—¹ˆ—
+	/** @brief	DX11ã®çµ‚äº†å‡¦ç†
 	*/
 	static void Finalize();
 
-	/** @brief	ƒfƒoƒCƒX‚Ìæ“¾
+	/** @brief	ãƒ‡ãƒã‚¤ã‚¹ã®å–å¾—
 	*	@return	ID3D11Device*
 	*/
 	inline static ID3D11Device* GetDevice() { return D3D11System::device.Get(); }
 
-	/** @brief	ƒfƒoƒCƒXƒRƒ“ƒeƒLƒXƒg‚Ìæ“¾
+	/** @brief	ãƒ‡ãƒã‚¤ã‚¹ã‚³ãƒ³ãƒ†ã‚­ã‚¹ãƒˆã®å–å¾—
 	*	@return	ID3D11DeviceContext*
 	*/
 	inline static ID3D11DeviceContext* GetContext() { return D3D11System::deviceContext.Get(); }
 
 private:
-	static D3D_FEATURE_LEVEL			featureLevel;		// DX11‚Ì‹@”\ƒŒƒxƒ‹
-	static ComPtr<ID3D11Device>			device;				// ƒfƒoƒCƒX
-	static ComPtr<ID3D11DeviceContext>	deviceContext;		// •`‰æƒRƒ}ƒ“ƒh‚ğo‚·
-	static ComPtr<IDXGISwapChain>		swapChain;			// ƒtƒŒ[ƒ€ƒoƒbƒtƒ@‚ÌŠÇ—
-	static ComPtr<IDXGIFactory>			factory;			// ƒAƒ_ƒvƒ^(GPU)î•ñ
+	static D3D_FEATURE_LEVEL			featureLevel;		// DX11ã®æ©Ÿèƒ½ãƒ¬ãƒ™ãƒ«
+	static ComPtr<ID3D11Device>			device;				// ãƒ‡ãƒã‚¤ã‚¹
+	static ComPtr<ID3D11DeviceContext>	deviceContext;		// æç”»ã‚³ãƒãƒ³ãƒ‰ã‚’å‡ºã™
+	static ComPtr<IDXGISwapChain>		swapChain;			// ãƒ•ãƒ¬ãƒ¼ãƒ ãƒãƒƒãƒ•ã‚¡ã®ç®¡ç†
+	static ComPtr<IDXGIFactory>			factory;			// ã‚¢ãƒ€ãƒ—ã‚¿(GPU)æƒ…å ±
 };
 /*
-	static ComPtr<ID3D11RenderTargetView>	targetView;			// •`‰æƒ^[ƒQƒbƒg
-	static ComPtr<ID3D11DepthStencilView>	depthStencilView;	// [“xAƒXƒeƒ“ƒVƒ‹—p‚Ìƒoƒbƒtƒ@
+	static ComPtr<ID3D11RenderTargetView>	targetView;			// æç”»ã‚¿ãƒ¼ã‚²ãƒƒãƒˆ
+	static ComPtr<ID3D11DepthStencilView>	depthStencilView;	// æ·±åº¦ã€ã‚¹ãƒ†ãƒ³ã‚·ãƒ«ç”¨ã®ãƒãƒƒãƒ•ã‚¡
 */

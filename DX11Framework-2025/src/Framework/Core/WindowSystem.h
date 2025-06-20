@@ -1,4 +1,4 @@
-/**	@file	WindowSystem.h
+ï»¿/**	@file	WindowSystem.h
 *	@date	2025/06/12
 */
 #pragma once
@@ -10,73 +10,73 @@
 #include"Framework/Utils/NonCopyable.h"
 
 /**@class	WindowSystem
- * @brief	ƒEƒBƒ“ƒhƒEì¬‚ÌŠÇ—‚ğs‚¤
- * @details	‚±‚ÌƒNƒ‰ƒX‚ÍƒRƒs[A‘ã“ü‚ğ‹Ö~‚µ‚Ä‚¢‚é
+ * @brief	ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ä½œæˆã®ç®¡ç†ã‚’è¡Œã†
+ * @details	ã“ã®ã‚¯ãƒ©ã‚¹ã¯ã‚³ãƒ”ãƒ¼ã€ä»£å…¥ã‚’ç¦æ­¢ã—ã¦ã„ã‚‹
  */
 class WindowSystem :private NonCopyable
 {
 public:
-	/** @brief	ƒRƒ“ƒXƒgƒ‰ƒNƒ^
+	/** @brief	ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
 	*/
 	WindowSystem();
 
-	/** @brief ƒfƒXƒgƒ‰ƒNƒ^
+	/** @brief ãƒ‡ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
 	*/
 	~WindowSystem();
 
-	/** @brief ƒEƒBƒ“ƒhƒE‚Ì‰Šú‰»ˆ—
-	 *	@param	const uint32_t ƒEƒBƒ“ƒhƒE‚Ìc•
-	 *	@param	const uint32_t ƒEƒBƒ“ƒhƒE‚Ì‰¡•
+	/** @brief ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®åˆæœŸåŒ–å‡¦ç†
+	 *	@param	const uint32_t ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ç¸¦å¹…
+	 *	@param	const uint32_t ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®æ¨ªå¹…
 	 */
 	static bool Initialize(const uint32_t _width, const uint32_t _height);
 
-	/** @brief ƒEƒBƒ“ƒhƒE‚ÌI—¹ˆ—
+	/** @brief ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®çµ‚äº†å‡¦ç†
 	*/
 	static void Finalize();
 
-	/** @brief	ƒEƒBƒ“ƒhƒEƒ^ƒCƒgƒ‹‚Ì•ÏX
-	*	@param	const std::wstring_view _windowTitle	ƒEƒBƒ“ƒhƒE‚Ìƒ^ƒCƒgƒ‹
+	/** @brief	ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚¿ã‚¤ãƒˆãƒ«ã®å¤‰æ›´
+	*	@param	const std::wstring_view _windowTitle	ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ã‚¿ã‚¤ãƒˆãƒ«
 	*/
 	static void SetWindowTitle(const std::wstring_view _windowTitle);
 
-	/**	@brief	ƒEƒBƒ“ƒhƒEƒTƒCƒY‚Ìİ’è
-	*	@param	const uint32_t ƒEƒBƒ“ƒhƒE‚Ìc•
-	*	@param	const uint32_t ƒEƒBƒ“ƒhƒE‚Ì‰¡•
+	/**	@brief	ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚µã‚¤ã‚ºã®è¨­å®š
+	*	@param	const uint32_t ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ç¸¦å¹…
+	*	@param	const uint32_t ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®æ¨ªå¹…
 	*/
 	static void SetWindowSize(const uint32_t _width, const uint32_t _height);
 
-	/**	@brief	ƒEƒBƒ“ƒhƒE‚Ì‰¡•‚Ìæ“¾
-	*	@return	uint32_t ƒEƒBƒ“ƒhƒE‚Ì‰¡•
+	/**	@brief	ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®æ¨ªå¹…ã®å–å¾—
+	*	@return	uint32_t ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®æ¨ªå¹…
 	*/
 	inline static uint32_t GetWidth() { return WindowSystem::width; }
 
-	/**	@brief	ƒEƒBƒ“ƒhƒE‚Ìc•‚Ìæ“¾
-	*	@return	uint32_t ƒEƒBƒ“ƒhƒE‚Ìc•
+	/**	@brief	ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ç¸¦å¹…ã®å–å¾—
+	*	@return	uint32_t ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ç¸¦å¹…
 	*/
 	inline static uint32_t GetHeight() { return WindowSystem::height; }
 
-	/**	@brief	ƒEƒBƒ“ƒhƒEƒnƒ“ƒhƒ‹‚Ìæ“¾
-	*	@return	HWND ƒEƒBƒ“ƒhƒEƒnƒ“ƒhƒ‹
+	/**	@brief	ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãƒãƒ³ãƒ‰ãƒ«ã®å–å¾—
+	*	@return	HWND ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãƒãƒ³ãƒ‰ãƒ«
 	*/
 	inline static HWND GetWindow() { return WindowSystem::hWnd; }
 
-	/**	@brief	ƒCƒ“ƒXƒ^ƒ“ƒXƒnƒ“ƒhƒ‹‚Ìæ“¾
-	*	@return	HINSTANCE ƒCƒ“ƒXƒ^ƒ“ƒXƒnƒ“ƒhƒ‹
+	/**	@brief	ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ãƒãƒ³ãƒ‰ãƒ«ã®å–å¾—
+	*	@return	HINSTANCE ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ãƒãƒ³ãƒ‰ãƒ«
 	*/
 	inline static HINSTANCE GetHInstance() { return WindowSystem::hInstance; }
 
-	/**@brief ƒEƒBƒ“ƒhƒEƒvƒƒV[ƒWƒƒ
-	 * @param	HWND	_hWnd	ƒEƒBƒ“ƒhƒEƒnƒ“ƒhƒ‹
-	 * @param	UINT	_msg	ƒƒbƒZ[ƒW
-	 * @param	WPARAM	_wp		ƒpƒ‰ƒ[ƒ^
-	 * @param	LPARAM	_lp		ƒpƒ‰ƒ[ƒ^
-	 * @return	LRESULT			ˆ—Œ‹‰Ê
-	 * @details ƒEƒBƒ“ƒhƒE‚É‘—‚ç‚ê‚½ƒƒbƒZ[ƒW‚ğˆ—‚·‚é
+	/**@brief ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãƒ—ãƒ­ã‚·ãƒ¼ã‚¸ãƒ£
+	 * @param	HWND	_hWnd	ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãƒãƒ³ãƒ‰ãƒ«
+	 * @param	UINT	_msg	ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸
+	 * @param	WPARAM	_wp		ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
+	 * @param	LPARAM	_lp		ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
+	 * @return	LRESULT			å‡¦ç†çµæœ
+	 * @details ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã«é€ã‚‰ã‚ŒãŸãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’å‡¦ç†ã™ã‚‹
 	 */
 	static LRESULT CALLBACK WndProc(HWND _hWnd, UINT _msg, WPARAM _wp, LPARAM _lp);
 
 private:
-	//ƒEƒBƒ“ƒhƒE‚Ì‰Šú”wŒiF
+	//ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®åˆæœŸèƒŒæ™¯è‰²
 	enum class BackColorBrush
 	{
 		WHITE = WHITE_BRUSH,	//0
@@ -88,12 +88,12 @@ private:
 		HOLLOW = HOLLOW_BRUSH,	//=NULL_BRUSH
 	};
 
-	static const std::wstring	className;		// ƒEƒBƒ“ƒhƒEƒNƒ‰ƒX–¼
-	static std::wstring			windowTitle;	// ƒEƒBƒ“ƒhƒEƒ^ƒCƒgƒ‹–¼(ƒfƒoƒbƒOƒV[ƒ“–¼‚È‚Ç‚Å•ÏX‚·‚é‚½‚ßconst‚Å‚Í‚È‚¢)
+	static const std::wstring	className;		// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚¯ãƒ©ã‚¹å
+	static std::wstring			windowTitle;	// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚¿ã‚¤ãƒˆãƒ«å(ãƒ‡ãƒãƒƒã‚°æ™‚ã‚·ãƒ¼ãƒ³åãªã©ã§å¤‰æ›´ã™ã‚‹ãŸã‚constã§ã¯ãªã„)
 
-	static uint32_t width;		// ƒEƒBƒ“ƒhƒE‰¡•
-	static uint32_t height;		// ƒEƒBƒ“ƒhƒEc•
+	static uint32_t width;		// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦æ¨ªå¹…
+	static uint32_t height;		// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ç¸¦å¹…
 
-	static HINSTANCE	hInstance;	// ƒCƒ“ƒXƒ^ƒ“ƒXƒnƒ“ƒhƒ‹
-	static HWND			hWnd;		// ƒEƒBƒ“ƒhƒEƒnƒ“ƒhƒ‹
+	static HINSTANCE	hInstance;	// ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ãƒãƒ³ãƒ‰ãƒ«
+	static HWND			hWnd;		// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãƒãƒ³ãƒ‰ãƒ«
 };

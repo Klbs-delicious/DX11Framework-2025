@@ -1,4 +1,4 @@
-/**	@file	D3D11System.cpp
+ï»¿/**	@file	D3D11System.cpp
 *	@date	2025/06/18
 */
 
@@ -8,47 +8,46 @@
 #include"Framework/Core/D3D11System.h"
 #include"Framework/Core/WindowSystem.h"
 
-#include <stdlib.h>  // _countof ‚ğg‚¤‚½‚ß‚É•K—v
+#include <dxgi1_2.h>    // CreateSwapChainForHwnd ç”¨
+#include <stdlib.h>     // _countof ã‚’ä½¿ã†ãŸã‚ã«å¿…è¦
 //-----------------------------------------------------------------------------
 // Class Static
 //-----------------------------------------------------------------------------
 
-// DX11‚Ì‹@”\ƒŒƒxƒ‹
+// DX11ã®æ©Ÿèƒ½ãƒ¬ãƒ™ãƒ«
 D3D_FEATURE_LEVEL			D3D11System::featureLevel = D3D_FEATURE_LEVEL_11_0;		
 
-ComPtr<ID3D11Device>        D3D11System::device;            // ƒfƒoƒCƒX
-ComPtr<ID3D11DeviceContext>	D3D11System::deviceContext;		// •`‰æƒRƒ}ƒ“ƒh‚ğo‚·
-ComPtr<IDXGISwapChain>		D3D11System::swapChain;			// ƒtƒŒ[ƒ€ƒoƒbƒtƒ@‚ÌŠÇ—
-ComPtr<IDXGIFactory>        D3D11System::factory;			// ƒAƒ_ƒvƒ^(GPU)î•ñ
+ComPtr<ID3D11Device>        D3D11System::device;            // ãƒ‡ãƒã‚¤ã‚¹
+ComPtr<ID3D11DeviceContext>	D3D11System::deviceContext;		// æç”»ã‚³ãƒãƒ³ãƒ‰ã‚’å‡ºã™
+ComPtr<IDXGISwapChain>		D3D11System::swapChain;			// ãƒ•ãƒ¬ãƒ¼ãƒ ãƒãƒƒãƒ•ã‚¡ã®ç®¡ç†
+ComPtr<IDXGIFactory>        D3D11System::factory;			// ã‚¢ãƒ€ãƒ—ã‚¿(GPU)æƒ…å ±
 
 //-----------------------------------------------------------------------------
 // D3D11System Class
 //-----------------------------------------------------------------------------
 
-/** @brief	ƒRƒ“ƒXƒgƒ‰ƒNƒ^
+/** @brief	ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
 */
 D3D11System::D3D11System() {}
 
-/** @brief	ƒfƒXƒgƒ‰ƒNƒ^
+/** @brief	ãƒ‡ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
 */
 D3D11System::~D3D11System() {}
 
-#include <dxgi1_2.h>  // CreateSwapChainForHwnd —p
-
-/** @brief	DX11‚Ì‰Šú‰»
+/** @brief	DX11ã®åˆæœŸåŒ–
 */
 void D3D11System::Initialize()
 {
     HRESULT hr = S_OK;
 
-    // ƒfƒoƒCƒX‚Ìİ’è
+    // ãƒ‡ãƒã‚¤ã‚¹ã®è¨­å®š
     UINT flags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
     D3D_FEATURE_LEVEL featureLevels[] = {
         D3D_FEATURE_LEVEL_11_1,
         D3D_FEATURE_LEVEL_11_0
     };
 
-    // ƒfƒoƒCƒX‚Ìì¬
+    // ãƒ‡ãƒã‚¤ã‚¹ã®ä½œæˆ
     hr = D3D11CreateDevice(
         nullptr,
         D3D_DRIVER_TYPE_HARDWARE,
@@ -62,11 +61,11 @@ void D3D11System::Initialize()
     );
 
     if (FAILED(hr)) {
-        MessageBox(nullptr, L"DirectX 11 ƒfƒoƒCƒXì¬‚É¸”s", L"ƒGƒ‰[", MB_OK);
+        MessageBox(nullptr, L"DirectX 11 ãƒ‡ãƒã‚¤ã‚¹ä½œæˆã«å¤±æ•—", L"ã‚¨ãƒ©ãƒ¼", MB_OK);
         return;
     }
 
-    // ƒXƒƒbƒvƒ`ƒF[ƒ“‚Ìİ’è
+    // ã‚¹ãƒ¯ãƒƒãƒ—ãƒã‚§ãƒ¼ãƒ³ã®è¨­å®š
     DXGI_SWAP_CHAIN_DESC1 scDesc{};
     scDesc.Width = WindowSystem::GetWidth();
     scDesc.Height = WindowSystem::GetHeight();
@@ -79,27 +78,27 @@ void D3D11System::Initialize()
     //scDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     //scDesc.Flags = 0;
 
-    // DXGIFactory2 Œo—R‚ÅƒXƒƒbƒvƒ`ƒF[ƒ“‚ğì¬
+    // DXGIFactory2 çµŒç”±ã§ã‚¹ãƒ¯ãƒƒãƒ—ãƒã‚§ãƒ¼ãƒ³ã‚’ä½œæˆ
     ComPtr<IDXGIDevice> dxgiDevice;
     D3D11System::device.As(&dxgiDevice);
 
-    // GPUî•ñ‚Ìæ“¾
+    // GPUæƒ…å ±ã®å–å¾—
     ComPtr<IDXGIAdapter> adapter;
     dxgiDevice->GetAdapter(&adapter);
 
-    // g—p’†GPU–¼‚ÌŠm”F
-    // ƒfƒoƒbƒO—p‚Éc‚µ‚Ä‚¢‚é
+    // ä½¿ç”¨ä¸­GPUåã®ç¢ºèª
+    // ãƒ‡ãƒãƒƒã‚°ç”¨ã«æ®‹ã—ã¦ã„ã‚‹
     /*
     DXGI_ADAPTER_DESC desc;
     adapter->GetDesc(&desc);
-    MessageBox(nullptr, desc.Description, L"g—p’†‚ÌGPU", MB_OK);
+    MessageBox(nullptr, desc.Description, L"ä½¿ç”¨ä¸­ã®GPU", MB_OK);
     */
 
-    // DXGIFactory2‚Ìæ“¾
+    // DXGIFactory2ã®å–å¾—
     ComPtr<IDXGIFactory2> dxgiFactory2;
     adapter->GetParent(__uuidof(IDXGIFactory2), reinterpret_cast<void**>(dxgiFactory2.GetAddressOf()));
 
-    // ƒXƒƒbƒvƒ`ƒF[ƒ“‚Ìì¬
+    // ã‚¹ãƒ¯ãƒƒãƒ—ãƒã‚§ãƒ¼ãƒ³ã®ä½œæˆ
     ComPtr<IDXGISwapChain1> swapChain1;
     hr = dxgiFactory2->CreateSwapChainForHwnd(
         D3D11System::device.Get(),
@@ -109,32 +108,32 @@ void D3D11System::Initialize()
         swapChain1.GetAddressOf()
     );
     if (FAILED(hr)) {
-        MessageBox(nullptr, L"ƒXƒƒbƒvƒ`ƒF[ƒ“ì¬¸”s", L"ƒGƒ‰[", MB_OK);
+        MessageBox(nullptr, L"ã‚¹ãƒ¯ãƒƒãƒ—ãƒã‚§ãƒ¼ãƒ³ä½œæˆå¤±æ•—", L"ã‚¨ãƒ©ãƒ¼", MB_OK);
         return;
     }
 
-    // swapChain1 ‚ğ D3D11System::swapChain ‚É•ÏŠ·
+    // swapChain1 ã‚’ D3D11System::swapChain ã«å¤‰æ›
     swapChain1.As(&D3D11System::swapChain);
 
-    // dxgiFactory2 ‚ğ IDXGIFactory ‚ÉƒLƒƒƒXƒg‚µ‚Ä•Û
+    // dxgiFactory2 ã‚’ IDXGIFactory ã«ã‚­ãƒ£ã‚¹ãƒˆã—ã¦ä¿æŒ
     dxgiFactory2.As(&D3D11System::factory);
 }
 
-/** @brief	DX11‚ÌI—¹ˆ—
+/** @brief	DX11ã®çµ‚äº†å‡¦ç†
 */
 void D3D11System::Finalize()
 {
     if (D3D11System::swapChain)
     {
-        D3D11System::swapChain->SetFullscreenState(FALSE, nullptr); // ˆê‰ƒtƒ‹ƒXƒNƒŠ[ƒ“‚©‚çƒEƒBƒ“ƒhƒEƒ‚[ƒh‚É–ß‚·
-        D3D11System::swapChain.Reset();                             // ƒŠƒ\[ƒX‚Ì‰ğ•ú
+        D3D11System::swapChain->SetFullscreenState(FALSE, nullptr); // ä¸€å¿œãƒ•ãƒ«ã‚¹ã‚¯ãƒªãƒ¼ãƒ³ã‹ã‚‰ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãƒ¢ãƒ¼ãƒ‰ã«æˆ»ã™
+        D3D11System::swapChain.Reset();                             // ãƒªã‚½ãƒ¼ã‚¹ã®è§£æ”¾
     }
     if (D3D11System::deviceContext)
     {
-        D3D11System::deviceContext->OMSetRenderTargets(0, nullptr, nullptr);    // –¾¦“I‚ÉƒoƒCƒ“ƒh‚ğ‰ğœ
-        D3D11System::deviceContext->ClearState();                               // Œ»İƒoƒCƒ“ƒh’†‚ÌƒXƒe[ƒg‚ğ‰ğœ
-        D3D11System::deviceContext->Flush();                                    // •Û—¯’†‚ÌƒRƒ}ƒ“ƒh‚ğ‹­§Às
-        D3D11System::deviceContext.Reset();                                     // ƒŠƒ\[ƒX‚Ì‰ğ•ú
+        D3D11System::deviceContext->OMSetRenderTargets(0, nullptr, nullptr);    // æ˜ç¤ºçš„ã«ãƒã‚¤ãƒ³ãƒ‰ã‚’è§£é™¤
+        D3D11System::deviceContext->ClearState();                               // ç¾åœ¨ãƒã‚¤ãƒ³ãƒ‰ä¸­ã®ã‚¹ãƒ†ãƒ¼ãƒˆã‚’è§£é™¤
+        D3D11System::deviceContext->Flush();                                    // ä¿ç•™ä¸­ã®ã‚³ãƒãƒ³ãƒ‰ã‚’å¼·åˆ¶å®Ÿè¡Œ
+        D3D11System::deviceContext.Reset();                                     // ãƒªã‚½ãƒ¼ã‚¹ã®è§£æ”¾
     }
     D3D11System::device.Reset();
     D3D11System::factory.Reset();  

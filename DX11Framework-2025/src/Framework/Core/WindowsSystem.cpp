@@ -1,4 +1,4 @@
-/**	@file	WindowSystem.cpp
+ï»¿/**	@file	WindowSystem.cpp
 *	@date	2025/06/12
 */
 
@@ -11,46 +11,46 @@
 //-----------------------------------------------------------------------------
 // Class Static
 //-----------------------------------------------------------------------------
-const std::wstring	WindowSystem::className = L"2025_FrameWork";    // ƒEƒBƒ“ƒhƒEƒNƒ‰ƒX–¼
-std::wstring        WindowSystem::windowTitle = L"2025_Framework";	// ƒEƒBƒ“ƒhƒEƒ^ƒCƒgƒ‹–¼(ƒfƒoƒbƒOƒV[ƒ“–¼‚È‚Ç‚Å•ÏX‚·‚é‚½‚ßconst‚Å‚Í‚È‚¢)
+const std::wstring	WindowSystem::className = L"2025_FrameWork";    // ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚¯ãƒ©ã‚¹å
+std::wstring        WindowSystem::windowTitle = L"2025_Framework";	// ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚¿ã‚¤ãƒˆãƒ«å(ãƒ‡ãƒãƒƒã‚°æ™‚ã‚·ãƒ¼ãƒ³åãªã©ã§å¤‰æ›´ã™ã‚‹ãŸã‚constã§ã¯ãªã„)
 
-uint32_t            WindowSystem::width;        // ƒEƒBƒ“ƒhƒE‰¡•
-uint32_t            WindowSystem::height;       // ƒEƒBƒ“ƒhƒEc•
-HINSTANCE           WindowSystem::hInstance;    // ƒCƒ“ƒXƒ^ƒ“ƒXƒnƒ“ƒhƒ‹
-HWND                WindowSystem::hWnd;         // ƒEƒBƒ“ƒhƒEƒnƒ“ƒhƒ‹
+uint32_t            WindowSystem::width;        // ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦æ¨ªå¹…
+uint32_t            WindowSystem::height;       // ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ç¸¦å¹…
+HINSTANCE           WindowSystem::hInstance;    // ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ãƒãƒ³ãƒ‰ãƒ«
+HWND                WindowSystem::hWnd;         // ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãƒãƒ³ãƒ‰ãƒ«
 
 
 //-----------------------------------------------------------------------------
 // WindowSystem Class
 //-----------------------------------------------------------------------------
 
-/** @brief	ƒRƒ“ƒXƒgƒ‰ƒNƒ^
+/** @brief	ã‚³ãƒ³ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
 */
 WindowSystem::WindowSystem()
 {
 }
 
-/** @brief ƒfƒXƒgƒ‰ƒNƒ^
+/** @brief ãƒ‡ã‚¹ãƒˆãƒ©ã‚¯ã‚¿
 */
 WindowSystem::~WindowSystem()
 {
 }
 
-/** @brief ƒEƒBƒ“ƒhƒE‚Ì‰Šú‰»ˆ—
- *	@param	const uint32_t ƒEƒBƒ“ƒhƒE‚Ìc•
- *	@param	const uint32_t ƒEƒBƒ“ƒhƒE‚Ì‰¡•
+/** @brief ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®åˆæœŸåŒ–å‡¦ç†
+ *	@param	const uint32_t ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ç¸¦å¹…
+ *	@param	const uint32_t ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®æ¨ªå¹…
  */
 bool WindowSystem::Initialize(const uint32_t _width, const uint32_t _height)
 {
-    // ‰æ–Ê‚ÌƒTƒCƒY‚ğİ’è
+    // ç”»é¢ã®ã‚µã‚¤ã‚ºã‚’è¨­å®š
     WindowSystem::width = _width;
     WindowSystem::height = _height;
 
-    // ƒCƒ“ƒXƒ^ƒ“ƒXƒnƒ“ƒhƒ‹‚Ìæ“¾
+    // ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ãƒãƒ³ãƒ‰ãƒ«ã®å–å¾—
     auto hInst = GetModuleHandle(nullptr);
     if (!hInst){ return false; }
 
-    // ƒEƒBƒ“ƒhƒE‚Ìİ’è
+    // ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®è¨­å®š
     WNDCLASSEX wc = {};
     wc.cbSize = sizeof(WNDCLASSEX);
     wc.style = CS_HREDRAW | CS_VREDRAW;
@@ -62,22 +62,22 @@ bool WindowSystem::Initialize(const uint32_t _width, const uint32_t _height)
     wc.lpszClassName = WindowSystem::className.c_str();
     wc.hIconSm = LoadIcon(hInst, IDI_APPLICATION);
 
-    // ƒEƒBƒ“ƒhƒE‚Ì“o˜^
+    // ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ç™»éŒ²
     if (!RegisterClassEx(&wc)){ return false; }
 
-    // ƒCƒ“ƒXƒ^ƒ“ƒXƒnƒ“ƒhƒ‹‚ğİ’è
+    // ã‚¤ãƒ³ã‚¹ã‚¿ãƒ³ã‚¹ãƒãƒ³ãƒ‰ãƒ«ã‚’è¨­å®š
     WindowSystem::hInstance = hInst;
 
-    // ƒEƒBƒ“ƒhƒE‚ÌƒTƒCƒY‚ğİ’è
+    // ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ã‚µã‚¤ã‚ºã‚’è¨­å®š
     RECT rc = {};
     rc.right = static_cast<LONG>(WindowSystem::width);
     rc.bottom = static_cast<LONG>(WindowSystem::height);
 
-    // ƒEƒBƒ“ƒhƒEƒTƒCƒY‚ğ’²ß
+    // ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚µã‚¤ã‚ºã‚’èª¿ç¯€
     auto style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU;
     AdjustWindowRect(&rc, style, FALSE);
 
-    // ƒEƒBƒ“ƒhƒE‚ğ¶¬
+    // ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’ç”Ÿæˆ
     WindowSystem::hWnd = CreateWindowEx(
         0,
         WindowSystem::className.c_str(),
@@ -93,23 +93,23 @@ bool WindowSystem::Initialize(const uint32_t _width, const uint32_t _height)
         nullptr);
     if (!WindowSystem::hWnd){ return false; }
 
-    // ƒEƒBƒ“ƒhƒE‚ğ•\¦
+    // ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’è¡¨ç¤º
     ShowWindow(WindowSystem::hWnd, SW_SHOWNORMAL);
 
-    // ƒEƒBƒ“ƒhƒE‚ğXV
+    // ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚’æ›´æ–°
     UpdateWindow(WindowSystem::hWnd);
 
-    // ƒEƒBƒ“ƒhƒE‚ÉƒtƒH[ƒJƒX‚ğİ’è
+    // ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã«ãƒ•ã‚©ãƒ¼ã‚«ã‚¹ã‚’è¨­å®š
     SetFocus(WindowSystem::hWnd);
 
     return true;
 }
 
-/** @brief ƒEƒBƒ“ƒhƒE‚ÌI—¹ˆ—
+/** @brief ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®çµ‚äº†å‡¦ç†
 */
 void WindowSystem::Finalize()
 {
-    // ƒEƒBƒ“ƒhƒE‚Ì“o˜^‚ğ‰ğœ
+    // ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ç™»éŒ²ã‚’è§£é™¤
     if (WindowSystem::hInstance != nullptr)
     {
         UnregisterClass(WindowSystem::className.c_str(), WindowSystem::hInstance);
@@ -119,8 +119,8 @@ void WindowSystem::Finalize()
     WindowSystem::hWnd = nullptr;
 }
 
-/** @brief	ƒEƒBƒ“ƒhƒEƒ^ƒCƒgƒ‹‚Ì•ÏX
-*	@param	const std::wstring_view _windowTitle	ƒEƒBƒ“ƒhƒE‚Ìƒ^ƒCƒgƒ‹
+/** @brief	ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚¿ã‚¤ãƒˆãƒ«ã®å¤‰æ›´
+*	@param	const std::wstring_view _windowTitle	ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ã‚¿ã‚¤ãƒˆãƒ«
 */
 void WindowSystem::SetWindowTitle(const std::wstring_view _windowTitle)
 {
@@ -129,9 +129,9 @@ void WindowSystem::SetWindowTitle(const std::wstring_view _windowTitle)
     SetWindowTextW(WindowSystem::hWnd, WindowSystem::windowTitle.c_str());
 }
 
-/**	@brief	ƒEƒBƒ“ƒhƒEƒTƒCƒY‚Ìİ’è
-*	@param	const uint32_t ƒEƒBƒ“ƒhƒE‚Ìc•
-*	@param	const uint32_t ƒEƒBƒ“ƒhƒE‚Ì‰¡•
+/**	@brief	ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚µã‚¤ã‚ºã®è¨­å®š
+*	@param	const uint32_t ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®ç¸¦å¹…
+*	@param	const uint32_t ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã®æ¨ªå¹…
 */
 void WindowSystem::SetWindowSize(const uint32_t _width, const uint32_t _height)
 {
@@ -140,11 +140,11 @@ void WindowSystem::SetWindowSize(const uint32_t _width, const uint32_t _height)
     WindowSystem::width = _width;
     WindowSystem::height = _height;
 
-    // ƒEƒBƒ“ƒhƒEƒXƒ^ƒCƒ‹‚É‡‚Á‚½ƒtƒŒ[ƒ€•ª‚ğ‰Á–¡‚µ‚½ƒEƒBƒ“ƒhƒE‘S‘Ì‚ÌƒTƒCƒY‚ğì¬
+    // ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚¹ã‚¿ã‚¤ãƒ«ã«åˆã£ãŸãƒ•ãƒ¬ãƒ¼ãƒ åˆ†ã‚’åŠ å‘³ã—ãŸã‚¦ã‚£ãƒ³ãƒ‰ã‚¦å…¨ä½“ã®ã‚µã‚¤ã‚ºã‚’ä½œæˆ
     RECT rc = { 0, 0, static_cast<LONG>(_width), static_cast<LONG>(_height) };
     AdjustWindowRect(&rc, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU, FALSE);
 
-    // ƒEƒBƒ“ƒhƒEƒTƒCƒY‚ÌXV
+    // ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã‚µã‚¤ã‚ºã®æ›´æ–°
     SetWindowPos(
         WindowSystem::hWnd,
         nullptr,
@@ -155,13 +155,13 @@ void WindowSystem::SetWindowSize(const uint32_t _width, const uint32_t _height)
     );
 }
 
-/**@brief ƒEƒBƒ“ƒhƒEƒvƒƒV[ƒWƒƒ
- * @param	HWND	_hWnd	ƒEƒBƒ“ƒhƒEƒnƒ“ƒhƒ‹
- * @param	UINT	_msg	ƒƒbƒZ[ƒW
- * @param	WPARAM	_wp		ƒpƒ‰ƒ[ƒ^
- * @param	LPARAM	_lp		ƒpƒ‰ƒ[ƒ^
- * @return	LRESULT			ˆ—Œ‹‰Ê
- * @details ƒEƒBƒ“ƒhƒE‚É‘—‚ç‚ê‚½ƒƒbƒZ[ƒW‚ğˆ—‚·‚é
+/**@brief ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãƒ—ãƒ­ã‚·ãƒ¼ã‚¸ãƒ£
+ * @param	HWND	_hWnd	ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ãƒãƒ³ãƒ‰ãƒ«
+ * @param	UINT	_msg	ãƒ¡ãƒƒã‚»ãƒ¼ã‚¸
+ * @param	WPARAM	_wp		ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
+ * @param	LPARAM	_lp		ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿
+ * @return	LRESULT			å‡¦ç†çµæœ
+ * @details ã‚¦ã‚£ãƒ³ãƒ‰ã‚¦ã«é€ã‚‰ã‚ŒãŸãƒ¡ãƒƒã‚»ãƒ¼ã‚¸ã‚’å‡¦ç†ã™ã‚‹
  */
 LRESULT CALLBACK WindowSystem::WndProc(HWND _hWnd, UINT _msg, WPARAM _wp, LPARAM _lp)
 {

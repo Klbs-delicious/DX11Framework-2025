@@ -30,12 +30,18 @@
     <ClCompile Include="src\Framework\Core\WindowsSystem.cpp">
       <Filter>ソース ファイル\Framework\Core</Filter>
     </ClCompile>
+    <ClCompile Include="src\Framework\Core\D3D11System.cpp">
+      <Filter>ソース ファイル\Framework\Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Framework\Utils\NonCopyable.h">
       <Filter>ソース ファイル\Framework\Utils</Filter>
     </ClInclude>
     <ClInclude Include="src\Framework\Core\WindowSystem.h">
+      <Filter>ソース ファイル\Framework\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Framework\Core\D3D11System.h">
       <Filter>ソース ファイル\Framework\Core</Filter>
     </ClInclude>
   </ItemGroup>

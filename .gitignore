@@ -3,6 +3,8 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+# 追加ライブラリ
+DX11Framework-2025/directxtk/
 # User-specific files
 *.rsuser
 *.suo

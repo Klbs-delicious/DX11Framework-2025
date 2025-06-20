@@ -25,8 +25,8 @@ public:
 	~WindowSystem();
 
 	/** @brief ウィンドウの初期化処理
-	*	@param	const uint32_t ウィンドウの縦幅
-	*	@param	const uint32_t ウィンドウの横幅
+	 *	@param	const uint32_t ウィンドウの縦幅
+	 *	@param	const uint32_t ウィンドウの横幅
 	 */
 	static bool Initialize(const uint32_t _width, const uint32_t _height);
 

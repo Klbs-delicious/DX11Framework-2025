@@ -41,7 +41,6 @@ void D3D11System::Initialize()
     HRESULT hr = S_OK;
 
     // デバイスの設定
-//    UINT flags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
     UINT flags = D3D11_CREATE_DEVICE_DEBUG;
     D3D_FEATURE_LEVEL featureLevels[] = {
         D3D_FEATURE_LEVEL_11_1,
@@ -97,7 +96,11 @@ void D3D11System::Initialize()
 
     // DXGIFactory2の取得
     ComPtr<IDXGIFactory2> dxgiFactory2;
-    adapter->GetParent(__uuidof(IDXGIFactory2), reinterpret_cast<void**>(dxgiFactory2.GetAddressOf()));
+    hr = adapter->GetParent(__uuidof(IDXGIFactory2), reinterpret_cast<void**>(dxgiFactory2.GetAddressOf()));
+    if (FAILED(hr)) {
+        MessageBox(nullptr, L"IDXGIFactory2 の取得に失敗しました", L"エラー", MB_OK);
+        return;
+    }
 
     // スワップチェーンの作成
     ComPtr<IDXGISwapChain1> swapChain1;
@@ -122,41 +125,28 @@ void D3D11System::Initialize()
 
 /** @brief	DX11の終了処理
 */
-#include <dxgidebug.h> // IDXGIDebug 使用のため
-#pragma comment(lib, "dxguid.lib")
-
 void D3D11System::Finalize()
 {
-    // 1. レンダーターゲットの解除とフラッシュ
-    if (deviceContext)
+    // 1. レンダーターゲットの解除とフラッシュを行う
+    if (D3D11System::deviceContext)
     {
-        deviceContext->OMSetRenderTargets(0, nullptr, nullptr);
-        deviceContext->ClearState();
-        deviceContext->Flush();
+        D3D11System::deviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+        D3D11System::deviceContext->ClearState();
+        D3D11System::deviceContext->Flush();
     }
 
-    // 2. フルスクリーンモードを解除してからスワップチェーン解放
-    if (swapChain)
+    // 2. フルスクリーンモードを解除してからスワップチェーンを解放
+    if (D3D11System::swapChain)
     {
-        swapChain->SetFullscreenState(FALSE, nullptr);
+        HRESULT hr = D3D11System::swapChain->SetFullscreenState(FALSE, nullptr);
+        if (FAILED(hr)) {
+            MessageBox(nullptr, L"フルスクリーン状態の解除に失敗しました", L"エラー", MB_OK);
+        }
     }
 
     // 3. 解放は依存順：factory → swapChain → context → device
-    factory.Reset();
-    swapChain.Reset();
-    deviceContext.Reset();
-    device.Reset();
-//
-//#if defined(DEBUG) || defined(_DEBUG)
-//    // 4. DXGI の Live Object チェック（開発時のみ）
-//    {
-//        ComPtr<IDXGIDebug> dxgiDebug;
-//        if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiDebug))))
-//        {
-//            OutputDebugString(L"--- DXGI ReportLiveObjects ---\n");
-//            dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
-//            OutputDebugString(L"------------------------------\n");
-//        }
-//    }
-//#endif
+    D3D11System::factory.Reset();
+    D3D11System::swapChain.Reset();
+    D3D11System::deviceContext.Reset();
+    D3D11System::device.Reset();
 }

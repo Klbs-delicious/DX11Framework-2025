@@ -52,7 +52,3 @@ private:
 	static ComPtr<IDXGISwapChain>		swapChain;			// フレームバッファの管理
 	static ComPtr<IDXGIFactory>			factory;			// アダプタ(GPU)情報
 };
-/*
-	static ComPtr<ID3D11RenderTargetView>	targetView;			// 描画ターゲット
-	static ComPtr<ID3D11DepthStencilView>	depthStencilView;	// 深度、ステンシル用のバッファ
-*/

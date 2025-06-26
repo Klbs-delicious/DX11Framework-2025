@@ -88,8 +88,8 @@ private:
 		HOLLOW = HOLLOW_BRUSH,	//=NULL_BRUSH
 	};
 
-	static const std::wstring	className;		// ウィンドウクラス名
-	static std::wstring			windowTitle;	// ウィンドウタイトル名(デバッグ時シーン名などで変更するためconstではない)
+	static std::wstring	className;		// ウィンドウクラス名
+	static std::wstring	windowTitle;	// ウィンドウタイトル名
 
 	static uint32_t width;		// ウィンドウ横幅
 	static uint32_t height;		// ウィンドウ縦幅

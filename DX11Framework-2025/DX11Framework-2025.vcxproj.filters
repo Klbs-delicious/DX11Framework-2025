@@ -33,6 +33,9 @@
     <ClCompile Include="src\Framework\Core\D3D11System.cpp">
       <Filter>ソース ファイル\Framework\Core</Filter>
     </ClCompile>
+    <ClCompile Include="src\Framework\Utils\DebugHooks.cpp">
+      <Filter>ソース ファイル\Framework\Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Framework\Utils\NonCopyable.h">
@@ -43,6 +46,9 @@
     </ClInclude>
     <ClInclude Include="src\Framework\Core\D3D11System.h">
       <Filter>ソース ファイル\Framework\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Framework\Utils\DebugHooks.h">
+      <Filter>ソース ファイル\Framework\Utils</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

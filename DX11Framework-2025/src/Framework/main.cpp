@@ -8,23 +8,32 @@
 //-----------------------------------------------------------------------------
 #include"Framework/Core/WindowSystem.h"
 #include"Framework/Core/D3D11System.h"
+#include "Framework/Utils/DebugHooks.h"
 
 //-----------------------------------------------------------------------------
 // EntryPoint
 //-----------------------------------------------------------------------------
 int main()
-{
-#if defined(DEBUG) || defined(_DEBUG)
-    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
-#else
-    HWND consoleWindow = GetConsoleWindow();    // コンソールウィンドウのハンドルを取得
-    ShowWindow(consoleWindow, SW_HIDE);         // コンソールウィンドウを非表示にする
-#endif//defined(DEBUG) || defined(_DEBUG)
-    !WindowSystem::Initialize(500, 300);
-    D3D11System::Initialize();
+{    
+	// Debug、Releseで適切なハンドラをセット
+	DebugHooks::Install();  
 
-    D3D11System::Finalize();
+    WindowSystem::Initialize(640, 480);
+	D3D11System::Initialize();
+
+	MSG msg = {};
+	while (msg.message != WM_QUIT)
+	{
+		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+
+		// ゲームループなど
+	}
+
+	D3D11System::Finalize();
     WindowSystem::Finalize();
-
     return 0;
 }

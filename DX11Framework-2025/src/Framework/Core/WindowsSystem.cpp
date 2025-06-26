@@ -7,12 +7,13 @@
 //-----------------------------------------------------------------------------
 #include<string>
 #include"Framework/Core/WindowSystem.h"
+#include"Framework/Core/RendererSystem.h"
 
 //-----------------------------------------------------------------------------
 // Class Static
 //-----------------------------------------------------------------------------
-const std::wstring	WindowSystem::className = L"2025_FrameWork";    // ウィンドウクラス名
-std::wstring        WindowSystem::windowTitle = L"2025_Framework";	// ウィンドウタイトル名(デバッグ時シーン名などで変更するためconstではない)
+std::wstring	WindowSystem::className = L"2025_FrameWork";    // ウィンドウクラス名
+std::wstring    WindowSystem::windowTitle = L"2025_Framework";	// ウィンドウタイトル名
 
 uint32_t            WindowSystem::width;        // ウィンドウ横幅
 uint32_t            WindowSystem::height;       // ウィンドウ縦幅
@@ -109,13 +110,18 @@ bool WindowSystem::Initialize(const uint32_t _width, const uint32_t _height)
 */
 void WindowSystem::Finalize()
 {
+    // 動的な文字列のメモリ解放（ヒープリーク検出の抑制）
+    std::wstring emptyTitle, emptyClass;
+
+    WindowSystem::windowTitle.swap(emptyTitle);
+    WindowSystem::className.swap(emptyClass);
+
     // ウィンドウの登録を解除
     if (WindowSystem::hInstance != nullptr)
     {
-        UnregisterClass(WindowSystem::className.c_str(), WindowSystem::hInstance);
+        UnregisterClass(className.c_str(), hInstance);
+        WindowSystem::hInstance = nullptr;
     }
-
-    WindowSystem::hInstance = nullptr;
     WindowSystem::hWnd = nullptr;
 }
 

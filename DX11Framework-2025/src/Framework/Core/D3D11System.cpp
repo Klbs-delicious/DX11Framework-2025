@@ -41,7 +41,8 @@ void D3D11System::Initialize()
     HRESULT hr = S_OK;
 
     // デバイスの設定
-    UINT flags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+//    UINT flags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+    UINT flags = D3D11_CREATE_DEVICE_DEBUG;
     D3D_FEATURE_LEVEL featureLevels[] = {
         D3D_FEATURE_LEVEL_11_1,
         D3D_FEATURE_LEVEL_11_0
@@ -75,8 +76,8 @@ void D3D11System::Initialize()
     scDesc.BufferCount = 2;
     scDesc.Scaling = DXGI_SCALING_STRETCH;
     scDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
-    //scDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-    //scDesc.Flags = 0;
+    scDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+    scDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 
     // DXGIFactory2 経由でスワップチェーンを作成
     ComPtr<IDXGIDevice> dxgiDevice;
@@ -121,20 +122,41 @@ void D3D11System::Initialize()
 
 /** @brief	DX11の終了処理
 */
+#include <dxgidebug.h> // IDXGIDebug 使用のため
+#pragma comment(lib, "dxguid.lib")
+
 void D3D11System::Finalize()
 {
-    if (D3D11System::swapChain)
+    // 1. レンダーターゲットの解除とフラッシュ
+    if (deviceContext)
     {
-        D3D11System::swapChain->SetFullscreenState(FALSE, nullptr); // 一応フルスクリーンからウィンドウモードに戻す
-        D3D11System::swapChain.Reset();                             // リソースの解放
+        deviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+        deviceContext->ClearState();
+        deviceContext->Flush();
     }
-    if (D3D11System::deviceContext)
+
+    // 2. フルスクリーンモードを解除してからスワップチェーン解放
+    if (swapChain)
     {
-        D3D11System::deviceContext->OMSetRenderTargets(0, nullptr, nullptr);    // 明示的にバインドを解除
-        D3D11System::deviceContext->ClearState();                               // 現在バインド中のステートを解除
-        D3D11System::deviceContext->Flush();                                    // 保留中のコマンドを強制実行
-        D3D11System::deviceContext.Reset();                                     // リソースの解放
+        swapChain->SetFullscreenState(FALSE, nullptr);
     }
-    D3D11System::device.Reset();
-    D3D11System::factory.Reset();  
+
+    // 3. 解放は依存順：factory → swapChain → context → device
+    factory.Reset();
+    swapChain.Reset();
+    deviceContext.Reset();
+    device.Reset();
+//
+//#if defined(DEBUG) || defined(_DEBUG)
+//    // 4. DXGI の Live Object チェック（開発時のみ）
+//    {
+//        ComPtr<IDXGIDebug> dxgiDebug;
+//        if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&dxgiDebug))))
+//        {
+//            OutputDebugString(L"--- DXGI ReportLiveObjects ---\n");
+//            dxgiDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
+//            OutputDebugString(L"------------------------------\n");
+//        }
+//    }
+//#endif
 }

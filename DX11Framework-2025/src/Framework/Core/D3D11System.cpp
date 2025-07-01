@@ -41,7 +41,12 @@ void D3D11System::Initialize()
     HRESULT hr = S_OK;
 
     // デバイスの設定
-    UINT flags = D3D11_CREATE_DEVICE_DEBUG;
+    UINT flags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+#if defined(_DEBUG)
+    // デバッグレイヤーを追加
+    flags |= D3D11_CREATE_DEVICE_DEBUG;  
+#endif
+
     D3D_FEATURE_LEVEL featureLevels[] = {
         D3D_FEATURE_LEVEL_11_1,
         D3D_FEATURE_LEVEL_11_0
@@ -127,26 +132,24 @@ void D3D11System::Initialize()
 */
 void D3D11System::Finalize()
 {
-    // 1. レンダーターゲットの解除とフラッシュを行う
-    if (D3D11System::deviceContext)
+    // 描画ターゲット解除 + 状態クリア
+    if (deviceContext)
     {
-        D3D11System::deviceContext->OMSetRenderTargets(0, nullptr, nullptr);
-        D3D11System::deviceContext->ClearState();
-        D3D11System::deviceContext->Flush();
+        deviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+        ID3D11Buffer* nullBuffer = nullptr;
+        deviceContext->VSSetConstantBuffers(0, 1, &nullBuffer); // ← バインド解除
+        deviceContext->ClearState();
+        deviceContext->Flush();
     }
 
-    // 2. フルスクリーンモードを解除してからスワップチェーンを解放
-    if (D3D11System::swapChain)
+    // フルスクリーン解除
+    if (swapChain)
     {
-        HRESULT hr = D3D11System::swapChain->SetFullscreenState(FALSE, nullptr);
-        if (FAILED(hr)) {
-            MessageBox(nullptr, L"フルスクリーン状態の解除に失敗しました", L"エラー", MB_OK);
-        }
+        swapChain->SetFullscreenState(FALSE, nullptr);
     }
 
-    // 3. 解放は依存順：factory → swapChain → context → device
-    D3D11System::factory.Reset();
-    D3D11System::swapChain.Reset();
-    D3D11System::deviceContext.Reset();
-    D3D11System::device.Reset();
+    factory.Reset();
+    swapChain.Reset();
+    deviceContext.Reset();
+    device.Reset();
 }

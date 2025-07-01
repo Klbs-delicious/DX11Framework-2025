@@ -7,7 +7,6 @@
 //-----------------------------------------------------------------------------
 #include<string>
 #include"Framework/Core/WindowSystem.h"
-#include"Framework/Core/RendererSystem.h"
 
 //-----------------------------------------------------------------------------
 // Class Static

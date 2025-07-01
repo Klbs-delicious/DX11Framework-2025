@@ -7,7 +7,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include"Framework/Core/WindowSystem.h"
-#include"Framework/Core/D3D11System.h"
+#include"Framework/Core/RenderSystem.h"
 #include "Framework/Utils/DebugHooks.h"
 
 //-----------------------------------------------------------------------------
@@ -19,7 +19,7 @@ int main()
 	DebugHooks::Install();  
 
     WindowSystem::Initialize(640, 480);
-	D3D11System::Initialize();
+	RenderSystem::Initialize();
 
 	MSG msg = {};
 	while (msg.message != WM_QUIT)
@@ -31,9 +31,11 @@ int main()
 		}
 
 		// ゲームループなど
+		RenderSystem::BeginRender();
+		RenderSystem::EndRender();
 	}
 
-	D3D11System::Finalize();
+	RenderSystem::Finalize();
     WindowSystem::Finalize();
     return 0;
 }

@@ -22,6 +22,7 @@
     <ClCompile Include="src\Framework\Core\D3D11System.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\Framework\Core\RenderSystem.cpp" />
     <ClCompile Include="src\Framework\Core\WindowsSystem.cpp" />
     <ClCompile Include="src\Framework\main.cpp" />
     <ClCompile Include="src\Framework\Utils\DebugHooks.cpp" />
@@ -30,6 +31,7 @@
     <ClInclude Include="src\Framework\Core\D3D11System.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="src\Framework\Core\RenderSystem.h" />
     <ClInclude Include="src\Framework\Core\WindowSystem.h" />
     <ClInclude Include="src\Framework\Utils\DebugHooks.h" />
     <ClInclude Include="src\Framework\Utils\NonCopyable.h" />

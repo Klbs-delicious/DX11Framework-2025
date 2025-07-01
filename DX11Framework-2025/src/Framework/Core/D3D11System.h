@@ -45,6 +45,11 @@ public:
 	*/
 	inline static ID3D11DeviceContext* GetContext() { return D3D11System::deviceContext.Get(); }
 
+	/** @brief	スワップチェーンの取得
+	*	@return	IDXGISwapChain*
+	*/
+	inline static IDXGISwapChain* GetSwapChain() { return D3D11System::swapChain.Get(); }
+
 private:
 	static D3D_FEATURE_LEVEL			featureLevel;		// DX11の機能レベル
 	static ComPtr<ID3D11Device>			device;				// デバイス

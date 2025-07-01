@@ -234,15 +234,18 @@ void RenderSystem::Finalize()
 void RenderSystem::BeginRender()
 {
     float clearColor[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
-    D3D11System::GetContext()->ClearRenderTargetView(RenderSystem::renderTargetView.Get(), clearColor);
-    D3D11System::GetContext()->ClearDepthStencilView(RenderSystem::depthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+    auto context = D3D11System::GetContext();
+    context->OMSetRenderTargets(1, RenderSystem::renderTargetView.GetAddressOf(), RenderSystem::depthStencilView.Get());
+    context->ClearRenderTargetView(RenderSystem::renderTargetView.Get(), clearColor);
+    context->ClearDepthStencilView(RenderSystem::depthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 }
 
 /// @brief	描画終了時の処理
 void RenderSystem::EndRender()
 {
     // バックバッファとフロントバッファを入れ替えて画面に表示
-    D3D11System::GetSwapChain()->Present(1, 0);
+    HRESULT hr = D3D11System::GetSwapChain()->Present(1, 0);
+    if (FAILED(hr)) { OutputDebugString(L"Present failed!\n"); }
 }
 
 /**	@brief	ワールド変換行列をGPUに送る

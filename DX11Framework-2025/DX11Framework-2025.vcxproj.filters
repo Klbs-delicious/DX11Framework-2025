@@ -22,6 +22,12 @@
     <Filter Include="ソース ファイル\Framework\Core">
       <UniqueIdentifier>{04b21f0c-b05c-4d37-abf3-0e4bc7b47bad}</UniqueIdentifier>
     </Filter>
+    <Filter Include="リソース ファイル\VertexShader">
+      <UniqueIdentifier>{0f98a36c-12b1-4b83-8784-175c839ab463}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="リソース ファイル\PixelShader">
+      <UniqueIdentifier>{1d65b21d-29d6-40e1-801b-db3f952753bd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Framework\main.cpp">
@@ -56,5 +62,13 @@
     <ClInclude Include="src\Framework\Core\RenderSystem.h">
       <Filter>ソース ファイル\Framework\Core</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="src\Framework\Graphics\Shaders\VertexShader\VS_Test.hlsl">
+      <Filter>リソース ファイル\VertexShader</Filter>
+    </FxCompile>
+    <FxCompile Include="src\Framework\Graphics\Shaders\PixelShader\PS_Test.hlsl">
+      <Filter>リソース ファイル\PixelShader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

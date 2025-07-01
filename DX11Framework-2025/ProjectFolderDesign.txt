@@ -1,0 +1,36 @@
+ProjectRoot/
+├── src/                             # ソースコード（C++ / HLSL）
+│   ├── Framework/                   # エンジン基盤・汎用描画ロジック
+│   │   ├── Core/                    # D3D11System, WindowSystem, タイマーなど
+│   │   ├── Graphics/               # Mesh, Texture, Renderer クラス群
+│   │   │   └── Shaders/           # HLSL ソース（汎用・描画機能用）
+│   │   ├── Shaders/                # ShaderManager, Compiler などクラス群
+│   │   ├── Utils/                  # 非コピー化, DebugHooks, ログ出力など
+│   │   └── main.cpp                # エントリーポイント
+│   ├── Game/                       # ゲーム固有のロジック・データ
+│   │   ├── Entities/              # プレイヤー、敵、NPCなど
+│   │   ├── Components/            # HP, 物理, 操作系の再利用部品
+│   │   └── Shader/                # ゲーム専用の HLSL ファイル（演出・UI）
+│   ├── Scenes/                     # 状態管理・遷移・演出
+│   │   ├── SceneBase.cpp/h        # 抽象化されたシーンクラス
+│   │   ├── MenuScene/
+│   │   ├── GameplayScene/
+│   │   └── ResultScene/
+│   ├── UI/                         # UI表示制御・InputAction など
+│   │   ├── Widgets/
+│   │   ├── Layouts/
+│   │   └── UIManager.cpp/h
+│   └── Resources/                 # 設定・言語など静的リソース
+│       ├── Config/
+│       └── Localization/
+
+├── Assets/                         # 実行時に使用されるリソース（素材）
+│   ├── Shaders/                    # コンパイル済み Shader (.cso)
+│   │   ├── Framework/             # 基礎描画用 Shader（再利用可能）
+│   │   └── GameSpecific/          # ゲーム固有演出 Shader（UI・特殊表現など）
+│   ├── Textures/                  # .png, .dds など画像素材
+│   ├── Models/                    # .fbx, .obj など立体モデル
+│   ├── Sounds/                    # .wav, .mp3 など音声素材
+│   └── Fonts/                     # フォント定義ファイル（.ttfなど）
+
+└── External/                      # 外部ライブラリ・SDKなど

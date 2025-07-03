@@ -3,6 +3,17 @@
 */
 #pragma once
 
+//-----------------------------------------------------------------------------
+// Test
+//-----------------------------------------------------------------------------
+#include"Framework/Core/RenderSystem.h"
+
+#include <chrono>
+#include <SimpleMath.h>
+#include <d3dcompiler.h>				
+#pragma comment(lib, "d3dcompiler.lib") 
+//-----------------------------------------------------------------------------
+
 /**	@class		BaseScene
  *	@brief		シーン基底クラス
  */
@@ -41,4 +52,12 @@ public:
 	 *	@details	継承を禁止する
 	 */
 	virtual void Finalize()final;
+
+	// 基底だがテスト用に定義
+private:
+	std::chrono::steady_clock::time_point startTime;
+	ComPtr<ID3D11Buffer> vertexBuffer;
+	ComPtr<ID3D11VertexShader> vertexShader;
+	ComPtr<ID3D11PixelShader> pixelShader;
+	ComPtr<ID3D11InputLayout> inputLayout;
 };

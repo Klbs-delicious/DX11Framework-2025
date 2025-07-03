@@ -26,7 +26,9 @@
     <ClCompile Include="src\Framework\Core\WindowsSystem.cpp" />
     <ClCompile Include="src\Framework\main.cpp" />
     <ClCompile Include="src\Framework\Scenes\BaseScene.cpp" />
+    <ClCompile Include="src\Framework\Scenes\SceneFactory.cpp" />
     <ClCompile Include="src\Framework\Utils\DebugHooks.cpp" />
+    <ClCompile Include="src\Scenes\TestScene.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Framework\Core\D3D11System.h">
@@ -35,8 +37,11 @@
     <ClInclude Include="src\Framework\Core\RenderSystem.h" />
     <ClInclude Include="src\Framework\Core\WindowSystem.h" />
     <ClInclude Include="src\Framework\Scenes\BaseScene.h" />
+    <ClInclude Include="src\Framework\Scenes\SceneFactory.h" />
+    <ClInclude Include="src\Framework\Scenes\SceneType.h" />
     <ClInclude Include="src\Framework\Utils\DebugHooks.h" />
     <ClInclude Include="src\Framework\Utils\NonCopyable.h" />
+    <ClInclude Include="src\Scenes\TestScene.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\Framework\Graphics\Shaders\PixelShader\PS_Test.hlsl">

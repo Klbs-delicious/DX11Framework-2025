@@ -31,6 +31,9 @@
     <Filter Include="ソース ファイル\Framework\Scenes">
       <UniqueIdentifier>{c93de8a7-8b0e-4557-a47e-e74ef04697cd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\Scenes">
+      <UniqueIdentifier>{88d41e81-8cda-40d9-aa22-b6c04fbdc77d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Framework\main.cpp">
@@ -51,6 +54,12 @@
     <ClCompile Include="src\Framework\Scenes\BaseScene.cpp">
       <Filter>ソース ファイル\Framework\Scenes</Filter>
     </ClCompile>
+    <ClCompile Include="src\Framework\Scenes\SceneFactory.cpp">
+      <Filter>ソース ファイル\Framework\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Scenes\TestScene.cpp">
+      <Filter>ソース ファイル\Scenes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Framework\Utils\NonCopyable.h">
@@ -70,6 +79,15 @@
     </ClInclude>
     <ClInclude Include="src\Framework\Scenes\BaseScene.h">
       <Filter>ソース ファイル\Framework\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Framework\Scenes\SceneFactory.h">
+      <Filter>ソース ファイル\Framework\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Framework\Scenes\SceneType.h">
+      <Filter>ソース ファイル\Framework\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Scenes\TestScene.h">
+      <Filter>ソース ファイル\Scenes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

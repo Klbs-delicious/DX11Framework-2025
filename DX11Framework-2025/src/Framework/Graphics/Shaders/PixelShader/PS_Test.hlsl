@@ -4,7 +4,7 @@ struct PS_IN
     float4 color : COLOR;
 };
 
-float4 main(PS_IN input) : SV_TARGET
+float4 main(PS_IN pin) : SV_TARGET
 {
-    return input.color;
+    return pin.color;
 }

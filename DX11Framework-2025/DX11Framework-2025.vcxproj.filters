@@ -28,6 +28,9 @@
     <Filter Include="リソース ファイル\PixelShader">
       <UniqueIdentifier>{1d65b21d-29d6-40e1-801b-db3f952753bd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\Framework\Scenes">
+      <UniqueIdentifier>{c93de8a7-8b0e-4557-a47e-e74ef04697cd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Framework\main.cpp">
@@ -44,6 +47,9 @@
     </ClCompile>
     <ClCompile Include="src\Framework\Core\RenderSystem.cpp">
       <Filter>ソース ファイル\Framework\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Framework\Scenes\BaseScene.cpp">
+      <Filter>ソース ファイル\Framework\Scenes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -62,6 +68,9 @@
     <ClInclude Include="src\Framework\Core\RenderSystem.h">
       <Filter>ソース ファイル\Framework\Core</Filter>
     </ClInclude>
+    <ClInclude Include="src\Framework\Scenes\BaseScene.h">
+      <Filter>ソース ファイル\Framework\Scenes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\Framework\Graphics\Shaders\VertexShader\VS_Test.hlsl">
@@ -70,5 +79,8 @@
     <FxCompile Include="src\Framework\Graphics\Shaders\PixelShader\PS_Test.hlsl">
       <Filter>リソース ファイル\PixelShader</Filter>
     </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="src\Framework\Graphics\Shaders\Common.hlsli" />
   </ItemGroup>
 </Project>

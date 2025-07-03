@@ -1,18 +1,23 @@
 ProjectRoot/
-├── src/                             # ソースコード（C++ / HLSL）
-│   ├── Framework/                   # エンジン基盤・汎用描画ロジック
-│   │   ├── Core/                    # D3D11System, WindowSystem, タイマーなど
-│   │   ├── Graphics/               # Mesh, Texture, Renderer クラス群
-│   │   │   └── Shaders/           # HLSL ソース（汎用・描画機能用）
-│   │   ├── Shaders/                # ShaderManager, Compiler などクラス群
-│   │   ├── Utils/                  # 非コピー化, DebugHooks, ログ出力など
-│   │   └── main.cpp                # エントリーポイント
+├── src/
+│   ├── Framework/                         # 再利用可能なエンジン・基盤系
+│   │   ├── Core/                          # D3D11System, WindowSystem など
+│   │   ├── Graphics/                      # Mesh, Texture, Renderer など
+│   │   │   └── Shaders/                   # 共通HLSLファイル
+│   │   ├── Shaders/                       # ShaderManager, Compiler 等
+│   │   ├── Utils/                         # ログ、非コピー化、ヘルパーなど
+│   │   ├── Scenes/                        # エンジン側のシーン基盤
+│   │   │   ├── BaseScene.h
+│   │   │   ├── BaseScene.cpp
+│   │   │   └── SceneFactory.hpp           # 任意で導入可能
+│   │   │  
+│   │   └── main.cpp
 │   ├── Game/                       # ゲーム固有のロジック・データ
 │   │   ├── Entities/              # プレイヤー、敵、NPCなど
 │   │   ├── Components/            # HP, 物理, 操作系の再利用部品
 │   │   └── Shader/                # ゲーム専用の HLSL ファイル（演出・UI）
 │   ├── Scenes/                     # 状態管理・遷移・演出
-│   │   ├── SceneBase.cpp/h        # 抽象化されたシーンクラス
+│   │   ├── SceneManager.cpp/h     # シーン管理
 │   │   ├── MenuScene/
 │   │   ├── GameplayScene/
 │   │   └── ResultScene/

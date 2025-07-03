@@ -25,6 +25,7 @@
     <ClCompile Include="src\Framework\Core\RenderSystem.cpp" />
     <ClCompile Include="src\Framework\Core\WindowsSystem.cpp" />
     <ClCompile Include="src\Framework\main.cpp" />
+    <ClCompile Include="src\Framework\Scenes\BaseScene.cpp" />
     <ClCompile Include="src\Framework\Utils\DebugHooks.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -33,6 +34,7 @@
     </ClInclude>
     <ClInclude Include="src\Framework\Core\RenderSystem.h" />
     <ClInclude Include="src\Framework\Core\WindowSystem.h" />
+    <ClInclude Include="src\Framework\Scenes\BaseScene.h" />
     <ClInclude Include="src\Framework\Utils\DebugHooks.h" />
     <ClInclude Include="src\Framework\Utils\NonCopyable.h" />
   </ItemGroup>

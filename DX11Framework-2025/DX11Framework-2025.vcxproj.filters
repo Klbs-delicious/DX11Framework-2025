@@ -60,6 +60,12 @@
     <ClCompile Include="src\Scenes\TestScene.cpp">
       <Filter>ソース ファイル\Scenes</Filter>
     </ClCompile>
+    <ClCompile Include="src\Scenes\SceneManager.cpp">
+      <Filter>ソース ファイル\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Scenes\TitleScene.cpp">
+      <Filter>ソース ファイル\Scenes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Framework\Utils\NonCopyable.h">
@@ -87,6 +93,12 @@
       <Filter>ソース ファイル\Framework\Scenes</Filter>
     </ClInclude>
     <ClInclude Include="src\Scenes\TestScene.h">
+      <Filter>ソース ファイル\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Scenes\SceneManager.h">
+      <Filter>ソース ファイル\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Scenes\TitleScene.h">
       <Filter>ソース ファイル\Scenes</Filter>
     </ClInclude>
   </ItemGroup>

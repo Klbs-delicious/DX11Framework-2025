@@ -35,10 +35,15 @@ public:
 	 */
 	void RequestSceneChange(SceneType _nextScenetype);
 
-	/**	@brief	演出や外部トリガー向けのコールバック設定を行う
-	 *	@param	std::function<void(SceneType)> _callback	演出や外部トリガー向けのコールバックコールバック
+	/**	@brief	遷移開始時の演出や外部トリガー向けのコールバック設定を行う
+	 *	@param	std::function<void(SceneType)> _callback	演出や外部トリガー向けのコールバック
 	 */
 	void SetTransitionCallback(std::function<void(SceneType)> _callback);
+
+	/**	@brief	遷移開始処理を行うためのラッパー関数
+	 *	@param	SceneType _nextSceneType	次のシーンタイプ
+	 */
+	void NotifyTransitionReady(SceneType _nextSceneType);
 
 private:
 	/**	@brief	遷移開始処理を行う
@@ -54,7 +59,9 @@ private:
 	std::unique_ptr<BaseScene>	currentScene;							///< 現在のシーン
 	SceneType currentSceneType;											///< 現在のシーンタイプ
 	SceneType pendingSceneType;											///< 切り替え予約シーンタイプ
-	std::function<void(SceneType _nextSceneType)> transitionCallback;	///< 遷移のトリガーを行うコールバック
+
+	std::function<void(SceneType _nextSceneType)> onTransitionBegin;  ///< 遷移開始通知イベント
+	std::function<void(SceneType _nextSceneType)> onTransitionEnd;    ///< 遷移完了通知イベント
 	
 	bool isTransitioning = false;		///< 遷移フラグ
 	bool isSceneInitialized = false;	///< 初期化チェック

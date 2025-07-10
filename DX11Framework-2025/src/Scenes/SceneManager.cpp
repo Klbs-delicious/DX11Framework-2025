@@ -63,21 +63,34 @@ void SceneManager::Draw()
 void SceneManager::RequestSceneChange(SceneType _nextScenetype)
 {
 	// 外部フック（遷移、その他演出など）があれば通知する
-	if (this->transitionCallback)
+	if (this->onTransitionBegin)
 	{
-		this->transitionCallback(_nextScenetype);
+		this->onTransitionBegin(_nextScenetype);
 	}
-
-	// 遷移処理を開始する
-	this->BeginTransition(_nextScenetype);
+	else
+	{
+		// 演出がない場合は遷移を開始する
+		NotifyTransitionReady(_nextScenetype);
+	}
 }
 
-/**	@brief	演出や外部トリガー向けのコールバック設定を行う
- *	@param	std::function<void(SceneType)> _callback	出や外部トリガー向けのコールバック
+/**	@brief	遷移開始時の演出や外部トリガー向けのコールバック設定を行う
+ *	@param	std::function<void(SceneType)> _callback	演出や外部トリガー向けのコールバック
  */
 void SceneManager::SetTransitionCallback(std::function<void(SceneType)> _callback)
 {
-	this->transitionCallback = std::move(_callback);
+	this->onTransitionBegin = std::move(_callback);
+}
+
+/**	@brief	遷移開始処理を行うためのラッパー関数
+ *	@param	SceneType _nextSceneType	次のシーンタイプ
+ */
+void SceneManager::NotifyTransitionReady(SceneType _nextSceneType)
+{
+	if (!this->isTransitioning)
+	{
+		this->BeginTransition(_nextSceneType);
+	}
 }
 
 /**	@brief	遷移開始処理を行う
@@ -91,6 +104,7 @@ void SceneManager::BeginTransition(SceneType _nextSceneType)
 
 	this->isSceneInitialized = false;
 }
+
 
 /// @brief Factoryを使ってシーン生成・切り替えを行う
 void SceneManager::CompleteTransition()
@@ -111,4 +125,10 @@ void SceneManager::CompleteTransition()
 		this->currentSceneType = this->pendingSceneType;
 	}
 	this->isTransitioning = false;
+
+	// 遷移完了を通知する
+	if (this->onTransitionEnd)
+	{
+		this->onTransitionEnd(this->currentSceneType);
+	}
 }

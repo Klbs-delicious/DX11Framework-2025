@@ -15,6 +15,10 @@
 #include "Scenes/TestScene.h"
 #include "Scenes/TitleScene.h"
 
+
+
+#include<iostream>
+
 //-----------------------------------------------------------------------------
 // EntryPoint
 //-----------------------------------------------------------------------------
@@ -38,6 +42,14 @@ int main()
 
 	// シーンマネージャーの作成
 	std::unique_ptr< SceneManager> sceneManager = std::make_unique<SceneManager>(std::move(factory));
+
+	// シーン遷移時の演出として仮で文字を出してみる
+	auto rawPtr = sceneManager.get();
+	sceneManager->SetTransitionCallback([rawPtr](SceneType _nextType) {
+		std::cout << "シーン遷移時の演出を行いました。" << std::endl;
+		rawPtr->NotifyTransitionReady(_nextType);
+		});
+
 	// シーン遷移を行う
 	sceneManager->RequestSceneChange(SceneType::Test);
 

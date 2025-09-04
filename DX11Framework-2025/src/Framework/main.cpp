@@ -9,6 +9,7 @@
 #include"Framework/Core/WindowSystem.h"
 #include"Framework/Core/RenderSystem.h"
 #include "Framework/Utils/DebugHooks.h"
+#include "Framework/Core/FPS.h"
 
 #include "Framework/Scenes/SceneFactory.h"
 #include "Scenes/SceneManager.h"
@@ -16,76 +17,70 @@
 #include "Scenes/TitleScene.h"
 
 
-
 #include<iostream>
-
+#include <Windows.h> // timeBeginPeriod 用
+#pragma comment(lib, "Winmm.lib")
 //-----------------------------------------------------------------------------
 // EntryPoint
 //-----------------------------------------------------------------------------
 int main()
-{    
-	// Debug、Releseで適切なハンドラをセット
-	DebugHooks::Install();  
+{
+    timeBeginPeriod(1);               // スリープ精度を1ms単位に強化
+    DebugHooks::Install();
+    FPS fps(70);
 
     WindowSystem::Initialize(640, 480);
-	RenderSystem::Initialize();
+    RenderSystem::Initialize();
 
-	// SceneFactoryテスト用
-	// シーンの登録
-	std::unique_ptr<SceneFactory >factory= std::make_unique<SceneFactory>();
-	factory->Register(SceneType::Test, [=] {
-		return std::make_unique<TestScene>();
-		});
-	factory->Register(SceneType::Title, [=] {
-		return std::make_unique<TitleScene>();
-		});
+    // シーン構成の初期化
+    auto factory = std::make_unique<SceneFactory>();
+    factory->Register(SceneType::Test, [] { return std::make_unique<TestScene>(); });
+    factory->Register(SceneType::Title, [] { return std::make_unique<TitleScene>(); });
 
-	// シーンマネージャーの作成
-	std::unique_ptr< SceneManager> sceneManager = std::make_unique<SceneManager>(std::move(factory));
+    auto sceneManager = std::make_unique<SceneManager>(std::move(factory));
+    sceneManager->SetTransitionCallback([raw = sceneManager.get()](SceneType next) {
+        std::cout << "シーン遷移時の演出を行いました。\n";
+        raw->NotifyTransitionReady(next);
+        });
 
-	// シーン遷移時の演出として仮で文字を出してみる
-	auto rawPtr = sceneManager.get();
-	sceneManager->SetTransitionCallback([rawPtr](SceneType _nextType) {
-		std::cout << "シーン遷移時の演出を行いました。" << std::endl;
-		rawPtr->NotifyTransitionReady(_nextType);
-		});
+    sceneManager->RequestSceneChange(SceneType::Test);
 
-	// シーン遷移を行う
-	sceneManager->RequestSceneChange(SceneType::Test);
+    // FPSログ用変数
+    float fpsAccumulator = 0.0f;
+    int fpsFrameCount = 0;
+    fps.ResetTime();
 
-	MSG msg = {};
-	while (msg.message != WM_QUIT)
-	{
-		if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
+    // メインループ
+    MSG msg{};
+    while (msg.message != WM_QUIT)
+    {
+        fps.Tick();
+        fps.Measure();
+        // 瞬間FPS
+        float FPS = 1.0f / fps.DeltaSec();    
+        std::cout << std::to_string(FPS) << std::endl;
 
-			// キー入力検出（例：スペースキーで切り替え）
-			if (msg.message == WM_KEYDOWN)
-			{
-				switch (msg.wParam)
-				{
-				case VK_SPACE:
-					// テスト → Test に遷移してみる（仮）
-					sceneManager->RequestSceneChange(SceneType::Test);
-					break;
+        // 以下、普段の更新・描画
+        if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+            if (msg.message == WM_KEYDOWN) {
+                switch (msg.wParam) {
+                case VK_SPACE:  sceneManager->RequestSceneChange(SceneType::Test);  break;
+                case VK_RETURN: sceneManager->RequestSceneChange(SceneType::Title); break;
+                }
+            }
+        }
 
-				case VK_RETURN:
-					// Enterキーでタイトルに戻す（仮）
-					sceneManager->RequestSceneChange(SceneType::Title);
-					break;
-				}
-			}
-		}
-	
-		sceneManager->Update(0.016f);	// 更新
-		RenderSystem::BeginRender();	// 描画開始
-		sceneManager->Draw();			// 描画
-		RenderSystem::EndRender();		// 描画終了
-	}
+        sceneManager->Update(FPS);
+        RenderSystem::BeginRender();
+        sceneManager->Draw();
+        RenderSystem::EndRender();
+    }
 
-	RenderSystem::Finalize();
+    RenderSystem::Finalize();
     WindowSystem::Finalize();
+    timeEndPeriod(1); // 精度設定を解除
+
     return 0;
 }

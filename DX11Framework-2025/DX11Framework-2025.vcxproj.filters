@@ -101,6 +101,9 @@
     <ClInclude Include="src\Scenes\TitleScene.h">
       <Filter>ソース ファイル\Scenes</Filter>
     </ClInclude>
+    <ClInclude Include="src\Framework\Core\FPS.h">
+      <Filter>ソース ファイル\Framework\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\Framework\Graphics\Shaders\VertexShader\VS_Test.hlsl">

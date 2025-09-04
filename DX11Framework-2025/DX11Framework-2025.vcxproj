@@ -36,6 +36,7 @@
     <ClInclude Include="src\Framework\Core\D3D11System.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="src\Framework\Core\FPS.h" />
     <ClInclude Include="src\Framework\Core\RenderSystem.h" />
     <ClInclude Include="src\Framework\Core\WindowSystem.h" />
     <ClInclude Include="src\Framework\Scenes\BaseScene.h" />

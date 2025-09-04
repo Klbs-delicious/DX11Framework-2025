@@ -58,7 +58,7 @@ int main()
         fps.Measure();
         // 瞬間FPS
         float FPS = 1.0f / fps.DeltaSec();    
-        std::cout << std::to_string(FPS) << std::endl;
+        std::cout << "Measured FPS: " << 1.0f / fps.DeltaSec() << std::endl;
 
         // 以下、普段の更新・描画
         if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {

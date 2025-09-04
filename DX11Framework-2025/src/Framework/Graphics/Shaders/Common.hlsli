@@ -11,6 +11,25 @@ cbuffer ProjectionBuffer : register(b2)
     matrix projection;
 }
 
+
+struct VS_IN
+{
+    float3 position : POSITION;
+    float4 color : COLOR;
+};
+
+struct VS_OUT
+{
+    float4 position : SV_POSITION;
+    float4 color : COLOR;
+};
+    
+struct PS_IN
+{
+    float4 position : SV_POSITION;
+    float4 color : COLOR;
+};
+
 //struct MATERIAL
 //{
 //    float4 ambient;

@@ -40,6 +40,7 @@
     </ClInclude>
     <ClInclude Include="src\Framework\Core\FPS.h" />
     <ClInclude Include="src\Framework\Core\RenderSystem.h" />
+    <ClInclude Include="src\Framework\Core\SystemLocator.h" />
     <ClInclude Include="src\Framework\Core\WindowSystem.h" />
     <ClInclude Include="src\Framework\Scenes\BaseScene.h" />
     <ClInclude Include="src\Framework\Scenes\SceneFactory.h" />

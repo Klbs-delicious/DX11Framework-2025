@@ -110,6 +110,9 @@
     <ClInclude Include="src\Framework\Core\Application.h">
       <Filter>ソース ファイル\Framework\Core</Filter>
     </ClInclude>
+    <ClInclude Include="src\Framework\Core\SystemLocator.h">
+      <Filter>ソース ファイル\Framework\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\Framework\Graphics\Shaders\VertexShader\VS_Test.hlsl">

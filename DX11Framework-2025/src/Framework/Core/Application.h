@@ -4,6 +4,8 @@
 #pragma once
 #include"Framework/Utils/NonCopyable.h"
 
+#include<cstdint>
+
 /**	@class	Application
  *	@brief	ゲームシステムの制御
  *	@details	

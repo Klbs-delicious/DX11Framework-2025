@@ -42,8 +42,10 @@ RenderSystem::~RenderSystem()
     D3D11System::Finalize();
 }
 
-/// @brief	初期化処理
-void RenderSystem::Initialize()
+/**	@brief	初期化処理
+ *	@return	bool 初期化に成功したかどうか
+ */
+bool RenderSystem::Initialize()
 {
     // D3D11Systemの初期化
     D3D11System::Initialize();
@@ -61,7 +63,10 @@ void RenderSystem::Initialize()
     {
         device->CreateRenderTargetView(renderTarget.Get(), nullptr, RenderSystem::renderTargetView.GetAddressOf());
     }
-    else { throw std::runtime_error("Failed to retrieve render target buffer."); }
+    else { 
+        throw std::runtime_error("Failed to retrieve render target buffer."); 
+        return false;
+    }
 
     // SwapChainDescの取得
     DXGI_SWAP_CHAIN_DESC swapChainDesc{};
@@ -79,7 +84,10 @@ void RenderSystem::Initialize()
     textureDesc.Usage = D3D11_USAGE_DEFAULT;
     textureDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
     hr = device->CreateTexture2D(&textureDesc, nullptr, depthStencil.GetAddressOf());
-    if (FAILED(hr)) { throw std::runtime_error("Failed to create depthStencil."); }
+    if (FAILED(hr)) {
+        throw std::runtime_error("Failed to create depthStencil.");
+        return false;
+    }
 
     // 深度ステンシルビューの作成
     D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc{};
@@ -88,6 +96,7 @@ void RenderSystem::Initialize()
     hr = device->CreateDepthStencilView(depthStencil.Get(), &depthStencilViewDesc, RenderSystem::depthStencilView.GetAddressOf());
     if (FAILED(hr)) {
         throw std::runtime_error("Failed to create depthStencilView.");
+        return false;
     }
 
     // レンダーターゲットの設定
@@ -207,6 +216,9 @@ void RenderSystem::Initialize()
     // プロジェクション変換行列
     device->CreateBuffer(&bufferDesc, nullptr, RenderSystem::projectionBuffer.GetAddressOf());
     context->VSSetConstantBuffers(2, 1, RenderSystem::projectionBuffer.GetAddressOf());
+
+    // 初期化成功
+    return true;
 }
 
 /// @brief	描画関連の終了処理

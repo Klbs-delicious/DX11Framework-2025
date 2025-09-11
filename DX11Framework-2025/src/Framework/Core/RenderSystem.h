@@ -32,8 +32,10 @@ public:
 	/// @brief	デストラクタ
 	~RenderSystem();
 
-	/// @brief	初期化処理
-	static void Initialize();
+	/**	@brief	初期化処理
+	 *	@return	bool 初期化に成功したかどうか
+	 */
+	static bool  Initialize();
 
 	/// @brief	終了処理
 	static void Finalize();

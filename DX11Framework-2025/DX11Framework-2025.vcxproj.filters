@@ -66,6 +66,9 @@
     <ClCompile Include="src\Scenes\TitleScene.cpp">
       <Filter>ソース ファイル\Scenes</Filter>
     </ClCompile>
+    <ClCompile Include="src\Framework\Core\Application.cpp">
+      <Filter>ソース ファイル\Framework\Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Framework\Utils\NonCopyable.h">
@@ -102,6 +105,9 @@
       <Filter>ソース ファイル\Scenes</Filter>
     </ClInclude>
     <ClInclude Include="src\Framework\Core\FPS.h">
+      <Filter>ソース ファイル\Framework\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Framework\Core\Application.h">
       <Filter>ソース ファイル\Framework\Core</Filter>
     </ClInclude>
   </ItemGroup>

@@ -2,6 +2,7 @@
 *	@date	2025/07/04
 */
 #pragma once
+#include"Framework/Utils/NonCopyable.h"
 #include"Framework/Scenes/SceneFactory.h"
 #include"Framework/Scenes/SceneType.h"
 #include"Framework/Scenes/BaseScene.h"
@@ -11,8 +12,9 @@
 
 /**	@class	SceneManager
  *	@brief	シーンの遷移、保持
+ *	@details	このクラスはコピー、代入を禁止している
  */
-class SceneManager
+class SceneManager :private NonCopyable
 {
 public:
 	/**	@brief	コンストラクタ

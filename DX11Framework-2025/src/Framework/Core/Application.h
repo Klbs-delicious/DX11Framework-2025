@@ -4,7 +4,12 @@
 #pragma once
 #include"Framework/Utils/NonCopyable.h"
 
+#include"Framework/Core/WindowSystem.h"
+#include"Framework/Core/D3D11System.h"
+#include"Framework/Core/RenderSystem.h"
+
 #include<cstdint>
+#include <memory>
 
 /**	@class	Application
  *	@brief	ゲームシステムの制御
@@ -45,4 +50,8 @@ public:
 
 private:
 	static AppConfig appConfig;
+
+	static std::unique_ptr<WindowSystem>   windowSystem;
+	static std::unique_ptr<D3D11System>    d3d11System;
+	static std::unique_ptr<RenderSystem>   renderSystem;
 };

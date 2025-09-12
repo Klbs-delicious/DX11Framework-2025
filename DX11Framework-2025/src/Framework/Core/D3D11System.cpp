@@ -1,42 +1,31 @@
-﻿/**	@file	D3D11System.cpp
-*	@date	2025/06/18
+﻿/** @file   D3D11System.cpp
+*   @date   2025/06/18
 */
 
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
 #include"Framework/Core/D3D11System.h"
-#include"Framework/Core/WindowSystem.h"
 
 #include <dxgi1_2.h>    // CreateSwapChainForHwnd 用
 #include <stdlib.h>     // _countof を使うために必要
-//-----------------------------------------------------------------------------
-// Class Static
-//-----------------------------------------------------------------------------
-
-// DX11の機能レベル
-D3D_FEATURE_LEVEL			D3D11System::featureLevel = D3D_FEATURE_LEVEL_11_0;		
-
-ComPtr<ID3D11Device>        D3D11System::device;            // デバイス
-ComPtr<ID3D11DeviceContext>	D3D11System::deviceContext;		// 描画コマンドを出す
-ComPtr<IDXGISwapChain>		D3D11System::swapChain;			// フレームバッファの管理
-ComPtr<IDXGIFactory>        D3D11System::factory;			// アダプタ(GPU)情報
 
 //-----------------------------------------------------------------------------
 // D3D11System Class
 //-----------------------------------------------------------------------------
 
-/** @brief	コンストラクタ
+/** @brief  コンストラクタ
+*   @param  WindowSystem* _window   ウィンドウ作成等を行うクラスの参照
 */
-D3D11System::D3D11System() {}
+D3D11System::D3D11System(WindowSystem* _window) :window(_window) {}
 
-/** @brief	デストラクタ
-*/
+/// @brief デストラクタ
 D3D11System::~D3D11System() {}
 
-/** @brief	DX11の初期化
+/** @brief DX11の初期化
+*   @return bool 初期化に成功したかどうかを返す
 */
-void D3D11System::Initialize()
+bool D3D11System::Initialize()
 {
     HRESULT hr = S_OK;
 
@@ -44,7 +33,7 @@ void D3D11System::Initialize()
     UINT flags = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 #if defined(_DEBUG)
     // デバッグレイヤーを追加
-    flags |= D3D11_CREATE_DEVICE_DEBUG;  
+    flags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
     D3D_FEATURE_LEVEL featureLevels[] = {
@@ -60,20 +49,20 @@ void D3D11System::Initialize()
         flags,
         featureLevels, _countof(featureLevels),
         D3D11_SDK_VERSION,
-        D3D11System::device.GetAddressOf(),
-        &D3D11System::featureLevel,
-        D3D11System::deviceContext.GetAddressOf()
+        this->device.GetAddressOf(),
+        &this->featureLevel,
+        this->deviceContext.GetAddressOf()
     );
 
     if (FAILED(hr)) {
         MessageBox(nullptr, L"DirectX 11 デバイス作成に失敗", L"エラー", MB_OK);
-        return;
+        return false;
     }
 
     // スワップチェーンの設定
     DXGI_SWAP_CHAIN_DESC1 scDesc{};
-    scDesc.Width = WindowSystem::GetWidth();
-    scDesc.Height = WindowSystem::GetHeight();
+    scDesc.Width = this->window->GetWidth();
+    scDesc.Height = this->window->GetHeight();
     scDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     scDesc.SampleDesc.Count = 1;
     scDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
@@ -85,7 +74,7 @@ void D3D11System::Initialize()
 
     // DXGIFactory2 経由でスワップチェーンを作成
     ComPtr<IDXGIDevice> dxgiDevice;
-    D3D11System::device.As(&dxgiDevice);
+    this->device.As(&dxgiDevice);
 
     // GPU情報の取得
     ComPtr<IDXGIAdapter> adapter;
@@ -104,52 +93,53 @@ void D3D11System::Initialize()
     hr = adapter->GetParent(__uuidof(IDXGIFactory2), reinterpret_cast<void**>(dxgiFactory2.GetAddressOf()));
     if (FAILED(hr)) {
         MessageBox(nullptr, L"IDXGIFactory2 の取得に失敗しました", L"エラー", MB_OK);
-        return;
+        return false;
     }
 
     // スワップチェーンの作成
     ComPtr<IDXGISwapChain1> swapChain1;
     hr = dxgiFactory2->CreateSwapChainForHwnd(
-        D3D11System::device.Get(),
-        WindowSystem::GetWindow(),
+        this->device.Get(),
+        this->window->GetWindow(),
         &scDesc,
         nullptr, nullptr,
         swapChain1.GetAddressOf()
     );
     if (FAILED(hr)) {
         MessageBox(nullptr, L"スワップチェーン作成失敗", L"エラー", MB_OK);
-        return;
+        return false;
     }
 
     // swapChain1 を D3D11System::swapChain に変換
-    swapChain1.As(&D3D11System::swapChain);
+    swapChain1.As(&this->swapChain);
 
     // dxgiFactory2 を IDXGIFactory にキャストして保持
-    dxgiFactory2.As(&D3D11System::factory);
+    dxgiFactory2.As(&this->factory);
+
+    return true;
 }
 
-/** @brief	DX11の終了処理
-*/
+/// @brief DX11の終了処理
 void D3D11System::Finalize()
 {
     // 描画ターゲット解除 + 状態クリア
-    if (deviceContext)
+    if (this->deviceContext)
     {
-        deviceContext->OMSetRenderTargets(0, nullptr, nullptr);
+        this->deviceContext->OMSetRenderTargets(0, nullptr, nullptr);
         ID3D11Buffer* nullBuffer = nullptr;
-        deviceContext->VSSetConstantBuffers(0, 1, &nullBuffer); // ← バインド解除
-        deviceContext->ClearState();
-        deviceContext->Flush();
+        this->deviceContext->VSSetConstantBuffers(0, 1, &nullBuffer); // ← バインド解除
+        this->deviceContext->ClearState();
+        this->deviceContext->Flush();
     }
 
     // フルスクリーン解除
-    if (swapChain)
+    if (this->swapChain)
     {
-        swapChain->SetFullscreenState(FALSE, nullptr);
+        this->swapChain->SetFullscreenState(FALSE, nullptr);
     }
 
-    factory.Reset();
-    swapChain.Reset();
-    deviceContext.Reset();
-    device.Reset();
+    this->factory.Reset();
+    this->swapChain.Reset();
+    this->deviceContext.Reset();
+    this->device.Reset();
 }

@@ -6,10 +6,10 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include"Framework/Core/Application.h"
-#include "Framework/Utils/DebugHooks.h"
-#include"Framework/Core/WindowSystem.h"
-#include"Framework/Core/RenderSystem.h"
+#include "Framework/Core/SystemLocator.h"
 #include"Framework/Core/FPS.h"
+
+#include "Framework/Utils/DebugHooks.h"
 
 #include "Scenes/SceneManager.h"
 #include "Scenes/TestScene.h"
@@ -21,6 +21,9 @@
 // Class Static
 //-----------------------------------------------------------------------------
 Application::AppConfig Application::appConfig = {};
+std::unique_ptr<WindowSystem>   Application::windowSystem;
+std::unique_ptr<D3D11System>    Application::d3d11System;
+std::unique_ptr<RenderSystem>   Application::renderSystem;
 
 //-----------------------------------------------------------------------------
 // RenderSystem Class
@@ -44,13 +47,29 @@ Application::~Application()
     timeEndPeriod(1);
 }
 
-/// @brief 初期化処理
+/** @brief      初期化処理
+*   @details    - 使用するシステムをSystemLocatorに登録する（今後SystemLocatorからシステムを取得して使用できるようにする）
+*               - 生成順序に気を付ける
+*/  
 bool Application::Initialize()
 {
     DebugHooks::Install();
 
-    if (!WindowSystem::Initialize(Application::appConfig.screenWidth, Application::appConfig.screenHeight)) { return false; }
-    if(!RenderSystem::Initialize()) { return false; }
+    // Window の生成と登録
+    Application::windowSystem = std::make_unique<WindowSystem>();
+    if (!Application::windowSystem->Initialize(Application::appConfig.screenWidth, Application::appConfig.screenHeight)) { return false; }
+    SystemLocator::Register<WindowSystem>(Application::windowSystem.get());
+
+    // D3D11System の生成と登録
+    Application::d3d11System = std::make_unique<D3D11System>(Application::windowSystem.get());
+    if (!Application::d3d11System->Initialize()) { return false; }
+
+    SystemLocator::Register<D3D11System>(Application::d3d11System.get());
+
+    // RenderSystem の生成と登録
+    Application::renderSystem = std::make_unique<RenderSystem>(Application::d3d11System.get(), Application::windowSystem.get());
+    if (!Application::renderSystem->Initialize()) { return false; }
+    SystemLocator::Register<RenderSystem>(Application::renderSystem.get());
 
     // 初期化成功
     return true;
@@ -94,7 +113,7 @@ void Application::MainLoop()
 
         // 瞬間FPS
         float FPS = 1.0f / fps.DeltaSec();
-        std::cout << "Measured FPS: " << 1.0f / fps.DeltaSec() << std::endl;
+        //std::cout << "Measured FPS: " << 1.0f / fps.DeltaSec() << std::endl;
 
         // 以下、普段の更新・描画
         if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
@@ -111,15 +130,23 @@ void Application::MainLoop()
         }
 
         sceneManager->Update(FPS);
-        RenderSystem::BeginRender();
+        Application::renderSystem->BeginRender();
         sceneManager->Draw();
-        RenderSystem::EndRender();
+        Application::renderSystem->EndRender();
     }
 }
 
-/// @brief	終了処理
+/** @brief      終了処理
+*   @details    - システムをSystemLocatorに登録した順から逆に解除する
+*               - システムの破棄順に注意する
+*/
 void Application::ShutDown()
 {
-    RenderSystem::Finalize();
-    WindowSystem::Finalize();
+    SystemLocator::Unregister<RenderSystem>();
+    SystemLocator::Unregister<D3D11System>();
+    SystemLocator::Unregister<WindowSystem>();
+
+    Application::renderSystem.reset();
+    Application::d3d11System.reset();
+    Application::windowSystem.reset();
 }

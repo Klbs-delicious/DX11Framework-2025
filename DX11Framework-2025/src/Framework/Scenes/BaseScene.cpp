@@ -7,6 +7,8 @@
 //-----------------------------------------------------------------------------
 #include"Framework/Scenes/BaseScene.h"
 
+#include"Framework/Core/SystemLocator.h"
+
 //-----------------------------------------------------------------------------
 // Test
 //-----------------------------------------------------------------------------
@@ -42,9 +44,13 @@ void BaseScene::Initialize()
 	// オブジェクトの生成
 	this->SetupObjects();
 
+	// テストなのでメンバに持たずに直接取得する
+	auto& d3d11 = SystemLocator::Get< D3D11System>();
+	auto& render = SystemLocator::Get< RenderSystem>();
+
 	// RenderSystem実行確認用
 	// 頂点バッファ作成
-	auto device = D3D11System::GetDevice();
+	auto device = d3d11.GetDevice();
 	D3D11_BUFFER_DESC vbDesc = {};
 	vbDesc.Usage = D3D11_USAGE_DEFAULT;
 	vbDesc.ByteWidth = sizeof(vertices);
@@ -108,7 +114,7 @@ void BaseScene::Initialize()
 
 		// ワールド行列
 		Matrix world = Matrix::Identity;
-		RenderSystem::SetWorldMatrix(&world);
+		render.SetWorldMatrix(&world);
 
 		// ビュー行列
 		Matrix view = Matrix::CreateLookAt(
@@ -116,7 +122,7 @@ void BaseScene::Initialize()
 			{ 0, 0,  0 },   // at
 			{ 0, 1,  0 }    // up
 		);
-		RenderSystem::SetViewMatrix(&view);
+		render.SetViewMatrix(&view);
 
 		// プロジェクション行列
 		Matrix proj = Matrix::CreatePerspectiveFieldOfView(
@@ -124,7 +130,7 @@ void BaseScene::Initialize()
 			640.0f / 480.0f,
 			0.1f, 100.0f
 		);
-		RenderSystem::SetProjectionMatrix(&proj);
+		render.SetProjectionMatrix(&proj);
 	}
 	// 時間計測スタート
 	this->startTime = std::chrono::steady_clock::now();
@@ -145,6 +151,10 @@ void BaseScene::Update(float _deltaTime)
  */
 void BaseScene::Draw()
 {
+	// テストなのでメンバに持たずに直接取得する
+	auto& d3d11 = SystemLocator::Get< D3D11System>();
+	auto& render = SystemLocator::Get< RenderSystem>();
+
 	// RenderSystem実行確認用に三角形を動かす処理
 	// 経過時間（秒）を取得
 	auto now = std::chrono::steady_clock::now();
@@ -155,10 +165,10 @@ void BaseScene::Draw()
 	Matrix world = Matrix::CreateRotationZ(timeS);              // 回転
 	world *= Matrix::CreateTranslation(0, std::sin(timeS) * 0.5f, 0);  // 縦揺れ
 	// 更新を GPU に通知
-	RenderSystem::SetWorldMatrix(&world);
+	render.SetWorldMatrix(&world);
 
 	// 頂点バッファ/シェーダ/Draw（例）
-	auto ctx = D3D11System::GetContext();
+	auto ctx = d3d11.GetContext();
 	UINT stride = sizeof(Vertex), offset = 0;
 	ctx->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
 	ctx->IASetInputLayout(inputLayout.Get());

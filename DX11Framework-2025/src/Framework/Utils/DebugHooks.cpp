@@ -107,6 +107,11 @@ namespace DebugHooks
         {
             SetUnhandledExceptionFilter(UnhandledException);
             OutputDebugString(L"[DebugHooks] CrashHandler Installed\n");
+
+            // コンソールを非表示にする
+            HWND hwnd = GetConsoleWindow();
+            if (hwnd != nullptr)
+                ShowWindow(hwnd, SW_HIDE); 
         }
     }
 #endif

@@ -23,6 +23,7 @@
     <ClCompile Include="src\Framework\Core\D3D11System.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="src\Framework\Core\DirectinputDevice.cpp" />
     <ClCompile Include="src\Framework\Core\GameLoop.cpp" />
     <ClCompile Include="src\Framework\Core\RenderSystem.cpp" />
     <ClCompile Include="src\Framework\Core\WindowsSystem.cpp" />
@@ -39,6 +40,7 @@
     <ClInclude Include="src\Framework\Core\D3D11System.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="src\Framework\Core\DirectInputDevice.h" />
     <ClInclude Include="src\Framework\Core\FPS.h" />
     <ClInclude Include="src\Framework\Core\GameLoop.h" />
     <ClInclude Include="src\Framework\Core\IInputDevice.h" />

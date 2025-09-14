@@ -7,6 +7,7 @@
 #include"Framework/Core/WindowSystem.h"
 #include"Framework/Core/D3D11System.h"
 #include"Framework/Core/RenderSystem.h"
+#include"Framework/Core/GameLoop.h"
 
 #include<cstdint>
 #include <memory>
@@ -25,7 +26,7 @@ public:
 	{
 		uint32_t screenWidth = 600;		///< 画面横サイズ
 		uint32_t screenHeight = 300;	///< 画面縦サイズ
-		bool isFullScreen = false;		///< フルスクリーンにするのか
+		bool isFullScreen = false;		///< フルスクリーンにするのか	[TODO] 使用するようにする
 	};
 
 	/** @brief  コンストラクタ
@@ -49,9 +50,11 @@ public:
 	static void ShutDown();
 
 private:
-	static AppConfig appConfig;
+	static AppConfig appConfig;	///< 環境構築に必要な情報
 
-	static std::unique_ptr<WindowSystem>   windowSystem;
-	static std::unique_ptr<D3D11System>    d3d11System;
-	static std::unique_ptr<RenderSystem>   renderSystem;
+	static std::unique_ptr<WindowSystem>   windowSystem;	///< ウィンドウを作成、更新する
+	static std::unique_ptr<D3D11System>    d3d11System;		///< DirectX11のデバイス関連
+	static std::unique_ptr<RenderSystem>   renderSystem;	///< 描画に必要な処理
+
+	static std::unique_ptr<GameLoop>   gameLoop;			///< ゲーム進行の管理
 };

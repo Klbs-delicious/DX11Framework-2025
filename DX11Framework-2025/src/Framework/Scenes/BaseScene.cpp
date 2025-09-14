@@ -8,6 +8,7 @@
 #include"Framework/Scenes/BaseScene.h"
 
 #include"Framework/Core/SystemLocator.h"
+#include"Scenes/SceneManager.h"
 
 //-----------------------------------------------------------------------------
 // Test
@@ -140,10 +141,7 @@ void BaseScene::Initialize()
  *	@param		float _deltaTime	デルタタイム
  *	@details	継承を禁止する
  */
-void BaseScene::Update(float _deltaTime)
-{
-
-}
+void BaseScene::Update(float _deltaTime) {}
 
 /**	@brief		ゲームオブジェクトの描画処理を行う
  *	@param		float _deltaTime	デルタタイム

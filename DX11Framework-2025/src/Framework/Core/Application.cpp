@@ -11,19 +11,16 @@
 
 #include "Framework/Utils/DebugHooks.h"
 
-#include "Scenes/SceneManager.h"
-#include "Scenes/TestScene.h"
-#include "Scenes/TitleScene.h"
-
 #include<iostream>
 
 //-----------------------------------------------------------------------------
 // Class Static
 //-----------------------------------------------------------------------------
-Application::AppConfig Application::appConfig = {};
+Application::AppConfig          Application::appConfig = {};
 std::unique_ptr<WindowSystem>   Application::windowSystem;
 std::unique_ptr<D3D11System>    Application::d3d11System;
 std::unique_ptr<RenderSystem>   Application::renderSystem;
+std::unique_ptr<GameLoop>       Application::gameLoop;
 
 //-----------------------------------------------------------------------------
 // RenderSystem Class
@@ -71,6 +68,9 @@ bool Application::Initialize()
     if (!Application::renderSystem->Initialize()) { return false; }
     SystemLocator::Register<RenderSystem>(Application::renderSystem.get());
 
+    // ゲーム進行
+    Application::gameLoop = std::make_unique<GameLoop>();
+
     // 初期化成功
     return true;
 }
@@ -91,22 +91,9 @@ void Application::MainLoop()
     MSG msg{};
     FPS fps(70);
 
-    // ------------------------------ テスト ------------------------------
-    // シーン構成の初期化
-    auto factory = std::make_unique<SceneFactory>();
-    factory->Register(SceneType::Test, [] { return std::make_unique<TestScene>(); });
-    factory->Register(SceneType::Title, [] { return std::make_unique<TitleScene>(); });
+    Application::gameLoop->Initialize();
 
-    auto sceneManager = std::make_unique<SceneManager>(std::move(factory));
-    sceneManager->SetTransitionCallback([raw = sceneManager.get()](SceneType next) {
-        std::cout << "シーン遷移時の演出を行いました。\n";
-        raw->NotifyTransitionReady(next);
-        });
-
-    sceneManager->RequestSceneChange(SceneType::Test);
-    // ------------------------------ テスト ------------------------------
-
-    while (msg.message != WM_QUIT)
+    while (msg.message != WM_QUIT && Application::gameLoop->IsRunning())
     {
         fps.Tick();
         fps.Measure();
@@ -122,16 +109,17 @@ void Application::MainLoop()
             if (msg.message == WM_KEYDOWN) {
                 switch (msg.wParam) {
                     // ------------------------------ テスト ------------------------------
-                case VK_SPACE:  sceneManager->RequestSceneChange(SceneType::Test);  break;
-                case VK_RETURN: sceneManager->RequestSceneChange(SceneType::Title); break;
+                //case VK_SPACE:  sceneManager->RequestSceneChange(SceneType::Test);  break;
+                //case VK_RETURN: sceneManager->RequestSceneChange(SceneType::Title); break;
+                case VK_RETURN: Application::gameLoop->RequestExit(); break;
                     // ------------------------------ テスト ------------------------------
                 }
             }
         }
 
-        sceneManager->Update(FPS);
+        Application::gameLoop->Update(fps.DeltaSec());
         Application::renderSystem->BeginRender();
-        sceneManager->Draw();
+        Application::gameLoop->Draw();
         Application::renderSystem->EndRender();
     }
 }
@@ -146,6 +134,7 @@ void Application::ShutDown()
     SystemLocator::Unregister<D3D11System>();
     SystemLocator::Unregister<WindowSystem>();
 
+    Application::gameLoop.reset();
     Application::renderSystem.reset();
     Application::d3d11System.reset();
     Application::windowSystem.reset();

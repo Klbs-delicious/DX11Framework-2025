@@ -3,6 +3,7 @@
  */
 #pragma once
 #include"Framework/Utils/NonCopyable.h"
+#include"Framework/Core/InputSystem.h"
 #include"Scenes/SceneManager.h"
 
 #include <memory>
@@ -56,7 +57,7 @@ private:
 	GameState gameState;	///< ゲームの状態
 
 	std::unique_ptr<SceneManager> sceneManager;	///< シーン管理
-	///< [TODO]入力の管理
+	std::unique_ptr<InputSystem> inputSystem;	///< 入力の管理
 	///< [TODO]ゲームオブジェクトの管理
 	///< [TODO]物理、衝突の処理
 	///< [TODO]サウンドの処理

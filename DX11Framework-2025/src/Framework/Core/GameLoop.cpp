@@ -7,6 +7,7 @@
 //-----------------------------------------------------------------------------
 #include"Framework/Core/GameLoop.h"
 #include"Framework/Core/SystemLocator.h"
+#include"Framework/Core/DirectInputDevice.h"
 
 #include "Scenes/TestScene.h"
 #include "Scenes/TitleScene.h"
@@ -41,6 +42,20 @@ void GameLoop::Initialize()
     // シーン管理を登録
     SystemLocator::Register<SceneManager>(this->sceneManager.get());
 
+    // 入力管理を行うクラスの生成と登録
+    this->inputSystem = std::make_unique<InputSystem>();
+    SystemLocator::Register<InputSystem>(this->inputSystem.get());
+
+    // 入力デバイスの登録
+    auto& window = SystemLocator::Get<WindowSystem>();
+    auto directInput = std::make_unique<DirectInputDevice>();
+    if (!directInput->Initialize(window.GetHInstance(), window.GetWindow())) { return; }
+    this->inputSystem->RegisterDevice(std::move(directInput));
+
+    // キーバインドの登録
+    this->inputSystem->RegisterKeyBinding("Space", static_cast<int>(DirectInputDevice::KeyboardKey::Space));
+    this->inputSystem->RegisterKeyBinding("DownArrow", static_cast<int>(DirectInputDevice::KeyboardKey::DownArrow));
+
     // シーンの変更
     this->sceneManager->RequestSceneChange(SceneType::Test);
 }
@@ -50,6 +65,7 @@ void GameLoop::Initialize()
  */
 void GameLoop::Update(float _deltaTime)
 {
+    this->inputSystem->Update();
     this->sceneManager->Update(_deltaTime);
 }
 
@@ -67,5 +83,6 @@ void GameLoop::Dispose()
 {
     SystemLocator::Unregister<SceneManager>();
 
+    this->inputSystem.reset();
     this->sceneManager.reset();
 }

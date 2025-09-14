@@ -8,7 +8,10 @@
 #include"Framework/Scenes/BaseScene.h"
 
 #include"Framework/Core/SystemLocator.h"
+#include"Framework/Core/InputSystem.h"
 #include"Scenes/SceneManager.h"
+
+#include<iostream>
 
 //-----------------------------------------------------------------------------
 // Test
@@ -141,7 +144,18 @@ void BaseScene::Initialize()
  *	@param		float _deltaTime	デルタタイム
  *	@details	継承を禁止する
  */
-void BaseScene::Update(float _deltaTime) {}
+void BaseScene::Update(float _deltaTime) 
+{
+	// テストなのでメンバに持たずに直接取得する
+	auto& input = SystemLocator::Get<InputSystem>();
+
+
+	if (input.IsActionPressed("Space")) { std::cout << "Space：Press" << std::endl; }
+	if (input.IsActionTriggered("Space")) { std::cout << "Space：Trigger" << std::endl; }
+
+	if (input.IsActionPressed("DownArrow")) { std::cout << "DownArrow：Press" << std::endl; }
+	if (input.IsActionTriggered("DownArrow")) { std::cout << "DownArrow：Trigger" << std::endl; }
+}
 
 /**	@brief		ゲームオブジェクトの描画処理を行う
  *	@param		float _deltaTime	デルタタイム

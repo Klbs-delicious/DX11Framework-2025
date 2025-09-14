@@ -15,6 +15,9 @@ public:
 	/// @brief	デストラクタ
 	virtual ~IInputDevice() = default;
 
+    /// @brief	@brief 解放処理
+    virtual void Dispose() = 0;
+
 	/// @brief	入力の更新
 	virtual void Update() = 0;
 

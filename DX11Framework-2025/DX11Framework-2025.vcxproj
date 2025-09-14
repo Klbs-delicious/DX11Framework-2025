@@ -25,6 +25,7 @@
     </ClCompile>
     <ClCompile Include="src\Framework\Core\DirectinputDevice.cpp" />
     <ClCompile Include="src\Framework\Core\GameLoop.cpp" />
+    <ClCompile Include="src\Framework\Core\InputSystem.cpp" />
     <ClCompile Include="src\Framework\Core\RenderSystem.cpp" />
     <ClCompile Include="src\Framework\Core\WindowsSystem.cpp" />
     <ClCompile Include="src\Framework\main.cpp" />
@@ -44,6 +45,7 @@
     <ClInclude Include="src\Framework\Core\FPS.h" />
     <ClInclude Include="src\Framework\Core\GameLoop.h" />
     <ClInclude Include="src\Framework\Core\IInputDevice.h" />
+    <ClInclude Include="src\Framework\Core\InputSystem.h" />
     <ClInclude Include="src\Framework\Core\RenderSystem.h" />
     <ClInclude Include="src\Framework\Core\SystemLocator.h" />
     <ClInclude Include="src\Framework\Core\WindowSystem.h" />

@@ -40,7 +40,7 @@ public:
     /**@brief 解放処理
      * @details COMポインタの Release を行い、リソースを破棄する
      */
-    void Dispose();
+    void Dispose()override;
 
     /**@brief 入力状態の更新
      * @details 毎フレーム呼び出し、キーボード・マウスの状態を取得・保存する
@@ -49,7 +49,7 @@ public:
 
     /**@brief 押下状態の取得
      * @param int _code 入力コード（DIK_* またはマウスボタンID）
-     * @return 押されていれば true
+     * @return bool	押されていれば true
      */
     bool IsPressed(int _code) const override;
 
@@ -74,6 +74,113 @@ public:
      * @details DirectInput では振動制御に対応していないため、空実装
      */
     void SetVibration(const MotorForce& _force) override {}
+
+    /**@enum KeyboardKey制御
+     * @brief DirectInput におけるキーボードの各キーに対応するコード
+     * @details DIK_* に対応するキーコードを型安全に扱うための列挙型
+     */
+    enum class KeyboardKey : int {
+        Escape = 0x01,
+        Num1 = 0x02,
+        Num2 = 0x03,
+        Num3 = 0x04,
+        Num4 = 0x05,
+        Num5 = 0x06,
+        Num6 = 0x07,
+        Num7 = 0x08,
+        Num8 = 0x09,
+        Num9 = 0x0A,
+        Num0 = 0x0B,
+
+        A = 0x1E,
+        B = 0x30,
+        C = 0x2E,
+        D = 0x20,
+        E = 0x12,
+        F = 0x21,
+        G = 0x22,
+        H = 0x23,
+        I = 0x17,
+        J = 0x24,
+        K = 0x25,
+        L = 0x26,
+        M = 0x32,
+        N = 0x31,
+        O = 0x18,
+        P = 0x19,
+        Q = 0x10,
+        R = 0x13,
+        S = 0x1F,
+        T = 0x14,
+        U = 0x16,
+        V = 0x2F,
+        W = 0x11,
+        X = 0x2D,
+        Y = 0x15,
+        Z = 0x2C,
+
+        Space = 0x39,
+        Enter = 0x1C,
+        Tab = 0x0F,
+        Backspace = 0x0E,
+        LShift = 0x2A,
+        RShift = 0x36,
+        LCtrl = 0x1D,
+        RCtrl = 0x9D,
+        LAlt = 0x38,
+        RAlt = 0xB8,
+
+        F1 = 0x3B,
+        F2 = 0x3C,
+        F3 = 0x3D,
+        F4 = 0x3E,
+        F5 = 0x3F,
+        F6 = 0x40,
+        F7 = 0x41,
+        F8 = 0x42,
+        F9 = 0x43,
+        F10 = 0x44,
+        F11 = 0x57,
+        F12 = 0x58,
+
+        UpArrow = 0xC8,
+        DownArrow = 0xD0,
+        LeftArrow = 0xCB,
+        RightArrow = 0xCD
+    };
+
+    /**@enum MouseButton制御
+     * @brief DirectInput におけるマウスの各ボタンに対応するコード
+     * @details DIK_* に対応するキーコードを型安全に扱うための列挙型
+     */
+    enum class MouseButton : int {
+        Left = 0,  // rgbButtons[0]
+        Right = 1,  // rgbButtons[1]
+        Middle = 2,  // rgbButtons[2]
+        XButton1 = 3,  // rgbButtons[3]
+        XButton2 = 4   // rgbButtons[4]
+    };
+
+    /**@enum GamepadButton制御
+     * @brief DirectInput におけるゲームパッドの各ボタンに対応するコード
+     * @details DIK_* に対応するキーコードを型安全に扱うための列挙型
+     */
+    enum class GamepadButton : int {
+        A = 0x200,
+        B = 0x201,
+        X = 0x202,
+        Y = 0x203,
+        Start = 0x204,
+        Back = 0x205,
+        LB = 0x206,
+        RB = 0x207,
+        LT = 0x208,
+        RT = 0x209,
+        DPadUp = 0x20A,
+        DPadDown = 0x20B,
+        DPadLeft = 0x20C,
+        DPadRight = 0x20D
+    };
 
 private:
     

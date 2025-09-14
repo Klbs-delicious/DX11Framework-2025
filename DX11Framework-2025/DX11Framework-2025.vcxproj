@@ -41,6 +41,7 @@
     </ClInclude>
     <ClInclude Include="src\Framework\Core\FPS.h" />
     <ClInclude Include="src\Framework\Core\GameLoop.h" />
+    <ClInclude Include="src\Framework\Core\IInputDevice.h" />
     <ClInclude Include="src\Framework\Core\RenderSystem.h" />
     <ClInclude Include="src\Framework\Core\SystemLocator.h" />
     <ClInclude Include="src\Framework\Core\WindowSystem.h" />

@@ -69,6 +69,9 @@
     <ClCompile Include="src\Framework\Core\Application.cpp">
       <Filter>ソース ファイル\Framework\Core</Filter>
     </ClCompile>
+    <ClCompile Include="src\Framework\Core\GameLoop.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Framework\Utils\NonCopyable.h">
@@ -111,6 +114,12 @@
       <Filter>ソース ファイル\Framework\Core</Filter>
     </ClInclude>
     <ClInclude Include="src\Framework\Core\SystemLocator.h">
+      <Filter>ソース ファイル\Framework\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Framework\Core\GameLoop.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Framework\Core\IInputDevice.h">
       <Filter>ソース ファイル\Framework\Core</Filter>
     </ClInclude>
   </ItemGroup>

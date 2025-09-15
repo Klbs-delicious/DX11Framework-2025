@@ -107,15 +107,20 @@ void Application::MainLoop()
             TranslateMessage(&msg);
             DispatchMessage(&msg);
             if (msg.message == WM_KEYDOWN) {
-                switch (msg.wParam) {
-                    // ------------------------------ テスト ------------------------------
-                //case VK_SPACE:  sceneManager->RequestSceneChange(SceneType::Test);  break;
-                //case VK_RETURN: sceneManager->RequestSceneChange(SceneType::Title); break;
-                case VK_RETURN: Application::gameLoop->RequestExit(); break;
-                    // ------------------------------ テスト ------------------------------
-                }
+                //switch (msg.wParam) {
+                //    // ------------------------------ テスト ------------------------------
+                ////case VK_SPACE:  sceneManager->RequestSceneChange(SceneType::Test);  break;
+                ////case VK_RETURN: sceneManager->RequestSceneChange(SceneType::Title); break;
+                ////case VK_RETURN: Application::gameLoop->RequestExit(); break;
+                //    // ------------------------------ テスト ------------------------------
+                //}
             }
         }
+
+        // テスト的にメンバに持たずに直接取得する-----------------------------------------------------
+        auto& input = SystemLocator::Get<InputSystem>();
+        if (input.IsActionTriggered("GameExit")) { Application::gameLoop->RequestExit(); }
+        // -------------------------------------------------------------------------------------------
 
         Application::gameLoop->Update(fps.DeltaSec());
         Application::renderSystem->BeginRender();

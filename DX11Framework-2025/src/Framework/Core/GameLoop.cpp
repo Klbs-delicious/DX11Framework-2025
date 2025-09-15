@@ -55,6 +55,9 @@ void GameLoop::Initialize()
     // キーバインドの登録
     this->inputSystem->RegisterKeyBinding("Space", static_cast<int>(DirectInputDevice::KeyboardKey::Space));
     this->inputSystem->RegisterKeyBinding("DownArrow", static_cast<int>(DirectInputDevice::KeyboardKey::DownArrow));
+    this->inputSystem->RegisterKeyBinding("SceneChangeTest", static_cast<int>(DirectInputDevice::KeyboardKey::D));
+    this->inputSystem->RegisterKeyBinding("SceneChangeTitle", static_cast<int>(DirectInputDevice::KeyboardKey::A));
+    this->inputSystem->RegisterKeyBinding("GameExit", static_cast<int>(DirectInputDevice::KeyboardKey::K));
 
     // シーンの変更
     this->sceneManager->RequestSceneChange(SceneType::Test);

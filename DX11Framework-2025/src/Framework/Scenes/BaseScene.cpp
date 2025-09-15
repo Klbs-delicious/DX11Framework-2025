@@ -45,99 +45,118 @@ BaseScene::~BaseScene(){}
  */
 void BaseScene::Initialize()
 {
-	// オブジェクトの生成
-	this->SetupObjects();
+    // オブジェクトの生成
+    this->SetupObjects();
 
-	// テストなのでメンバに持たずに直接取得する
-	auto& d3d11 = SystemLocator::Get< D3D11System>();
-	auto& render = SystemLocator::Get< RenderSystem>();
+    // テストなのでメンバに持たずに直接取得する
+    auto& d3d11 = SystemLocator::Get<D3D11System>();
+    auto& render = SystemLocator::Get<RenderSystem>();
+    auto device = d3d11.GetDevice();
 
-	// RenderSystem実行確認用
-	// 頂点バッファ作成
-	auto device = d3d11.GetDevice();
-	D3D11_BUFFER_DESC vbDesc = {};
-	vbDesc.Usage = D3D11_USAGE_DEFAULT;
-	vbDesc.ByteWidth = sizeof(vertices);
-	vbDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    // 頂点バッファ作成
+    D3D11_BUFFER_DESC vbDesc = {};
+    vbDesc.Usage = D3D11_USAGE_DEFAULT;
+    vbDesc.ByteWidth = sizeof(vertices);
+    vbDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 
-	D3D11_SUBRESOURCE_DATA initData = {};
-	initData.pSysMem = vertices;
+    D3D11_SUBRESOURCE_DATA initData = {};
+    initData.pSysMem = vertices;
 
-	this->vertexBuffer;
-	device->CreateBuffer(&vbDesc, &initData, vertexBuffer.GetAddressOf());
+    device->CreateBuffer(&vbDesc, &initData, vertexBuffer.GetAddressOf());
 
-	D3D11_INPUT_ELEMENT_DESC layout[] = {
-	{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,                          D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	{ "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, sizeof(float) * 3,       D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	};
-	UINT numElements = ARRAYSIZE(layout);
+    // 入力レイアウト定義
+    D3D11_INPUT_ELEMENT_DESC layout[] = {
+        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 0,                          D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, sizeof(float) * 3,          D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    };
+    UINT numElements = ARRAYSIZE(layout);
 
-	ComPtr<ID3DBlob> vsBlob, psBlob, errorBlob;
+    // シェーダー読み込み・生成
+    {
+        ComPtr<ID3DBlob> vsBlob, psBlob, errorBlob;
 
-	// 頂点シェーダのコンパイル
-	HRESULT hr = D3DCompileFromFile(L"src/Framework/Graphics/Shaders/VertexShader/VS_Test.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-		"main", "vs_5_0", 0, 0, vsBlob.GetAddressOf(), errorBlob.GetAddressOf());
+        // DEBUGビルドでは .hlsl をコンパイル、Releaseビルドでは .cso を読み込む
+#ifdef _DEBUG
+    // .hlslファイルからコンパイル（開発用）
+        HRESULT hrVS = D3DCompileFromFile(
+            L"src/Framework/Graphics/Shaders/VertexShader/VS_Test.hlsl",
+            nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+            "main", "vs_5_0", 0, 0,
+            vsBlob.GetAddressOf(), errorBlob.GetAddressOf());
 
-	// ピクセルシェーダのコンパイル
-	D3DCompileFromFile(L"src/Framework/Graphics/Shaders/PixelShader/PS_Test.hlsl", nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-		"main", "ps_5_0", 0, 0, psBlob.GetAddressOf(), errorBlob.GetAddressOf());
+        HRESULT hrPS = D3DCompileFromFile(
+            L"src/Framework/Graphics/Shaders/PixelShader/PS_Test.hlsl",
+            nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+            "main", "ps_5_0", 0, 0,
+            psBlob.GetAddressOf(), errorBlob.GetAddressOf());
 
-	if (FAILED(hr))
-	{
-		if (errorBlob)
-		{
-			// エラーメッセージを文字列として取り出す
-			const char* errorMsg = static_cast<const char*>(errorBlob->GetBufferPointer());
-			std::string errorString(errorMsg, errorBlob->GetBufferSize());
+        if (FAILED(hrVS) || FAILED(hrPS)) {
+            if (errorBlob) {
+                const char* errorMsg = static_cast<const char*>(errorBlob->GetBufferPointer());
+                std::string errorString(errorMsg, errorBlob->GetBufferSize());
+                std::wstring wErrorString(errorString.begin(), errorString.end());
+                OutputDebugString(L"[Shader Compilation Error]\n");
+                OutputDebugString(wErrorString.c_str());
+            }
+            else {
+                OutputDebugString(L"シェーダーのコンパイルに失敗しましたが、errorBlob に情報がありません。\n");
+            }
+            return;
+        }
+#else
+    // .csoファイルから読み込み（本番用）
+        HRESULT hrVS = D3DReadFileToBlob(L"Assets/Shaders/VS_Test.cso", vsBlob.GetAddressOf());
+        HRESULT hrPS = D3DReadFileToBlob(L"Assets/Shaders/PS_Test.cso", psBlob.GetAddressOf());
 
-			// WideChar に変換してデバッグ出力
-			std::wstring wErrorString(errorString.begin(), errorString.end());
-			OutputDebugString(L"[Shader Compilation Error]\n");
-			OutputDebugString(wErrorString.c_str());
-		}
-		else
-		{
-			OutputDebugString(L"シェーダのコンパイルに失敗しましたが、errorBlob に情報がありません。\n");
-		}
-	}
+        if (FAILED(hrVS) || FAILED(hrPS)) {
+            OutputDebugString(L"[CSO Load Error] シェーダーバイナリの読み込みに失敗しました。\n");
+            return;
+        }
+#endif
 
-	// シェーダ生成
-	device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), nullptr, vertexShader.GetAddressOf());
-	device->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(), nullptr, pixelShader.GetAddressOf());
+        // シェーダー生成
+        auto device = SystemLocator::Get<D3D11System>().GetDevice();
+        device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), nullptr, vertexShader.GetAddressOf());
+        device->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(), nullptr, pixelShader.GetAddressOf());
 
-	// 入力レイアウト生成
-	device->CreateInputLayout(layout, numElements, vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), inputLayout.GetAddressOf());
+        // 入力レイアウト定義
+        D3D11_INPUT_ELEMENT_DESC layout[] = {
+            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 0,                          D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, sizeof(float) * 3,          D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        };
+        UINT numElements = ARRAYSIZE(layout);
 
-	if (vertexShader == nullptr || pixelShader == nullptr) {
-		OutputDebugString(L"シェーダが壊れている可能性あり\n");
-	}
+        // 入力レイアウト生成
+        device->CreateInputLayout(layout, numElements, vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), inputLayout.GetAddressOf());
 
-	// ループ前に一度だけ行列をCPUで作成して、各CBに転送
-	{
-		using namespace DirectX::SimpleMath;
+        if (vertexShader == nullptr || pixelShader == nullptr) {
+            OutputDebugString(L"シェーダーが壊れている可能性あり\n");
+        }
+    }
 
-		// ワールド行列
-		Matrix world = Matrix::Identity;
-		render.SetWorldMatrix(&world);
 
-		// ビュー行列
-		Matrix view = Matrix::CreateLookAt(
-			{ 0, 0, -2 },   // eye
-			{ 0, 0,  0 },   // at
-			{ 0, 1,  0 }    // up
-		);
-		render.SetViewMatrix(&view);
+    // 行列の初期設定
+    using namespace DirectX::SimpleMath;
 
-		// プロジェクション行列
-		Matrix proj = Matrix::CreatePerspectiveFieldOfView(
-			DirectX::XMConvertToRadians(45.0f),
-			640.0f / 480.0f,
-			0.1f, 100.0f
-		);
-		render.SetProjectionMatrix(&proj);
-	}
-	// 時間計測スタート
-	this->startTime = std::chrono::steady_clock::now();
+    Matrix world = Matrix::Identity;
+    render.SetWorldMatrix(&world);
+
+    Matrix view = Matrix::CreateLookAt(
+        { 0, 0, -2 },
+        { 0, 0,  0 },
+        { 0, 1,  0 }
+    );
+    render.SetViewMatrix(&view);
+
+    Matrix proj = Matrix::CreatePerspectiveFieldOfView(
+        DirectX::XMConvertToRadians(45.0f),
+        640.0f / 480.0f,
+        0.1f, 100.0f
+    );
+    render.SetProjectionMatrix(&proj);
+
+    // 時間計測スタート
+    this->startTime = std::chrono::steady_clock::now();
 }
 
 /**	@brief		オブジェクトの更新を行う
@@ -146,8 +165,9 @@ void BaseScene::Initialize()
  */
 void BaseScene::Update(float _deltaTime) 
 {
-	// テストなのでメンバに持たずに直接取得する
+	// テスト的にメンバに持たずに直接取得する
 	auto& input = SystemLocator::Get<InputSystem>();
+	auto& scenemanager = SystemLocator::Get<SceneManager>();
 
 
 	if (input.IsActionPressed("Space")) { std::cout << "Space：Press" << std::endl; }
@@ -155,6 +175,10 @@ void BaseScene::Update(float _deltaTime)
 
 	if (input.IsActionPressed("DownArrow")) { std::cout << "DownArrow：Press" << std::endl; }
 	if (input.IsActionTriggered("DownArrow")) { std::cout << "DownArrow：Trigger" << std::endl; }
+
+    if (input.IsActionTriggered("SceneChangeTest")) { scenemanager.RequestSceneChange(SceneType::Test); }
+    if (input.IsActionTriggered("SceneChangeTitle")) { scenemanager.RequestSceneChange(SceneType::Title); }
+
 }
 
 /**	@brief		ゲームオブジェクトの描画処理を行う

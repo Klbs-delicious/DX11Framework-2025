@@ -8,6 +8,7 @@
 #include <windows.h>
 #include <dbghelp.h>
 #include <tchar.h>
+#include <cstdio>
 
 #pragma comment(lib, "dbghelp.lib")
 
@@ -43,6 +44,19 @@ namespace DebugHooks
         {
             SetConsoleCtrlHandler(CtrlHandler, TRUE);
             OutputDebugString(L"[DebugHooks] Console CtrlHandler Installed\n");
+
+            // コンソールを明示的に表示
+            AllocConsole();
+            HWND hwnd = GetConsoleWindow();
+            if (hwnd != nullptr)
+                ShowWindow(hwnd, SW_SHOW); 
+
+            // 標準出力・エラー出力をコンソールに接続
+            FILE* fp;
+            freopen_s(&fp, "CONOUT$", "w", stdout);
+            freopen_s(&fp, "CONOUT$", "w", stderr);
+
+            //std::cout << "[DebugHooks] Console Allocated" << std::endl;
         }
     }
 #endif

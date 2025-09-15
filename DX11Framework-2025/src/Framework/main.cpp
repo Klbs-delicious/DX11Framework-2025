@@ -27,7 +27,7 @@
 int main()
 {
     Application::AppConfig config = {
-        1000,
+        720,
         400,
     };
 

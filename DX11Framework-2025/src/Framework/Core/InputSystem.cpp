@@ -14,7 +14,7 @@
 //-----------------------------------------------------------------------------
 
 InputSystem::InputSystem() :devices(std::vector<std::unique_ptr<IInputDevice>>()), keyMap(std::unordered_map<std::string, int>()) {}
-InputSystem::~InputSystem(){}
+InputSystem::~InputSystem() { this->Dispose(); }
 
 /// @brief	リソースの解放処理
 void InputSystem::Dispose()

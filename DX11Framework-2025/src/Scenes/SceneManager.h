@@ -56,6 +56,8 @@ private:
 	/// @brief Factoryを使ってシーン生成・切り替えを行う
 	void CompleteTransition();
 
+	/// @brief 終了処理
+	void Dispose();
 private:
 	std::unique_ptr<SceneFactory> sceneFactory;							///< シーン生成を行うファクトリクラス
 	std::unique_ptr<BaseScene>	currentScene;							///< 現在のシーン

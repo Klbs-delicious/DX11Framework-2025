@@ -30,6 +30,7 @@
     <ClCompile Include="src\Framework\Core\WindowsSystem.cpp" />
     <ClCompile Include="src\Framework\main.cpp" />
     <ClCompile Include="src\Framework\Scenes\BaseScene.cpp" />
+    <ClCompile Include="src\Framework\Scenes\GameObject.cpp" />
     <ClCompile Include="src\Framework\Scenes\SceneFactory.cpp" />
     <ClCompile Include="src\Framework\Utils\DebugHooks.cpp" />
     <ClCompile Include="src\Scenes\SceneManager.cpp" />
@@ -50,8 +51,12 @@
     <ClInclude Include="src\Framework\Core\SystemLocator.h" />
     <ClInclude Include="src\Framework\Core\WindowSystem.h" />
     <ClInclude Include="src\Framework\Scenes\BaseScene.h" />
+    <ClInclude Include="src\Framework\Scenes\Component.h" />
+    <ClInclude Include="src\Framework\Scenes\GameObject.h" />
+    <ClInclude Include="src\Framework\Scenes\PhaseInterfaces.h" />
     <ClInclude Include="src\Framework\Scenes\SceneFactory.h" />
     <ClInclude Include="src\Framework\Scenes\SceneType.h" />
+    <ClInclude Include="src\Framework\Scenes\TestComponent.h" />
     <ClInclude Include="src\Framework\Utils\DebugHooks.h" />
     <ClInclude Include="src\Framework\Utils\NonCopyable.h" />
     <ClInclude Include="src\Scenes\SceneManager.h" />

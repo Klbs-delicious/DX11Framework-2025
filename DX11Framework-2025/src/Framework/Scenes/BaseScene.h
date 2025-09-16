@@ -7,6 +7,7 @@
 // Test
 //-----------------------------------------------------------------------------
 #include"Framework/Core/RenderSystem.h"
+#include"Framework/Scenes/GameObject.h"
 
 #include <chrono>
 #include <SimpleMath.h>
@@ -56,6 +57,8 @@ public:
 
 	// 基底だがテスト用に定義
 private:
+	std::unique_ptr<GameObject> object;
+
 	std::chrono::steady_clock::time_point startTime;
 	ComPtr<ID3D11Buffer> vertexBuffer;
 	ComPtr<ID3D11VertexShader> vertexShader;

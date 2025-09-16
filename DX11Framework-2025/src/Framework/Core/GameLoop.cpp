@@ -21,7 +21,7 @@
 /// @brief	コンストラクタ
 GameLoop::GameLoop() :isRunning(true), gameState(GameState::Play) {}
 /// @brief	デストラクタ
-GameLoop::~GameLoop(){}
+GameLoop::~GameLoop(){ this->Dispose(); }
 
 /**	@brief		初期化処理を行う
  */
@@ -68,6 +68,8 @@ void GameLoop::Initialize()
  */
 void GameLoop::Update(float _deltaTime)
 {
+    if (!this->isRunning) { return; }
+
     this->inputSystem->Update();
     this->sceneManager->Update(_deltaTime);
 }
@@ -77,6 +79,8 @@ void GameLoop::Update(float _deltaTime)
  */
 void GameLoop::Draw()
 {
+    if (!this->isRunning) { return; }
+
     this->sceneManager->Draw();
 }
 

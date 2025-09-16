@@ -23,7 +23,7 @@ SceneManager::SceneManager(std::unique_ptr<SceneFactory> _factory) :sceneFactory
 	this->pendingSceneType = SceneType::Test;
 }
 /// @brief	デストラクタ
-SceneManager::~SceneManager() {}
+SceneManager::~SceneManager() { this->Dispose(); }
 
 /**	@brief	シーンの更新を行う
  *	@param	float _deltaTime	デルタタイム
@@ -34,6 +34,9 @@ void SceneManager::Update(float _deltaTime)
 	if (this->isTransitioning)
 	{
 		this->CompleteTransition();
+
+		// 旧シーンのUpdateをスキップ
+		return; 
 	}
 
 	if (this->currentScene)
@@ -51,6 +54,8 @@ void SceneManager::Update(float _deltaTime)
 /// @brief	シーンの描画を行う
 void SceneManager::Draw()
 {
+	if (this->isTransitioning || !this->isSceneInitialized) { return; }
+
 	if (this->currentScene)
 	{
 		this->currentScene->Draw();
@@ -120,6 +125,9 @@ void SceneManager::CompleteTransition()
 
 	if (newScene)
 	{
+		// シーンの終了処理
+		if (this->currentScene) { this->currentScene->Finalize(); }
+
 		// シーンを切り替える
 		this->currentScene = std::move(newScene);
 		this->currentSceneType = this->pendingSceneType;
@@ -131,4 +139,17 @@ void SceneManager::CompleteTransition()
 	{
 		this->onTransitionEnd(this->currentSceneType);
 	}
+}
+
+/// @brief 終了処理
+void SceneManager::Dispose()
+{
+	if (this->currentScene) {
+		this->currentScene->Finalize(); // 最後のシーンを明示的に終了
+		this->currentScene.reset();
+	}
+
+	this->sceneFactory.reset();
+	this->onTransitionBegin = nullptr;
+	this->onTransitionEnd = nullptr;
 }

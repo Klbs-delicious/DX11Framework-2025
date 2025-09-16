@@ -11,6 +11,8 @@
 #include"Framework/Core/InputSystem.h"
 #include"Scenes/SceneManager.h"
 
+#include"Framework/Scenes/TestComponent.h"
+
 #include<iostream>
 
 //-----------------------------------------------------------------------------
@@ -47,6 +49,11 @@ void BaseScene::Initialize()
 {
     // オブジェクトの生成
     this->SetupObjects();
+
+    // ここでオブジェクトを生成
+    this->object = std::make_unique<GameObject>();
+    this->object->AddComponent<HogeComponent>();
+    this->object->Initialize();
 
     // テストなのでメンバに持たずに直接取得する
     auto& d3d11 = SystemLocator::Get<D3D11System>();
@@ -173,12 +180,14 @@ void BaseScene::Update(float _deltaTime)
 	if (input.IsActionPressed("Space")) { std::cout << "Space：Press" << std::endl; }
 	if (input.IsActionTriggered("Space")) { std::cout << "Space：Trigger" << std::endl; }
 
-	if (input.IsActionPressed("DownArrow")) { std::cout << "DownArrow：Press" << std::endl; }
+    if (input.IsActionPressed("DownArrow")) { this->object->RemoveComponent<HogeComponent>(); }
 	if (input.IsActionTriggered("DownArrow")) { std::cout << "DownArrow：Trigger" << std::endl; }
 
     if (input.IsActionTriggered("SceneChangeTest")) { scenemanager.RequestSceneChange(SceneType::Test); }
     if (input.IsActionTriggered("SceneChangeTitle")) { scenemanager.RequestSceneChange(SceneType::Title); }
 
+
+    this->object->Update(_deltaTime);
 }
 
 /**	@brief		ゲームオブジェクトの描画処理を行う
@@ -187,6 +196,8 @@ void BaseScene::Update(float _deltaTime)
  */
 void BaseScene::Draw()
 {
+    this->object->Draw();
+
 	// テストなのでメンバに持たずに直接取得する
 	auto& d3d11 = SystemLocator::Get< D3D11System>();
 	auto& render = SystemLocator::Get< RenderSystem>();
@@ -219,5 +230,6 @@ void BaseScene::Draw()
  */
 void BaseScene::Finalize()
 {
-
+    this->object->Dispose();
+    this->object.reset();
 }

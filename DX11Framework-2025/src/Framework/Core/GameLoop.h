@@ -39,10 +39,10 @@ public:
 	/**	@brief	ゲームが進行中かどうかを返す
 	 *	@return	bool	trueなら進行中
 	 */
-	inline bool IsRunning()const { return this->isRunning; }
+	bool IsRunning()const { return this->isRunning; }
 
 	/// @brief	ゲームループを抜ける
-	inline void RequestExit() { this->isRunning = false; }
+	void RequestExit() { this->isRunning = false; }
 
 private:
 	bool isRunning;			///< ゲームが進行中かどうか

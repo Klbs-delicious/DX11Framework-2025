@@ -14,10 +14,13 @@
 //-----------------------------------------------------------------------------
 
 /** @brief  コンストラクタ
-*	@param	bool _isActive = true	オブジェクトの有効状態
+*	@param	const std::string& _name                        オブジェクトの名前
+*	@param	const GameTags::Tag _tag = GameTags::Tag::None	オブジェクトのタグ名
+*	@param	const bool _isActive = true						オブジェクトの有効状態
 */
-GameObject::GameObject(bool _isActive)
-    : isPendingDestroy(false), isActive(_isActive), parent(nullptr){}
+GameObject::GameObject(const std::string& _name, const GameTags::Tag _tag, const bool _isActive)
+    : isPendingDestroy(false), isActive(_isActive), parent(nullptr), name(_name), tag(_tag) {}
+
 /// @brief	デストラクタ
 GameObject::~GameObject() {}
 
@@ -71,6 +74,7 @@ void GameObject::Dispose()
     this->updatableComponents.clear();
     this->drawableComponents.clear();
     this->children.clear();
+    this->name.clear();
 }
 
 /** @brief  オブジェクトの削除申請を行う
@@ -84,14 +88,6 @@ void GameObject::OnDestroy()
     {
         child->OnDestroy();
     }
-}
-
-/** @brief  オブジェクトが削除申請済かどうかを取得する
- *  @return bool	削除申請済なら true
- */
-bool GameObject::IsPendingDestroy()const
-{
-    return this->isPendingDestroy;
 }
 
 /** @brief  子オブジェクトの追加

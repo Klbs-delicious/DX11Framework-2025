@@ -53,6 +53,7 @@
     <ClInclude Include="src\Framework\Scenes\BaseScene.h" />
     <ClInclude Include="src\Framework\Scenes\Component.h" />
     <ClInclude Include="src\Framework\Scenes\GameObject.h" />
+    <ClInclude Include="src\Framework\Scenes\GameObjectManager.h" />
     <ClInclude Include="src\Framework\Scenes\PhaseInterfaces.h" />
     <ClInclude Include="src\Framework\Scenes\SceneFactory.h" />
     <ClInclude Include="src\Framework\Scenes\SceneType.h" />

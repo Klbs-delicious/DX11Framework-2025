@@ -158,6 +158,9 @@
     <ClInclude Include="src\Framework\Utils\NonCopyable.h">
       <Filter>ヘッダー ファイル\Utils</Filter>
     </ClInclude>
+    <ClInclude Include="src\Framework\Scenes\GameObjectManager.h">
+      <Filter>ヘッダー ファイル\Scenes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\Framework\Graphics\Shaders\VertexShader\VS_Test.hlsl">

@@ -51,7 +51,7 @@ void BaseScene::Initialize()
     this->SetupObjects();
 
     // ここでオブジェクトを生成
-    this->object = std::make_unique<GameObject>();
+    this->object = std::make_unique<GameObject>("TestObjectName",GameTags::Tag::Enemy);
     this->object->AddComponent<HogeComponent>();
     this->object->Initialize();
 
@@ -176,7 +176,6 @@ void BaseScene::Update(float _deltaTime)
 	auto& input = SystemLocator::Get<InputSystem>();
 	auto& scenemanager = SystemLocator::Get<SceneManager>();
 
-
 	if (input.IsActionPressed("Space")) { std::cout << "Space：Press" << std::endl; }
 	if (input.IsActionTriggered("Space")) { std::cout << "Space：Trigger" << std::endl; }
 
@@ -185,7 +184,6 @@ void BaseScene::Update(float _deltaTime)
 
     if (input.IsActionTriggered("SceneChangeTest")) { scenemanager.RequestSceneChange(SceneType::Test); }
     if (input.IsActionTriggered("SceneChangeTitle")) { scenemanager.RequestSceneChange(SceneType::Title); }
-
 
     this->object->Update(_deltaTime);
 }
@@ -230,6 +228,8 @@ void BaseScene::Draw()
  */
 void BaseScene::Finalize()
 {
+    std::cout << "オブジェクトの名前" << this->object->GetName() << std::endl;
+    std::cout << "オブジェクトのタグ" << static_cast<int>(this->object->GetTag()) << std::endl;
     this->object->Dispose();
     this->object.reset();
 }

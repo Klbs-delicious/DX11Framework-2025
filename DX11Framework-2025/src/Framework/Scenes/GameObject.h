@@ -3,7 +3,8 @@
  */
 #pragma once
 #include"Framework/Scenes/Component.h"
-#include"Framework/Scenes//PhaseInterfaces.h"
+#include"Framework/Scenes/PhaseInterfaces.h"
+#include"Framework/Event/GameObjectEvent.h"
 
 #include<string>
 #include<list>
@@ -44,18 +45,19 @@ namespace GameTags
  /** @class	GameObject
   *	@brief	ゲーム内の振る舞いや構造を構成する基本単位
   *	@details	
-  *				- このクラスは継承を禁止しており、コンポジションによって機能を拡張する設計
-  *				- 更新・描画などの責務はコンポーネントに委譲される
+  *		- このクラスは継承を禁止しており、コンポジションによって機能を拡張する設計
+  *		- 更新・描画などの責務はコンポーネントに委譲される
   */
 class GameObject final
 {
 public:
 	/** @brief  コンストラクタ
-	*	@param	const std::string& _name							オブジェクトの名前
-	*	@param	const GameTags::Tag _tag = GameTags::Tag::None	オブジェクトのタグ名
-	*	@param	const bool _isActive = true						オブジェクトの有効状態
+	*	@param	IGameObjectObserver&		_gameobjctObs					GameObjectの状態を通知する
+	*	@param	const std::string&			_name							オブジェクトの名前
+	*	@param	const GameTags::Tag			_tag = GameTags::Tag::None		オブジェクトのタグ名
+	*	@param	const bool					_isActive = true				オブジェクトの有効状態
 	*/
-	GameObject(const std::string& _name , const GameTags::Tag _tag = GameTags::Tag::None, const bool _isActive = true);
+	GameObject(IGameObjectObserver& _gameobjctObs, const std::string& _name, const GameTags::Tag _tag = GameTags::Tag::None, const bool _isActive = true);
 
 	/// @brief	デストラクタ
 	~GameObject();
@@ -70,7 +72,6 @@ public:
 	void Update(float _deltaTime);
 
 	/**	@brief		ゲームオブジェクトの描画処理を行う
-	 *	@param		float _deltaTime	デルタタイム
 	 *	@details	継承を禁止する
 	 */
 	void Draw();
@@ -108,6 +109,16 @@ public:
 	 */
 	bool IsPendingDestroy()const { return this->isPendingDestroy; }
 
+	/** @brief  オブジェクトが更新処理を持っているかどうか
+	 *  @return bool	更新処理を持っているなら true
+	 */
+	bool IsUpdatable() const { return !this->updatableComponents.empty(); }
+
+	/** @brief  オブジェクトが描画処理を持っているかどうか
+	 *  @return bool	描画処理を持っているなら true
+	 */
+	bool IsDrawable() const { return !this->drawableComponents.empty(); }
+
 	/** @brief  子オブジェクトの追加
 	 *  @param	GameObject* _child	子オブジェクト
 	 */
@@ -126,21 +137,38 @@ public:
 	{
 		static_assert(std::is_base_of<Component, T>::value, " クラス T はComponentから派生する必要があります。");
 
+		//コンポーネントの生成
 		auto component = std::make_unique<T>(this);
 
 		T* rawPtr = component.get();
 		this->components.emplace_back(std::move(component));
 
+		// IUpdatable,IDrawableがあるか取得
+		bool isUpdatable = this->IsUpdatable();
+		bool isDrawable = this->IsDrawable();
+
 		// IUpdatable に該当するなら登録
 		if (auto updatable = dynamic_cast<IUpdatable*>(rawPtr))
 		{
 			this->updatableComponents.push_back(updatable);
+
+			if(!isUpdatable)
+			{
+				// GameObject管理に配列に入れるように申請する
+				this->gameObjectObs.OnGameObjectEvent(this, GameObjectEvent::Refreshed);
+			}
 		}
 
 		// IDrawable に該当するなら登録
 		if (auto drawable = dynamic_cast<IDrawable*>(rawPtr))
 		{
 			this->drawableComponents.push_back(drawable);
+
+			if (!isDrawable) 
+			{
+				// GameObject管理に配列に入れるように申請する	
+				this->gameObjectObs.OnGameObjectEvent(this, GameObjectEvent::Refreshed);
+			}
 		}
 
 		return rawPtr;
@@ -195,6 +223,8 @@ public:
 	}
 
 private:
+	IGameObjectObserver& gameObjectObs;	///< GameObjectの状態を通知するObserver
+
 	bool isPendingDestroy;	///< オブジェクトの削除フラグ
 	bool isActive;			///< オブジェクトの有効/無効フラグ
 

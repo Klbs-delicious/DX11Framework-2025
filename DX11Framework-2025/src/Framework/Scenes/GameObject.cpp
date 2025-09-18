@@ -8,18 +8,23 @@
 #include "Framework/Scenes/GameObject.h"
 
 #include <algorithm>
+#include <iostream>
 
 //-----------------------------------------------------------------------------
 // GameLoop Class
 //-----------------------------------------------------------------------------
 
 /** @brief  コンストラクタ
-*	@param	const std::string& _name                        オブジェクトの名前
-*	@param	const GameTags::Tag _tag = GameTags::Tag::None	オブジェクトのタグ名
-*	@param	const bool _isActive = true						オブジェクトの有効状態
+*	@param	IGameObjectObserver&	    _gameobjctObs					GameObjectの状態を通知する
+*	@param	const std::string&			_name							オブジェクトの名前
+*	@param	const GameTags::Tag			_tag = GameTags::Tag::None		オブジェクトのタグ名
+*	@param	const bool					_isActive = true				オブジェクトの有効状態
 */
-GameObject::GameObject(const std::string& _name, const GameTags::Tag _tag, const bool _isActive)
-    : isPendingDestroy(false), isActive(_isActive), parent(nullptr), name(_name), tag(_tag) {}
+GameObject::GameObject(IGameObjectObserver& _gameobjctObs, const std::string& _name, const GameTags::Tag _tag, const bool _isActive)
+    : gameObjectObs(_gameobjctObs), isPendingDestroy(false), isActive(_isActive), parent(nullptr), name(_name), tag(_tag) 
+{
+    std::cout << "生成した" << std::endl;
+};
 
 /// @brief	デストラクタ
 GameObject::~GameObject() {}
@@ -31,6 +36,11 @@ void GameObject::Initialize()
     {
         component->Initialize();
     }
+
+    // 初期化完了通知
+    this->gameObjectObs.OnGameObjectEvent(this, GameObjectEvent::Initialized);
+
+    std::cout << this->name << " （" << std::to_string(static_cast<int>(this->tag)) << "番）を初期化した！" << std::endl;
 }
 
 /**	@brief		オブジェクトの更新を行う
@@ -66,6 +76,8 @@ void GameObject::Draw()
  */
 void GameObject::Dispose()
 {
+    std::cout << this->name << " （" << std::to_string(static_cast<int>(this->tag)) << "番）を削除した！" << std::endl;
+
     for (auto& component : this->components)
     {
         component->Dispose();
@@ -75,17 +87,22 @@ void GameObject::Dispose()
     this->drawableComponents.clear();
     this->children.clear();
     this->name.clear();
+
 }
 
 /** @brief  オブジェクトの削除申請を行う
  */
 void GameObject::OnDestroy()
 {
+    if (this->isPendingDestroy) return;
+
     this->isPendingDestroy = true;
 
-    // 子オブジェクトにも通知する
-    for (auto* child : this->children)
-    {
+    // Observer に通知
+    this->gameObjectObs.OnGameObjectEvent(this, GameObjectEvent::Destroyed);
+
+    // 子オブジェクトにも通知
+    for (auto* child : this->children) {
         child->OnDestroy();
     }
 }

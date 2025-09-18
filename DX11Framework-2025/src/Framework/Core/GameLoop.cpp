@@ -27,10 +27,22 @@ GameLoop::~GameLoop(){ this->Dispose(); }
  */
 void GameLoop::Initialize()
 {
+    // 入力管理を行うクラスの生成と登録
+    this->inputSystem = std::make_unique<InputSystem>();
+    SystemLocator::Register<InputSystem>(this->inputSystem.get());
+
+    // ゲームオブジェクトの管理を行うクラスの生成と登録
+    this->gameObjectManager = std::make_unique<GameObjectManager>();
+    SystemLocator::Register<GameObjectManager>(this->gameObjectManager.get());
+
     // シーン構成の初期化
     auto factory = std::make_unique<SceneFactory>();
-    factory->Register(SceneType::Test, [] { return std::make_unique<TestScene>(); });
-    factory->Register(SceneType::Title, [] { return std::make_unique<TitleScene>(); });
+    factory->Register(SceneType::Test, [](GameObjectManager& manager) {
+        return std::make_unique<TestScene>(manager);
+        });
+    factory->Register(SceneType::Title, [](GameObjectManager& manager) {
+        return std::make_unique<TitleScene>(manager);
+        });
 
     // シーン管理の作成
     this->sceneManager = std::make_unique<SceneManager>(std::move(factory));
@@ -41,10 +53,6 @@ void GameLoop::Initialize()
 
     // シーン管理を登録
     SystemLocator::Register<SceneManager>(this->sceneManager.get());
-
-    // 入力管理を行うクラスの生成と登録
-    this->inputSystem = std::make_unique<InputSystem>();
-    SystemLocator::Register<InputSystem>(this->inputSystem.get());
 
     // 入力デバイスの登録
     auto& window = SystemLocator::Get<WindowSystem>();
@@ -89,7 +97,9 @@ void GameLoop::Draw()
 void GameLoop::Dispose()
 {
     SystemLocator::Unregister<SceneManager>();
+    SystemLocator::Unregister<GameObjectManager>();
 
-    this->inputSystem.reset();
     this->sceneManager.reset();
+    this->gameObjectManager.reset();
+    this->inputSystem.reset();
 }

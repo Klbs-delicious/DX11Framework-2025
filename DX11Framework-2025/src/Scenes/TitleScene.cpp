@@ -13,8 +13,10 @@
 // TitleScene Class
 //-----------------------------------------------------------------------------
 
-/// @brief	コンストラクタ
-TitleScene::TitleScene() {}
+/**	@brief コンストラクタ
+ *	@param GameObjectManager&	_gameObjectManager	ゲームオブジェクトの管理
+ */
+TitleScene::TitleScene(GameObjectManager& _gameObjectManager) :BaseScene(_gameObjectManager) {}
 
 /// @brief	デストラクタ
 TitleScene::~TitleScene() {}

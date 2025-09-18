@@ -43,6 +43,12 @@
     <Filter Include="リソース ファイル\PixelShader">
       <UniqueIdentifier>{1d65b21d-29d6-40e1-801b-db3f952753bd}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\Framework\Event">
+      <UniqueIdentifier>{24886c2e-1ec5-4671-9270-aaf15e21947f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Event">
+      <UniqueIdentifier>{b561c57e-b4b2-469b-8be3-15712e803b7e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Framework\main.cpp">
@@ -88,6 +94,9 @@
       <Filter>ソース ファイル\Framework\Core</Filter>
     </ClCompile>
     <ClCompile Include="src\Framework\Scenes\GameObject.cpp">
+      <Filter>ソース ファイル\Framework\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Framework\Scenes\GameObjectManager.cpp">
       <Filter>ソース ファイル\Framework\Scenes</Filter>
     </ClCompile>
   </ItemGroup>
@@ -160,6 +169,9 @@
     </ClInclude>
     <ClInclude Include="src\Framework\Scenes\GameObjectManager.h">
       <Filter>ヘッダー ファイル\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Framework\Event\GameObjectEvent.h">
+      <Filter>ヘッダー ファイル\Event</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

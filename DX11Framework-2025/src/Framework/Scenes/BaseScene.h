@@ -8,6 +8,7 @@
 //-----------------------------------------------------------------------------
 #include"Framework/Core/RenderSystem.h"
 #include"Framework/Scenes/GameObject.h"
+#include"Framework/Scenes/GameObjectManager.h"
 
 #include <chrono>
 #include <SimpleMath.h>
@@ -21,15 +22,17 @@
  */
 class BaseScene
 {
-protected:
+public:
 	/**	@brief		オブジェクトの生成、登録等を行う
 	 *	@details	純粋仮想関数
 	 */
 	virtual void SetupObjects() = 0;
 
-public:
-	/// @brief	コンストラクタ
-	BaseScene();
+	/**	@brief コンストラクタ
+	 *	@param GameObjectManager&	_gameObjectManager	ゲームオブジェクトの管理
+	 */
+	BaseScene(GameObjectManager& _gameObjectManager);
+
 	/// @brief	デストラクタ
 	virtual ~BaseScene();
 
@@ -55,10 +58,11 @@ public:
 	 */
 	virtual void Finalize()final;
 
+protected:
+	GameObjectManager& gameObjectManager;	///< ゲームオブジェクトの管理
+
 	// 基底だがテスト用に定義
 private:
-	std::unique_ptr<GameObject> object;
-
 	std::chrono::steady_clock::time_point startTime;
 	ComPtr<ID3D11Buffer> vertexBuffer;
 	ComPtr<ID3D11VertexShader> vertexShader;

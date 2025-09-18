@@ -36,24 +36,21 @@ Vertex vertices[] = {
 // BaseScene Class
 //-----------------------------------------------------------------------------
 
-/// @brief	コンストラクタ
-BaseScene::BaseScene() {}
+/** @brief コンストラクタ
+ *  @param GameObjectManager&	_gameObjectManager	ゲームオブジェクトの管理
+ */
+BaseScene::BaseScene(GameObjectManager& _gameObjectManager) :gameObjectManager(_gameObjectManager) {}
 
 /// @brief	デストラクタ
-BaseScene::~BaseScene(){}
+BaseScene::~BaseScene() {}
 
 /**	@brief		ゲームオブジェクトの初期化処理を行う
  *	@details	継承を禁止する
  */
 void BaseScene::Initialize()
 {
-    // オブジェクトの生成
-    this->SetupObjects();
-
-    // ここでオブジェクトを生成
-    this->object = std::make_unique<GameObject>("TestObjectName",GameTags::Tag::Enemy);
-    this->object->AddComponent<HogeComponent>();
-    this->object->Initialize();
+    // 初期化
+    this->gameObjectManager.FlushInitialize();
 
     // テストなのでメンバに持たずに直接取得する
     auto& d3d11 = SystemLocator::Get<D3D11System>();
@@ -172,6 +169,12 @@ void BaseScene::Initialize()
  */
 void BaseScene::Update(float _deltaTime) 
 {
+    // 未初期化オブジェクトの初期化
+    this->gameObjectManager.FlushInitialize();
+
+    // オブジェクトの一括更新
+    this->gameObjectManager.UpdateAll(_deltaTime);
+
 	// テスト的にメンバに持たずに直接取得する
 	auto& input = SystemLocator::Get<InputSystem>();
 	auto& scenemanager = SystemLocator::Get<SceneManager>();
@@ -179,13 +182,9 @@ void BaseScene::Update(float _deltaTime)
 	if (input.IsActionPressed("Space")) { std::cout << "Space：Press" << std::endl; }
 	if (input.IsActionTriggered("Space")) { std::cout << "Space：Trigger" << std::endl; }
 
-    if (input.IsActionPressed("DownArrow")) { this->object->RemoveComponent<HogeComponent>(); }
-	if (input.IsActionTriggered("DownArrow")) { std::cout << "DownArrow：Trigger" << std::endl; }
-
     if (input.IsActionTriggered("SceneChangeTest")) { scenemanager.RequestSceneChange(SceneType::Test); }
     if (input.IsActionTriggered("SceneChangeTitle")) { scenemanager.RequestSceneChange(SceneType::Title); }
 
-    this->object->Update(_deltaTime);
 }
 
 /**	@brief		ゲームオブジェクトの描画処理を行う
@@ -194,7 +193,8 @@ void BaseScene::Update(float _deltaTime)
  */
 void BaseScene::Draw()
 {
-    this->object->Draw();
+    // オブジェクトの一括描画
+    this->gameObjectManager.DrawAll();
 
 	// テストなのでメンバに持たずに直接取得する
 	auto& d3d11 = SystemLocator::Get< D3D11System>();
@@ -228,8 +228,6 @@ void BaseScene::Draw()
  */
 void BaseScene::Finalize()
 {
-    std::cout << "オブジェクトの名前" << this->object->GetName() << std::endl;
-    std::cout << "オブジェクトのタグ" << static_cast<int>(this->object->GetTag()) << std::endl;
-    this->object->Dispose();
-    this->object.reset();
+    // オブジェクトを削除
+    this->gameObjectManager.Dispose();
 }

@@ -44,6 +44,7 @@ void SceneManager::Update(float _deltaTime)
 		// 初期化が行われていなければ初期化処理を行う
 		if (!this->isSceneInitialized)
 		{
+			this->currentScene->SetupObjects();
 			this->currentScene->Initialize();
 			this->isSceneInitialized = true;
 		}
@@ -109,7 +110,6 @@ void SceneManager::BeginTransition(SceneType _nextSceneType)
 
 	this->isSceneInitialized = false;
 }
-
 
 /// @brief Factoryを使ってシーン生成・切り替えを行う
 void SceneManager::CompleteTransition()

@@ -9,7 +9,8 @@ ProjectRoot/
 │   │   ├── Scenes/                        # エンジン側のシーン基盤
 │   │   │   ├── BaseScene.h
 │   │   │   ├── BaseScene.cpp
-│   │   │   └── SceneFactory.hpp           # 任意で導入可能
+│   │   │   └── SceneFactory.hpp          # 任意で導入可能
+│   │   ├── Event/                        	# イベント通知に関するもの
 │   │   │  
 │   │   └── main.cpp
 │   ├── Game/                       # ゲーム固有のロジック・データ

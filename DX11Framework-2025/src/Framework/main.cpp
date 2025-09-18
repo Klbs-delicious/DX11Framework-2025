@@ -17,7 +17,6 @@
 #include "Scenes/TestScene.h"
 #include "Scenes/TitleScene.h"
 
-
 #include<iostream>
 #include <Windows.h> // timeBeginPeriod 用
 #pragma comment(lib, "Winmm.lib")

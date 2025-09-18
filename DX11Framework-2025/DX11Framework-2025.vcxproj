@@ -31,6 +31,7 @@
     <ClCompile Include="src\Framework\main.cpp" />
     <ClCompile Include="src\Framework\Scenes\BaseScene.cpp" />
     <ClCompile Include="src\Framework\Scenes\GameObject.cpp" />
+    <ClCompile Include="src\Framework\Scenes\GameObjectManager.cpp" />
     <ClCompile Include="src\Framework\Scenes\SceneFactory.cpp" />
     <ClCompile Include="src\Framework\Utils\DebugHooks.cpp" />
     <ClCompile Include="src\Scenes\SceneManager.cpp" />
@@ -50,6 +51,7 @@
     <ClInclude Include="src\Framework\Core\RenderSystem.h" />
     <ClInclude Include="src\Framework\Core\SystemLocator.h" />
     <ClInclude Include="src\Framework\Core\WindowSystem.h" />
+    <ClInclude Include="src\Framework\Event\GameObjectEvent.h" />
     <ClInclude Include="src\Framework\Scenes\BaseScene.h" />
     <ClInclude Include="src\Framework\Scenes\Component.h" />
     <ClInclude Include="src\Framework\Scenes\GameObject.h" />

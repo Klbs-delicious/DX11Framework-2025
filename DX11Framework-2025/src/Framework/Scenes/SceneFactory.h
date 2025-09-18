@@ -3,6 +3,8 @@
 */
 #pragma once
 #include"Framework/Utils/NonCopyable.h"
+
+#include"Framework/Scenes/GameObjectManager.h"
 #include"Framework/Scenes/SceneType.h"
 #include"Framework/Scenes/BaseScene.h"
 
@@ -17,7 +19,7 @@
 class SceneFactory :private NonCopyable
 {
 public:
-	using Creator = std::function<std::unique_ptr<BaseScene>()>;
+	using Creator = std::function < std::unique_ptr<BaseScene>(GameObjectManager&) >;
 
 	/// @brief	コンストラクタ
 	SceneFactory();

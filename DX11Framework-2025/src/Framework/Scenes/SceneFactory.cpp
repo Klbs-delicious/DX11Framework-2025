@@ -6,6 +6,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include"Framework/Scenes/SceneFactory.h"
+#include"Framework/Core/SystemLocator.h"
 
 //-----------------------------------------------------------------------------
 // SceneFactory Class
@@ -32,8 +33,11 @@ void SceneFactory::Register(SceneType _type, Creator _creator)
 std::unique_ptr<BaseScene> SceneFactory::Create(SceneType _type) const
 {
     auto it = this->registry.find(_type);
-    if (it != this->registry.end()) {
-        return it->second();
+    if (it != this->registry.end()) 
+    {
+        // ゲームオブジェクトの管理クラスを注入してシーンを生成
+        GameObjectManager& gameObjectmanager = SystemLocator::Get<GameObjectManager>();
+        return it->second(gameObjectmanager);
     }
 
     // 未登録のシーンタイプなら null を返す

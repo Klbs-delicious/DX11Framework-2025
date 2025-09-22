@@ -12,6 +12,7 @@ ProjectRoot/
 │   │   │   └── SceneFactory.hpp          # 任意で導入可能
 │   │   ├── Event/                        	# イベント通知に関するもの
 │   │   │  
+│   │   ├── Entities/			# 論理的なオブジェクト構造の基盤
 │   │   └── main.cpp
 │   ├── Game/                       # ゲーム固有のロジック・データ
 │   │   ├── Entities/              # プレイヤー、敵、NPCなど

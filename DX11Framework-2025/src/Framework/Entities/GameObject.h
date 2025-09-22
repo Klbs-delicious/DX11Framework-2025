@@ -2,8 +2,9 @@
  * @date   2025/09/16
  */
 #pragma once
-#include"Framework/Scenes/Component.h"
-#include"Framework/Scenes/PhaseInterfaces.h"
+#include"Framework/Entities/Component.h"
+#include"Framework/Entities/PhaseInterfaces.h"
+#include"Framework/Entities/Transform.h"
 #include"Framework/Event/GameObjectEvent.h"
 
 #include<string>
@@ -138,7 +139,7 @@ public:
 		static_assert(std::is_base_of<Component, T>::value, " クラス T はComponentから派生する必要があります。");
 
 		//コンポーネントの生成
-		auto component = std::make_unique<T>(this);
+		auto component = std::make_unique<T>(static_cast<GameObject*>(this));
 
 		T* rawPtr = component.get();
 		this->components.emplace_back(std::move(component));
@@ -222,6 +223,8 @@ public:
 		}
 	}
 
+public:
+		Transform* transform;	///< 位置、回転、スケール情報
 private:
 	IGameObjectObserver& gameObjectObs;	///< GameObjectの状態を通知するObserver
 
@@ -231,8 +234,6 @@ private:
 	GameObject* parent;	///< 親オブジェクト
 	std::string name;	///< オブジェクト名
 	GameTags::Tag tag;	///< タグ名
-	
-	///< [TODO]位置、回転、スケール情報
 
 	std::vector<GameObject*> children;						///< 子オブジェクトのリスト
 	std::list<std::unique_ptr<Component>>	components;		///< コンポーネントのリスト

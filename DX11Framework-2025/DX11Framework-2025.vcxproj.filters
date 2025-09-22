@@ -49,6 +49,12 @@
     <Filter Include="ヘッダー ファイル\Event">
       <UniqueIdentifier>{b561c57e-b4b2-469b-8be3-15712e803b7e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\Framework\Entities">
+      <UniqueIdentifier>{11aa4265-b643-42e2-87ec-fe475ee9d39e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Entities">
+      <UniqueIdentifier>{06c859ff-18f7-47e1-b9c7-9c9f7a634647}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Framework\main.cpp">
@@ -93,23 +99,17 @@
     <ClCompile Include="src\Framework\Core\InputSystem.cpp">
       <Filter>ソース ファイル\Framework\Core</Filter>
     </ClCompile>
-    <ClCompile Include="src\Framework\Scenes\GameObject.cpp">
-      <Filter>ソース ファイル\Framework\Scenes</Filter>
+    <ClCompile Include="src\Framework\Entities\GameObject.cpp">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="src\Framework\Scenes\GameObjectManager.cpp">
-      <Filter>ソース ファイル\Framework\Scenes</Filter>
+    <ClCompile Include="src\Framework\Entities\GameObjectManager.cpp">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Framework\Entities\Transform.cpp">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Scenes\TestScene.h">
-      <Filter>ソース ファイル\Scenes</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Scenes\SceneManager.h">
-      <Filter>ソース ファイル\Scenes</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Scenes\TitleScene.h">
-      <Filter>ソース ファイル\Scenes</Filter>
-    </ClInclude>
     <ClInclude Include="src\Framework\Core\Application.h">
       <Filter>ヘッダー ファイル\Core</Filter>
     </ClInclude>
@@ -152,26 +152,41 @@
     <ClInclude Include="src\Framework\Utils\DebugHooks.h">
       <Filter>ヘッダー ファイル\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="src\Framework\Scenes\Component.h">
-      <Filter>ヘッダー ファイル\Scenes</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Scenes\GameObject.h">
-      <Filter>ヘッダー ファイル\Scenes</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Scenes\PhaseInterfaces.h">
-      <Filter>ヘッダー ファイル\Scenes</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Scenes\TestComponent.h">
-      <Filter>ヘッダー ファイル\Core</Filter>
-    </ClInclude>
     <ClInclude Include="src\Framework\Utils\NonCopyable.h">
       <Filter>ヘッダー ファイル\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="src\Framework\Scenes\GameObjectManager.h">
-      <Filter>ヘッダー ファイル\Scenes</Filter>
-    </ClInclude>
     <ClInclude Include="src\Framework\Event\GameObjectEvent.h">
       <Filter>ヘッダー ファイル\Event</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Framework\Entities\GameObject.h">
+      <Filter>ヘッダー ファイル\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Framework\Entities\Component.h">
+      <Filter>ヘッダー ファイル\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Framework\Entities\GameObjectManager.h">
+      <Filter>ヘッダー ファイル\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Framework\Entities\PhaseInterfaces.h">
+      <Filter>ヘッダー ファイル\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Framework\Entities\TestComponent.h">
+      <Filter>ヘッダー ファイル\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Scenes\TestScene.h">
+      <Filter>ヘッダー ファイル\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Scenes\SceneManager.h">
+      <Filter>ヘッダー ファイル\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Scenes\TitleScene.h">
+      <Filter>ヘッダー ファイル\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Framework\Entities\Transform.h">
+      <Filter>ヘッダー ファイル\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Framework\Utils\CommonTypes.h">
+      <Filter>ヘッダー ファイル\Utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

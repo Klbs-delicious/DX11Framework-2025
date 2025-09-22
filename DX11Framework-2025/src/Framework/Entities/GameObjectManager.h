@@ -3,7 +3,7 @@
  */
 #pragma once
 #include"Framework/Utils/NonCopyable.h"
-#include"Framework/Scenes/GameObject.h"
+#include"Framework/Entities/GameObject.h"
 #include"Framework/Event/GameObjectEvent.h"
 
 #include<memory>

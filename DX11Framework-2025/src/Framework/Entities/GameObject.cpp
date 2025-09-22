@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include "Framework/Scenes/GameObject.h"
+#include "Framework/Entities/GameObject.h"
 
 #include <algorithm>
 #include <iostream>
@@ -21,8 +21,12 @@
 *	@param	const bool					_isActive = true				オブジェクトの有効状態
 */
 GameObject::GameObject(IGameObjectObserver& _gameobjctObs, const std::string& _name, const GameTags::Tag _tag, const bool _isActive)
-    : gameObjectObs(_gameobjctObs), isPendingDestroy(false), isActive(_isActive), parent(nullptr), name(_name), tag(_tag) 
+    : gameObjectObs(_gameobjctObs), transform(nullptr) , isPendingDestroy(false), isActive(_isActive), parent(nullptr), name(_name), tag(_tag)
 {
+	// Transformコンポーネントを追加
+    // 生成、破棄などは一緒に行えるようにしたが処理はコンポーネントのリストとは別で回す
+    this->transform = this->AddComponent<Transform>();
+
     std::cout << "生成した" << std::endl;
 };
 
@@ -55,6 +59,9 @@ void GameObject::Update(float _deltaTime)
     {
         updatable->Update(_deltaTime);
     }
+
+    // ここでTransformを更新する
+    if (this->transform) { this->transform->UpdateWorldMatrix(); }
 }
 
 /**	@brief		ゲームオブジェクトの描画処理を行う
@@ -82,6 +89,7 @@ void GameObject::Dispose()
     {
         component->Dispose();
     }
+	this->transform = nullptr;
     this->components.clear();
     this->updatableComponents.clear();
     this->drawableComponents.clear();

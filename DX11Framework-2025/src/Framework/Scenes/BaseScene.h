@@ -7,8 +7,8 @@
 // Test
 //-----------------------------------------------------------------------------
 #include"Framework/Core/RenderSystem.h"
-#include"Framework/Scenes/GameObject.h"
-#include"Framework/Scenes/GameObjectManager.h"
+#include"Framework/Entities/GameObject.h"
+#include"Framework/Entities/GameObjectManager.h"
 
 #include <chrono>
 #include <SimpleMath.h>

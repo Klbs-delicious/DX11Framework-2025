@@ -4,7 +4,7 @@
 #pragma once
 #include"Framework/Utils/NonCopyable.h"
 
-#include"Framework/Scenes/GameObjectManager.h"
+#include"Framework/Entities/GameObjectManager.h"
 #include"Framework/Scenes/SceneType.h"
 #include"Framework/Scenes/BaseScene.h"
 

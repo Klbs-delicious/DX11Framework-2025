@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include "Framework/Scenes/GameObjectManager.h"
+#include "Framework/Entities/GameObjectManager.h"
 
 //-----------------------------------------------------------------------------
 // GameObjectManager Class
@@ -218,6 +218,7 @@ void GameObjectManager::OnGameObjectEvent(GameObject* _obj, GameObjectEvent _eve
 		// 更新・描画対象に登録
 		if (_obj->IsUpdatable()) this->updateList.push_back(_obj);
 		if (_obj->IsDrawable())  this->drawList.push_back(_obj);
+		std::cout << "Refreshed: " << _obj->GetName() << std::endl;
 		break;
 	case GameObjectEvent::Destroyed:
 		if (!_obj) return;

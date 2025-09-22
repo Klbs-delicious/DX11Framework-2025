@@ -11,7 +11,7 @@
 #include"Framework/Core/InputSystem.h"
 #include"Scenes/SceneManager.h"
 
-#include"Framework/Scenes/TestComponent.h"
+#include"Framework/Entities/TestComponent.h"
 
 #include<iostream>
 

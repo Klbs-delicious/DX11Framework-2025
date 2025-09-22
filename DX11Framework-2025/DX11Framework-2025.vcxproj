@@ -30,6 +30,7 @@
     <ClCompile Include="src\Framework\Core\WindowsSystem.cpp" />
     <ClCompile Include="src\Framework\Entities\GameObject.cpp" />
     <ClCompile Include="src\Framework\Entities\GameObjectManager.cpp" />
+    <ClCompile Include="src\Framework\Entities\TestRenderer.cpp" />
     <ClCompile Include="src\Framework\Entities\Transform.cpp" />
     <ClCompile Include="src\Framework\main.cpp" />
     <ClCompile Include="src\Framework\Scenes\BaseScene.cpp" />
@@ -57,6 +58,7 @@
     <ClInclude Include="src\Framework\Entities\GameObjectManager.h" />
     <ClInclude Include="src\Framework\Entities\PhaseInterfaces.h" />
     <ClInclude Include="src\Framework\Entities\TestComponent.h" />
+    <ClInclude Include="src\Framework\Entities\TestRenderer.h" />
     <ClInclude Include="src\Framework\Entities\Transform.h" />
     <ClInclude Include="src\Framework\Event\GameObjectEvent.h" />
     <ClInclude Include="src\Framework\Scenes\BaseScene.h" />
@@ -143,12 +145,12 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(ProjectDir)directxtk\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)directxtk\lib\x64\Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)\External\directxtk\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)\External\directxtk\lib\x64\Debug;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(ProjectDir)directxtk\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)directxtk\lib\x64\Release;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir)\External\directxtk\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)\External\directxtk\lib\x64\Release;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

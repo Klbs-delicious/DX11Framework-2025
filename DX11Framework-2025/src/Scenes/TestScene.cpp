@@ -8,6 +8,7 @@
 #include"Scenes/TestScene.h"
 #include"Framework/Entities/TestComponent.h"
 #include"Framework/Entities/TestRenderer.h"
+#include"Framework/Entities/Camera2D.h"
 
 #include<iostream>
 
@@ -31,12 +32,8 @@ void TestScene::SetupObjects()
 	// オブジェクトを生成する
 	auto obj_1 = this->gameObjectManager.Instantiate("obj_1");
 	std::cout << obj_1->GetName() << " : " << std::to_string(obj_1->transform->GetWorldPosition().x) << std::endl;
+	obj_1->AddComponent<Camera2D>();
 	obj_1->AddComponent<TestRenderer>();
-	//std::cout << obj_1->GetName() << " : " <<
-	//	std::to_string(obj_1->transform->GetWorldPosition().x) <<
-	//	std::to_string(obj_1->transform->GetWorldPosition().y) <<
-	//	std::to_string(obj_1->transform->GetWorldPosition().z) <<
-	//	std::endl;
 
 	this->gameObjectManager.Instantiate("obj_2");
 	auto obj_2 = this->gameObjectManager.Instantiate("obj_3");

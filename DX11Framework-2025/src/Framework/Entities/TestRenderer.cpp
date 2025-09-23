@@ -1,4 +1,5 @@
 ﻿#include "Framework/Entities/TestRenderer.h"
+#include "Framework/Entities/GameObject.h"
 #include "Framework/Core/SystemLocator.h"
 #include "Framework/Core/D3D11System.h"
 #include "Framework/Core/RenderSystem.h"
@@ -9,6 +10,8 @@
 TestRenderer::TestRenderer(GameObject* owner, bool isActive)
     : Component(owner, isActive)
 {
+    this->camera = this->owner->GetComponent<Camera2D>();
+	this->transform = this->owner->GetComponent<Transform>();
 }
 
 TestRenderer::~TestRenderer() {}
@@ -105,15 +108,25 @@ void TestRenderer::Draw()
     float timeS = std::chrono::duration<float>(now - startTime).count();
 
     using namespace DirectX::SimpleMath;
-    Matrix world = Matrix::CreateRotationZ(timeS);
-    world *= Matrix::CreateTranslation(0, std::sin(timeS) * 0.5f, 0);
+	this->transform->SetLocalRotation(Quaternion::CreateFromYawPitchRoll(0, 0, timeS));
+    this->transform->SetLocalPosition(DX::Vector3(320.0f, 240.0f, 0.0f));
+    this->transform->SetLocalScale(DX::Vector3(100.0f, 50.0f, 1.0f));
+
+	Matrix view = this->camera->GetViewMatrix();
+	Matrix proj = this->camera->GetProjectionMatrix();
+
+    Matrix world = this->transform->GetWorldMatrix();
     render.SetWorldMatrix(&world);
+	render.SetViewMatrix(&view);
+	render.SetProjectionMatrix(&proj);
 
     auto ctx = d3d11.GetContext();
     UINT stride = sizeof(Vertex), offset = 0;
     ctx->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
+
     ctx->IASetInputLayout(inputLayout.Get());
     ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
     ctx->VSSetShader(vertexShader.Get(), nullptr, 0);
     ctx->PSSetShader(pixelShader.Get(), nullptr, 0);
     ctx->Draw(3, 0);
@@ -123,4 +136,3 @@ void TestRenderer::Dispose()
 {
     // ComPtr に任せる
 }
-

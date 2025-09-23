@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "Framework/Entities/Component.h"
 #include "Framework/Entities/PhaseInterfaces.h"
+#include "Framework/Entities/Transform.h"
+#include "Framework/Entities/Camera2D.h"
 
 #include <d3d11.h>
 #include <wrl/client.h>
@@ -18,6 +20,9 @@ public:
     void Dispose() override;
 
 private:
+    Camera2D* camera;
+	Transform* transform;
+
     struct Vertex {
     	DirectX::SimpleMath::Vector3 position;
     	DirectX::SimpleMath::Vector4 color;
@@ -30,4 +35,3 @@ private:
 
     std::chrono::steady_clock::time_point startTime;
 };
-

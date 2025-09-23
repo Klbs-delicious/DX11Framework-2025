@@ -35,6 +35,11 @@ public:
 	 */
 	void UpdateWorldMatrix();
 
+	/**	@brief 再計算する必要があるかを取得
+	 *	@return bool 再計算する必要があるなら true
+	 */
+	bool GetIsDirty()const { return this->isDirty; }
+
 	/// -------------------------------------------------------------
 
 	/**@brief ワールド空間の座標を設定

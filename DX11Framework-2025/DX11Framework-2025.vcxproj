@@ -28,6 +28,7 @@
     <ClCompile Include="src\Framework\Core\InputSystem.cpp" />
     <ClCompile Include="src\Framework\Core\RenderSystem.cpp" />
     <ClCompile Include="src\Framework\Core\WindowsSystem.cpp" />
+    <ClCompile Include="src\Framework\Entities\Camera2D.cpp" />
     <ClCompile Include="src\Framework\Entities\GameObject.cpp" />
     <ClCompile Include="src\Framework\Entities\GameObjectManager.cpp" />
     <ClCompile Include="src\Framework\Entities\TestRenderer.cpp" />
@@ -53,6 +54,7 @@
     <ClInclude Include="src\Framework\Core\RenderSystem.h" />
     <ClInclude Include="src\Framework\Core\SystemLocator.h" />
     <ClInclude Include="src\Framework\Core\WindowSystem.h" />
+    <ClInclude Include="src\Framework\Entities\Camera2D.h" />
     <ClInclude Include="src\Framework\Entities\Component.h" />
     <ClInclude Include="src\Framework\Entities\GameObject.h" />
     <ClInclude Include="src\Framework\Entities\GameObjectManager.h" />

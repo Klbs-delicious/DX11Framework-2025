@@ -23,11 +23,11 @@ void TestRenderer::Initialize()
     auto device = d3d11.GetDevice();
 
     Vertex vertices[] = {
-        { {-0.5f, -0.5f, 0}, {0,0,1,1} },
-        { { 0.5f, -0.5f, 0}, {0,1,0,1} },
-        { { 0.0f,  0.5f, 0}, {1,0,0,1} },
+        { {-0.5f, -0.5f, 0}, {0, 0, 1, 1}/*, {0.0f, 1.0f}*/},   // 左下
+        { { 0.5f, -0.5f, 0}, {0, 1, 0, 1}/*,, {1.0f, 1.0f}*/ }, // 右下
+        { {-0.5f,  0.5f, 0}, {1, 0, 0, 1}/*,, {0.0f, 0.0f}*/ }, // 左上
+        { { 0.5f,  0.5f, 0}, {1, 1, 0, 1}/*,, {1.0f, 0.0f}*/ }, // 右上
     };
-
     D3D11_BUFFER_DESC vbDesc = {};
     vbDesc.Usage = D3D11_USAGE_DEFAULT;
     vbDesc.ByteWidth = sizeof(vertices);
@@ -38,8 +38,22 @@ void TestRenderer::Initialize()
 
     device->CreateBuffer(&vbDesc, &initData, vertexBuffer.GetAddressOf());
 
-    ComPtr<ID3DBlob> vsBlob, psBlob, errorBlob;
+    uint16_t indices[] = {
+    0, 1, 2,  // 第1三角形（左下 → 右下 → 左上）
+    1, 3, 2   // 第2三角形（右下 → 右上 → 左上）
+    };
 
+    D3D11_BUFFER_DESC ibDesc = {};
+    ibDesc.Usage = D3D11_USAGE_DEFAULT;
+    ibDesc.ByteWidth = sizeof(indices);
+    ibDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+
+    D3D11_SUBRESOURCE_DATA ibData = {};
+    ibData.pSysMem = indices;
+
+    device->CreateBuffer(&ibDesc, &ibData, indexBuffer.GetAddressOf());
+
+    ComPtr<ID3DBlob> vsBlob, psBlob, errorBlob;
 #ifdef _DEBUG
     HRESULT hrVS = D3DCompileFromFile(
         L"src/Framework/Graphics/Shaders/VertexShader/VS_Test.hlsl",
@@ -121,15 +135,17 @@ void TestRenderer::Draw()
 	render.SetProjectionMatrix(&proj);
 
     auto ctx = d3d11.GetContext();
-    UINT stride = sizeof(Vertex), offset = 0;
+    UINT stride = sizeof(Vertex);
+    UINT offset = 0;
     ctx->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
-
+    ctx->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
     ctx->IASetInputLayout(inputLayout.Get());
     ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     ctx->VSSetShader(vertexShader.Get(), nullptr, 0);
     ctx->PSSetShader(pixelShader.Get(), nullptr, 0);
-    ctx->Draw(3, 0);
+
+    ctx->DrawIndexed(6, 0, 0);
 }
 
 void TestRenderer::Dispose()

@@ -28,6 +28,7 @@ private:
     	DirectX::SimpleMath::Vector4 color;
     };
 
+    Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
     Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
     Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
     Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;

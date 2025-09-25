@@ -8,6 +8,7 @@
 #include"Framework/Core/GameLoop.h"
 #include"Framework/Core/SystemLocator.h"
 #include"Framework/Core/DirectInputDevice.h"
+#include"Framework/Core/ResourceHub.h"
 
 #include "Scenes/TestScene.h"
 #include "Scenes/TitleScene.h"
@@ -67,6 +68,10 @@ void GameLoop::Initialize()
     this->inputSystem->RegisterKeyBinding("SceneChangeTitle", static_cast<int>(DirectInputDevice::KeyboardKey::A));
     this->inputSystem->RegisterKeyBinding("GameExit", static_cast<int>(DirectInputDevice::KeyboardKey::K));
 
+    // 画像管理クラスをリソース管理クラスに登録
+    this->spriteManager = std::make_unique<SpriteManager>();
+    ResourceHub::Register(this->spriteManager.get());
+
     // シーンの変更
     this->sceneManager->RequestSceneChange(SceneType::Test);
 }
@@ -96,9 +101,11 @@ void GameLoop::Draw()
  */
 void GameLoop::Dispose()
 {
+    ResourceHub::Unregister<SpriteManager>();
     SystemLocator::Unregister<SceneManager>();
     SystemLocator::Unregister<GameObjectManager>();
 
+    this->spriteManager.reset();
     this->sceneManager.reset();
     this->gameObjectManager.reset();
     this->inputSystem.reset();

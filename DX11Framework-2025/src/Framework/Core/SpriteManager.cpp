@@ -25,7 +25,8 @@
 void SpriteManager::TexturepathRegister()
 {
 	// 画像のパスを登録していく
-	this->spritePathMap["Test"] = u8"Assets/Textures/eidan.png";
+	this->spritePathMap["Default"] = u8"Assets/Textures/Default.png";
+	this->spritePathMap["Eidan"] = u8"Assets/Textures/Eidan.png";
 }
 
 //// @brief コンストラクタ
@@ -83,13 +84,29 @@ void SpriteManager::Unregister(const std::string& _key)
  *	@param	const std::string& _key	リソースのキー
  *	@return	T*	リソースのポインタ、見つからなかった場合は nullptr
  */
-Sprite* SpriteManager::Get(const std::string& _key) const
+Sprite* SpriteManager::Get(const std::string& _key)
 {
-	if(this->spriteMap.contains(_key))
+	// すでに登録済みならそのまま返す
+	auto it = this->spriteMap.find(_key);
+	if (it != this->spriteMap.end()) 
 	{
-		return this->spriteMap.at(_key).get();
+		return it->second.get();
 	}
-	return nullptr;
+	// パスが存在するか確認
+	auto pathIt = this->spritePathMap.find(_key);
+	if (pathIt == this->spritePathMap.end()) 
+	{
+		std::cerr << "Sprite path not found for key: " << _key << std::endl;
+		return nullptr;
+	}
+
+	// 登録処理
+	if (!this->Register(_key)) {
+		std::cerr << "Failed to register sprite for key: " << _key << std::endl;
+		return nullptr;
+	}
+
+	return this->spriteMap.at(_key).get();
 }
 
 /**	@brief	画像の読み込み

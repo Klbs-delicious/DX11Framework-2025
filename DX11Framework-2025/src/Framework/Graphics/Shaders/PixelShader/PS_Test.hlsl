@@ -2,5 +2,7 @@
 
 float4 main(PS_IN pin) : SV_TARGET
 {
-    return pin.color;
+    float4 color = tex.Sample(samp, pin.uv);
+    color *= pin.color;
+    return color;
 }

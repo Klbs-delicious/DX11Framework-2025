@@ -5,6 +5,14 @@
 
 # 追加ライブラリ
 DX11Framework-2025/directxtk/
+
+# Assetディレクトリを除外
+DX11Framework-2025/DX11Framework-2025/Asset/
+
+# アセット関連
+*.png
+*.jpeg
+
 # User-specific files
 *.rsuser
 *.suo

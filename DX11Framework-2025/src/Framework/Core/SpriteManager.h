@@ -32,7 +32,7 @@ public:
 	 *	@param	const std::string& _key	リソースのキー
 	 *	@return	T*	リソースのポインタ、見つからなかった場合は nullptr
 	 */
-	virtual Sprite* Get(const std::string& _key) const override;
+	virtual Sprite* Get(const std::string& _key) override;
 
 private:
 	/**	@brief	画像の読み込み

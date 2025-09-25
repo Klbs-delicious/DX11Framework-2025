@@ -50,5 +50,5 @@ private:
 	/**	@brief	システムの参照を保持する
 	 *	@details - ヘッダ内 inline static は C++17 準拠で安全だが、初期化順序・スレッド・ライフタイムに注意が必要
 	 */
-	inline static std::unordered_map<std::type_index, void*> systems;	 
+	inline static std::unordered_map<std::type_index, void*> systems;
 };

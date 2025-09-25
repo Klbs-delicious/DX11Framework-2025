@@ -1,15 +1,22 @@
 ﻿#include "Framework/Entities/TestRenderer.h"
 #include "Framework/Entities/GameObject.h"
 #include "Framework/Core/SystemLocator.h"
+#include "Framework/Core/ResourceHub.h"
 #include "Framework/Core/D3D11System.h"
 #include "Framework/Core/RenderSystem.h"
+#include "Framework/Core/SpriteManager.h"
 
 #include <d3dcompiler.h>
 #pragma comment(lib, "d3dcompiler.lib")
+#include	<iostream>
 
 TestRenderer::TestRenderer(GameObject* owner, bool isActive)
     : Component(owner, isActive)
 {
+    // デフォルトの画像情報を取得する
+    IResourceManager<Sprite>& spriteManager = ResourceHub::Get<Sprite>();
+    this->sprite = spriteManager.Get("Eidan");
+
     this->camera = this->owner->GetComponent<Camera2D>();
 	this->transform = this->owner->GetComponent<Transform>();
 }
@@ -23,10 +30,10 @@ void TestRenderer::Initialize()
     auto device = d3d11.GetDevice();
 
     Vertex vertices[] = {
-        { {-0.5f, -0.5f, 0}, {0, 0, 1, 1}/*, {0.0f, 1.0f}*/},   // 左下
-        { { 0.5f, -0.5f, 0}, {0, 1, 0, 1}/*,, {1.0f, 1.0f}*/ }, // 右下
-        { {-0.5f,  0.5f, 0}, {1, 0, 0, 1}/*,, {0.0f, 0.0f}*/ }, // 左上
-        { { 0.5f,  0.5f, 0}, {1, 1, 0, 1}/*,, {1.0f, 0.0f}*/ }, // 右上
+        { {-0.5f, -0.5f, 0}, {1, 1, 1, 1}, {0.0f, 0.0f} }, // 左下 → 左上
+        { { 0.5f, -0.5f, 0}, {1, 1, 1, 1}, {1.0f, 0.0f} }, // 右下 → 右上
+        { {-0.5f,  0.5f, 0}, {1, 1, 1, 1}, {0.0f, 1.0f} }, // 左上 → 左下
+        { { 0.5f,  0.5f, 0}, {1, 1, 1, 1}, {1.0f, 1.0f} }, // 右上 → 右下
     };
     D3D11_BUFFER_DESC vbDesc = {};
     vbDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -96,6 +103,7 @@ void TestRenderer::Initialize()
     D3D11_INPUT_ELEMENT_DESC layout[] = {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 0,                          D3D11_INPUT_PER_VERTEX_DATA, 0 },
         { "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, sizeof(float) * 3,          D3D11_INPUT_PER_VERTEX_DATA, 0 },
+        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       0, sizeof(float) * 7,          D3D11_INPUT_PER_VERTEX_DATA, 0 },
     };
 
     device->CreateInputLayout(layout, ARRAYSIZE(layout), vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), inputLayout.GetAddressOf());
@@ -124,8 +132,9 @@ void TestRenderer::Draw()
     using namespace DirectX::SimpleMath;
 	this->transform->SetLocalRotation(Quaternion::CreateFromYawPitchRoll(0, 0, timeS));
     this->transform->SetLocalPosition(DX::Vector3(320.0f, 240.0f, 0.0f));
-    this->transform->SetLocalScale(DX::Vector3(100.0f, 50.0f, 1.0f));
+    this->transform->SetLocalScale(DX::Vector3(200.0f, 100.0f, 1.0f));
 
+    // 変換行列を送る
 	Matrix view = this->camera->GetViewMatrix();
 	Matrix proj = this->camera->GetProjectionMatrix();
 
@@ -134,6 +143,7 @@ void TestRenderer::Draw()
 	render.SetViewMatrix(&view);
 	render.SetProjectionMatrix(&proj);
 
+    // バッファを送る
     auto ctx = d3d11.GetContext();
     UINT stride = sizeof(Vertex);
     UINT offset = 0;
@@ -142,6 +152,15 @@ void TestRenderer::Draw()
     ctx->IASetInputLayout(inputLayout.Get());
     ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+    // テクスチャを送る
+    ID3D11ShaderResourceView* srv = this->sprite->texture.Get();
+    if (!srv) {
+		std::cerr << "テクスチャがセットされていません。" << std::endl;
+		return;
+    }
+    ctx->PSSetShaderResources(0, 1, &srv);
+
+    // シェーダーの設定
     ctx->VSSetShader(vertexShader.Get(), nullptr, 0);
     ctx->PSSetShader(pixelShader.Get(), nullptr, 0);
 
@@ -151,4 +170,19 @@ void TestRenderer::Draw()
 void TestRenderer::Dispose()
 {
     // ComPtr に任せる
+}
+
+/** @brief Spriteの設定
+ *  @param std::string _spriteName    Spriteの情報
+ *  @return bool 設定出来たら true
+ */
+bool TestRenderer::SetSprite(const std::string& _spriteName)
+{
+    IResourceManager<Sprite>& spriteManager = ResourceHub::Get<Sprite>();
+    this->sprite = spriteManager.Get(_spriteName);
+    if (!this->sprite) {
+        std::cerr << "その名前のSpriteが存在しません。" << std::endl;
+        return false;
+    }
+    return true;
 }

@@ -15,19 +15,25 @@ struct VS_IN
 {
     float3 position : POSITION;
     float4 color : COLOR;
+    float2 uv : TEXCOORD0;
 };
 
 struct VS_OUT
 {
     float4 position : SV_POSITION;
     float4 color : COLOR;
+    float2 uv : TEXCOORD0;
 };
     
 struct PS_IN
 {
     float4 position : SV_POSITION;
     float4 color : COLOR;
+    float2 uv : TEXCOORD0;
 };
+
+Texture2D tex : register(t0);       // テクスチャリソース
+SamplerState samp : register(s0);   // サンプラーステート
 
 //struct MATERIAL
 //{

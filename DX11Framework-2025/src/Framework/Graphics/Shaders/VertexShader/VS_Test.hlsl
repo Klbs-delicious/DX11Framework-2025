@@ -15,6 +15,9 @@ VS_OUT main(VS_IN input)
 
     // 色はそのまま渡す
     output.color = input.color;
+    
+    // テクスチャ
+    output.uv = input.uv;
 
     return output;
 }

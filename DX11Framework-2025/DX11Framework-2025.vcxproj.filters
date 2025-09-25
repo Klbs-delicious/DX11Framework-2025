@@ -108,14 +108,14 @@
     <ClCompile Include="src\Framework\Entities\Transform.cpp">
       <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="src\Framework\Entities\TestRenderer.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="src\Framework\Entities\Camera2D.cpp">
       <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
     <ClCompile Include="src\Framework\Core\SpriteManager.cpp">
       <Filter>ソース ファイル\Framework\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Framework\Entities\TestRenderer.cpp">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

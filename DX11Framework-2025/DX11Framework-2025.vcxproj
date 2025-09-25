@@ -27,6 +27,7 @@
     <ClCompile Include="src\Framework\Core\GameLoop.cpp" />
     <ClCompile Include="src\Framework\Core\InputSystem.cpp" />
     <ClCompile Include="src\Framework\Core\RenderSystem.cpp" />
+    <ClCompile Include="src\Framework\Core\SpriteManager.cpp" />
     <ClCompile Include="src\Framework\Core\WindowsSystem.cpp" />
     <ClCompile Include="src\Framework\Entities\Camera2D.cpp" />
     <ClCompile Include="src\Framework\Entities\GameObject.cpp" />
@@ -52,6 +53,9 @@
     <ClInclude Include="src\Framework\Core\IInputDevice.h" />
     <ClInclude Include="src\Framework\Core\InputSystem.h" />
     <ClInclude Include="src\Framework\Core\RenderSystem.h" />
+    <ClInclude Include="src\Framework\Core\IResourceManager.h" />
+    <ClInclude Include="src\Framework\Core\ResourceHub.h" />
+    <ClInclude Include="src\Framework\Core\SpriteManager.h" />
     <ClInclude Include="src\Framework\Core\SystemLocator.h" />
     <ClInclude Include="src\Framework\Core\WindowSystem.h" />
     <ClInclude Include="src\Framework\Entities\Camera2D.h" />
@@ -63,6 +67,7 @@
     <ClInclude Include="src\Framework\Entities\TestRenderer.h" />
     <ClInclude Include="src\Framework\Entities\Transform.h" />
     <ClInclude Include="src\Framework\Event\GameObjectEvent.h" />
+    <ClInclude Include="src\Framework\Graphics\Sprite.h" />
     <ClInclude Include="src\Framework\Scenes\BaseScene.h" />
     <ClInclude Include="src\Framework\Scenes\SceneFactory.h" />
     <ClInclude Include="src\Framework\Scenes\SceneType.h" />

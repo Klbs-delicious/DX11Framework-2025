@@ -131,7 +131,6 @@ void TestRenderer::Draw()
 
     using namespace DirectX::SimpleMath;
 	this->transform->SetLocalRotation(Quaternion::CreateFromYawPitchRoll(0, 0, timeS));
-    this->transform->SetLocalPosition(DX::Vector3(320.0f, 240.0f, 0.0f));
     this->transform->SetLocalScale(DX::Vector3(200.0f, 100.0f, 1.0f));
 
     // 変換行列を送る

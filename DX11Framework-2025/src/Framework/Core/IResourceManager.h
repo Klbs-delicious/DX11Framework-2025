@@ -10,7 +10,8 @@ template<typename T>
 /** @class	リソース管理インターフェース
  *  @brief  テンプレートクラスでリソース管理のインターフェースを定義する
  */
-class IResourceManager {
+class IResourceManager : private NonCopyable
+{
 public:
 	/// @brief 仮想デストラクタ
     virtual ~IResourceManager() = default;

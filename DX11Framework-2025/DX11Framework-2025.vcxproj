@@ -41,6 +41,7 @@
     <ClCompile Include="src\Scenes\SceneManager.cpp" />
     <ClCompile Include="src\Scenes\TestScene.cpp" />
     <ClCompile Include="src\Scenes\TitleScene.cpp" />
+    <ClCompile Include="src\Tests\TestMoveComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Framework\Core\Application.h" />
@@ -77,6 +78,7 @@
     <ClInclude Include="src\Scenes\SceneManager.h" />
     <ClInclude Include="src\Scenes\TestScene.h" />
     <ClInclude Include="src\Scenes\TitleScene.h" />
+    <ClInclude Include="src\Tests\TestMoveComponent.h" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="src\Framework\Graphics\Shaders\PixelShader\PS_Test.hlsl">

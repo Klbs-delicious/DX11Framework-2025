@@ -39,11 +39,11 @@ public:
     }
 
     template<typename T>
-    /** @brief リソースマネージャの解除 */
+    /// @brief リソースマネージャの解除 
     static void Unregister() {
         ResourceHub::managers.erase(std::type_index(typeid(T)));
     }
 
 private:
-    inline static std::unordered_map<std::type_index, void*> managers;
+	inline static std::unordered_map<std::type_index, void*> managers;  ///< 登録されたリソースマネージャのマップ
 };

@@ -15,7 +15,7 @@ public:
 	//// @brief コンストラクタ
 	SpriteManager();
 	/// @brief デストラクタ
-	virtual ~SpriteManager();
+	virtual ~SpriteManager()override;
 
 	/** @brief  リソースを登録する
 	 *	@param  const std::string& _key	リソースのキー

@@ -117,6 +117,9 @@
     <ClCompile Include="src\Framework\Entities\TestRenderer.cpp">
       <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
+    <ClCompile Include="src\Tests\TestMoveComponent.cpp">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Framework\Core\Application.h">
@@ -197,14 +200,8 @@
     <ClInclude Include="src\Framework\Utils\CommonTypes.h">
       <Filter>ヘッダー ファイル\Utils</Filter>
     </ClInclude>
-    <ClInclude Include="src\Framework\Entities\TestRenderer.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="src\Framework\Entities\Camera2D.h">
       <Filter>ヘッダー ファイル\Entities</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Graphics\Sprite.h">
-      <Filter>ソース ファイル\Framework</Filter>
     </ClInclude>
     <ClInclude Include="src\Framework\Core\IResourceManager.h">
       <Filter>ヘッダー ファイル\Core</Filter>
@@ -214,6 +211,15 @@
     </ClInclude>
     <ClInclude Include="src\Framework\Core\ResourceHub.h">
       <Filter>ヘッダー ファイル\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Framework\Graphics\Sprite.h">
+      <Filter>ヘッダー ファイル\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Framework\Entities\TestRenderer.h">
+      <Filter>ヘッダー ファイル\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Tests\TestMoveComponent.h">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

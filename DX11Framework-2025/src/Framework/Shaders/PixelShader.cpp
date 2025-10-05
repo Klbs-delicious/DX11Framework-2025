@@ -5,31 +5,31 @@
 //-----------------------------------------------------------------------------
 // Includes
 //-----------------------------------------------------------------------------
-#include"Framework/Shaders/VertexShader.h"
+#include"Framework/Shaders/PixelShader.h"
 
 //-----------------------------------------------------------------------------
 // VertexShader class
 //-----------------------------------------------------------------------------
-VertexShader::VertexShader() :vertexShader(nullptr), inputLayout(nullptr) {}
-VertexShader:: ~VertexShader()
+PixelShader::PixelShader() :pixelShader(nullptr) {}
+PixelShader:: ~PixelShader()
 {
-	this->vertexShader.Reset();
+	this->pixelShader.Reset();
 }
 
 /**	@brief シェーダーのバインド
  *	@param ID3D11Device& _context	D3D11のデバイスコンテキスト
  */
-void VertexShader::Bind(ID3D11DeviceContext& _context)
+void PixelShader::Bind(ID3D11DeviceContext& _context)
 {
-	_context.VSSetShader(this->vertexShader.Get() , nullptr, 0);
+	_context.PSSetShader(this->pixelShader.Get(), nullptr, 0);
 }
 
 /**	@brief シェーダーのバインドを解除
 　*	@param ID3D11Device& _context	D3D11のデバイスコンテキスト
 　*/
-void VertexShader::Unbind(ID3D11DeviceContext& _context)
+void PixelShader::Unbind(ID3D11DeviceContext& _context)
 {
-	_context.VSSetShader(nullptr, nullptr, 0);
+	_context.PSSetShader(nullptr, nullptr, 0);
 }
 
 /**	@brief シェーダーの生成
@@ -37,13 +37,13 @@ void VertexShader::Unbind(ID3D11DeviceContext& _context)
  *	@param std::wstring& _fileName	シェーダーファイル名
  *	@return bool シェーダーの生成に成功したら true
  */
-bool VertexShader::CreateShader(ID3D11Device& _device, std::wstring& _fileName)
+bool PixelShader::CreateShader(ID3D11Device& _device, std::wstring& _fileName)
 {
-	HRESULT hr = _device.CreateVertexShader(
+	HRESULT hr = _device.CreatePixelShader(
 		this->blob->GetBufferPointer(),
 		this->blob->GetBufferSize(),
 		nullptr,
-		this->vertexShader.GetAddressOf()
+		this->pixelShader.GetAddressOf()
 	);
 	if (FAILED(hr))
 	{
@@ -52,4 +52,3 @@ bool VertexShader::CreateShader(ID3D11Device& _device, std::wstring& _fileName)
 	}
 	return true;
 }
-

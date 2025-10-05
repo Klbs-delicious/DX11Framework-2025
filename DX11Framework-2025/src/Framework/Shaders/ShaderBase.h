@@ -29,9 +29,9 @@ public:
 
 	/**	@brief シェーダーの生成
 	 *	@param ID3D11Device& _device	D3D11のデバイス
-	 *	@param std::wstring& _fileName	シェーダーファイル名
+	 *	@return bool シェーダーの生成に成功したら true
 	 */
-	virtual void CreateShader(ID3D11Device& _device, std::wstring& _fileName) = 0;
+	virtual	bool CreateShader(ID3D11Device& _device, std::wstring& _fileName) = 0;
 
 	/**	@brief	バイナリデータの取得
 	 *	@return ID3DBlob* シェーダーバイナリ

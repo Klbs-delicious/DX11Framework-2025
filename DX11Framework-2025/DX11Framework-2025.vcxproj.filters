@@ -55,6 +55,12 @@
     <Filter Include="ヘッダー ファイル\Entities">
       <UniqueIdentifier>{06c859ff-18f7-47e1-b9c7-9c9f7a634647}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\Framework\Shader">
+      <UniqueIdentifier>{c87160b0-5046-4ccf-92ab-a29d3829580d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Shader">
+      <UniqueIdentifier>{6b101b7c-dd78-4fd7-b3d8-0ce97ccdd36d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Framework\main.cpp">
@@ -119,6 +125,9 @@
     </ClCompile>
     <ClCompile Include="src\Tests\TestMoveComponent.cpp">
       <Filter>ソース ファイル\Framework\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Framework\Shaders\ShaderBase.cpp">
+      <Filter>ソース ファイル\Framework\Shader</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -218,8 +227,11 @@
     <ClInclude Include="src\Framework\Entities\TestRenderer.h">
       <Filter>ヘッダー ファイル\Entities</Filter>
     </ClInclude>
+    <ClInclude Include="src\Framework\Shaders\ShaderBase.h">
+      <Filter>ヘッダー ファイル\Shader</Filter>
+    </ClInclude>
     <ClInclude Include="src\Tests\TestMoveComponent.h">
-      <Filter>ソース ファイル\Framework\Entities</Filter>
+      <Filter>ヘッダー ファイル\Entities</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

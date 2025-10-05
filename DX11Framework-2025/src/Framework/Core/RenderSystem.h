@@ -100,7 +100,6 @@ public:
      */
     void SetFillMode(D3D11_FILL_MODE _fillMode);
 
-
     /** @brief 深度テストを常にパスさせる設定に変更する
      *  @details
      * - 深度テストは有効（DepthEnable = TRUE）

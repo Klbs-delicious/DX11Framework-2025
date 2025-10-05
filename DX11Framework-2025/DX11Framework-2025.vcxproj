@@ -38,6 +38,7 @@
     <ClCompile Include="src\Framework\Scenes\BaseScene.cpp" />
     <ClCompile Include="src\Framework\Scenes\SceneFactory.cpp" />
     <ClCompile Include="src\Framework\Shaders\ShaderBase.cpp" />
+    <ClCompile Include="src\Framework\Shaders\VertexShader.cpp" />
     <ClCompile Include="src\Framework\Utils\DebugHooks.cpp" />
     <ClCompile Include="src\Scenes\SceneManager.cpp" />
     <ClCompile Include="src\Scenes\TestScene.cpp" />
@@ -74,6 +75,7 @@
     <ClInclude Include="src\Framework\Scenes\SceneFactory.h" />
     <ClInclude Include="src\Framework\Scenes\SceneType.h" />
     <ClInclude Include="src\Framework\Shaders\ShaderBase.h" />
+    <ClInclude Include="src\Framework\Shaders\VertexShader.h" />
     <ClInclude Include="src\Framework\Utils\CommonTypes.h" />
     <ClInclude Include="src\Framework\Utils\DebugHooks.h" />
     <ClInclude Include="src\Framework\Utils\NonCopyable.h" />

@@ -18,14 +18,14 @@ public:
 	~ShaderBase();
 
 	/**	@brief シェーダーのバインド
-	 *	@param ID3D11Device& _device	D3D11のデバイス
+	 *	@param ID3D11Device& _context	D3D11のデバイスコンテキスト
 	 */
-	virtual void Bind(ID3D11Device& _device) = 0;
+	virtual void Bind(ID3D11DeviceContext& _context) = 0;
 
 	/**	@brief シェーダーのバインドを解除
-	 *	@param ID3D11Device& _device	D3D11のデバイス
+	 *	@param ID3D11Device& _context	D3D11のデバイスコンテキスト
 	 */
-	virtual void Unbind(ID3D11Device& _device) = 0;
+	virtual void Unbind(ID3D11DeviceContext& _context) = 0;
 
 	/**	@brief シェーダーの生成
 	 *	@param ID3D11Device& _device	D3D11のデバイス

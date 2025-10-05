@@ -129,6 +129,9 @@
     <ClCompile Include="src\Framework\Shaders\ShaderBase.cpp">
       <Filter>ソース ファイル\Framework\Shader</Filter>
     </ClCompile>
+    <ClCompile Include="src\Framework\Shaders\VertexShader.cpp">
+      <Filter>ソース ファイル\Framework\Shader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Framework\Core\Application.h">
@@ -232,6 +235,9 @@
     </ClInclude>
     <ClInclude Include="src\Tests\TestMoveComponent.h">
       <Filter>ヘッダー ファイル\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Framework\Shaders\VertexShader.h">
+      <Filter>ヘッダー ファイル\Shader</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

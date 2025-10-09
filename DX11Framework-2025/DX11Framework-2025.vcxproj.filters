@@ -31,239 +31,253 @@
     <Filter Include="ソース ファイル\Scenes">
       <UniqueIdentifier>{88d41e81-8cda-40d9-aa22-b6c04fbdc77d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ヘッダー ファイル\Core">
-      <UniqueIdentifier>{370cb1be-6a2c-45dc-a4d5-23fd4cdeacba}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\Scenes">
-      <UniqueIdentifier>{d45f5e43-634d-40c5-9fe4-3c13e58637db}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\Utils">
-      <UniqueIdentifier>{5a51c33b-61e3-472c-a03c-4db9cd0432f3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="リソース ファイル\PixelShader">
       <UniqueIdentifier>{1d65b21d-29d6-40e1-801b-db3f952753bd}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\Framework\Event">
-      <UniqueIdentifier>{24886c2e-1ec5-4671-9270-aaf15e21947f}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ヘッダー ファイル\Event">
-      <UniqueIdentifier>{b561c57e-b4b2-469b-8be3-15712e803b7e}</UniqueIdentifier>
     </Filter>
     <Filter Include="ソース ファイル\Framework\Entities">
       <UniqueIdentifier>{11aa4265-b643-42e2-87ec-fe475ee9d39e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ヘッダー ファイル\Entities">
-      <UniqueIdentifier>{06c859ff-18f7-47e1-b9c7-9c9f7a634647}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ソース ファイル\Framework\Shader">
+    <Filter Include="ソース ファイル\Framework\Shaders">
       <UniqueIdentifier>{c87160b0-5046-4ccf-92ab-a29d3829580d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ヘッダー ファイル\Shader">
+    <Filter Include="ソース ファイル\Framework\Events">
+      <UniqueIdentifier>{24886c2e-1ec5-4671-9270-aaf15e21947f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Framework\Graphics">
+      <UniqueIdentifier>{b835eb0b-d768-463a-a355-952fe18ab57a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Test">
+      <UniqueIdentifier>{994f75cd-c754-4a86-a9dd-eacbdaf95631}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Framework">
+      <UniqueIdentifier>{619d01e0-464f-4a5e-a498-4bf995775bc2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Framework\Core">
+      <UniqueIdentifier>{370cb1be-6a2c-45dc-a4d5-23fd4cdeacba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Framework\Entities">
+      <UniqueIdentifier>{06c859ff-18f7-47e1-b9c7-9c9f7a634647}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Framework\Event">
+      <UniqueIdentifier>{b561c57e-b4b2-469b-8be3-15712e803b7e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Framework\Shader">
       <UniqueIdentifier>{6b101b7c-dd78-4fd7-b3d8-0ce97ccdd36d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Framework\Utils">
+      <UniqueIdentifier>{5a51c33b-61e3-472c-a03c-4db9cd0432f3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Framework\Graphics">
+      <UniqueIdentifier>{41e2de51-6b78-4dc4-8267-27c30d39d46f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Framework\Scenes">
+      <UniqueIdentifier>{d45f5e43-634d-40c5-9fe4-3c13e58637db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Test">
+      <UniqueIdentifier>{d73fd882-447d-46e6-a032-e0502ac3223c}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Framework\main.cpp">
+    <ClInclude Include="Code\Include\Framework\Core\Application.h">
+      <Filter>ヘッダー ファイル\Framework\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Core\D3D11System.h">
+      <Filter>ヘッダー ファイル\Framework\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\Component.h">
+      <Filter>ヘッダー ファイル\Framework\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Utils\CommonTypes.h">
+      <Filter>ヘッダー ファイル\Framework\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\Camera2D.h">
+      <Filter>ヘッダー ファイル\Framework\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Utils\DebugHooks.h">
+      <Filter>ヘッダー ファイル\Framework\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Core\DirectInputDevice.h">
+      <Filter>ヘッダー ファイル\Framework\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Core\FPS.h">
+      <Filter>ヘッダー ファイル\Framework\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Core\GameLoop.h">
+      <Filter>ヘッダー ファイル\Framework\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\GameObject.h">
+      <Filter>ヘッダー ファイル\Framework\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Event\GameObjectEvent.h">
+      <Filter>ヘッダー ファイル\Framework\Event</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\GameObjectManager.h">
+      <Filter>ヘッダー ファイル\Framework\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Core\IInputDevice.h">
+      <Filter>ヘッダー ファイル\Framework\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Core\InputSystem.h">
+      <Filter>ヘッダー ファイル\Framework\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Core\IResourceManager.h">
+      <Filter>ヘッダー ファイル\Framework\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Utils\NonCopyable.h">
+      <Filter>ヘッダー ファイル\Framework\Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\PhaseInterfaces.h">
+      <Filter>ヘッダー ファイル\Framework\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Shaders\PixelShader.h">
+      <Filter>ヘッダー ファイル\Framework\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Core\RenderSystem.h">
+      <Filter>ヘッダー ファイル\Framework\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Core\ResourceHub.h">
+      <Filter>ヘッダー ファイル\Framework\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Scenes\SceneFactory.h">
+      <Filter>ヘッダー ファイル\Framework\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Scenes\SceneType.h">
+      <Filter>ヘッダー ファイル\Framework\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Scenes\SceneManager.h">
+      <Filter>ヘッダー ファイル\Framework\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Shaders\ShaderBase.h">
+      <Filter>ヘッダー ファイル\Framework\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\Sprite.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Shaders\ShaderCommon.h">
+      <Filter>ヘッダー ファイル\Framework\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Shaders\ShaderManager.h">
+      <Filter>ヘッダー ファイル\Framework\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\SpriteManager.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Core\SystemLocator.h">
+      <Filter>ヘッダー ファイル\Framework\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\TestComponent.h">
+      <Filter>ヘッダー ファイル\Test</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Tests\TestMoveComponent.h">
+      <Filter>ヘッダー ファイル\Test</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\TestRenderer.h">
+      <Filter>ヘッダー ファイル\Test</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Scenes\TestScene.h">
+      <Filter>ヘッダー ファイル\Test</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Scenes\TitleScene.h">
+      <Filter>ヘッダー ファイル\Framework\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\Transform.h">
+      <Filter>ヘッダー ファイル\Framework\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Shaders\VertexShader.h">
+      <Filter>ヘッダー ファイル\Framework\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Core\WindowSystem.h">
+      <Filter>ヘッダー ファイル\Framework\Core</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Code\Source\Framework\main.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="src\Framework\Core\WindowsSystem.cpp">
+    <ClCompile Include="Code\Source\Framework\Core\Application.cpp">
       <Filter>ソース ファイル\Framework\Core</Filter>
     </ClCompile>
-    <ClCompile Include="src\Framework\Core\D3D11System.cpp">
+    <ClCompile Include="Code\Source\Framework\Core\D3D11System.cpp">
       <Filter>ソース ファイル\Framework\Core</Filter>
     </ClCompile>
-    <ClCompile Include="src\Framework\Utils\DebugHooks.cpp">
+    <ClCompile Include="Code\Source\Framework\Core\GameLoop.cpp">
+      <Filter>ソース ファイル\Framework\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Entities\GameObjectManager.cpp">
+      <Filter>ソース ファイル\Framework\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Core\InputSystem.cpp">
+      <Filter>ソース ファイル\Framework\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Core\WindowsSystem.cpp">
+      <Filter>ソース ファイル\Framework\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Core\RenderSystem.cpp">
+      <Filter>ソース ファイル\Framework\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Utils\DebugHooks.cpp">
       <Filter>ソース ファイル\Framework\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="src\Framework\Core\RenderSystem.cpp">
+    <ClCompile Include="Code\Source\Framework\Core\DirectinputDevice.cpp">
       <Filter>ソース ファイル\Framework\Core</Filter>
     </ClCompile>
-    <ClCompile Include="src\Framework\Scenes\BaseScene.cpp">
+    <ClCompile Include="Code\Source\Framework\Scenes\BaseScene.cpp">
       <Filter>ソース ファイル\Framework\Scenes</Filter>
     </ClCompile>
-    <ClCompile Include="src\Framework\Scenes\SceneFactory.cpp">
+    <ClCompile Include="Code\Source\Framework\Entities\Camera2D.cpp">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Entities\GameObject.cpp">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Shaders\PixelShader.cpp">
+      <Filter>ソース ファイル\Framework\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Shaders\VertexShader.cpp">
+      <Filter>ソース ファイル\Framework\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Shaders\ShaderBase.cpp">
+      <Filter>ソース ファイル\Framework\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Shaders\ShaderManager.cpp">
+      <Filter>ソース ファイル\Framework\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Scenes\SceneFactory.cpp">
       <Filter>ソース ファイル\Framework\Scenes</Filter>
     </ClCompile>
-    <ClCompile Include="src\Scenes\TestScene.cpp">
-      <Filter>ソース ファイル\Scenes</Filter>
+    <ClCompile Include="Code\Source\Scenes\SceneManager.cpp">
+      <Filter>ソース ファイル\Framework\Scenes</Filter>
     </ClCompile>
-    <ClCompile Include="src\Scenes\SceneManager.cpp">
-      <Filter>ソース ファイル\Scenes</Filter>
+    <ClCompile Include="Code\Source\Framework\Graphics\SpriteManager.cpp">
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\Scenes\TitleScene.cpp">
-      <Filter>ソース ファイル\Scenes</Filter>
+    <ClCompile Include="Code\Source\Tests\TestMoveComponent.cpp">
+      <Filter>ソース ファイル\Test</Filter>
     </ClCompile>
-    <ClCompile Include="src\Framework\Core\Application.cpp">
-      <Filter>ソース ファイル\Framework\Core</Filter>
+    <ClCompile Include="Code\Source\Scenes\TestScene.cpp">
+      <Filter>ソース ファイル\Test</Filter>
     </ClCompile>
-    <ClCompile Include="src\Framework\Core\DirectinputDevice.cpp">
-      <Filter>ソース ファイル\Framework\Core</Filter>
+    <ClCompile Include="Code\Source\Framework\Entities\TestRenderer.cpp">
+      <Filter>ソース ファイル\Test</Filter>
     </ClCompile>
-    <ClCompile Include="src\Framework\Core\GameLoop.cpp">
-      <Filter>ソース ファイル\Framework\Core</Filter>
+    <ClCompile Include="Code\Source\Scenes\TitleScene.cpp">
+      <Filter>ソース ファイル\Framework\Scenes</Filter>
     </ClCompile>
-    <ClCompile Include="src\Framework\Core\InputSystem.cpp">
-      <Filter>ソース ファイル\Framework\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Framework\Entities\GameObject.cpp">
+    <ClCompile Include="Code\Source\Framework\Entities\Transform.cpp">
       <Filter>ソース ファイル\Framework\Entities</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Framework\Entities\GameObjectManager.cpp">
-      <Filter>ソース ファイル\Framework\Entities</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Framework\Entities\Transform.cpp">
-      <Filter>ソース ファイル\Framework\Entities</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Framework\Entities\Camera2D.cpp">
-      <Filter>ソース ファイル\Framework\Entities</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Framework\Core\SpriteManager.cpp">
-      <Filter>ソース ファイル\Framework\Core</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Framework\Entities\TestRenderer.cpp">
-      <Filter>ソース ファイル\Framework\Entities</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Tests\TestMoveComponent.cpp">
-      <Filter>ソース ファイル\Framework\Entities</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Framework\Shaders\ShaderBase.cpp">
-      <Filter>ソース ファイル\Framework\Shader</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Framework\Shaders\VertexShader.cpp">
-      <Filter>ソース ファイル\Framework\Shader</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Framework\Shaders\PixelShader.cpp">
-      <Filter>ソース ファイル\Framework\Shader</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Framework\Core\ShaderManager.cpp">
-      <Filter>ソース ファイル\Framework\Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Framework\Core\Application.h">
-      <Filter>ヘッダー ファイル\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Core\D3D11System.h">
-      <Filter>ヘッダー ファイル\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Core\DirectInputDevice.h">
-      <Filter>ヘッダー ファイル\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Core\FPS.h">
-      <Filter>ヘッダー ファイル\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Core\GameLoop.h">
-      <Filter>ヘッダー ファイル\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Core\IInputDevice.h">
-      <Filter>ヘッダー ファイル\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Core\InputSystem.h">
-      <Filter>ヘッダー ファイル\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Core\RenderSystem.h">
-      <Filter>ヘッダー ファイル\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Core\SystemLocator.h">
-      <Filter>ヘッダー ファイル\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Core\WindowSystem.h">
-      <Filter>ヘッダー ファイル\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Scenes\BaseScene.h">
-      <Filter>ヘッダー ファイル\Scenes</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Scenes\SceneFactory.h">
-      <Filter>ヘッダー ファイル\Scenes</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Scenes\SceneType.h">
-      <Filter>ヘッダー ファイル\Scenes</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Utils\DebugHooks.h">
-      <Filter>ヘッダー ファイル\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Utils\NonCopyable.h">
-      <Filter>ヘッダー ファイル\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Event\GameObjectEvent.h">
-      <Filter>ヘッダー ファイル\Event</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Entities\GameObject.h">
-      <Filter>ヘッダー ファイル\Entities</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Entities\Component.h">
-      <Filter>ヘッダー ファイル\Entities</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Entities\GameObjectManager.h">
-      <Filter>ヘッダー ファイル\Entities</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Entities\PhaseInterfaces.h">
-      <Filter>ヘッダー ファイル\Entities</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Entities\TestComponent.h">
-      <Filter>ヘッダー ファイル\Entities</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Scenes\TestScene.h">
-      <Filter>ヘッダー ファイル\Scenes</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Scenes\SceneManager.h">
-      <Filter>ヘッダー ファイル\Scenes</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Scenes\TitleScene.h">
-      <Filter>ヘッダー ファイル\Scenes</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Entities\Transform.h">
-      <Filter>ヘッダー ファイル\Entities</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Utils\CommonTypes.h">
-      <Filter>ヘッダー ファイル\Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Entities\Camera2D.h">
-      <Filter>ヘッダー ファイル\Entities</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Core\IResourceManager.h">
-      <Filter>ヘッダー ファイル\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Core\SpriteManager.h">
-      <Filter>ヘッダー ファイル\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Core\ResourceHub.h">
-      <Filter>ヘッダー ファイル\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Graphics\Sprite.h">
-      <Filter>ヘッダー ファイル\Entities</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Entities\TestRenderer.h">
-      <Filter>ヘッダー ファイル\Entities</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Shaders\ShaderBase.h">
-      <Filter>ヘッダー ファイル\Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Tests\TestMoveComponent.h">
-      <Filter>ヘッダー ファイル\Entities</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Shaders\VertexShader.h">
-      <Filter>ヘッダー ファイル\Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Shaders\PixelShader.h">
-      <Filter>ヘッダー ファイル\Shader</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Core\ShaderManager.h">
-      <Filter>ヘッダー ファイル\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Shaders\ShaderCommon.h">
-      <Filter>ヘッダー ファイル\Core</Filter>
-    </ClInclude>
+    <None Include="Code\Shaders\Common.hlsli">
+      <Filter>リソース ファイル</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="src\Framework\Graphics\Shaders\VertexShader\VS_Test.hlsl">
-      <Filter>リソース ファイル\VertexShader</Filter>
-    </FxCompile>
-    <FxCompile Include="src\Framework\Graphics\Shaders\PixelShader\PS_Test.hlsl">
+    <FxCompile Include="Code\Shaders\PixelShader\PS_Test.hlsl">
       <Filter>リソース ファイル\PixelShader</Filter>
     </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="src\Framework\Graphics\Shaders\Common.hlsli" />
+    <FxCompile Include="Code\Shaders\VertexShader\VS_Test.hlsl">
+      <Filter>リソース ファイル\VertexShader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

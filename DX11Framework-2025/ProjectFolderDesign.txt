@@ -1,43 +1,27 @@
 ProjectRoot/
-├── src/
-│   ├── Framework/                         # 再利用可能なエンジン・基盤系
-│   │   ├── Core/                          # D3D11System, WindowSystem など
-│   │   ├── Graphics/                      # Mesh, Texture, Renderer など
-│   │   │   └── Shaders/                   # 共通HLSLファイル
-│   │   ├── Shaders/                       # ShaderManager, Compiler 等
-│   │   ├── Utils/                         # ログ、非コピー化、ヘルパーなど
-│   │   ├── Scenes/                        # エンジン側のシーン基盤
-│   │   │   ├── BaseScene.h
-│   │   │   ├── BaseScene.cpp
-│   │   │   └── SceneFactory.hpp          # 任意で導入可能
-│   │   ├── Event/                        	# イベント通知に関するもの
-│   │   │  
-│   │   ├── Entities/			# 論理的なオブジェクト構造の基盤
-│   │   └── main.cpp
-│   ├── Game/                       # ゲーム固有のロジック・データ
-│   │   ├── Entities/              # プレイヤー、敵、NPCなど
-│   │   ├── Components/            # HP, 物理, 操作系の再利用部品
-│   │   └── Shader/                # ゲーム専用の HLSL ファイル（演出・UI）
-│   ├── Scenes/                     # 状態管理・遷移・演出
-│   │   ├── SceneManager.cpp/h     # シーン管理
-│   │   ├── MenuScene/
-│   │   ├── GameplayScene/
-│   │   └── ResultScene/
-│   ├── UI/                         # UI表示制御・InputAction など
-│   │   ├── Widgets/
-│   │   ├── Layouts/
-│   │   └── UIManager.cpp/h
-│   └── Resources/                 # 設定・言語など静的リソース
-│       ├── Config/
-│       └── Localization/
+├── Include/                  # C++のヘッダー（宣言・インターフェース）
+│   ├── Core/                # システム系（WindowSystem, D3D11Systemなど）
+│   ├── Graphics/            # Mesh, Texture, Rendererなど
+│   ├── Shaders/             # Shader定数構造体など（C++とHLSLの橋渡し）
+│   └── Utils/               # ログ、非コピー化、ヘルパーなど
 
-├── Assets/                         # 実行時に使用されるリソース（素材）
-│   ├── Shaders/                    # コンパイル済み Shader (.cso)
-│   │   ├── Framework/             # 基礎描画用 Shader（再利用可能）
-│   │   └── GameSpecific/          # ゲーム固有演出 Shader（UI・特殊表現など）
-│   ├── Textures/                  # .png, .dds など画像素材
-│   ├── Models/                    # .fbx, .obj など立体モデル
-│   ├── Sounds/                    # .wav, .mp3 など音声素材
-│   └── Fonts/                     # フォント定義ファイル（.ttfなど）
+├── Source/                   # C++の実装（ロジック・処理）
+│   ├── Core/
+│   ├── Graphics/
+│   ├── Shaders/             # ShaderManager, Compilerなど
+│   ├── Scenes/              # シーン制御・遷移
+│   ├── Entities/            # ゲームオブジェクト
+│   └── Utils/
 
-└── External/                      # 外部ライブラリ・SDKなど
+├── Shaders/                  # GPU用コード（HLSLファイル）
+│   ├── Framework/           # 再利用可能な描画ロジック
+│   └── GameSpecific/        # ゲーム固有の演出・UI表現
+
+├── Assets/                   # 実行時リソース（素材・バイナリ）
+│   ├── Shaders/             # コンパイル済み .cso ファイル
+│   ├── Textures/            # .png, .dds など画像素材
+│   ├── Models/              # .fbx, .obj など立体モデル
+│   ├── Sounds/              # .wav, .mp3 など音声素材
+│   └── Fonts/               # .ttf などフォント定義
+
+└── External/                 # 外部ライブラリ・SDKなど

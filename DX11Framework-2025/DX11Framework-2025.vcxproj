@@ -19,96 +19,87 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Framework\Core\Application.cpp" />
-    <ClCompile Include="src\Framework\Core\D3D11System.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="src\Framework\Core\DirectinputDevice.cpp" />
-    <ClCompile Include="src\Framework\Core\GameLoop.cpp" />
-    <ClCompile Include="src\Framework\Core\InputSystem.cpp" />
-    <ClCompile Include="src\Framework\Core\RenderSystem.cpp" />
-    <ClCompile Include="src\Framework\Core\ShaderManager.cpp" />
-    <ClCompile Include="src\Framework\Core\SpriteManager.cpp" />
-    <ClCompile Include="src\Framework\Core\WindowsSystem.cpp" />
-    <ClCompile Include="src\Framework\Entities\Camera2D.cpp" />
-    <ClCompile Include="src\Framework\Entities\GameObject.cpp" />
-    <ClCompile Include="src\Framework\Entities\GameObjectManager.cpp" />
-    <ClCompile Include="src\Framework\Entities\TestRenderer.cpp" />
-    <ClCompile Include="src\Framework\Entities\Transform.cpp" />
-    <ClCompile Include="src\Framework\main.cpp" />
-    <ClCompile Include="src\Framework\Scenes\BaseScene.cpp" />
-    <ClCompile Include="src\Framework\Scenes\SceneFactory.cpp" />
-    <ClCompile Include="src\Framework\Shaders\PixelShader.cpp" />
-    <ClCompile Include="src\Framework\Shaders\ShaderBase.cpp" />
-    <ClCompile Include="src\Framework\Shaders\VertexShader.cpp" />
-    <ClCompile Include="src\Framework\Utils\DebugHooks.cpp" />
-    <ClCompile Include="src\Scenes\SceneManager.cpp" />
-    <ClCompile Include="src\Scenes\TestScene.cpp" />
-    <ClCompile Include="src\Scenes\TitleScene.cpp" />
-    <ClCompile Include="src\Tests\TestMoveComponent.cpp" />
+    <ClInclude Include="Code\Include\Framework\Core\Application.h" />
+    <ClInclude Include="Code\Include\Framework\Core\D3D11System.h" />
+    <ClInclude Include="Code\Include\Framework\Core\DirectInputDevice.h" />
+    <ClInclude Include="Code\Include\Framework\Core\FPS.h" />
+    <ClInclude Include="Code\Include\Framework\Core\GameLoop.h" />
+    <ClInclude Include="Code\Include\Framework\Core\IInputDevice.h" />
+    <ClInclude Include="Code\Include\Framework\Core\InputSystem.h" />
+    <ClInclude Include="Code\Include\Framework\Core\IResourceManager.h" />
+    <ClInclude Include="Code\Include\Framework\Core\RenderSystem.h" />
+    <ClInclude Include="Code\Include\Framework\Core\ResourceHub.h" />
+    <ClInclude Include="Code\Include\Framework\Core\SystemLocator.h" />
+    <ClInclude Include="Code\Include\Framework\Core\WindowSystem.h" />
+    <ClInclude Include="Code\Include\Framework\Entities\Camera2D.h" />
+    <ClInclude Include="Code\Include\Framework\Entities\Component.h" />
+    <ClInclude Include="Code\Include\Framework\Entities\GameObject.h" />
+    <ClInclude Include="Code\Include\Framework\Entities\GameObjectManager.h" />
+    <ClInclude Include="Code\Include\Framework\Entities\PhaseInterfaces.h" />
+    <ClInclude Include="Code\Include\Framework\Entities\TestComponent.h" />
+    <ClInclude Include="Code\Include\Framework\Entities\TestRenderer.h" />
+    <ClInclude Include="Code\Include\Framework\Entities\Transform.h" />
+    <ClInclude Include="Code\Include\Framework\Event\GameObjectEvent.h" />
+    <ClInclude Include="Code\Include\Framework\Graphics\Sprite.h" />
+    <ClInclude Include="Code\Include\Framework\Graphics\SpriteManager.h" />
+    <ClInclude Include="Code\Include\Framework\Scenes\SceneFactory.h" />
+    <ClInclude Include="Code\Include\Framework\Scenes\SceneType.h" />
+    <ClInclude Include="Code\Include\Framework\Shaders\PixelShader.h" />
+    <ClInclude Include="Code\Include\Framework\Shaders\ShaderBase.h" />
+    <ClInclude Include="Code\Include\Framework\Shaders\ShaderCommon.h" />
+    <ClInclude Include="Code\Include\Framework\Shaders\ShaderManager.h" />
+    <ClInclude Include="Code\Include\Framework\Shaders\VertexShader.h" />
+    <ClInclude Include="Code\Include\Framework\Utils\CommonTypes.h" />
+    <ClInclude Include="Code\Include\Framework\Utils\DebugHooks.h" />
+    <ClInclude Include="Code\Include\Framework\Utils\NonCopyable.h" />
+    <ClInclude Include="Code\Include\Scenes\SceneManager.h" />
+    <ClInclude Include="Code\Include\Scenes\TestScene.h" />
+    <ClInclude Include="Code\Include\Scenes\TitleScene.h" />
+    <ClInclude Include="Code\Include\Tests\TestMoveComponent.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Framework\Core\Application.h" />
-    <ClInclude Include="src\Framework\Core\D3D11System.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
-    </ClInclude>
-    <ClInclude Include="src\Framework\Core\DirectInputDevice.h" />
-    <ClInclude Include="src\Framework\Core\FPS.h" />
-    <ClInclude Include="src\Framework\Core\GameLoop.h" />
-    <ClInclude Include="src\Framework\Core\IInputDevice.h" />
-    <ClInclude Include="src\Framework\Core\InputSystem.h" />
-    <ClInclude Include="src\Framework\Core\RenderSystem.h" />
-    <ClInclude Include="src\Framework\Core\IResourceManager.h" />
-    <ClInclude Include="src\Framework\Core\ResourceHub.h" />
-    <ClInclude Include="src\Framework\Core\ShaderManager.h" />
-    <ClInclude Include="src\Framework\Core\SpriteManager.h" />
-    <ClInclude Include="src\Framework\Core\SystemLocator.h" />
-    <ClInclude Include="src\Framework\Core\WindowSystem.h" />
-    <ClInclude Include="src\Framework\Entities\Camera2D.h" />
-    <ClInclude Include="src\Framework\Entities\Component.h" />
-    <ClInclude Include="src\Framework\Entities\GameObject.h" />
-    <ClInclude Include="src\Framework\Entities\GameObjectManager.h" />
-    <ClInclude Include="src\Framework\Entities\PhaseInterfaces.h" />
-    <ClInclude Include="src\Framework\Entities\TestComponent.h" />
-    <ClInclude Include="src\Framework\Entities\TestRenderer.h" />
-    <ClInclude Include="src\Framework\Entities\Transform.h" />
-    <ClInclude Include="src\Framework\Event\GameObjectEvent.h" />
-    <ClInclude Include="src\Framework\Graphics\Sprite.h" />
-    <ClInclude Include="src\Framework\Scenes\BaseScene.h" />
-    <ClInclude Include="src\Framework\Scenes\SceneFactory.h" />
-    <ClInclude Include="src\Framework\Scenes\SceneType.h" />
-    <ClInclude Include="src\Framework\Shaders\PixelShader.h" />
-    <ClInclude Include="src\Framework\Shaders\ShaderBase.h" />
-    <ClInclude Include="src\Framework\Shaders\ShaderCommon.h" />
-    <ClInclude Include="src\Framework\Shaders\VertexShader.h" />
-    <ClInclude Include="src\Framework\Utils\CommonTypes.h" />
-    <ClInclude Include="src\Framework\Utils\DebugHooks.h" />
-    <ClInclude Include="src\Framework\Utils\NonCopyable.h" />
-    <ClInclude Include="src\Scenes\SceneManager.h" />
-    <ClInclude Include="src\Scenes\TestScene.h" />
-    <ClInclude Include="src\Scenes\TitleScene.h" />
-    <ClInclude Include="src\Tests\TestMoveComponent.h" />
+    <ClCompile Include="Code\Source\Framework\Core\Application.cpp" />
+    <ClCompile Include="Code\Source\Framework\Core\D3D11System.cpp" />
+    <ClCompile Include="Code\Source\Framework\Core\DirectinputDevice.cpp" />
+    <ClCompile Include="Code\Source\Framework\Core\GameLoop.cpp" />
+    <ClCompile Include="Code\Source\Framework\Core\InputSystem.cpp" />
+    <ClCompile Include="Code\Source\Framework\Core\RenderSystem.cpp" />
+    <ClCompile Include="Code\Source\Framework\Core\WindowsSystem.cpp" />
+    <ClCompile Include="Code\Source\Framework\Entities\Camera2D.cpp" />
+    <ClCompile Include="Code\Source\Framework\Entities\GameObject.cpp" />
+    <ClCompile Include="Code\Source\Framework\Entities\GameObjectManager.cpp" />
+    <ClCompile Include="Code\Source\Framework\Entities\TestRenderer.cpp" />
+    <ClCompile Include="Code\Source\Framework\Entities\Transform.cpp" />
+    <ClCompile Include="Code\Source\Framework\Graphics\SpriteManager.cpp" />
+    <ClCompile Include="Code\Source\Framework\main.cpp" />
+    <ClCompile Include="Code\Source\Framework\Scenes\BaseScene.cpp" />
+    <ClCompile Include="Code\Source\Framework\Scenes\SceneFactory.cpp" />
+    <ClCompile Include="Code\Source\Framework\Shaders\PixelShader.cpp" />
+    <ClCompile Include="Code\Source\Framework\Shaders\ShaderBase.cpp" />
+    <ClCompile Include="Code\Source\Framework\Shaders\ShaderManager.cpp" />
+    <ClCompile Include="Code\Source\Framework\Shaders\VertexShader.cpp" />
+    <ClCompile Include="Code\Source\Framework\Utils\DebugHooks.cpp" />
+    <ClCompile Include="Code\Source\Scenes\SceneManager.cpp" />
+    <ClCompile Include="Code\Source\Scenes\TestScene.cpp" />
+    <ClCompile Include="Code\Source\Scenes\TitleScene.cpp" />
+    <ClCompile Include="Code\Source\Tests\TestMoveComponent.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="src\Framework\Graphics\Shaders\PixelShader\PS_Test.hlsl">
+    <None Include="Code\Shaders\Common.hlsli" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Code\Shaders\PixelShader\PS_Test.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
-      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">main</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">main</EntryPointName>
     </FxCompile>
-    <FxCompile Include="src\Framework\Graphics\Shaders\VertexShader\VS_Test.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+    <FxCompile Include="Code\Shaders\VertexShader\VS_Test.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">main</EntryPointName>
-      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">main</EntryPointName>
     </FxCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="src\Framework\Graphics\Shaders\Common.hlsli" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -205,7 +196,7 @@
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Code;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -225,7 +216,7 @@
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Code;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
     <Link>

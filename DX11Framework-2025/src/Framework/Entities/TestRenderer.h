@@ -5,11 +5,13 @@
 #include "Framework/Entities/Transform.h"
 #include "Framework/Entities/Camera2D.h"
 #include "Framework/Graphics/Sprite.h"
+#include "Framework/Shaders/ShaderBase.h"
 
 #include <d3d11.h>
 #include <wrl/client.h>
 #include <chrono>
 #include <SimpleMath.h>
+#include <vector>
 
 class TestRenderer : public Component, public IDrawable
 {
@@ -40,9 +42,7 @@ private:
 
     Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
     Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
-    Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
-    Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
+    std::vector<ShaderBase*> shaders;
     Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
 
-    std::chrono::steady_clock::time_point startTime;
 };

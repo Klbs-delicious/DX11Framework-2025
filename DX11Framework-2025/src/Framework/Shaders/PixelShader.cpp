@@ -34,11 +34,16 @@ void PixelShader::Unbind(ID3D11DeviceContext& _context)
 
 /**	@brief シェーダーの生成
  *	@param ID3D11Device& _device	D3D11のデバイス
- *	@param std::wstring& _fileName	シェーダーファイル名
+ *  @param ShaderInfo _shaderInfo シェーダー情報
  *	@return bool シェーダーの生成に成功したら true
  */
-bool PixelShader::CreateShader(ID3D11Device& _device, std::wstring& _fileName)
-{
+bool PixelShader::CreateShader(ID3D11Device& _device, const ShaderInfo _shaderInfo)
+{	
+	// シェーダーファイルからバイナリデータを読み込む
+	this->LoadShader(_device, _shaderInfo);
+	if (!this->blob) { return false; }
+
+	// ピクセルシェーダーの生成
 	HRESULT hr = _device.CreatePixelShader(
 		this->blob->GetBufferPointer(),
 		this->blob->GetBufferSize(),

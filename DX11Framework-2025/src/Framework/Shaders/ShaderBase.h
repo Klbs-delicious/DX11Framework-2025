@@ -3,10 +3,15 @@
  */
 #pragma once
 #include"Framework/Utils/CommonTypes.h"
+#include "Framework/Shaders/ShaderCommon.h"
 
 #include<string>
+#include<array>
+
 #include <d3d11.h>
 #pragma comment(lib,"d3d11.lib")
+
+using namespace ShaderCommon;
 
 /**	@class	ShaderBase
  *	@brief	シェーダーの基底クラス
@@ -29,9 +34,10 @@ public:
 
 	/**	@brief シェーダーの生成
 	 *	@param ID3D11Device& _device	D3D11のデバイス
+	 *  @param ShaderInfo _shaderInfo シェーダー情報
 	 *	@return bool シェーダーの生成に成功したら true
 	 */
-	virtual	bool CreateShader(ID3D11Device& _device, std::wstring& _fileName) = 0;
+	virtual	bool CreateShader(ID3D11Device& _device, const ShaderInfo _shaderInfo) = 0;
 
 	/**	@brief	バイナリデータの取得
 	 *	@return ID3DBlob* シェーダーバイナリ
@@ -39,19 +45,20 @@ public:
 	ID3DBlob* GetBlob() { return this->blob.Get(); }
 protected:
 	/**	@brief	シェーダーファイルからバイナリデータを読み込む
-	 *	@param ID3D11Device& _device	D3D11のデバイス
-	 *	@param std::wstring& _fileName	シェーダーファイル名
-	 *	@return ComPtr<ID3DBlob> シェーダーバイナリ
+	 *	@param ID3D11Device&    _device	    D3D11のデバイス
+	 *	@param const ShaderInfo _shaderInfo シェーダー情報
+	 *	@return ComPtr<ID3DBlob>            シェーダーバイナリ
 	 */
-	void LoadShader(ID3D11Device& _device, std::wstring& _fileName);
+	void LoadShader(ID3D11Device& _device, const ShaderInfo _shaderInfo);
 
 	DX::ComPtr<ID3DBlob> blob;	///< シェーダーバイナリ
 
 private:
-	/**	@brief シェーダーのコンパイル
-	 *	@param ID3D11Device& _device D3D11のデバイス
-	 *	@param std::wstring& _fileName シェーダーファイル名
-	 *	@return bool コンパイルに成功したら true
+	/** @brief シェーダーのコンパイル
+	 *  @param ID3D11Device& _device D3D11のデバイス
+	 *  @param ShaderInfo _shaderInfo シェーダー情報
+	 *  @return bool コンパイルに成功したら true
 	 */
-	bool CompileShader(ID3D11Device& _device, std::wstring& _fileName);
+	bool CompileShader(ID3D11Device& _device, const ShaderInfo _shaderInfo);
+
 };

@@ -1,6 +1,6 @@
 #include "../Common.hlsli"
 
-VS_OUT main(VS_IN input)
+VS_OUT main(VS_IN input) 
 {
     VS_OUT output;
 

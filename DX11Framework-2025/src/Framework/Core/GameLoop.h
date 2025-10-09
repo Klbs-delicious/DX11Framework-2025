@@ -5,6 +5,7 @@
 #include"Framework/Utils/NonCopyable.h"
 #include"Framework/Core/InputSystem.h"
 #include"Framework/Core/SpriteManager.h"
+#include"Framework/Core/ShaderManager.h"
 #include"Framework/Entities/GameObjectManager.h"
 #include"Scenes/SceneManager.h"
 
@@ -62,6 +63,7 @@ private:
 	std::unique_ptr<InputSystem> inputSystem;				///< 入力の管理
 	std::unique_ptr<GameObjectManager> gameObjectManager;	///< ゲームオブジェクトの管理
 	std::unique_ptr<SpriteManager> spriteManager;			///< 画像データの管理
+	std::unique_ptr<ShaderManager> shaderManager;			///< シェーダーの管理
 	///< [TODO]物理、衝突の処理
 	///< [TODO]サウンドの処理
 	///< [TODO]UIの管理

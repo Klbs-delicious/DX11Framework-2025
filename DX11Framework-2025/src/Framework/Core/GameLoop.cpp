@@ -70,6 +70,10 @@ void GameLoop::Initialize()
     this->spriteManager = std::make_unique<SpriteManager>();
     ResourceHub::Register(this->spriteManager.get());
 
+	// シェーダー管理クラスをリソース管理クラスに登録
+	this->shaderManager = std::make_unique<ShaderManager>();
+    ResourceHub::Register(this->shaderManager.get());
+
     // シーンの変更
     this->sceneManager->RequestSceneChange(SceneType::Test);
 }
@@ -99,10 +103,12 @@ void GameLoop::Draw()
  */
 void GameLoop::Dispose()
 {
+    SystemLocator::Unregister<ShaderManager>();
     ResourceHub::Unregister<SpriteManager>();
     SystemLocator::Unregister<SceneManager>();
     SystemLocator::Unregister<GameObjectManager>();
 
+    this->shaderManager.reset();
     this->spriteManager.reset();
     this->sceneManager.reset();
     this->gameObjectManager.reset();

@@ -26,5 +26,4 @@ namespace DX
 	using Microsoft::WRL::ComPtr;
 
 	constexpr float PI = std::numbers::pi_v<float>;
-
 }

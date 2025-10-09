@@ -27,6 +27,7 @@
     <ClCompile Include="src\Framework\Core\GameLoop.cpp" />
     <ClCompile Include="src\Framework\Core\InputSystem.cpp" />
     <ClCompile Include="src\Framework\Core\RenderSystem.cpp" />
+    <ClCompile Include="src\Framework\Core\ShaderManager.cpp" />
     <ClCompile Include="src\Framework\Core\SpriteManager.cpp" />
     <ClCompile Include="src\Framework\Core\WindowsSystem.cpp" />
     <ClCompile Include="src\Framework\Entities\Camera2D.cpp" />
@@ -59,6 +60,7 @@
     <ClInclude Include="src\Framework\Core\RenderSystem.h" />
     <ClInclude Include="src\Framework\Core\IResourceManager.h" />
     <ClInclude Include="src\Framework\Core\ResourceHub.h" />
+    <ClInclude Include="src\Framework\Core\ShaderManager.h" />
     <ClInclude Include="src\Framework\Core\SpriteManager.h" />
     <ClInclude Include="src\Framework\Core\SystemLocator.h" />
     <ClInclude Include="src\Framework\Core\WindowSystem.h" />
@@ -77,6 +79,7 @@
     <ClInclude Include="src\Framework\Scenes\SceneType.h" />
     <ClInclude Include="src\Framework\Shaders\PixelShader.h" />
     <ClInclude Include="src\Framework\Shaders\ShaderBase.h" />
+    <ClInclude Include="src\Framework\Shaders\ShaderCommon.h" />
     <ClInclude Include="src\Framework\Shaders\VertexShader.h" />
     <ClInclude Include="src\Framework\Utils\CommonTypes.h" />
     <ClInclude Include="src\Framework\Utils\DebugHooks.h" />

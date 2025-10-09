@@ -26,9 +26,10 @@ public:
 
 	/**	@brief シェーダーの生成
 	 *	@param ID3D11Device& _device	D3D11のデバイス
+	 *  @param ShaderInfo _shaderInfo シェーダー情報
 	 *	@return bool シェーダーの生成に成功したら true
 	 */
-	bool CreateShader(ID3D11Device& _device, std::wstring& _fileName) override;
+	bool CreateShader(ID3D11Device& _device, const ShaderInfo _shaderInfo) override;
 
 private:
 	DX::ComPtr<ID3D11PixelShader> pixelShader;	///< ピクセルシェーダー

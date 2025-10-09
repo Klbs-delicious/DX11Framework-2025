@@ -6,9 +6,12 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include "Framework/Shaders/ShaderBase.h"
+#include "Framework/Shaders/ShaderCommon.h"
 
 #include <d3dcompiler.h>
 #pragma comment(lib, "d3dcompiler.lib")
+
+using namespace ShaderCommon;
 
 //-----------------------------------------------------------------------------
 // ShaderBase class
@@ -22,14 +25,14 @@ ShaderBase::~ShaderBase()
 }
 
 /**	@brief	シェーダーファイルからバイナリデータを読み込む
- *	@param ID3D11Device& _device	D3D11のデバイス
- *	@param std::wstring& _fileName	シェーダーファイル名
- *	@return ComPtr<ID3DBlob> シェーダーバイナリ
+ *	@param ID3D11Device&    _device	    D3D11のデバイス
+ *	@param const ShaderInfo _shaderInfo シェーダー情報
+ *	@return ComPtr<ID3DBlob>            シェーダーバイナリ
  */
-void ShaderBase::LoadShader(ID3D11Device& _device, std::wstring& _fileName)
+void ShaderBase::LoadShader(ID3D11Device& _device, const ShaderInfo _shaderInfo)
 {
 #ifdef _DEBUG
-    this->CompileShader(_device, _fileName);
+    this->CompileShader(_device, _shaderInfo);
 
 #else
     // 指定のシェーダーファイルを読み込み
@@ -49,20 +52,20 @@ void ShaderBase::LoadShader(ID3D11Device& _device, std::wstring& _fileName)
 
 /** @brief シェーダーのコンパイル
  *  @param ID3D11Device& _device D3D11のデバイス
- *  @param std::wstring& _fileName シェーダーファイル名
+ *  @param ShaderInfo _shaderInfo シェーダー情報
  *  @return bool コンパイルに成功したら true
  */
-bool ShaderBase::CompileShader(ID3D11Device& _device, std::wstring& _fileName)
+bool ShaderBase::CompileShader(ID3D11Device& _device, const ShaderInfo _shaderInfo)
 {
     DX::ComPtr<ID3DBlob> errorBlob;
 
     // 指定のシェーダーファイルをコンパイル
-    std::wstring fullPath = L"src/Framework/Graphics/Shaders/" + _fileName + L".hlsl";
+    std::wstring fullPath = L"src/Framework/Graphics/Shaders/" + _shaderInfo.filePath + L".hlsl";
 
     HRESULT hrVS = D3DCompileFromFile(
         fullPath.c_str(),
         nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-        "main", "vs_5_0", 0, 0,
+        EntryPointName[static_cast<int>(_shaderInfo.shaderType)].c_str(), TargetName[static_cast<int>(_shaderInfo.shaderType)].c_str(), 0, 0,
         this->blob.GetAddressOf(), errorBlob.GetAddressOf());
 
     if(SUCCEEDED(hrVS))

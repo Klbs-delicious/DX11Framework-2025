@@ -21,7 +21,7 @@ TestRenderer::TestRenderer(GameObject* owner, bool isActive)
 
     // デフォルトの画像情報を取得する
     IResourceManager<Sprite>& spriteManager = ResourceHub::Get<Sprite>();
-    this->sprite = spriteManager.Get("Default");
+    this->sprite = spriteManager.Get("Eidan");
 
     this->camera = this->owner->GetComponent<Camera2D>();
 	this->transform = this->owner->GetComponent<Transform>();
@@ -117,9 +117,18 @@ void TestRenderer::Draw()
     ctx->DrawIndexed(6, 0, 0);
 }
 
-void TestRenderer::Dispose()
-{
-    // ComPtr に任せる
+void TestRenderer::Dispose() {
+    auto& d3d11 = SystemLocator::Get<D3D11System>();
+    auto ctx = d3d11.GetContext();
+    if (ctx) {
+        ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
+        ctx->PSSetShaderResources(0, 1, nullSRV);
+    }
+    inputLayout.Reset();
+    indexBuffer.Reset();
+    vertexBuffer.Reset();
+
+    shaders.clear();
 }
 
 /** @brief Spriteの設定

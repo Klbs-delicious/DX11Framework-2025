@@ -20,7 +20,7 @@ class ShaderBase
 {
 public:
 	ShaderBase();
-	~ShaderBase();
+	virtual ~ShaderBase();
 
 	/**	@brief シェーダーのバインド
 	 *	@param ID3D11Device& _context	D3D11のデバイスコンテキスト

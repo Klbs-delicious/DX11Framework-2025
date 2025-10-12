@@ -12,7 +12,7 @@ class PixelShader : public ShaderBase
 {
 public:
 	PixelShader();
-	~PixelShader();
+	~PixelShader()override;
 
 	/**	@brief シェーダーのバインド
 	 *	@param ID3D11Device& _context	D3D11のデバイスコンテキスト

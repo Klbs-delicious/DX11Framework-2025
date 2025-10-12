@@ -11,6 +11,8 @@
 #include"Include/Framework/Utils/CommonTypes.h"
 
 #define STB_IMAGE_IMPLEMENTATION
+#define STBI_NO_TGA			// ← TGA ローダ自体を無効化（switchのフォーススルー警告を消す）
+#define STBI_NO_GIF			// ← GIF ローダ自体を無効化（関数で確保している自動変数（スタック上のローカル領域）が大きい警告を消す）
 #include "../External/stb/stb_image.h"
 
 #include	<filesystem>
@@ -38,7 +40,7 @@ SpriteManager::SpriteManager() :spriteMap()
 /// @brief デストラクタ
 SpriteManager::~SpriteManager()
 {
-	this->spriteMap.clear();		// Spriteデストラクタ内部で明示的にShaderResourceViewを解放している
+	this->spriteMap.clear();		
 	this->spritePathMap.clear();
 }
 
@@ -52,7 +54,7 @@ bool SpriteManager::Register(const std::string& _key)
 	if (this->spriteMap.contains(_key)) { return true; }
 
 	// 画像を読み込む
-	const std::u8string& path = this->spritePathMap.at(_key);
+	const std::string& path = this->spritePathMap.at(_key);
 	std::unique_ptr<Sprite> resource = this->LoadTexture(path);
 
 	if (!resource) {
@@ -113,7 +115,7 @@ Sprite* SpriteManager::Get(const std::string& _key)
  *	@param	const std::u8string& _path	画像のファイルパス
  *	@return	std::unique_ptr<Sprite>	画像データ（失敗した場合は nullptr）
  */
-std::unique_ptr<Sprite> SpriteManager::LoadTexture(const std::u8string& _path)
+std::unique_ptr<Sprite> SpriteManager::LoadTexture(const std::string& _path)
 {
 	std::filesystem::path filepath = _path;
 

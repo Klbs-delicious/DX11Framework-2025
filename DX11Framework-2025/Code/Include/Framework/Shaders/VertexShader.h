@@ -12,7 +12,7 @@ class VertexShader : public ShaderBase
 {
 public:
 	VertexShader();
-	~VertexShader();
+	~VertexShader()override;
 
 	/**	@brief シェーダーのバインド
 	 *	@param ID3D11Device& _context	D3D11のデバイスコンテキスト

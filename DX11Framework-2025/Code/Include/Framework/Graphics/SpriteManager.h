@@ -39,7 +39,7 @@ private:
 	 *	@param	const std::u8string& _path	画像のファイルパス
 	 *	@return	std::unique_ptr<Sprite>	画像データ（失敗した場合は nullptr）
 	 */
-	std::unique_ptr<Sprite> LoadTexture(const std::u8string& _path);
+	std::unique_ptr<Sprite> LoadTexture(const std::string& _path);
 
 	/**	@brief 画像データをメモリから読み込む
 	 *	@param	const unsigned char*	_data	画像のバイナリデータ（メモリ上にある）
@@ -51,5 +51,5 @@ private:
 	void TexturepathRegister();	
 
 	std::unordered_map<std::string, std::unique_ptr<Sprite>> spriteMap;		///< スプライトのマップ
-	std::unordered_map<std::string, std::u8string> spritePathMap;			///< スプライトに対応する画像パスのマップ
+	std::unordered_map<std::string, std::string> spritePathMap;				///< スプライトに対応する画像パスのマップ
 };

@@ -6,11 +6,8 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include"Include/Scenes/TestScene.h"
-#include"Include/Framework/Entities/TestComponent.h"
 #include"Include/Framework/Entities/TestRenderer.h"
 #include"Include/Framework/Entities/Camera2D.h"
-#include"Include/Framework/Core/ResourceHub.h"
-#include"Include/Framework/Shaders/ShaderManager.h"
 #include"Include/Tests/TestMoveComponent.h"
 
 #include<iostream>
@@ -22,9 +19,7 @@
 /** @brief コンストラクタ
  *	@param GameObjectManager&	_gameObjectManager	ゲームオブジェクトの管理
  */
-TestScene::TestScene(GameObjectManager& _gameObjectManager) :BaseScene(_gameObjectManager) 
-{
-}
+TestScene::TestScene(GameObjectManager& _gameObjectManager) :BaseScene(_gameObjectManager) {}
 
 /// @brief	デストラクタ
 TestScene::~TestScene() {}
@@ -38,6 +33,8 @@ void TestScene::SetupObjects()
 	auto obj_1 = this->gameObjectManager.Instantiate("obj_1");
 	std::cout << obj_1->GetName() << " : " << std::to_string(obj_1->transform->GetWorldPosition().x) << std::endl;
 	obj_1->transform->SetLocalPosition(DX::Vector3(320.0f, 240.0f, 0.0f));
+	obj_1->transform->SetLocalScale(DX::Vector3(150.0f, 150.0f, 0.0f));
+
 	obj_1->AddComponent<Camera2D>();
 	obj_1->AddComponent<TestRenderer>();
 	obj_1->AddComponent<TestMoveComponent>();

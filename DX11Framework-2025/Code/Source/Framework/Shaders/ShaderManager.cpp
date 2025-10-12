@@ -23,7 +23,11 @@ ShaderManager::ShaderManager() :d3d11(SystemLocator::Get<D3D11System>()), shader
 	this->PreRegisterShaderInfo("TestPS", ShaderInfo(ShaderType::PixelShader, L"PixelShader/PS_Test"));
 }
 
-ShaderManager::~ShaderManager() {}
+ShaderManager::~ShaderManager()
+{
+	this->shaderInfoMap.clear();
+	this->shaderMap.clear();
+}
 
 /** @brief  リソースを登録する
  *	@param  const std::string& _key	リソースのキー

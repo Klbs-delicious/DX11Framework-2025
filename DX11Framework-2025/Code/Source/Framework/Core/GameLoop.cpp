@@ -103,14 +103,18 @@ void GameLoop::Draw()
  */
 void GameLoop::Dispose()
 {
+    this->shaderManager.reset();
     SystemLocator::Unregister<ShaderManager>();
+
+    this->spriteManager.reset();
     ResourceHub::Unregister<SpriteManager>();
+
+    this->sceneManager.reset();
     SystemLocator::Unregister<SceneManager>();
+
+    this->gameObjectManager.reset();
     SystemLocator::Unregister<GameObjectManager>();
 
-    this->shaderManager.reset();
-    this->spriteManager.reset();
-    this->sceneManager.reset();
-    this->gameObjectManager.reset();
     this->inputSystem.reset();
+    SystemLocator::Unregister<InputSystem>();
 }

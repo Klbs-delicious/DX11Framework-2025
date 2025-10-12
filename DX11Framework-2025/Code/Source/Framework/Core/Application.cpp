@@ -135,12 +135,14 @@ void Application::MainLoop()
 */
 void Application::ShutDown()
 {
-    SystemLocator::Unregister<RenderSystem>();
-    SystemLocator::Unregister<D3D11System>();
-    SystemLocator::Unregister<WindowSystem>();
-
     Application::gameLoop.reset();
+
     Application::renderSystem.reset();
+    SystemLocator::Unregister<RenderSystem>();
+
     Application::d3d11System.reset();
+    SystemLocator::Unregister<D3D11System>();
+
     Application::windowSystem.reset();
+    SystemLocator::Unregister<WindowSystem>();
 }

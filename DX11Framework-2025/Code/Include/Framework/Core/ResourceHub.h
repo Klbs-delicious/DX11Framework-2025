@@ -3,7 +3,6 @@
  */
 #pragma once
 #include "Include/Framework/Utils/NonCopyable.h"
-#include "Include/Framework/Core/SystemLocator.h"
 #include "Include/Framework/Core/IResourceManager.h"
 
 #include <typeindex>

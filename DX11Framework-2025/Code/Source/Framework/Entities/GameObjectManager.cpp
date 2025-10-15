@@ -7,13 +7,16 @@
 //-----------------------------------------------------------------------------
 #include "Include/Framework/Entities/GameObjectManager.h"
 
+#include <algorithm>
 //-----------------------------------------------------------------------------
 // GameObjectManager Class
 //-----------------------------------------------------------------------------
 
-/// @brief コンストラクタ
-GameObjectManager::GameObjectManager():
-	gameObjects(),
+/**	@brief コンストラクタ
+ *	@param const EngineServices* _services
+ */
+GameObjectManager::GameObjectManager(const EngineServices* _services) :
+	gameObjects(), services(_services),
 	pendingInit(),updateList(),drawList(), destroyQueue(),
 	nameMap(),tagMap()
 {}
@@ -109,6 +112,9 @@ GameObject* GameObjectManager::Instantiate(const std::string& _name, const GameT
 
 	// [TODO]GameObjectクラス内でSetUp()を作成しコンストラクタ内でSetUp()を定義する
 	//rawPtr->SetUp();
+
+	// リソース関連の参照を設定
+	rawPtr->SetServices(this->services);
 
 	// 初期化待ちキューに登録（初期化は次のループで呼ぶ）
 	this->pendingInit.push_back(rawPtr);
@@ -214,24 +220,48 @@ void GameObjectManager::FlushDestroyQueue()
 void GameObjectManager::OnGameObjectEvent(GameObject* _obj, GameObjectEvent _event)
 {
 	switch (_event) {
-	case GameObjectEvent::Refreshed:
-		// 更新・描画対象に登録
-		if (_obj->IsUpdatable()) this->updateList.push_back(_obj);
-		if (_obj->IsDrawable())  this->drawList.push_back(_obj);
-		std::cout << "Refreshed: " << _obj->GetName() << std::endl;
+	case GameObjectEvent::Initialized:
+		// 初期化直後：現在の状態に合わせて登録を正規化
+		RefreshRegistration(_obj);
 		break;
+
+	case GameObjectEvent::Refreshed:
+		// コンポーネント構成や有効/無効が変わった：登録を正規化
+		RefreshRegistration(_obj);
+		// std::cout << "Refreshed: " << _obj->GetName() << std::endl;
+		break;
+
 	case GameObjectEvent::Destroyed:
 		if (!_obj) return;
-		// すでに削除キューに入っていないか確認して追加
+
+		// 破棄前に、更新/描画リストから確実に外す（外し漏れ防止）
+		erase_one(this->updateList, _obj);
+		erase_one(this->drawList, _obj);
+
+		// すでに破棄キューに入っていないか確認して追加する
 		if (std::find(this->destroyQueue.begin(), this->destroyQueue.end(), _obj) == this->destroyQueue.end())
 		{
 			this->destroyQueue.push_back(_obj);
 		}
 		break;
-	case GameObjectEvent::Initialized:
-		// 更新・描画対象に登録
-		if (_obj->IsUpdatable()) this->updateList.push_back(_obj);
-		if (_obj->IsDrawable())  this->drawList.push_back(_obj);
-		break;
 	}
+}
+
+/**	@brief 現在の状態（IsUpdatable/IsDrawable）に合わせて登録を正規化
+ *	@param _obj
+ *	@details
+ *		- 必要なら追加、不要なら除去
+ *		- Initialized/Refreshed から共通で呼ぶ
+ */
+void GameObjectManager::RefreshRegistration(GameObject* _obj)
+{
+	if (!_obj) return;
+
+	// Update 対象の正規化
+	if (_obj->IsUpdatable())  { push_unique(this->updateList, _obj); }
+	else{ erase_one(this->updateList, _obj); }
+
+	// Draw 対象の正規化
+	if (_obj->IsDrawable()){ push_unique(this->drawList, _obj); }
+	else { erase_one(this->drawList, _obj); }
 }

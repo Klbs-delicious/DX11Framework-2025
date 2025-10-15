@@ -32,8 +32,23 @@ void GameLoop::Initialize()
     this->inputSystem = std::make_unique<InputSystem>();
     SystemLocator::Register<InputSystem>(this->inputSystem.get());
 
+    // 画像管理クラスをリソース管理クラスに登録
+    this->spriteManager = std::make_unique<SpriteManager>();
+    ResourceHub::Register(this->spriteManager.get());
+
+    // シェーダー管理クラスをリソース管理クラスに登録
+    this->shaderManager = std::make_unique<ShaderManager>();
+    ResourceHub::Register(this->shaderManager.get());
+
+    this->services = {
+        &ResourceHub::Get<Sprite>(),
+        //&ResourceHub::Get<Material>(),
+        //&ResourceHub::Get<Mesh>(),
+        &ResourceHub::Get<ShaderBase>(),
+    };
+
     // ゲームオブジェクトの管理を行うクラスの生成と登録
-    this->gameObjectManager = std::make_unique<GameObjectManager>();
+    this->gameObjectManager = std::make_unique<GameObjectManager>(&services);
     SystemLocator::Register<GameObjectManager>(this->gameObjectManager.get());
 
     // シーン構成の初期化
@@ -65,14 +80,6 @@ void GameLoop::Initialize()
     this->inputSystem->RegisterKeyBinding("SceneChangeTest", static_cast<int>(DirectInputDevice::KeyboardKey::D));
     this->inputSystem->RegisterKeyBinding("SceneChangeTitle", static_cast<int>(DirectInputDevice::KeyboardKey::A));
     this->inputSystem->RegisterKeyBinding("GameExit", static_cast<int>(DirectInputDevice::KeyboardKey::K));
-
-    // 画像管理クラスをリソース管理クラスに登録
-    this->spriteManager = std::make_unique<SpriteManager>();
-    ResourceHub::Register(this->spriteManager.get());
-
-	// シェーダー管理クラスをリソース管理クラスに登録
-	this->shaderManager = std::make_unique<ShaderManager>();
-    ResourceHub::Register(this->shaderManager.get());
 
     // シーンの変更
     this->sceneManager->RequestSceneChange(SceneType::Test);

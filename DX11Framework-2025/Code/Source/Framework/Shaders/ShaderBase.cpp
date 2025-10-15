@@ -29,7 +29,7 @@ ShaderBase::~ShaderBase()
  *	@param const ShaderInfo _shaderInfo シェーダー情報
  *	@return ComPtr<ID3DBlob>            シェーダーバイナリ
  */
-void ShaderBase::LoadShader(ID3D11Device& _device, const ShaderInfo _shaderInfo)
+void ShaderBase::LoadShader(ID3D11Device& _device, const ShaderInfo _shaderInfo)const
 {
 #ifdef _DEBUG
     this->CompileShader(_device, _shaderInfo);
@@ -55,7 +55,7 @@ void ShaderBase::LoadShader(ID3D11Device& _device, const ShaderInfo _shaderInfo)
  *  @param ShaderInfo _shaderInfo シェーダー情報
  *  @return bool コンパイルに成功したら true
  */
-bool ShaderBase::CompileShader(ID3D11Device& _device, const ShaderInfo _shaderInfo)
+bool ShaderBase::CompileShader(ID3D11Device& _device, const ShaderInfo _shaderInfo)const
 {
     DX::ComPtr<ID3DBlob> errorBlob;
 

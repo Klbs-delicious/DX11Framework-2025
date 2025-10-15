@@ -25,7 +25,7 @@ Camera2D::Camera2D(GameObject* _owner, bool _isActive)
     auto& window = SystemLocator::Get<WindowSystem>();
     this->screenSize = DX::Vector2(static_cast<float>(window.GetWidth()), static_cast<float>(window.GetHeight()));
 
-    this->transform = this->owner->GetComponent<Transform>();
+    this->transform = this->Owner()->GetComponent<Transform>();
 }
 
 /** @brief 初期化処理

@@ -42,16 +42,16 @@ public:
 	/**	@brief	バイナリデータの取得
 	 *	@return ID3DBlob* シェーダーバイナリ
 	 */
-	ID3DBlob* GetBlob() { return this->blob.Get(); }
+	ID3DBlob* GetBlob()const { return this->blob.Get(); }
 protected:
 	/**	@brief	シェーダーファイルからバイナリデータを読み込む
 	 *	@param ID3D11Device&    _device	    D3D11のデバイス
 	 *	@param const ShaderInfo _shaderInfo シェーダー情報
 	 *	@return ComPtr<ID3DBlob>            シェーダーバイナリ
 	 */
-	void LoadShader(ID3D11Device& _device, const ShaderInfo _shaderInfo);
+	void LoadShader(ID3D11Device& _device, const ShaderInfo _shaderInfo)const;
 
-	DX::ComPtr<ID3DBlob> blob;	///< シェーダーバイナリ
+	mutable DX::ComPtr<ID3DBlob> blob;	///< シェーダーバイナリ
 
 private:
 	/** @brief シェーダーのコンパイル
@@ -59,6 +59,6 @@ private:
 	 *  @param ShaderInfo _shaderInfo シェーダー情報
 	 *  @return bool コンパイルに成功したら true
 	 */
-	bool CompileShader(ID3D11Device& _device, const ShaderInfo _shaderInfo);
+	bool CompileShader(ID3D11Device& _device, const ShaderInfo _shaderInfo)const;
 
 };

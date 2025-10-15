@@ -6,7 +6,6 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include"Include/Framework/Shaders/VertexShader.h"
-#include"Include/Framework/Shaders/ShaderManager.h"
 
 //-----------------------------------------------------------------------------
 // VertexShader class

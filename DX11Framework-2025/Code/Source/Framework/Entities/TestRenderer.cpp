@@ -1,36 +1,33 @@
 ﻿#include "Include/Framework/Entities/TestRenderer.h"
 #include "Include/Framework/Entities/GameObject.h"
 #include "Include/Framework/Core/SystemLocator.h"
-#include "Include/Framework/Core/ResourceHub.h"
 #include "Include/Framework/Core/D3D11System.h"
 #include "Include/Framework/Core/RenderSystem.h"
-#include "Include/Framework/Graphics/SpriteManager.h"
-#include "Include/Framework/Shaders/ShaderManager.h"
 
-#include <d3dcompiler.h>
 #pragma comment(lib, "d3dcompiler.lib")
 #include	<iostream>
 
-TestRenderer::TestRenderer(GameObject* owner, bool isActive)
-    : Component(owner, isActive)
-{
-    // シェーダーの取得
-    auto& shaderManager = ResourceHub::Get<ShaderBase>();
-    this->shaders.push_back(shaderManager.Get("TestVS"));
-    this->shaders.push_back(shaderManager.Get("TestPS"));
-
-    // デフォルトの画像情報を取得する
-    IResourceManager<Sprite>& spriteManager = ResourceHub::Get<Sprite>();
-    this->sprite = spriteManager.Get("Eidan");
-
-    this->camera = this->owner->GetComponent<Camera2D>();
-	this->transform = this->owner->GetComponent<Transform>();
-}
+TestRenderer::TestRenderer(GameObject* owner, bool isActive):
+    Component(owner, isActive),
+    shaders()
+{}
 
 TestRenderer::~TestRenderer() {}
 
 void TestRenderer::Initialize()
 {
+    // シェーダーの取得
+    auto shaderManager = this->Owner()->Services()->shaders;
+    this->shaders.push_back(shaderManager->Get("TestVS"));
+    this->shaders.push_back(shaderManager->Get("TestPS"));
+
+    // デフォルトの画像情報を取得する
+    auto* spriteManager = this->Owner()->Services()->sprites;
+    this->sprite = spriteManager->Get("Eidan");
+
+    this->camera = this->Owner()->GetComponent<Camera2D>();
+    this->transform = this->Owner()->GetComponent<Transform>();
+
     auto& d3d11 = SystemLocator::Get<D3D11System>();
     auto& render = SystemLocator::Get<RenderSystem>();
     auto device = d3d11.GetDevice();
@@ -73,7 +70,8 @@ void TestRenderer::Initialize()
     };
     
     // 一旦テスト的に頂点シェーダーを指定していれる
-    device->CreateInputLayout(layout, ARRAYSIZE(layout), this->shaders[0]->GetBlob()->GetBufferPointer(), this->shaders[0]->GetBlob()->GetBufferSize(), inputLayout.GetAddressOf());
+    auto* vsBlob = this->shaders[0]->GetBlob();
+    device->CreateInputLayout(layout, ARRAYSIZE(layout), vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), inputLayout.GetAddressOf());
 }
 
 void TestRenderer::Draw()
@@ -137,8 +135,8 @@ void TestRenderer::Dispose() {
  */
 bool TestRenderer::SetSprite(const std::string& _spriteName)
 {
-    IResourceManager<Sprite>& spriteManager = ResourceHub::Get<Sprite>();
-    this->sprite = spriteManager.Get(_spriteName);
+    auto* spriteManager = this->Owner()->Services()->sprites;
+    this->sprite = spriteManager->Get(_spriteName);
     if (!this->sprite) {
         std::cerr << "その名前のSpriteが存在しません。" << std::endl;
         return false;

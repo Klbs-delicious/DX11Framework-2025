@@ -7,8 +7,6 @@ TestMoveComponent::TestMoveComponent(GameObject* owner, bool isActive ):
 	Component(owner, isActive),
 	inputSystem(SystemLocator::Get<InputSystem>())
 {
-	this->owner = owner;
-	this->isActive = isActive;
 	this->transform = owner->GetComponent<Transform>();
 }
 

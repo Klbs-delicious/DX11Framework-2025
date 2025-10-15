@@ -5,7 +5,7 @@
 #include"Include/Framework/Utils/CommonTypes.h"
 #include <d3d11.h>
 
-/**	@brief スプライト情報
+/**	@brief スプライト（画像）情報
  */
 struct Sprite
 {

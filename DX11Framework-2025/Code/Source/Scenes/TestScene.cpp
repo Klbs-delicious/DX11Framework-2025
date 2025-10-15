@@ -35,6 +35,9 @@ void TestScene::SetupObjects()
 	obj_1->transform->SetLocalPosition(DX::Vector3(320.0f, 240.0f, 0.0f));
 	obj_1->transform->SetLocalScale(DX::Vector3(150.0f, 150.0f, 0.0f));
 
+	std::vector<ShaderBase*> shaders = {};
+	shaders.push_back(obj_1->Services()->shaders->Get("TestPS"));
+
 	obj_1->AddComponent<Camera2D>();
 	obj_1->AddComponent<TestRenderer>();
 	obj_1->AddComponent<TestMoveComponent>();

@@ -21,8 +21,10 @@
 class GameObjectManager :private NonCopyable, public IGameObjectObserver
 {
 public:
-	/// @brief	コンストラクタ
-	GameObjectManager();
+	/**	@brief コンストラクタ
+	 *	@param const EngineServices* _services
+	 */
+	GameObjectManager(const EngineServices* _services);
 
 	/// @brief	デストラクタ
 	~GameObjectManager();
@@ -83,8 +85,33 @@ public:
 	 */
 	void OnGameObjectEvent(GameObject* _obj, GameObjectEvent _event)override;
 
+	/**	@brief  オブジェクトの重複を入れないユーティリティ
+	 *	@param std::vector<GameObject*>& _v
+	 *	@param GameObject* _p
+	 */
+	static inline void push_unique(std::vector<GameObject*>& _v, GameObject* _p) {
+		if (std::find(_v.begin(), _v.end(), _p) == _v.end()) _v.push_back(_p);
+	}
+
+	/**	@brief  オブジェクトを確実に外すユーティリティ
+	 *	@param std::vector<GameObject*>& _v
+	 *	@param GameObject* _p
+	 */
+	static inline void erase_one(std::vector<GameObject*>& _v, GameObject* _p) {
+		_v.erase(std::remove(_v.begin(), _v.end(), _p), _v.end());
+	}
+
+	/**	@brief 現在の状態（IsUpdatable/IsDrawable）に合わせて登録を正規化
+	 *	@param _obj 
+	 *	@details	
+	 *		- 必要なら追加、不要なら除去
+	 *		- Initialized/Refreshed から共通で呼ぶ
+	 */
+	void RefreshRegistration(GameObject* _obj);
+
 private:
 	std::list<std::unique_ptr<GameObject>> gameObjects;		///< 生成されたゲームオブジェクト
+	const EngineServices* services;							///< リソース関連の参照
 
 	std::deque<GameObject*> pendingInit;	///< 初期化を行うオブジェクトのキュー
 	std::vector<GameObject*> updateList;	///< 更新を行うオブジェクトの配列

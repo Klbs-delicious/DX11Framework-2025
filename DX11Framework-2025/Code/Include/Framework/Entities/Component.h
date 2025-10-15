@@ -2,6 +2,7 @@
  * @date   2025/09/16
  */
 #pragma once
+#include"Include/Framework/Core/EngineServices.h"
 class GameObject; 
 
  /** @class Component
@@ -21,10 +22,10 @@ public:
 	virtual ~Component() = default;
 
 	/// @brief 初期化処理
-	virtual void Initialize() = 0;
+	virtual void Initialize() {};
 
 	/// @brief 終了処理
-	virtual void Dispose() = 0;
+	virtual void Dispose() {};
 
 	/** @brief  コンポーネントの有効状態を設定する
 	 *  @param bool _active	コンポーネントの有効/無効
@@ -35,9 +36,17 @@ public:
 	 *  @return bool コンポーネントが有効なら true
 	 */
 	bool IsActive() const { return this->isActive; }
-
 protected:
-	GameObject* owner;	///< このコンポーネントがアタッチされているオブジェクト
+	/**	@brief リソース関連の参照を取得する
+	 *	@return EngineServices*
+	 */
+	const EngineServices* Services() const;
 
+	/**	@brief	親オブジェクトの取得
+	 *	@return	GameObject*
+	 */
+	GameObject* Owner() const { return this->owner; }
+private :
+	GameObject* owner;	///< このコンポーネントがアタッチされているオブジェクト
 	bool isActive;
 };

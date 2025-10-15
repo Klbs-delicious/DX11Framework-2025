@@ -106,11 +106,6 @@ public:
 
 	/// -------------------------------------------------------------
 
-	/**@brief このコンポーネントがアタッチされているオブジェクトを取得
-	 * @return GameObject* このコンポーネントがアタッチされているオブジェクト
-	 */
-	GameObject* GetOwner()const { return this->owner; }
-
 	/**@brief 親Transformを設定
 	 * @param Transform* _parent 親Transform
 	 */

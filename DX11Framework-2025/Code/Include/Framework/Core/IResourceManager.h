@@ -29,7 +29,7 @@ public:
 
 	/**	@brief	キーに対応するリソースを取得する
 	 *	@param	const std::string& _key	リソースのキー
-	 *	@return	T*	リソースのポインタ、見つからなかった場合は nullptr
+	 *	@return	const T*	リソースのポインタ、見つからなかった場合は nullptr
 	 */
-    virtual T* Get(const std::string& _key) = 0;
+	virtual T* Get(const std::string& _key)const = 0;
 };

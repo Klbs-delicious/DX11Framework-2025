@@ -9,7 +9,6 @@
 
 #include <d3d11.h>
 #include <wrl/client.h>
-#include <chrono>
 #include <SimpleMath.h>
 #include <vector>
 
@@ -32,7 +31,7 @@ public:
 private:
     Camera2D* camera;
 	Transform* transform;
-    Sprite* sprite;         ///< 画像情報
+    const Sprite* sprite;         ///< 画像情報
 
     struct Vertex {
     	DirectX::SimpleMath::Vector3 position;

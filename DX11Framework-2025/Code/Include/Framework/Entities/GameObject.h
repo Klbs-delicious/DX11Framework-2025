@@ -223,10 +223,21 @@ public:
 		}
 	}
 
+	/**	@brief リソース関連の参照を取得する
+	 *	@return EngineServices*
+	 */
+	const EngineServices* Services() const { return this->services; }
+
+	/**	@brief リソース関連の参照を設定
+	 *	@param  const EngineServices* _services
+	 */
+	void SetServices(const EngineServices* _services) { this->services = _services; }
+
 public:
 		Transform* transform;	///< 位置、回転、スケール情報
 private:
-	IGameObjectObserver& gameObjectObs;	///< GameObjectの状態を通知するObserver
+	IGameObjectObserver& gameObjectObs;			///< GameObjectの状態を通知するObserver
+	const EngineServices* services = nullptr;	///< リソース関連の参照
 
 	bool isPendingDestroy;	///< オブジェクトの削除フラグ
 	bool isActive;			///< オブジェクトの有効/無効フラグ

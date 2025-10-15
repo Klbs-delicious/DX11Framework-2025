@@ -35,35 +35,7 @@ ShaderManager::~ShaderManager()
  */
 bool ShaderManager::Register(const std::string& _key)
 {
-	// すでに登録されている
-	if (this->shaderMap.contains(_key)) { return false; }
-
-	// シェーダー情報が登録されていない
-	if (!this->shaderInfoMap.contains(_key)) { return false; }
-
-	// シェーダー情報を取得
-	const ShaderInfo& info = this->shaderInfoMap.at(_key);
-
-	// シェーダーの種類に応じてインスタンスを生成
-	std::unique_ptr<ShaderBase> shader;
-	switch (info.shaderType)
-	{
-	case ShaderType::VertexShader:
-		shader = std::make_unique<VertexShader>();
-		break;
-	case ShaderType::PixelShader:
-		shader = std::make_unique<PixelShader>();
-		break;
-	}
-	if (!shader) { return false; }
-
-	// シェーダーの生成
-	shader->CreateShader(*this->d3d11.GetDevice(), info);
-	if (!shader->GetBlob()) { return false; }
-
-	// 作成したシェーダーをマップに登録する
-	this->shaderMap.emplace(_key, std::move(shader));
-	return true;
+	return this->RegisterInternal(_key);
 }
 
 /**	@brief リソースの登録を解除する
@@ -80,9 +52,9 @@ void ShaderManager::Unregister(const std::string& _key)
 
 /**	@brief	キーに対応するリソースを取得する
  *	@param	const std::string& _key	リソースのキー
- *	@return	T*	リソースのポインタ、見つからなかった場合は nullptr
+ *	@return	const ShaderBase*	リソースのポインタ、見つからなかった場合は nullptr
  */
-ShaderBase* ShaderManager::Get(const std::string& _key)
+ShaderBase* ShaderManager::Get(const std::string& _key)const
 {
 	// シェーダー情報が存在しない
 	if (!this->shaderInfoMap.contains(_key)) { return nullptr; }
@@ -90,7 +62,8 @@ ShaderBase* ShaderManager::Get(const std::string& _key)
 	if (!this->shaderMap.contains(_key))
 	{
 		// 登録されていなければ登録を試みる
-		if (!this->Register(_key))
+		// const のままlazy-load
+		if (!this->RegisterInternal(_key)) 
 		{
 			std::cerr << "ShaderManager::Get: Failed to register shader for key: " << _key << std::endl;
 			return nullptr;
@@ -111,5 +84,30 @@ bool ShaderManager::PreRegisterShaderInfo(const std::string& _key, const ShaderI
 	if (this->shaderInfoMap.contains(_key)) { return false; }
 
 	this->shaderInfoMap.insert({ _key, _info });
+	return true;
+}
+
+/**	@brief 論理的constを使用してリソースの登録を行う
+ *	@param  const std::string& _key	リソースのキー
+ *	@return bool	登録に成功したら true
+ */
+bool ShaderManager::RegisterInternal(const std::string& _key) const
+{
+	if (this->shaderMap.contains(_key)) return true;
+	auto it = this->shaderInfoMap.find(_key);
+	if (it == this->shaderInfoMap.end()) return false;
+
+	const ShaderInfo& info = it->second;
+	std::unique_ptr<ShaderBase> shader;
+	switch (info.shaderType) {
+	case ShaderType::VertexShader: shader = std::make_unique<VertexShader>(); break;
+	case ShaderType::PixelShader: shader = std::make_unique<PixelShader>();  break;
+	default: return false;
+	}
+	if (!shader) return false;
+
+	if (!shader->CreateShader(*d3d11.GetDevice(), info)) return false;
+
+	shaderMap.emplace(_key, std::move(shader)); // shaderMap は mutable
 	return true;
 }

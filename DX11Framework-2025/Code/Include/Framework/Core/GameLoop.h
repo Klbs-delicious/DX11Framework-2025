@@ -8,6 +8,7 @@
 #include"Include/Framework/Shaders/ShaderManager.h"
 #include"Include/Framework/Entities/GameObjectManager.h"
 #include"Include/Scenes/SceneManager.h"
+#include"Include/Framework/Core/EngineServices.h"
 
 #include <memory>
 
@@ -58,6 +59,9 @@ private:
 		MAX,
 	};
 	GameState gameState;	///< ゲームの状態
+
+	// リソース関連の参照
+	EngineServices services;
 
 	std::unique_ptr<SceneManager> sceneManager;				///< シーン管理
 	std::unique_ptr<InputSystem> inputSystem;				///< 入力の管理

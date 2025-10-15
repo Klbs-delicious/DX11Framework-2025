@@ -50,20 +50,7 @@ SpriteManager::~SpriteManager()
  */
 bool SpriteManager::Register(const std::string& _key)
 {
-	// 存在する場合は登録成功にする
-	if (this->spriteMap.contains(_key)) { return true; }
-
-	// 画像を読み込む
-	const std::string& path = this->spritePathMap.at(_key);
-	std::unique_ptr<Sprite> resource = this->LoadTexture(path);
-
-	if (!resource) {
-		std::cerr << "Failed to LoadTexture: " << std::string(path.begin(), path.end()) << std::endl;
-		return false;
-	}
-
-	this->spriteMap[_key] = std::move(resource);
-	return true;
+	return RegisterInternal(_key);
 }
 
 /**	@brief リソースの登録を解除する
@@ -84,9 +71,9 @@ void SpriteManager::Unregister(const std::string& _key)
 
 /**	@brief	キーに対応するリソースを取得する
  *	@param	const std::string& _key	リソースのキー
- *	@return	T*	リソースのポインタ、見つからなかった場合は nullptr
+ *	@return	const Sprite*	リソースのポインタ、見つからなかった場合は nullptr
  */
-Sprite* SpriteManager::Get(const std::string& _key)
+Sprite* SpriteManager::Get(const std::string& _key)const
 {
 	// すでに登録済みならそのまま返す
 	auto it = this->spriteMap.find(_key);
@@ -103,7 +90,7 @@ Sprite* SpriteManager::Get(const std::string& _key)
 	}
 
 	// 登録処理
-	if (!this->Register(_key)) {
+	if (!this->RegisterInternal(_key)) {
 		std::cerr << "Failed to register sprite for key: " << _key << std::endl;
 		return nullptr;
 	}
@@ -111,11 +98,31 @@ Sprite* SpriteManager::Get(const std::string& _key)
 	return this->spriteMap.at(_key).get();
 }
 
+/**	@brief 論理的constを使用してリソースの登録を行う
+ *	@param  const std::string& _key	リソースのキー
+ *	@return bool	登録に成功したら true
+ */
+bool SpriteManager::RegisterInternal(const std::string& _key) const
+{
+	// すでに登録済みならそのまま返す
+	if (this->spriteMap.contains(_key)) return true;
+
+	// パスが存在するか確認
+	auto it = this->spritePathMap.find(_key);
+	if (it == this->spritePathMap.end()) return false;
+			 
+	// 登録処理
+	auto tex = LoadTexture(it->second);
+	if (!tex) return false;
+	this->spriteMap.emplace(_key, std::move(tex)); // spriteMap は mutable
+	return true;
+}
+
 /**	@brief	画像の読み込み
  *	@param	const std::u8string& _path	画像のファイルパス
  *	@return	std::unique_ptr<Sprite>	画像データ（失敗した場合は nullptr）
  */
-std::unique_ptr<Sprite> SpriteManager::LoadTexture(const std::string& _path)
+std::unique_ptr<Sprite> SpriteManager::LoadTexture(const std::string& _path)const
 {
 	std::filesystem::path filepath = _path;
 

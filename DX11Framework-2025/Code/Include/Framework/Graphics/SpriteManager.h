@@ -21,7 +21,7 @@ public:
 	 *	@param  const std::string& _key	リソースのキー
 	 *	@return bool	登録に成功したら true
 	 */
-	virtual bool Register(const std::string& _key)override;
+	virtual bool Register(const std::string& _key) override;
 
 	/**	@brief リソースの登録を解除する
 	 *	@param  const std::string& _key	リソースのキー
@@ -30,16 +30,22 @@ public:
 
 	/**	@brief	キーに対応するリソースを取得する
 	 *	@param	const std::string& _key	リソースのキー
-	 *	@return	T*	リソースのポインタ、見つからなかった場合は nullptr
+	 *	@return	const Sprite*	リソースのポインタ、見つからなかった場合は nullptr
 	 */
-	virtual Sprite* Get(const std::string& _key) override;
+	virtual Sprite* Get(const std::string& _key)const  override;
 
 private:
+	/**	@brief 論理的constを使用してリソースの登録を行う
+	 *	@param  const std::string& _key	リソースのキー
+	 *	@return bool	登録に成功したら true
+	 */
+	bool RegisterInternal(const std::string& _key) const;
+
 	/**	@brief	画像の読み込み
 	 *	@param	const std::u8string& _path	画像のファイルパス
 	 *	@return	std::unique_ptr<Sprite>	画像データ（失敗した場合は nullptr）
 	 */
-	std::unique_ptr<Sprite> LoadTexture(const std::string& _path);
+	std::unique_ptr<Sprite> LoadTexture(const std::string& _path)const;
 
 	/**	@brief 画像データをメモリから読み込む
 	 *	@param	const unsigned char*	_data	画像のバイナリデータ（メモリ上にある）
@@ -50,6 +56,6 @@ private:
 	/// @brief 画像の読み込みパスを登録
 	void TexturepathRegister();	
 
-	std::unordered_map<std::string, std::unique_ptr<Sprite>> spriteMap;		///< スプライトのマップ
-	std::unordered_map<std::string, std::string> spritePathMap;				///< スプライトに対応する画像パスのマップ
+	mutable std::unordered_map<std::string, std::unique_ptr<Sprite>> spriteMap;		///< スプライトのマップ
+	mutable std::unordered_map<std::string, std::string> spritePathMap;				///< スプライトに対応する画像パスのマップ
 };

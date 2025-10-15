@@ -189,6 +189,9 @@
     <ClInclude Include="Code\Include\Framework\Core\WindowSystem.h">
       <Filter>ヘッダー ファイル\Framework\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Core\EngineServices.h">
+      <Filter>ヘッダー ファイル\Framework\Core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Code\Source\Framework\main.cpp">
@@ -264,6 +267,9 @@
       <Filter>ソース ファイル\Framework\Scenes</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Entities\Transform.cpp">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Entities\Component.cpp">
       <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
   </ItemGroup>

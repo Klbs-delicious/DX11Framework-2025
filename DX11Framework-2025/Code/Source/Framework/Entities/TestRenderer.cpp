@@ -3,6 +3,7 @@
 #include "Include/Framework/Core/SystemLocator.h"
 #include "Include/Framework/Core/D3D11System.h"
 #include "Include/Framework/Core/RenderSystem.h"
+#include "Include/Framework/Graphics/SpriteManager.h"
 
 #pragma comment(lib, "d3dcompiler.lib")
 #include	<iostream>
@@ -10,7 +11,14 @@
 TestRenderer::TestRenderer(GameObject* owner, bool isActive):
     Component(owner, isActive),
     shaders()
-{}
+{
+	// SpriteComponentが存在しなければ追加する
+    this->spriteComponent = this->Owner()->GetComponent<SpriteComponent>();
+    if (!this->spriteComponent) 
+    {
+        this->spriteComponent = this->Owner()->AddComponent<SpriteComponent>();
+	}
+}
 
 TestRenderer::~TestRenderer() {}
 
@@ -21,9 +29,8 @@ void TestRenderer::Initialize()
     this->shaders.push_back(shaderManager->Get("TestVS"));
     this->shaders.push_back(shaderManager->Get("TestPS"));
 
-    // デフォルトの画像情報を取得する
-    auto* spriteManager = this->Owner()->Services()->sprites;
-    this->sprite = spriteManager->Get("Eidan");
+	// スプライトコンポーネントの取得
+    this->spriteComponent = this->Owner()->GetComponent<SpriteComponent>();
 
     this->camera = this->Owner()->GetComponent<Camera2D>();
     this->transform = this->Owner()->GetComponent<Transform>();
@@ -98,7 +105,8 @@ void TestRenderer::Draw()
     ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     // テクスチャを送る
-    ID3D11ShaderResourceView* srv = this->sprite->texture.Get();
+    const Sprite* sprite = this->spriteComponent->GetSprite();
+    ID3D11ShaderResourceView* srv = sprite ? sprite->texture.Get() : nullptr;
     if (!srv) {
 		std::cerr << "テクスチャがセットされていません。" << std::endl;
 		return;
@@ -127,19 +135,4 @@ void TestRenderer::Dispose() {
     vertexBuffer.Reset();
 
     shaders.clear();
-}
-
-/** @brief Spriteの設定
- *  @param std::string _spriteName    Spriteの情報
- *  @return bool 設定出来たら true
- */
-bool TestRenderer::SetSprite(const std::string& _spriteName)
-{
-    auto* spriteManager = this->Owner()->Services()->sprites;
-    this->sprite = spriteManager->Get(_spriteName);
-    if (!this->sprite) {
-        std::cerr << "その名前のSpriteが存在しません。" << std::endl;
-        return false;
-    }
-    return true;
 }

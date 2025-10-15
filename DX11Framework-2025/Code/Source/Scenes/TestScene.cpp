@@ -9,6 +9,8 @@
 #include"Include/Framework/Entities/TestRenderer.h"
 #include"Include/Framework/Entities/Camera2D.h"
 #include"Include/Tests/TestMoveComponent.h"
+#include"Include/Framework/Core/ResourceHub.h"
+#include"Include/Framework/Core/IResourceManager.h"
 
 #include<iostream>
 
@@ -29,18 +31,19 @@ void TestScene::SetupObjects()
 {
 	std::cout << "シーン名" << "TestScene" << std::endl;
 
+	// 未設定の場合はデフォルト画像を設定する
+	auto& spriteManager= ResourceHub::Get<Sprite>();
+
 	// オブジェクトを生成する
 	auto obj_1 = this->gameObjectManager.Instantiate("obj_1");
 	std::cout << obj_1->GetName() << " : " << std::to_string(obj_1->transform->GetWorldPosition().x) << std::endl;
 	obj_1->transform->SetLocalPosition(DX::Vector3(320.0f, 240.0f, 0.0f));
 	obj_1->transform->SetLocalScale(DX::Vector3(150.0f, 150.0f, 0.0f));
 
-	std::vector<ShaderBase*> shaders = {};
-	shaders.push_back(obj_1->Services()->shaders->Get("TestPS"));
-
 	obj_1->AddComponent<Camera2D>();
 	obj_1->AddComponent<TestRenderer>();
 	obj_1->AddComponent<TestMoveComponent>();
+	obj_1->GetComponent<SpriteComponent>()->SetSprite(spriteManager.Get("Eidan"));
 
 	auto obj_2 =this->gameObjectManager.Instantiate("obj_2");
 	obj_2->transform->SetLocalPosition(DX::Vector3(100.0f, 100.0f, 0.0f));

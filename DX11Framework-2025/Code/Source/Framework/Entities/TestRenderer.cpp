@@ -56,16 +56,6 @@ void TestRenderer::Initialize()
     };
     this->indexBuffer = std::make_unique<IndexBuffer>();
     this->indexBuffer->Create(device, indices, sizeof(uint16_t), _countof(indices));
-
-    D3D11_INPUT_ELEMENT_DESC layout[] = {
-        { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 0,                          D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, sizeof(float) * 3,          D3D11_INPUT_PER_VERTEX_DATA, 0 },
-        { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       0, sizeof(float) * 7,          D3D11_INPUT_PER_VERTEX_DATA, 0 },
-    };
-    
-    // 一旦テスト的に頂点シェーダーを指定していれる
-    auto* vsBlob = this->shaders[0]->GetBlob();
-    device->CreateInputLayout(layout, ARRAYSIZE(layout), vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), inputLayout.GetAddressOf());
 }
 
 void TestRenderer::Draw()
@@ -88,7 +78,6 @@ void TestRenderer::Draw()
     UINT offset = 0;
     this->vertexBuffer->Bind(ctx);
     this->indexBuffer->Bind(ctx);
-    ctx->IASetInputLayout(inputLayout.Get());
     ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     // テクスチャを送る
@@ -117,7 +106,6 @@ void TestRenderer::Dispose() {
         ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
         ctx->PSSetShaderResources(0, 1, nullSRV);
     }
-    inputLayout.Reset();
 
     this->indexBuffer.reset();
     this->vertexBuffer.reset();

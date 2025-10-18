@@ -38,5 +38,5 @@ public:
 
 private:
 	DX::ComPtr<ID3D11VertexShader> vertexShader;	///< 頂点シェーダー
-	ID3D11InputLayout* inputLayout;					///< 頂点入力レイアウト
+	DX::ComPtr<ID3D11InputLayout> inputLayout;		///< 頂点入力レイアウト
 };

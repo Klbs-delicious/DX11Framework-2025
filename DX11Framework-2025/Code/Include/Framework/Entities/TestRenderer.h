@@ -39,5 +39,5 @@ private:
     std::unique_ptr<VertexBuffer>vertexBuffer;
     std::unique_ptr<IndexBuffer>indexBuffer;
     std::vector<ShaderBase*> shaders;
-    Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
+    //Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
 };

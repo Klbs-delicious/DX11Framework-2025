@@ -14,6 +14,7 @@ VertexShader::VertexShader() :vertexShader(nullptr), inputLayout(nullptr) {}
 VertexShader:: ~VertexShader()
 {
 	this->vertexShader.Reset();
+	this->inputLayout.Reset();
 }
 
 /**	@brief シェーダーのバインド
@@ -21,6 +22,7 @@ VertexShader:: ~VertexShader()
  */
 void VertexShader::Bind(ID3D11DeviceContext& _context)
 {
+	_context.IASetInputLayout(this->inputLayout.Get());
 	_context.VSSetShader(this->vertexShader.Get() , nullptr, 0);
 }
 
@@ -29,6 +31,7 @@ void VertexShader::Bind(ID3D11DeviceContext& _context)
 　*/
 void VertexShader::Unbind(ID3D11DeviceContext& _context)
 {
+	_context.IASetInputLayout(nullptr);
 	_context.VSSetShader(nullptr, nullptr, 0);
 }
 
@@ -55,5 +58,16 @@ bool VertexShader::CreateShader(ID3D11Device& _device, const ShaderInfo _shaderI
 		if (this->blob)this->blob->Release();
 		return false;
 	}
+
+	// 入力レイアウトの作成
+	hr = _device.CreateInputLayout(
+		ShaderCommon::LayoutDescs[static_cast<size_t>(_shaderInfo.layoutType)].data(),
+		ShaderCommon::LayoutDescs[static_cast<UINT>(_shaderInfo.layoutType)].size(),
+		this->blob->GetBufferPointer(),
+		this->blob->GetBufferSize(),
+		this->inputLayout.GetAddressOf()
+	);
+	if (FAILED(hr)) { return false; }
+
 	return true;
 }

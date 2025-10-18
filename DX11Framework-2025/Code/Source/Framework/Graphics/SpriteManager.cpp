@@ -32,11 +32,15 @@ void SpriteManager::TexturepathRegister()
 }
 
 //// @brief コンストラクタ
-SpriteManager::SpriteManager() :spriteMap()
+SpriteManager::SpriteManager() :spriteMap(), spritePathMap(), defaultSprite(nullptr)
 {
 	// 画像の読み込みパスを登録
 	this->TexturepathRegister();
+
+	// デフォルト画像を設定しておく
+	this->defaultSprite = this->Get("Default");
 }
+
 /// @brief デストラクタ
 SpriteManager::~SpriteManager()
 {
@@ -50,7 +54,18 @@ SpriteManager::~SpriteManager()
  */
 bool SpriteManager::Register(const std::string& _key)
 {
-	return RegisterInternal(_key);
+	// すでに登録済みならそのまま返す
+	if (this->spriteMap.contains(_key)) return true;
+
+	// パスが存在するか確認
+	auto it = this->spritePathMap.find(_key);
+	if (it == this->spritePathMap.end()) return false;
+
+	// 登録処理
+	auto tex = LoadTexture(it->second);
+	if (!tex) return false;
+	this->spriteMap.emplace(_key, std::move(tex)); // spriteMap は mutable
+	return true;
 }
 
 /**	@brief リソースの登録を解除する
@@ -73,7 +88,7 @@ void SpriteManager::Unregister(const std::string& _key)
  *	@param	const std::string& _key	リソースのキー
  *	@return	const Sprite*	リソースのポインタ、見つからなかった場合は nullptr
  */
-Sprite* SpriteManager::Get(const std::string& _key)const
+Sprite* SpriteManager::Get(const std::string& _key)
 {
 	// すでに登録済みならそのまま返す
 	auto it = this->spriteMap.find(_key);
@@ -90,32 +105,12 @@ Sprite* SpriteManager::Get(const std::string& _key)const
 	}
 
 	// 登録処理
-	if (!this->RegisterInternal(_key)) {
+	if (!this->Register(_key)) {
 		std::cerr << "Failed to register sprite for key: " << _key << std::endl;
 		return nullptr;
 	}
 
 	return this->spriteMap.at(_key).get();
-}
-
-/**	@brief 論理的constを使用してリソースの登録を行う
- *	@param  const std::string& _key	リソースのキー
- *	@return bool	登録に成功したら true
- */
-bool SpriteManager::RegisterInternal(const std::string& _key) const
-{
-	// すでに登録済みならそのまま返す
-	if (this->spriteMap.contains(_key)) return true;
-
-	// パスが存在するか確認
-	auto it = this->spritePathMap.find(_key);
-	if (it == this->spritePathMap.end()) return false;
-			 
-	// 登録処理
-	auto tex = LoadTexture(it->second);
-	if (!tex) return false;
-	this->spriteMap.emplace(_key, std::move(tex)); // spriteMap は mutable
-	return true;
 }
 
 /**	@brief	画像の読み込み

@@ -13,15 +13,34 @@
 
 using namespace ShaderCommon;
 
- /** @class	ShaderManager
-  *	 @brief	シェーダーのリソースを管理するクラス
-  */
-class ShaderManager :public IResourceManager<ShaderBase>
+/** @class	IShaderManager
+ *	@brief	シェーダー特有の機能インターフェース
+ *	@details
+ *		- IResourceManager<ShaderBase>のままではシェーダーの種類ごとにデフォルトのリソースを返すことができないため
+ *		  専用のインターフェースを作成した
+ */
+class IShaderManager : public IResourceManager<ShaderBase> 
 {
 public:
+	virtual ShaderBase* Default(ShaderType _type) const = 0;
+};
+
+ /** @class	ShaderManager
+  *	 @brief	シェーダーのリソースを管理するクラス
+  *	@details
+  *		- シェーダーの種類ごとにデフォルトのリソースを返す為に専用インターフェースIShaderManagerを挟んでいる
+  *		- IResourceManager<ShaderBase>::Default()は使用しない想定で、共通リソースとして頂点シェーダーを返す
+  *		- 管理する際はIResourceManager<ShaderBase> で、取得時はShaderManagerで取得する想定
+  */
+class ShaderManager :public IShaderManager
+{
+public:
+	// ResourceHubで型名を判定するのに使用する
+	// 間に中間クラスIShaderManagerが挟まっているため、依存名としての型を明示している
+	using ResourceType = ShaderBase; 
 
 	ShaderManager();
-	~ShaderManager();
+	~ShaderManager()override;
 
 	/** @brief  リソースを登録する
 	 *	@param  const std::string& _key	リソースのキー
@@ -38,7 +57,7 @@ public:
 	 *	@param	const std::string& _key	リソースのキー
 	 *	@return	const ShaderBase*	リソースのポインタ、見つからなかった場合は nullptr
 	 */
-	virtual ShaderBase* Get(const std::string& _key)const  override;
+	virtual ShaderBase* Get(const std::string& _key) override;
 
 	/**	@brief シェーダー情報を事前登録する
 	 *	@param	const std::string& _key	リソースのキー
@@ -47,15 +66,22 @@ public:
 	 */
 	bool PreRegisterShaderInfo(const std::string& _key, const ShaderInfo& _info);
 
-private:
-	/**	@brief 論理的constを使用してリソースの登録を行う
-	 *	@param  const std::string& _key	リソースのキー
-	 *	@return bool	登録に成功したら true
+	/**	@brief	デフォルトのリソースを取得する（共通デフォルトとして頂点シェーダーを返す）
+	 *	@return	ShaderBase*	共通デフォルトとして頂点シェーダーのポインタ、ない場合は nullptrが返される
 	 */
-	bool RegisterInternal(const std::string& _key) const;
+	ShaderBase* Default()const override { return this->deafultShader; }
+
+	/**	@brief	指定したタイプのデフォルト設定のシェーダーを取得する
+	 *	@param	ShaderType _type	シェーダーの種類	
+	 *	@return	ShaderBase*	リソースのポインタ、ない場合は nullptrが返される
+	 */
+	ShaderBase* Default(ShaderType _type)const override;
 
 	D3D11System& d3d11;	///< D3D11システムの参照
 
-	mutable std::unordered_map<std::string, std::unique_ptr<ShaderBase>> shaderMap;	///< シェーダーマップ
-	mutable std::unordered_map<std::string, ShaderInfo>	shaderInfoMap;				///< シェーダー情報マップ
+	std::unordered_map<std::string, std::unique_ptr<ShaderBase>> shaderMap;	///< シェーダーマップ
+	std::unordered_map<std::string, ShaderInfo>	shaderInfoMap;				///< シェーダー情報マップ
+
+	std::unordered_map<ShaderType, ShaderBase*> defaultShadersMap;	///< 未設定の場合に使用するデフォルトシェーダー
+	ShaderBase* deafultShader;										///<　共通デフォルト（頂点シェーダー）
 };

@@ -41,10 +41,10 @@ void GameLoop::Initialize()
     ResourceHub::Register(this->shaderManager.get());
 
     this->services = {
-        &ResourceHub::Get<Sprite>(),
+        &ResourceHub::Get<SpriteManager>(),
         //&ResourceHub::Get<Material>(),
         //&ResourceHub::Get<Mesh>(),
-        &ResourceHub::Get<ShaderBase>(),
+        &ResourceHub::Get<ShaderManager>(),
     };
 
     // ゲームオブジェクトの管理を行うクラスの生成と登録

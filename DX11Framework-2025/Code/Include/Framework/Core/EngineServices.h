@@ -3,11 +3,10 @@
  */
 #pragma once
 // 重いヘッダを避ける
-template<class T> class IResourceManager;
-struct Sprite;
+class SpriteManager;
 //struct Material;
 //struct Mesh;
-class ShaderBase;
+class ShaderManager;
 
 /** @struct     EngineServices
  *  @brief      リソース関連の依存を保持
@@ -15,8 +14,8 @@ class ShaderBase;
  */
 struct EngineServices final
 {
-    IResourceManager<Sprite>* sprites = nullptr;
+    SpriteManager* sprites = nullptr;
     //IResourceManager<Material>* materials = nullptr;
     //IResourceManager<Mesh>* meshes = nullptr;
-    IResourceManager<ShaderBase>* shaders = nullptr;
+    ShaderManager* shaders = nullptr;
 };

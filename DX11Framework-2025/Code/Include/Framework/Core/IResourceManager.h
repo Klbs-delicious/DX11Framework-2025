@@ -13,6 +13,8 @@ template<typename T>
 class IResourceManager : private NonCopyable
 {
 public:
+	using ResourceType = T; // ResourceHubで型名を判定するのに使用する
+
 	/// @brief 仮想デストラクタ
     virtual ~IResourceManager() = default;
 
@@ -31,5 +33,10 @@ public:
 	 *	@param	const std::string& _key	リソースのキー
 	 *	@return	const T*	リソースのポインタ、見つからなかった場合は nullptr
 	 */
-	virtual T* Get(const std::string& _key)const = 0;
+	virtual T* Get(const std::string& _key) = 0;
+
+	/**	@brief	デフォルトのリソースを取得する
+	 *	@return	const T*	リソースのポインタ、見つからなかった場合は nullptr
+	 */
+	virtual T* Default()const = 0;
 };

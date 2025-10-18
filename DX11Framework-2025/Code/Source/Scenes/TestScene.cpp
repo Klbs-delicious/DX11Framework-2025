@@ -10,7 +10,7 @@
 #include"Include/Framework/Entities/Camera2D.h"
 #include"Include/Tests/TestMoveComponent.h"
 #include"Include/Framework/Core/ResourceHub.h"
-#include"Include/Framework/Core/IResourceManager.h"
+#include"Include/Framework/Graphics/SpriteManager.h"
 
 #include<iostream>
 
@@ -32,7 +32,7 @@ void TestScene::SetupObjects()
 	std::cout << "シーン名" << "TestScene" << std::endl;
 
 	// 未設定の場合はデフォルト画像を設定する
-	auto& spriteManager= ResourceHub::Get<Sprite>();
+	auto& spriteManager= ResourceHub::Get<SpriteManager>();
 
 	// オブジェクトを生成する
 	auto obj_1 = this->gameObjectManager.Instantiate("obj_1");

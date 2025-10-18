@@ -14,8 +14,8 @@ void SpriteComponent::Initialize()
 	if(!this->sprite)
 	{
 		// 未設定の場合はデフォルト画像を設定する
-		IResourceManager<Sprite>* spriteManager = this->Owner()->Services()->sprites;
-		this->sprite = spriteManager->Get("Default");	
+		SpriteManager* spriteManager = this->Owner()->Services()->sprites;
+		this->sprite = spriteManager->Default();
 	}
 }
 

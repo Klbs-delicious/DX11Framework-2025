@@ -16,15 +16,26 @@
 // ShaderManager class
 //-----------------------------------------------------------------------------
 
-ShaderManager::ShaderManager() :d3d11(SystemLocator::Get<D3D11System>()), shaderMap(), shaderInfoMap()
+ShaderManager::ShaderManager() :
+	d3d11(SystemLocator::Get<D3D11System>()), 
+	shaderMap(), 
+	shaderInfoMap(),
+	defaultShadersMap(), 
+	deafultShader()
 {
 	// シェーダー情報の事前登録
 	this->PreRegisterShaderInfo("TestVS", ShaderInfo(ShaderType::VertexShader, L"VertexShader/VS_Test"));
 	this->PreRegisterShaderInfo("TestPS", ShaderInfo(ShaderType::PixelShader, L"PixelShader/PS_Test"));
+
+	// デフォルト設定のシェーダーリソースを登録
+	this->defaultShadersMap[ShaderType::VertexShader] = this->Get("TestVS");
+	this->defaultShadersMap[ShaderType::PixelShader] = this->Get("TestPS");
 }
 
 ShaderManager::~ShaderManager()
 {
+	this->deafultShader = nullptr;
+	this->defaultShadersMap.clear();
 	this->shaderInfoMap.clear();
 	this->shaderMap.clear();
 }
@@ -35,7 +46,23 @@ ShaderManager::~ShaderManager()
  */
 bool ShaderManager::Register(const std::string& _key)
 {
-	return this->RegisterInternal(_key);
+	if (this->shaderMap.contains(_key)) return true;
+	auto it = this->shaderInfoMap.find(_key);
+	if (it == this->shaderInfoMap.end()) return false;
+
+	const ShaderInfo& info = it->second;
+	std::unique_ptr<ShaderBase> shader;
+	switch (info.shaderType) {
+	case ShaderType::VertexShader: shader = std::make_unique<VertexShader>(); break;
+	case ShaderType::PixelShader: shader = std::make_unique<PixelShader>();  break;
+	default: return false;
+	}
+	if (!shader) return false;
+
+	if (!shader->CreateShader(*d3d11.GetDevice(), info)) return false;
+
+	shaderMap.emplace(_key, std::move(shader));
+	return true;
 }
 
 /**	@brief リソースの登録を解除する
@@ -54,7 +81,7 @@ void ShaderManager::Unregister(const std::string& _key)
  *	@param	const std::string& _key	リソースのキー
  *	@return	const ShaderBase*	リソースのポインタ、見つからなかった場合は nullptr
  */
-ShaderBase* ShaderManager::Get(const std::string& _key)const
+ShaderBase* ShaderManager::Get(const std::string& _key)
 {
 	// シェーダー情報が存在しない
 	if (!this->shaderInfoMap.contains(_key)) { return nullptr; }
@@ -62,8 +89,7 @@ ShaderBase* ShaderManager::Get(const std::string& _key)const
 	if (!this->shaderMap.contains(_key))
 	{
 		// 登録されていなければ登録を試みる
-		// const のままlazy-load
-		if (!this->RegisterInternal(_key)) 
+		if (!this->Register(_key))
 		{
 			std::cerr << "ShaderManager::Get: Failed to register shader for key: " << _key << std::endl;
 			return nullptr;
@@ -87,27 +113,15 @@ bool ShaderManager::PreRegisterShaderInfo(const std::string& _key, const ShaderI
 	return true;
 }
 
-/**	@brief 論理的constを使用してリソースの登録を行う
- *	@param  const std::string& _key	リソースのキー
- *	@return bool	登録に成功したら true
+/**	@brief	指定したタイプのデフォルト設定のシェーダーを取得する
+ *	@param	ShaderType _type	シェーダーの種類
+ *	@return	ShaderBase*	リソースのポインタ、ない場合は nullptrが返される
  */
-bool ShaderManager::RegisterInternal(const std::string& _key) const
+ShaderBase* ShaderManager::Default(ShaderType _type)const
 {
-	if (this->shaderMap.contains(_key)) return true;
-	auto it = this->shaderInfoMap.find(_key);
-	if (it == this->shaderInfoMap.end()) return false;
+	// シェーダー情報が存在しない
+	if (!this->defaultShadersMap.contains(_type)) { return nullptr; }
 
-	const ShaderInfo& info = it->second;
-	std::unique_ptr<ShaderBase> shader;
-	switch (info.shaderType) {
-	case ShaderType::VertexShader: shader = std::make_unique<VertexShader>(); break;
-	case ShaderType::PixelShader: shader = std::make_unique<PixelShader>();  break;
-	default: return false;
-	}
-	if (!shader) return false;
-
-	if (!shader->CreateShader(*d3d11.GetDevice(), info)) return false;
-
-	shaderMap.emplace(_key, std::move(shader)); // shaderMap は mutable
-	return true;
+	// キーに対応するシェーダーを返す
+	return this->defaultShadersMap.at(_type);
 }

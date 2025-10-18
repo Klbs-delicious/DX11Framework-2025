@@ -3,7 +3,7 @@
 #include "Include/Framework/Core/SystemLocator.h"
 #include "Include/Framework/Core/D3D11System.h"
 #include "Include/Framework/Core/RenderSystem.h"
-#include "Include/Framework/Graphics/SpriteManager.h"
+#include "Include/Framework/Shaders/ShaderManager.h"
 
 #pragma comment(lib, "d3dcompiler.lib")
 #include	<iostream>
@@ -26,8 +26,8 @@ void TestRenderer::Initialize()
 {
     // シェーダーの取得
     auto shaderManager = this->Owner()->Services()->shaders;
-    this->shaders.push_back(shaderManager->Get("TestVS"));
-    this->shaders.push_back(shaderManager->Get("TestPS"));
+    this->shaders.push_back(shaderManager->Default(ShaderType::VertexShader));
+    this->shaders.push_back(shaderManager->Default(ShaderType::PixelShader));
 
 	// スプライトコンポーネントの取得
     this->spriteComponent = this->Owner()->GetComponent<SpriteComponent>();

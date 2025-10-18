@@ -6,8 +6,6 @@
 //-----------------------------------------------------------------------------
 // Test
 //-----------------------------------------------------------------------------
-#include"Include/Framework/Core/RenderSystem.h"
-#include"Include/Framework/Entities/GameObject.h"
 #include"Include/Framework/Entities/GameObjectManager.h"
 
 //-----------------------------------------------------------------------------

@@ -6,7 +6,6 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include"Include/Framework/Core/RenderSystem.h"
-#include"Include/Framework/Core/SystemLocator.h"
 #include"Include/Framework/Core/WindowSystem.h"
 #include"Include/Framework/Core/D3D11System.h"
 
@@ -178,7 +177,7 @@ bool RenderSystem::Initialize()
 
     // 定数バッファの作成
     D3D11_BUFFER_DESC bufferDesc{};
-    bufferDesc.ByteWidth = sizeof(DirectX::SimpleMath::Matrix);
+    bufferDesc.ByteWidth = sizeof(DX::Matrix4x4);
     bufferDesc.Usage = D3D11_USAGE_DEFAULT;
     bufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
     bufferDesc.CPUAccessFlags = 0;
@@ -186,16 +185,19 @@ bool RenderSystem::Initialize()
     bufferDesc.StructureByteStride = sizeof(float);
 
     // ワールド変換行列
-    device->CreateBuffer(&bufferDesc, nullptr, this->worldBuffer.GetAddressOf());
-    context->VSSetConstantBuffers(0, 1, this->worldBuffer.GetAddressOf());
+    this->worldBuffer = std::make_unique<ConstantBuffer<DX::Matrix4x4>>();
+    this->worldBuffer->Create(device);
+    this->worldBuffer->BindVS(context, 0);
 
     // ビュー変換行列
-    device->CreateBuffer(&bufferDesc, nullptr, this->viewBuffer.GetAddressOf());
-    context->VSSetConstantBuffers(1, 1, this->viewBuffer.GetAddressOf());
+    this->viewBuffer = std::make_unique<ConstantBuffer<DX::Matrix4x4>>();
+    this->viewBuffer->Create(device);
+    this->viewBuffer->BindVS(context, 1);
 
     // プロジェクション変換行列
-    device->CreateBuffer(&bufferDesc, nullptr, this->projectionBuffer.GetAddressOf());
-    context->VSSetConstantBuffers(2, 1, this->projectionBuffer.GetAddressOf());
+    this->projectionBuffer = std::make_unique<ConstantBuffer<DX::Matrix4x4>>();
+    this->projectionBuffer->Create(device);
+    this->projectionBuffer->BindVS(context, 2);
 
     // 初期化成功
     return true;
@@ -213,9 +215,9 @@ void RenderSystem::Finalize()
     this->depthStateDisable.Reset();
 
     // 定数バッファ（描画ターゲットが参照する可能性がある）
-    this->worldBuffer.Reset();
-    this->viewBuffer.Reset();
-    this->projectionBuffer.Reset();
+    this->worldBuffer.reset();
+    this->viewBuffer.reset();
+    this->projectionBuffer.reset();
 
     // 描画対象（最後）
     this->depthStencilView.Reset();
@@ -241,30 +243,33 @@ void RenderSystem::EndRender()
 }
 
 /** @brief  ワールド変換行列をGPUに送る
- *  @param  DirectX::SimpleMath::Matrix*    _worldMatrix    ワールド変換行列
+ *  @param  DX::Matrix4x4*    _worldMatrix    ワールド変換行列
  */
-void RenderSystem::SetWorldMatrix(DirectX::SimpleMath::Matrix* _worldMatrix)
+void RenderSystem::SetWorldMatrix(DX::Matrix4x4* _worldMatrix)
 {
-    DirectX::SimpleMath::Matrix mat = _worldMatrix->Transpose();
-    this->d3d11->GetContext()->UpdateSubresource(this->worldBuffer.Get(), 0, nullptr, &mat, 0, 0);
+    DX::Matrix4x4 mat = _worldMatrix->Transpose();
+    this->worldBuffer->Update(this->d3d11->GetContext(), mat);
+    this->worldBuffer->BindVS(this->d3d11->GetContext(), 0);
 }
 
 /** @brief  プロジェクション変換行列をGPUに送る
- *  @param  DirectX::SimpleMath::Matrix*    _projectionMatrix   プロジェクション変換行列
+ *  @param  DX::Matrix4x4*    _projectionMatrix   プロジェクション変換行列
  */
-void RenderSystem::SetProjectionMatrix(DirectX::SimpleMath::Matrix* _projectionMatrix)
+void RenderSystem::SetProjectionMatrix(DX::Matrix4x4* _projectionMatrix)
 {
-    DirectX::SimpleMath::Matrix mat = _projectionMatrix->Transpose();
-    this->d3d11->GetContext()->UpdateSubresource(this->projectionBuffer.Get(), 0, nullptr, &mat, 0, 0);
+    DX::Matrix4x4 mat = _projectionMatrix->Transpose();
+    this->projectionBuffer->Update(this->d3d11->GetContext(), mat);
+    this->projectionBuffer->BindVS(this->d3d11->GetContext(), 2);
 }
 
 /** @brief  ビュー変換行列をGPUに送る
- *  @param  DirectX::SimpleMath::Matrix*    _viewMatrix ビュー変換行列
+ *  @param  DX::Matrix4x4*    _viewMatrix ビュー変換行列
  */
-void RenderSystem::SetViewMatrix(DirectX::SimpleMath::Matrix* _viewMatrix)
+void RenderSystem::SetViewMatrix(DX::Matrix4x4* _viewMatrix)
 {
-    DirectX::SimpleMath::Matrix mat = _viewMatrix->Transpose();
-    this->d3d11->GetContext()->UpdateSubresource(this->viewBuffer.Get(), 0, nullptr, &mat, 0, 0);
+    DX::Matrix4x4 mat = _viewMatrix->Transpose();
+    this->viewBuffer->Update(this->d3d11->GetContext(), mat);
+    this->viewBuffer->BindVS(this->d3d11->GetContext(), 1);
 }
 
 /** @brief 指定したブレンドステートを設定

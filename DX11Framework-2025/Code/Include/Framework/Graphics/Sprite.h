@@ -2,8 +2,8 @@
 *	@date	2025/09/24
 */
 #pragma once
-#include"Include/Framework/Utils/CommonTypes.h"
 #include <d3d11.h>
+#include"Include/Framework/Utils/CommonTypes.h"
 
 /**	@brief スプライト（画像）情報
  */

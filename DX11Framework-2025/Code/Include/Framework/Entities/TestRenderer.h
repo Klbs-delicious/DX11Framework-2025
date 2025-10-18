@@ -5,6 +5,8 @@
 #include "Include/Framework/Entities/Camera2D.h"
 #include "Include/Framework/Entities/SpriteComponent.h"
 #include "Include/Framework/Shaders/ShaderBase.h"
+#include "Include/Framework/Graphics/VertexBuffer.h"
+#include "Include/Framework/Graphics/IndexBuffer.h"
 
 #include <d3d11.h>
 #include <wrl/client.h>
@@ -32,8 +34,10 @@ private:
         DirectX::SimpleMath::Vector2 uv;
     };
 
-    Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
-    Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
+    //Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
+    //Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
+    std::unique_ptr<VertexBuffer>vertexBuffer;
+    std::unique_ptr<IndexBuffer>indexBuffer;
     std::vector<ShaderBase*> shaders;
     Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
 };

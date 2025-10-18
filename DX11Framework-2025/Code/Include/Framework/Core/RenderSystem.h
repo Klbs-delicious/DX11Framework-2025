@@ -4,9 +4,11 @@
 #pragma once
 #include"Include/Framework/Utils/NonCopyable.h"
 #include"Include/Framework/Core/D3D11System.h"
+#include"Include/Framework/Graphics/ConstantBuffer.h"
+#include"Include/Framework/Utils/CommonTypes.h"
 
-#include <SimpleMath.h>
-#include<vector>
+#include <memory>
+//#include<vector>
 
 /** @enum BlendStateType
  *  @brief ブレンドステートの種類
@@ -50,19 +52,19 @@ public:
     void EndRender();
 
     /** @brief  ワールド変換行列をGPUに送る
-     *  @param  DirectX::SimpleMath::Matrix*    _worldMatrix    ワールド変換行列
+     *  @param  DX::Matrix4x4*    _worldMatrix    ワールド変換行列
      */
-    void SetWorldMatrix(DirectX::SimpleMath::Matrix* _worldMatrix);
+    void SetWorldMatrix(DX::Matrix4x4* _worldMatrix);
 
     /** @brief  プロジェクション変換行列をGPUに送る
-     *  @param  DirectX::SimpleMath::Matrix*    _projectionMatrix   プロジェクション変換行列
+     *  @param  DX::Matrix4x4*    _projectionMatrix   プロジェクション変換行列
      */
-    void SetProjectionMatrix(DirectX::SimpleMath::Matrix* _projectionMatrix);
+    void SetProjectionMatrix(DX::Matrix4x4* _projectionMatrix);
 
     /** @brief  ビュー変換行列をGPUに送る
-     *  @param  DirectX::SimpleMath::Matrix*    _viewMatrix ビュー変換行列
+     *  @param  DX::Matrix4x4*    _viewMatrix ビュー変換行列
      */
-    void SetViewMatrix(DirectX::SimpleMath::Matrix* _viewMatrix);
+    void SetViewMatrix(DX::Matrix4x4* _viewMatrix);
 
     ///**   @brief  ビューポートを追加
     // *    @param  const D3D11_VIEWPORT& _viewport 追加するビューポート
@@ -113,16 +115,17 @@ private:
     WindowSystem* window;   ///< ウィンドウ作成等を行うクラスの参照
 
     //std::vector<D3D11_VIEWPORT>       viewportList;       ///< ビューポートのリスト
-    ComPtr<ID3D11RenderTargetView>  renderTargetView;       ///< 描画ターゲット
-    ComPtr<ID3D11DepthStencilView>  depthStencilView;       ///< 深度、ステンシル用のバッファ
+    DX::ComPtr<ID3D11RenderTargetView>  renderTargetView;       ///< 描画ターゲット
+    DX::ComPtr<ID3D11DepthStencilView>  depthStencilView;       ///< 深度、ステンシル用のバッファ
 
-    ComPtr<ID3D11Buffer>    worldBuffer;        ///< ワールド変換行列を保持するバッファ
-    ComPtr<ID3D11Buffer>    projectionBuffer;   ///< プロジェクション変換行列を保持するバッファ
-    ComPtr<ID3D11Buffer>    viewBuffer;         ///< ビュー変換行列を保持するバッファ
+    std::unique_ptr<ConstantBuffer<DX::Matrix4x4>>  worldBuffer;        ///< ワールド変換行列を保持するバッファ
+    std::unique_ptr<ConstantBuffer<DX::Matrix4x4>>  projectionBuffer;   ///< プロジェクション変換行列を保持するバッファ
+    std::unique_ptr<ConstantBuffer<DX::Matrix4x4>>  viewBuffer;         ///< ビュー変換行列を保持するバッファ
 
-    ComPtr<ID3D11DepthStencilState> depthStateEnable;   ///< 深度テストを有効にした状態
-    ComPtr<ID3D11DepthStencilState> depthStateDisable;  ///< 深度テストを無効にした状態
 
-    ComPtr<ID3D11BlendState> blendState[static_cast<int>(BlendStateType::MAX_BLENDSTATE)];  ///< 各種ブレンドステートを保持する配列
-    ComPtr<ID3D11BlendState> blendStateATC;                                                 ///< Alpha To Coverage（マルチサンプリング対応の透明処理）用の専用ブレンドステート
+    DX::ComPtr<ID3D11DepthStencilState> depthStateEnable;   ///< 深度テストを有効にした状態
+    DX::ComPtr<ID3D11DepthStencilState> depthStateDisable;  ///< 深度テストを無効にした状態
+
+    DX::ComPtr<ID3D11BlendState> blendState[static_cast<int>(BlendStateType::MAX_BLENDSTATE)];  ///< 各種ブレンドステートを保持する配列
+    DX::ComPtr<ID3D11BlendState> blendStateATC;                                                 ///< Alpha To Coverage（マルチサンプリング対応の透明処理）用の専用ブレンドステート
 };

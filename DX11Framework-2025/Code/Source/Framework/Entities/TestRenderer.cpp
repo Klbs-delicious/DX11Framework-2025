@@ -39,36 +39,23 @@ void TestRenderer::Initialize()
     auto& render = SystemLocator::Get<RenderSystem>();
     auto device = d3d11.GetDevice();
 
+    // 頂点バッファの作成
     Vertex vertices[] = {
         { {-0.5f, -0.5f, 0}, {1, 1, 1, 1}, {0.0f, 0.0f} }, // 左下 → 左上
         { { 0.5f, -0.5f, 0}, {1, 1, 1, 1}, {1.0f, 0.0f} }, // 右下 → 右上
         { {-0.5f,  0.5f, 0}, {1, 1, 1, 1}, {0.0f, 1.0f} }, // 左上 → 左下
         { { 0.5f,  0.5f, 0}, {1, 1, 1, 1}, {1.0f, 1.0f} }, // 右上 → 右下
     };
-    D3D11_BUFFER_DESC vbDesc = {};
-    vbDesc.Usage = D3D11_USAGE_DEFAULT;
-    vbDesc.ByteWidth = sizeof(vertices);
-    vbDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    this->vertexBuffer = std::make_unique<VertexBuffer>();
+    this->vertexBuffer->Create(device, vertices, sizeof(Vertex), _countof(vertices));
 
-    D3D11_SUBRESOURCE_DATA initData = {};
-    initData.pSysMem = vertices;
-
-    device->CreateBuffer(&vbDesc, &initData, vertexBuffer.GetAddressOf());
-
+    // インデックスバッファの作成
     uint16_t indices[] = {
     0, 1, 2,  // 第1三角形（左下 → 右下 → 左上）
     1, 3, 2   // 第2三角形（右下 → 右上 → 左上）
     };
-
-    D3D11_BUFFER_DESC ibDesc = {};
-    ibDesc.Usage = D3D11_USAGE_DEFAULT;
-    ibDesc.ByteWidth = sizeof(indices);
-    ibDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-
-    D3D11_SUBRESOURCE_DATA ibData = {};
-    ibData.pSysMem = indices;
-
-    device->CreateBuffer(&ibDesc, &ibData, indexBuffer.GetAddressOf());
+    this->indexBuffer = std::make_unique<IndexBuffer>();
+    this->indexBuffer->Create(device, indices, sizeof(uint16_t), _countof(indices));
 
     D3D11_INPUT_ELEMENT_DESC layout[] = {
         { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 0,                          D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -99,8 +86,8 @@ void TestRenderer::Draw()
     auto ctx = d3d11.GetContext();
     UINT stride = sizeof(Vertex);
     UINT offset = 0;
-    ctx->IASetVertexBuffers(0, 1, vertexBuffer.GetAddressOf(), &stride, &offset);
-    ctx->IASetIndexBuffer(indexBuffer.Get(), DXGI_FORMAT_R16_UINT, 0);
+    this->vertexBuffer->Bind(ctx);
+    this->indexBuffer->Bind(ctx);
     ctx->IASetInputLayout(inputLayout.Get());
     ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -120,7 +107,7 @@ void TestRenderer::Draw()
     }
 
     // 描画
-    ctx->DrawIndexed(6, 0, 0);
+    ctx->DrawIndexed(this->indexBuffer->GetIndexCount(), 0, 0);
 }
 
 void TestRenderer::Dispose() {
@@ -131,8 +118,9 @@ void TestRenderer::Dispose() {
         ctx->PSSetShaderResources(0, 1, nullSRV);
     }
     inputLayout.Reset();
-    indexBuffer.Reset();
-    vertexBuffer.Reset();
+
+    this->indexBuffer.reset();
+    this->vertexBuffer.reset();
 
     shaders.clear();
 }

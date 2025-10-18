@@ -195,6 +195,21 @@
     <ClInclude Include="Code\Include\Framework\Entities\SpriteComponent.h">
       <Filter>ヘッダー ファイル\Framework\Entities</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\BufferBase.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\ConstantBuffer.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\IndexBuffer.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\VertexBuffer.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\DynamicConstantBuffer.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Code\Source\Framework\main.cpp">
@@ -277,6 +292,15 @@
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Entities\SpriteComponent.cpp">
       <Filter>ソース ファイル\Framework\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\BufferBase.cpp">
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\IndexBuffer.cpp">
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\VertexBuffer.cpp">
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

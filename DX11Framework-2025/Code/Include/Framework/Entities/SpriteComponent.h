@@ -31,6 +31,11 @@ public:
 	 */
 	const Sprite* GetSprite()const;
 
+	/** @brief 画像を適用する
+	 *  @param ID3D11DeviceContext* _context
+	 */
+	void Apply(ID3D11DeviceContext* _context);
+
 private :
 	const Sprite* sprite;	///< 画像をまとめたデータ構造
 };

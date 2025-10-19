@@ -36,8 +36,10 @@
     <ClInclude Include="Code\Include\Framework\Entities\Component.h" />
     <ClInclude Include="Code\Include\Framework\Entities\GameObject.h" />
     <ClInclude Include="Code\Include\Framework\Entities\GameObjectManager.h" />
+    <ClInclude Include="Code\Include\Framework\Entities\MaterialComponent.h" />
     <ClInclude Include="Code\Include\Framework\Entities\PhaseInterfaces.h" />
     <ClInclude Include="Code\Include\Framework\Entities\SpriteComponent.h" />
+    <ClInclude Include="Code\Include\Framework\Entities\SpriteRenderer.h" />
     <ClInclude Include="Code\Include\Framework\Entities\TestComponent.h" />
     <ClInclude Include="Code\Include\Framework\Entities\TestRenderer.h" />
     <ClInclude Include="Code\Include\Framework\Entities\Transform.h" />
@@ -78,7 +80,9 @@
     <ClCompile Include="Code\Source\Framework\Entities\Component.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\GameObject.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\GameObjectManager.cpp" />
+    <ClCompile Include="Code\Source\Framework\Entities\MaterialComponent.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\SpriteComponent.cpp" />
+    <ClCompile Include="Code\Source\Framework\Entities\SpriteRenderer.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\TestRenderer.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\Transform.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\BufferBase.cpp" />

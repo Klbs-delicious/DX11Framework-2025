@@ -216,6 +216,12 @@
     <ClInclude Include="Code\Include\Framework\Graphics\MaterialManager.h">
       <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\MaterialComponent.h">
+      <Filter>ヘッダー ファイル\Framework\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\SpriteRenderer.h">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Code\Source\Framework\main.cpp">
@@ -313,6 +319,12 @@
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Graphics\MaterialManager.cpp">
       <Filter>ソース ファイル\Framework\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Entities\MaterialComponent.cpp">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Entities\SpriteRenderer.cpp">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

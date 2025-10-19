@@ -1,12 +1,23 @@
-﻿#include "Include/Framework/Entities/SpriteComponent.h"
+﻿/** @file   SpriteComponent.cpp
+ *  @date   2025/10/13
+ */
+
+ //-----------------------------------------------------------------------------
+ // Includes
+ //-----------------------------------------------------------------------------
+#include "Include/Framework/Entities/SpriteComponent.h"
 #include "Include/Framework/Graphics/SpriteManager.h"
+
+//-----------------------------------------------------------------------------
+// SpriteComponent class
+//-----------------------------------------------------------------------------
 
 SpriteComponent::SpriteComponent(GameObject* _owner, bool _isActive) :
 	Component(_owner, _isActive),
 	sprite(nullptr)
 {}
 
-SpriteComponent::~SpriteComponent(){}
+SpriteComponent::~SpriteComponent() {}
 
 /// @brief 初期化処理
 void SpriteComponent::Initialize()
@@ -39,4 +50,14 @@ void SpriteComponent::SetSprite(Sprite* _sprite)
 const Sprite* SpriteComponent::GetSprite()const 
 {
 	return this->sprite;
+}
+
+/** @brief 画像を適用する
+ *  @param ID3D11DeviceContext* _context
+ */
+void SpriteComponent::Apply(ID3D11DeviceContext* _context)
+{
+	// テクスチャを送る
+	ID3D11ShaderResourceView* srv = this->sprite ? this->sprite->texture.Get() : nullptr;
+	_context->PSSetShaderResources(0, 1, &srv);
 }

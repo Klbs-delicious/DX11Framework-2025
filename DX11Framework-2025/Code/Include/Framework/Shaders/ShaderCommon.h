@@ -3,9 +3,6 @@
  * @date   2025/10/09
  */
 #pragma once
-//#include"Include/Framework/Shaders/VertexShader.h"
-//#include"Include/Framework/Shaders/PixelShader.h"
-
 #include<d3d11.h>
 #include<string>
 #include<array>

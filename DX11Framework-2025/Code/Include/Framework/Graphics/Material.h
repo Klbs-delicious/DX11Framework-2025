@@ -22,6 +22,16 @@ struct MaterialParams
     float Shiness;      ///< 光沢度
     BOOL TextureEnable; ///< テクスチャ使用フラグ
     float Dummy[2];     ///< 予備領域
+
+    MaterialParams() :
+        Ambient(1, 1, 1, 1),
+        Diffuse(1, 1, 1, 1),
+        Specular(0, 0, 0, 1),
+        Emission(0, 0, 0, 1),
+        Shiness(32.0f),
+        TextureEnable(TRUE),
+        Dummy{ 0.0f, 0.0f }
+    { }
 };
 
 /**	@brief マテリアル情報

@@ -1,23 +1,36 @@
-﻿#include "Include/Framework/Entities/TestRenderer.h"
+﻿/** @file   SpriteRenderer.cpp
+ *  @date   2025/10/13
+ */
+  
+//-----------------------------------------------------------------------------
+// Includes
+//-----------------------------------------------------------------------------
+#include "Include/Framework/Entities/SpriteRenderer.h"
 #include "Include/Framework/Entities/GameObject.h"
+#include "Include/Framework/Entities/GameObjectManager.h"
+
 #include "Include/Framework/Core/SystemLocator.h"
 #include "Include/Framework/Core/D3D11System.h"
 #include "Include/Framework/Core/RenderSystem.h"
-#include "Include/Framework/Graphics/MaterialManager.h"
 
-#pragma comment(lib, "d3dcompiler.lib")
-#include	<iostream>
+//-----------------------------------------------------------------------------
+// SpriteRenderer class
+//-----------------------------------------------------------------------------
 
-TestRenderer::TestRenderer(GameObject* owner, bool isActive):
+SpriteRenderer::SpriteRenderer(GameObject* owner, bool isActive) :
     Component(owner, isActive),
-    shaders()
+    camera(nullptr),
+    transform(nullptr),
+    spriteComponent(nullptr),
+    materialComponent(nullptr),
+    vertexBuffer(nullptr),
+    indexBuffer(nullptr)
 {
-	// SpriteComponentが存在しなければ追加する
+    // SpriteComponentが存在しなければ追加する
     this->spriteComponent = this->Owner()->GetComponent<SpriteComponent>();
-    if (!this->spriteComponent) 
-    {
+    if (!this->spriteComponent){
         this->spriteComponent = this->Owner()->AddComponent<SpriteComponent>();
-	}
+    }
     // MaterialComponentが存在しなければ追加する
     this->materialComponent = this->Owner()->GetComponent<MaterialComponent>();
     if (!this->materialComponent) {
@@ -25,11 +38,12 @@ TestRenderer::TestRenderer(GameObject* owner, bool isActive):
     }
 }
 
-TestRenderer::~TestRenderer() {}
+SpriteRenderer::~SpriteRenderer() {}
 
-void TestRenderer::Initialize()
+void SpriteRenderer::Initialize()
 {
-    this->camera = this->Owner()->GetComponent<Camera2D>();
+    // コンポーネントの取得
+    this->camera = SystemLocator::Get<GameObjectManager>().GetFindObjectWithTag(GameTags::Tag::Camera)->GetComponent<Camera2D>();
     this->transform = this->Owner()->GetComponent<Transform>();
 
     auto& d3d11 = SystemLocator::Get<D3D11System>();
@@ -55,19 +69,19 @@ void TestRenderer::Initialize()
     this->indexBuffer->Create(device, indices, sizeof(uint16_t), _countof(indices));
 }
 
-void TestRenderer::Draw()
+void SpriteRenderer::Draw()
 {
     auto& d3d11 = SystemLocator::Get<D3D11System>();
     auto& render = SystemLocator::Get<RenderSystem>();
 
     // 変換行列を送る
     using namespace DirectX::SimpleMath;
-	Matrix view = this->camera->GetViewMatrix();
-	Matrix proj = this->camera->GetProjectionMatrix();
+    Matrix view = this->camera->GetViewMatrix();
+    Matrix proj = this->camera->GetProjectionMatrix();
     Matrix world = this->transform->GetWorldMatrix();
     render.SetWorldMatrix(&world);
-	render.SetViewMatrix(&view);
-	render.SetProjectionMatrix(&proj);
+    render.SetViewMatrix(&view);
+    render.SetProjectionMatrix(&proj);
 
     // バッファを送る
     auto ctx = d3d11.GetContext();
@@ -85,7 +99,7 @@ void TestRenderer::Draw()
     ctx->DrawIndexed(this->indexBuffer->GetIndexCount(), 0, 0);
 }
 
-void TestRenderer::Dispose() 
+void SpriteRenderer::Dispose()
 {
     auto& d3d11 = SystemLocator::Get<D3D11System>();
     auto ctx = d3d11.GetContext();

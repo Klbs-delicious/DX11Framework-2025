@@ -3,7 +3,7 @@
 #include "Include/Framework/Core/SystemLocator.h"
 #include "Include/Framework/Core/D3D11System.h"
 #include "Include/Framework/Core/RenderSystem.h"
-#include "Include/Framework/Shaders/ShaderManager.h"
+#include "Include/Framework/Graphics/MaterialManager.h"
 
 #pragma comment(lib, "d3dcompiler.lib")
 #include	<iostream>
@@ -24,9 +24,9 @@ TestRenderer::~TestRenderer() {}
 
 void TestRenderer::Initialize()
 {
-    // シェーダーの取得
-    auto shaderManager = this->Owner()->Services()->shaders;
-    this->program = shaderManager->DefaultProgram();
+    // マテリアルの取得
+    auto materialManager = this->Owner()->Services()->materials;
+    this->material = materialManager->Default();
 
 	// スプライトコンポーネントの取得
     this->spriteComponent = this->Owner()->GetComponent<SpriteComponent>();
@@ -87,13 +87,14 @@ void TestRenderer::Draw()
     ctx->PSSetShaderResources(0, 1, &srv);
 
     // シェーダーの設定
-    this->program->Bind(*ctx);
+    this->material->shaders->Bind(*ctx);
 
     // 描画
     ctx->DrawIndexed(this->indexBuffer->GetIndexCount(), 0, 0);
 }
 
-void TestRenderer::Dispose() {
+void TestRenderer::Dispose() 
+{
     auto& d3d11 = SystemLocator::Get<D3D11System>();
     auto ctx = d3d11.GetContext();
     if (ctx) {

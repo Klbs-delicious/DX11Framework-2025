@@ -210,6 +210,12 @@
     <ClInclude Include="Code\Include\Framework\Graphics\DynamicConstantBuffer.h">
       <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\Material.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\MaterialManager.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Code\Source\Framework\main.cpp">
@@ -304,6 +310,9 @@
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Shaders\ShaderCommon.cpp">
       <Filter>ソース ファイル\Framework\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\MaterialManager.cpp">
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

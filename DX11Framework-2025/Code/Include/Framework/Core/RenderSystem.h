@@ -9,6 +9,7 @@
 
 #include <memory>
 //#include<vector>
+#include<array>
 
 /** @enum BlendStateType
  *  @brief ブレンドステートの種類
@@ -19,6 +20,19 @@ enum class BlendStateType {
     BS_ADDITIVE,      ///< 加算合成
     BS_SUBTRACTION,   ///< 減算合成
     MAX_BLENDSTATE    ///< ブレンドステートの最大値
+};
+
+/** @enum   SamplerType
+ *  @brief  サンプラーの種類
+ */
+enum class SamplerType {
+    LinearWrap,     ///< なめらかな補間、UV繰り返し
+    LinearClamp,    ///< なめらかな補間、端を固定（端の色で伸ばす）
+    PointWrap,      ///< 補間なし、繰り返し
+    PointClamp,     ///< 補間なし、端を固定
+    AnisotropicWrap,///< 高精度補間、UV繰り返し
+    ShadowCompare,  ///< シャドウマップ用
+    Max
 };
 
 /** @class      RenderSystem
@@ -50,6 +64,11 @@ public:
 
     /// @brief  描画終了時の処理
     void EndRender();
+
+    /** @brief サンプラーの作成
+     *  @return HRESULT 作成に成功したら true
+     */
+    HRESULT CreateSampler();
 
     /** @brief  ワールド変換行列をGPUに送る
      *  @param  DX::Matrix4x4*    _worldMatrix    ワールド変換行列
@@ -85,6 +104,11 @@ public:
      *  @param BlendStateType _blendState 使用するブレンドステートの種類
      */
     void SetBlendState(BlendStateType _blendState);
+
+    /** @brief 指定したサンプラーを設定
+     *  @param SamplerType _samplerType 
+     */
+    void SetSampler(SamplerType _samplerType);
 
     /** @brief Alpha To Coverage（マルチサンプリング対応の透明処理）用のON/OFFを切り替える
      *  @param bool _enable true：ATC有効  false：無効
@@ -128,4 +152,6 @@ private:
 
     DX::ComPtr<ID3D11BlendState> blendState[static_cast<int>(BlendStateType::MAX_BLENDSTATE)];  ///< 各種ブレンドステートを保持する配列
     DX::ComPtr<ID3D11BlendState> blendStateATC;                                                 ///< Alpha To Coverage（マルチサンプリング対応の透明処理）用の専用ブレンドステート
+
+    std::array < ComPtr<ID3D11SamplerState>, static_cast<size_t>(SamplerType::Max) > samplerStates; ///< 各種サンプラーを保持する配列
 };

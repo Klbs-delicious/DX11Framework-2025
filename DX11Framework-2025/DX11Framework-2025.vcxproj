@@ -46,6 +46,8 @@
     <ClInclude Include="Code\Include\Framework\Graphics\ConstantBuffer.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\DynamicConstantBuffer.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\IndexBuffer.h" />
+    <ClInclude Include="Code\Include\Framework\Graphics\Material.h" />
+    <ClInclude Include="Code\Include\Framework\Graphics\MaterialManager.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\Sprite.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\SpriteManager.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\VertexBuffer.h" />
@@ -81,6 +83,7 @@
     <ClCompile Include="Code\Source\Framework\Entities\Transform.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\BufferBase.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\IndexBuffer.cpp" />
+    <ClCompile Include="Code\Source\Framework\Graphics\MaterialManager.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\SpriteManager.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\VertexBuffer.cpp" />
     <ClCompile Include="Code\Source\Framework\main.cpp" />

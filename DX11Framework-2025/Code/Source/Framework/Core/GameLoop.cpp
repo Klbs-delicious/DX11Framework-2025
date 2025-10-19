@@ -40,9 +40,13 @@ void GameLoop::Initialize()
     this->shaderManager = std::make_unique<ShaderManager>();
     ResourceHub::Register(this->shaderManager.get());
 
+    // マテリアル管理クラスをリソース管理クラスに登録
+    this->materialManager = std::make_unique<MaterialManager>();
+    ResourceHub::Register(this->materialManager.get());
+
     this->services = {
         &ResourceHub::Get<SpriteManager>(),
-        //&ResourceHub::Get<Material>(),
+        &ResourceHub::Get<MaterialManager>(),
         //&ResourceHub::Get<Mesh>(),
         &ResourceHub::Get<ShaderManager>(),
     };
@@ -110,6 +114,9 @@ void GameLoop::Draw()
  */
 void GameLoop::Dispose()
 {
+    this->materialManager.reset();
+    SystemLocator::Unregister<MaterialManager>();
+
     this->shaderManager.reset();
     SystemLocator::Unregister<ShaderManager>();
 

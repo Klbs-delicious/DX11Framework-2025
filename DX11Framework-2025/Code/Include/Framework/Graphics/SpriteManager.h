@@ -19,9 +19,9 @@ public:
 
 	/** @brief  リソースを登録する
 	 *	@param  const std::string& _key	リソースのキー
-	 *	@return bool	登録に成功したら true
+	 *  @return Sprite* 登録されていない場合nullptr
 	 */
-	bool Register(const std::string& _key) override;
+	Sprite* Register(const std::string& _key) override;
 
 	/**	@brief リソースの登録を解除する
 	 *	@param  const std::string& _key	リソースのキー

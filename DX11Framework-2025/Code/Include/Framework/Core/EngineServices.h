@@ -4,7 +4,7 @@
 #pragma once
 // 重いヘッダを避ける
 class SpriteManager;
-//struct Material;
+class MaterialManager;
 //struct Mesh;
 class ShaderManager;
 
@@ -15,7 +15,7 @@ class ShaderManager;
 struct EngineServices final
 {
     SpriteManager* sprites = nullptr;
-    //IResourceManager<Material>* materials = nullptr;
+    MaterialManager* materials = nullptr;
     //IResourceManager<Mesh>* meshes = nullptr;
     ShaderManager* shaders = nullptr;
 };

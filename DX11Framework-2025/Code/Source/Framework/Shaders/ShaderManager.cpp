@@ -51,27 +51,30 @@ ShaderManager::~ShaderManager()
 
 /** @brief  リソースを登録する
  *	@param  const std::string& _key	リソースのキー
- *	@return bool	登録に成功したら true
+ *  @return ShaderBase* 登録されていない場合nullptr
  */
-bool ShaderManager::Register(const std::string& _key)
+ShaderBase* ShaderManager::Register(const std::string& _key)
 {
-	if (this->shaderMap.contains(_key)) return true;
+	if (this->shaderMap.contains(_key)) return this->Get(_key);
 	auto it = this->shaderInfoMap.find(_key);
-	if (it == this->shaderInfoMap.end()) return false;
+	if (it == this->shaderInfoMap.end()) { return nullptr; }
 
 	const ShaderInfo& info = it->second;
 	std::unique_ptr<ShaderBase> shader;
-	switch (info.shaderType) {
+	switch (info.shaderType)
+	{
 	case ShaderType::VertexShader: shader = std::make_unique<VertexShader>(); break;
 	case ShaderType::PixelShader: shader = std::make_unique<PixelShader>();  break;
-	default: return false;
+	default: return nullptr;
 	}
-	if (!shader) return false;
+	if (!shader) { return nullptr; }
 
-	if (!shader->CreateShader(*d3d11.GetDevice(), info)) return false;
+	if (!shader->CreateShader(*d3d11.GetDevice(), info)) { return nullptr; }
 
+	// 登録
+	ShaderBase* rawPtr = shader.get();
 	this->shaderMap.emplace(_key, std::move(shader));
-	return true;
+	return rawPtr;
 }
 
 /**	@brief リソースの登録を解除する

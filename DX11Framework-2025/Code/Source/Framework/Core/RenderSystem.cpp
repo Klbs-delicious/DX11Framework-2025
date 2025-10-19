@@ -81,7 +81,6 @@ bool RenderSystem::Initialize()
     // レンダーターゲットの設定
     context->OMSetRenderTargets(1, this->renderTargetView.GetAddressOf(), this->depthStencilView.Get());
 
-
     // シンプルなビューポートを作成
     D3D11_VIEWPORT viewport;
     viewport.Width = static_cast<FLOAT>(this->window->GetWidth());
@@ -157,23 +156,12 @@ bool RenderSystem::Initialize()
     context->OMSetDepthStencilState(this->depthStateEnable.Get(), 0);
 
     // サンプラーステートの設定
-    D3D11_SAMPLER_DESC samplerDesc{};
-    samplerDesc.Filter = D3D11_FILTER_ANISOTROPIC;
-    // テクスチャ座標が[0.0,1.0]を超えてしまった際の扱い
-    // テクスチャを繰り返す設定
-    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-    //  テクスチャの端の色をそのまま使う設定
-    //    samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
-    //    samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
-    //    samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
-    samplerDesc.MaxAnisotropy = 4;
-    samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
-    ComPtr<ID3D11SamplerState> samplerState;
-    device->CreateSamplerState(&samplerDesc, samplerState.GetAddressOf());
-    context->PSSetSamplers(0, 1, samplerState.GetAddressOf());
+    hr = this->CreateSampler();
+    if (FAILED(hr)) {
+        throw std::runtime_error("Failed to create Sampler.");
+        return false;
+    }
+    this->SetSampler(SamplerType::LinearWrap);
 
     // 定数バッファの作成
     D3D11_BUFFER_DESC bufferDesc{};
@@ -242,6 +230,55 @@ void RenderSystem::EndRender()
     if (FAILED(hr)) { OutputDebugString(L"Present failed!\n"); }
 }
 
+/** @brief サンプラーの作成
+ *  @return HRESULT 作成に成功したら S_OK
+ */
+HRESULT RenderSystem::CreateSampler()
+{
+    ID3D11Device* device = this->d3d11->GetDevice();
+    D3D11_SAMPLER_DESC desc = {};
+
+    HRESULT hr;
+
+    // --- LinearWrap ---
+    desc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+    desc.AddressU = desc.AddressV = desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    hr = device->CreateSamplerState(&desc, this->samplerStates[static_cast<size_t>(SamplerType::LinearWrap)].GetAddressOf());
+    if (FAILED(hr)) { return hr; }
+
+    // --- LinearClamp ---
+    desc.AddressU = desc.AddressV = desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    hr = device->CreateSamplerState(&desc, this->samplerStates[static_cast<size_t>(SamplerType::LinearClamp)].GetAddressOf());
+    if (FAILED(hr)) { return hr; }
+
+    // --- PointWrap ---
+    desc.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+    desc.AddressU = desc.AddressV = desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    hr = device->CreateSamplerState(&desc, this->samplerStates[static_cast<size_t>(SamplerType::PointWrap)].GetAddressOf());
+    if (FAILED(hr)) { return hr; }
+
+    // --- PointClamp ---
+    desc.AddressU = desc.AddressV = desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    hr = device->CreateSamplerState(&desc, this->samplerStates[static_cast<size_t>(SamplerType::PointClamp)].GetAddressOf());
+    if (FAILED(hr)) { return hr; }
+
+    // --- AnisotropicWrap ---
+    desc.Filter = D3D11_FILTER_ANISOTROPIC;
+    desc.MaxAnisotropy = 8; // 4〜16が一般的
+    desc.AddressU = desc.AddressV = desc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+    hr = device->CreateSamplerState(&desc, this->samplerStates[static_cast<size_t>(SamplerType::AnisotropicWrap)].GetAddressOf());
+    if (FAILED(hr)) { return hr; }
+
+    // --- ShadowCompare ---
+    desc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR;
+    desc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
+    desc.AddressU = desc.AddressV = desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+    hr = device->CreateSamplerState(&desc, this->samplerStates[static_cast<size_t>(SamplerType::ShadowCompare)].GetAddressOf());
+    if (FAILED(hr)) { return hr; }
+
+    return hr;
+}
+
 /** @brief  ワールド変換行列をGPUに送る
  *  @param  DX::Matrix4x4*    _worldMatrix    ワールド変換行列
  */
@@ -282,6 +319,15 @@ void RenderSystem::SetBlendState(BlendStateType _blendState)
         float blendFactor[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
         this->d3d11->GetContext()->OMSetBlendState(this->blendState[static_cast<int>(_blendState)].Get(), blendFactor, 0xffffffff);
     }
+}
+
+/** @brief 指定したサンプラーを設定
+ *  @param SamplerType _samplerType
+ */
+void RenderSystem::SetSampler(SamplerType _samplerType)
+{
+    ID3D11DeviceContext* context = this->d3d11->GetContext();
+    context->PSSetSamplers(0, 1, this->samplerStates[static_cast<size_t>(_samplerType)].GetAddressOf());
 }
 
 /** @brief Alpha To Coverage（マルチサンプリング対応の透明処理）用のON/OFFを切り替える

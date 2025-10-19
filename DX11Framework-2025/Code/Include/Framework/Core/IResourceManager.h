@@ -20,9 +20,9 @@ public:
 
 	/** @brief  リソースを登録する
 	 *	@param  const std::string& _key	リソースのキー
-	 *	@return bool	登録に成功したら true
+	 *	@return T*	登録に成功しなかったら nullptr
      */
-    virtual bool Register(const std::string& _key) = 0;
+    virtual T* Register(const std::string& _key) = 0;
 
 	/**	@brief リソースの登録を解除する
 	 *	@param  const std::string& _key	リソースのキー

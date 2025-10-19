@@ -50,22 +50,25 @@ SpriteManager::~SpriteManager()
 
 /** @brief  リソースを登録する
  *	@param  const std::string& _key	リソースのキー
- *	@return bool	登録に成功したら true
+ *  @return Sprite* 登録されていない場合nullptr
  */
-bool SpriteManager::Register(const std::string& _key)
+Sprite* SpriteManager::Register(const std::string& _key)
 {
 	// すでに登録済みならそのまま返す
-	if (this->spriteMap.contains(_key)) return true;
+	if (this->spriteMap.contains(_key)) return this->Get(_key);
 
 	// パスが存在するか確認
 	auto it = this->spritePathMap.find(_key);
-	if (it == this->spritePathMap.end()) return false;
+	if (it == this->spritePathMap.end()) { return nullptr; }
 
-	// 登録処理
+	// 画像読み込み処理
 	auto tex = LoadTexture(it->second);
-	if (!tex) return false;
-	this->spriteMap.emplace(_key, std::move(tex)); // spriteMap は mutable
-	return true;
+	if (!tex) { return nullptr; }
+
+	// 登録
+	Sprite* rawPtr = tex.get();
+	this->spriteMap.emplace(_key, std::move(tex));
+	return rawPtr;
 }
 
 /**	@brief リソースの登録を解除する

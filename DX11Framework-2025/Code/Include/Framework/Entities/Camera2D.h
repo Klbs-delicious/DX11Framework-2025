@@ -28,6 +28,8 @@ public:
      */
     Camera2D(GameObject* _owner, bool _isActive = true);
 
+    ~Camera2D()override = default;
+
     /// @brief 初期化処理
     void Initialize() override;
 
@@ -84,6 +86,9 @@ public:
 	 */
 	void SetOriginMode(OriginMode _mode) { this->originMode = this->originMode; this->isDirty = true; }
 private:
+    /// @brief ビュー・プロジェクション行列を内部的に更新
+    void UpdateMatrix();
+private:
 	bool isDirty;                   ///< 行列の再計算が必要かどうか
     Transform* transform;
 
@@ -95,7 +100,4 @@ private:
 	float zoom;                         ///< ズーム倍率
 
 	OriginMode originMode = OriginMode::Center;     ///< カメラの原点モード
-
-	/// @brief ビュー・プロジェクション行列を内部的に更新
-	void UpdateMatrix();
 };

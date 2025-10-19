@@ -222,6 +222,9 @@
     <ClInclude Include="Code\Include\Framework\Entities\SpriteRenderer.h">
       <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\Camera3D.h">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Code\Source\Framework\main.cpp">
@@ -324,6 +327,9 @@
       <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Entities\SpriteRenderer.cpp">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Entities\Camera3D.cpp">
       <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
   </ItemGroup>

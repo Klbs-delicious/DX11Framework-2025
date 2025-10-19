@@ -26,8 +26,7 @@ void TestRenderer::Initialize()
 {
     // シェーダーの取得
     auto shaderManager = this->Owner()->Services()->shaders;
-    this->shaders.push_back(shaderManager->Default(ShaderType::VertexShader));
-    this->shaders.push_back(shaderManager->Default(ShaderType::PixelShader));
+    this->program = shaderManager->DefaultProgram();
 
 	// スプライトコンポーネントの取得
     this->spriteComponent = this->Owner()->GetComponent<SpriteComponent>();
@@ -74,8 +73,6 @@ void TestRenderer::Draw()
 
     // バッファを送る
     auto ctx = d3d11.GetContext();
-    UINT stride = sizeof(Vertex);
-    UINT offset = 0;
     this->vertexBuffer->Bind(ctx);
     this->indexBuffer->Bind(ctx);
     ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -90,10 +87,7 @@ void TestRenderer::Draw()
     ctx->PSSetShaderResources(0, 1, &srv);
 
     // シェーダーの設定
-    for (auto& shader : this->shaders)
-    {
-        shader->Bind(*ctx);
-    }
+    this->program->Bind(*ctx);
 
     // 描画
     ctx->DrawIndexed(this->indexBuffer->GetIndexCount(), 0, 0);

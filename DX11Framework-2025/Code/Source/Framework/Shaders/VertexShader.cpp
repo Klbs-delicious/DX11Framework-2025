@@ -62,7 +62,7 @@ bool VertexShader::CreateShader(ID3D11Device& _device, const ShaderInfo _shaderI
 	// 入力レイアウトの作成
 	hr = _device.CreateInputLayout(
 		ShaderCommon::LayoutDescs[static_cast<size_t>(_shaderInfo.layoutType)].data(),
-		ShaderCommon::LayoutDescs[static_cast<UINT>(_shaderInfo.layoutType)].size(),
+		static_cast<UINT>(ShaderCommon::LayoutDescs[static_cast<size_t>(_shaderInfo.layoutType)].size()),
 		this->blob->GetBufferPointer(),
 		this->blob->GetBufferSize(),
 		this->inputLayout.GetAddressOf()

@@ -3,10 +3,15 @@
  * @date   2025/10/09
  */
 #pragma once
-#include<d3d11.h>
+//#include"Include/Framework/Shaders/VertexShader.h"
+//#include"Include/Framework/Shaders/PixelShader.h"
 
+#include<d3d11.h>
 #include<string>
 #include<array>
+#include<vector>
+
+class ShaderBase;
 
  /**@namespace	ShaderCommon
   * @brief		シェーダー情報の共通定義
@@ -109,5 +114,25 @@ namespace ShaderCommon
 		//	{ "INDICES",  0, DXGI_FORMAT_R32G32B32A32_UINT,  0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		//	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,       0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		//}
+	};
+
+	/**	@struct ShaderProgram
+	 *	@brief	シェーダーの組み合わせを保持する構造体
+	 */
+	struct ShaderProgram
+	{
+		ShaderBase* vs = nullptr;
+		ShaderBase* ps = nullptr;
+
+		//VertexShader* vs = nullptr;
+		//PixelShader* ps = nullptr;
+		//GeometryShader* gs = nullptr;
+		//HullShader*     hs = nullptr;
+		//DomainShader*   ds = nullptr;
+
+		/**	@brief シェーダーのバインドを行う
+		 *	@param ID3D11DeviceContext& _ctx 
+		 */
+		void Bind(ID3D11DeviceContext& _ctx) const;
 	};
 }

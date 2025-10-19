@@ -16,7 +16,8 @@ struct Sprite
 
 	Sprite() :texture(nullptr), width(0), height(0), bpp(0) {}
 
-	~Sprite() {
-		if (texture) { texture.Reset(); }
+	~Sprite() 
+	{
+		if (this->texture) { this->texture.Reset(); }
 	}
 };

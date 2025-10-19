@@ -302,6 +302,9 @@
     <ClCompile Include="Code\Source\Framework\Graphics\VertexBuffer.cpp">
       <Filter>ソース ファイル\Framework\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Shaders\ShaderCommon.cpp">
+      <Filter>ソース ファイル\Framework\Shaders</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Code\Shaders\Common.hlsli">

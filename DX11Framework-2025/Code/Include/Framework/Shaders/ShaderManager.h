@@ -2,7 +2,6 @@
  * @date   2025/10/08
  */
 #pragma once
-#include"Include/Framework/Utils/CommonTypes.h"
 #include"Include/Framework/Core/D3D11System.h"
 #include"Include/Framework/Core/IResourceManager.h"
 #include"Include/Framework/Shaders/ShaderBase.h"
@@ -10,6 +9,7 @@
 
 #include<unordered_map>
 #include<memory>
+#include<array>
 
 using namespace ShaderCommon;
 
@@ -59,6 +59,19 @@ public:
 	 */
 	virtual ShaderBase* Get(const std::string& _key) override;
 
+	/**	@brief シェーダープログラムの作成
+	 *	@param const std::string& _programName プログラム名
+	 *	@param std::array<std::string, static_cast<size_t>(ShaderType::MaxShaderType)> _shaderNames 各シェーダー名
+	 *	@return 登録が無事済んだら true
+	 */
+	bool CreateShaderProgram(const std::string& _programName, std::array<std::string, static_cast<size_t>(ShaderType::MaxShaderType)> _shaderNames);
+
+	/**	@brief シェーダープログラムの取得
+	 *	@param const std::string& _programName プログラム名
+	 *	@return ShaderProgram*	シェーダープログラムの参照
+	 */
+	ShaderProgram* GetShaderProgram(const std::string& _programName);
+
 	/**	@brief シェーダー情報を事前登録する
 	 *	@param	const std::string& _key	リソースのキー
 	 *	@param	const ShaderInfo& _info	シェーダー情報
@@ -77,11 +90,18 @@ public:
 	 */
 	ShaderBase* Default(ShaderType _type)const override;
 
+	/**	@brief	デフォルト設定のシェーダープログラムを取得する
+	 *	@return ShaderProgram* 
+	 */
+	ShaderProgram* DefaultProgram()const { return this->deafultProgram; }
+
 	D3D11System& d3d11;	///< D3D11システムの参照
 
 	std::unordered_map<std::string, std::unique_ptr<ShaderBase>> shaderMap;	///< シェーダーマップ
 	std::unordered_map<std::string, ShaderInfo>	shaderInfoMap;				///< シェーダー情報マップ
+	std::unordered_map<std::string, ShaderProgram>	shaderProgramMap;		///< シェーダーの組み合わせマップ
 
 	std::unordered_map<ShaderType, ShaderBase*> defaultShadersMap;	///< 未設定の場合に使用するデフォルトシェーダー
 	ShaderBase* deafultShader;										///<　共通デフォルト（頂点シェーダー）
+	ShaderProgram* deafultProgram;									///<　デフォルトのシェーダープログラム
 };

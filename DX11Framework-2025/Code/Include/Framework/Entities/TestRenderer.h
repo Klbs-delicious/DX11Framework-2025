@@ -7,6 +7,7 @@
 #include "Include/Framework/Shaders/ShaderBase.h"
 #include "Include/Framework/Graphics/VertexBuffer.h"
 #include "Include/Framework/Graphics/IndexBuffer.h"
+#include "Include/Framework/Shaders/ShaderCommon.h"
 
 #include <d3d11.h>
 #include <wrl/client.h>
@@ -39,5 +40,6 @@ private:
     std::unique_ptr<VertexBuffer>vertexBuffer;
     std::unique_ptr<IndexBuffer>indexBuffer;
     std::vector<ShaderBase*> shaders;
+    ShaderCommon::ShaderProgram* program;
     //Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
 };

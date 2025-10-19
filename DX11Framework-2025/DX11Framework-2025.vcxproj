@@ -88,6 +88,7 @@
     <ClCompile Include="Code\Source\Framework\Scenes\SceneFactory.cpp" />
     <ClCompile Include="Code\Source\Framework\Shaders\PixelShader.cpp" />
     <ClCompile Include="Code\Source\Framework\Shaders\ShaderBase.cpp" />
+    <ClCompile Include="Code\Source\Framework\Shaders\ShaderCommon.cpp" />
     <ClCompile Include="Code\Source\Framework\Shaders\ShaderManager.cpp" />
     <ClCompile Include="Code\Source\Framework\Shaders\VertexShader.cpp" />
     <ClCompile Include="Code\Source\Framework\Utils\DebugHooks.cpp" />

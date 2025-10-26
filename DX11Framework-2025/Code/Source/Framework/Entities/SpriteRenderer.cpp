@@ -43,7 +43,7 @@ SpriteRenderer::~SpriteRenderer() {}
 void SpriteRenderer::Initialize()
 {
     // コンポーネントの取得
-    this->camera = SystemLocator::Get<GameObjectManager>().GetFindObjectWithTag(GameTags::Tag::Camera)->GetComponent<Camera2D>();
+    this->camera = SystemLocator::Get<GameObjectManager>().GetFindObjectByName("Camera2D")->GetComponent<Camera2D>();
     this->transform = this->Owner()->GetComponent<Transform>();
 
     auto& d3d11 = SystemLocator::Get<D3D11System>();

@@ -309,9 +309,11 @@ const DX::Matrix4x4& Transform::GetWorldMatrix() const
  */
 DX::Vector3 Transform::Forward() const
 {
-    const_cast<Transform*>(this)->UpdateWorldMatrix();
+    // +Zを正面にする（DirectX標準）
+    const_cast<Transform*>(this)->UpdateWorldMatrix();  
     return DX::Vector3(this->worldMatrix._31, this->worldMatrix._32, this->worldMatrix._33);
 }
+
 /**@brief   上方向ベクトルを取得
  * @return DX::Vector3  上方向ベクトル
  */

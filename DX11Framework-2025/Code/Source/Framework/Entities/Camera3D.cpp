@@ -10,6 +10,8 @@
 #include "Include/Framework/Core/SystemLocator.h"
 #include "Include/Framework/Core/Application.h"
 
+#include<iostream>
+
 //-----------------------------------------------------------------------------
 // Camera3D class
 //-----------------------------------------------------------------------------
@@ -129,16 +131,34 @@ void Camera3D::UpdateMatrix()
 
     DX::Vector3 pos = this->transform->GetWorldPosition();
 
-    // ビュー行列を作成（LookAt式）
-    this->viewMatrix = DX::Matrix4x4::CreateLookAt(pos, this->target, this->up);
+    // TransformのForwardベクトルを利用して注視点を求める
+    DX::Vector3 forward = this->transform->Forward();
+    DX::Vector3 target = pos + forward;
 
-    // プロジェクション行列を作成（透視投影）
-    this->projectionMatrix = DX::Matrix4x4::CreatePerspectiveFieldOfView(
-        this->fovY, this->aspect, this->nearZ, this->farZ
+    std::cout << "[Camera3D] pos: ("
+        << pos.x << ", " << pos.y << ", " << pos.z
+        << "), forward: ("
+        << forward.x << ", " << forward.y << ", " << forward.z
+        << ")\n";
+
+    // ビュー行列を作成
+    this->viewMatrix = DirectX::XMMatrixLookAtLH(
+        XMLoadFloat3(&pos),
+        XMLoadFloat3(&target),
+        XMLoadFloat3(&this->up)
+    );
+
+    // プロジェクション行列を作成
+    this->projectionMatrix = DirectX::XMMatrixPerspectiveFovLH(
+        this->fovY,
+        this->aspect,
+        this->nearZ,
+        this->farZ
     );
 
     this->isDirty = false;
 }
+
 
 /** @brief スクリーン座標 → ワールド方向ベクトル変換
  *  @param const DX::Vector2& _screenPos スクリーン座標（ピクセル）

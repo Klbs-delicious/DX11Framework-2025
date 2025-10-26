@@ -7,7 +7,9 @@
 //-----------------------------------------------------------------------------
 #include"Include/Scenes/TestScene.h"
 #include"Include/Framework/Entities/SpriteRenderer.h"
+#include"Include/Framework/Entities/TestRenderer.h"
 #include"Include/Framework/Entities/Camera2D.h"
+#include"Include/Framework/Entities/Camera3D.h"
 #include"Include/Tests/TestMoveComponent.h"
 #include"Include/Framework/Core/ResourceHub.h"
 #include"Include/Framework/Graphics/SpriteManager.h"
@@ -35,8 +37,13 @@ void TestScene::SetupObjects()
 	auto& spriteManager= ResourceHub::Get<SpriteManager>();
 
 	// カメラオブジェクト
-	auto cameraObj = this->gameObjectManager.Instantiate("CameraObject", GameTags::Tag::Camera);
-	cameraObj->AddComponent<Camera2D>();
+	auto camera3D = this->gameObjectManager.Instantiate("Camera3D", GameTags::Tag::Camera);
+	camera3D->AddComponent<Camera3D>();
+	camera3D->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, -10.0f));
+
+	// カメラオブジェクト
+	auto camera2D = this->gameObjectManager.Instantiate("Camera2D", GameTags::Tag::Camera);
+	camera2D->AddComponent<Camera2D>();
 
 	// オブジェクトを生成する
 	auto obj_1 = this->gameObjectManager.Instantiate("obj_1");
@@ -49,9 +56,7 @@ void TestScene::SetupObjects()
 	obj_1->GetComponent<SpriteComponent>()->SetSprite(spriteManager.Get("Eidan"));
 
 	auto obj_2 =this->gameObjectManager.Instantiate("obj_2");
-	obj_2->transform->SetLocalPosition(DX::Vector3(100.0f, 100.0f, 0.0f));
-	obj_2->transform->SetLocalScale(DX::Vector3(100.0f, 100.0f, 0.0f));
-
-	obj_2->AddComponent<Camera2D>();
-	obj_2->AddComponent<SpriteRenderer>();
+	obj_2->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f , 0.0f));
+	obj_2->transform->SetLocalScale(DX::Vector3(0.01f, 0.01f, 0.01f));
+	obj_2->AddComponent<TestRenderer>();
 }

@@ -51,6 +51,8 @@
     <ClInclude Include="Code\Include\Framework\Graphics\IndexBuffer.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\Material.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\MaterialManager.h" />
+    <ClInclude Include="Code\Include\Framework\Graphics\ModelData.h" />
+    <ClInclude Include="Code\Include\Framework\Graphics\ModelInporter.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\Sprite.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\SpriteManager.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\TextureLoader.h" />
@@ -65,6 +67,7 @@
     <ClInclude Include="Code\Include\Framework\Utils\CommonTypes.h" />
     <ClInclude Include="Code\Include\Framework\Utils\DebugHooks.h" />
     <ClInclude Include="Code\Include\Framework\Utils\NonCopyable.h" />
+    <ClInclude Include="Code\Include\Framework\Utils\TreeNode.h" />
     <ClInclude Include="Code\Include\Scenes\SceneManager.h" />
     <ClInclude Include="Code\Include\Scenes\TestScene.h" />
     <ClInclude Include="Code\Include\Scenes\TitleScene.h" />
@@ -91,6 +94,7 @@
     <ClCompile Include="Code\Source\Framework\Graphics\BufferBase.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\IndexBuffer.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\MaterialManager.cpp" />
+    <ClCompile Include="Code\Source\Framework\Graphics\ModelInporter.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\SpriteManager.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\TextureLoader.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\VertexBuffer.cpp" />
@@ -112,11 +116,23 @@
     <None Include="Code\Shaders\Common.hlsli" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="Code\Shaders\PixelShader\PS_ModelTest.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+    </FxCompile>
     <FxCompile Include="Code\Shaders\PixelShader\PS_Test.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="Code\Shaders\VertexShader\VS_ModelTest.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
     </FxCompile>
     <FxCompile Include="Code\Shaders\VertexShader\VS_Test.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>

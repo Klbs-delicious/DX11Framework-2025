@@ -9,9 +9,16 @@
 #include "Include/Framework/Entities/GameObjectManager.h"
 
 #include <iostream>
+#include <vector>
 
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
+
+struct ModelVertexGPU
+{
+    XMFLOAT3 position;
+    XMFLOAT3 normal;
+};
 
 TestRenderer::TestRenderer(GameObject* _owner, bool _active)
     : Component(_owner, _active)
@@ -67,16 +74,64 @@ void TestRenderer::Initialize()
     // バッファ生成
     if (!modelData.vertices.empty())
     {
-        const auto& verts = modelData.vertices[0];
-        const auto& inds = modelData.indices[0];
+        size_t totalVertexCount = 0;
+        for (const auto& meshVertices : modelData.vertices)
+        {
+            totalVertexCount += meshVertices.size();
+        }
 
-        vertexBuffer = std::make_unique<VertexBuffer>();
-        vertexBuffer->Create(device, verts.data(), sizeof(Vertex_t), static_cast<UINT>(verts.size()));
+        size_t totalIndexCount = 0;
+        for (const auto& meshIndices : modelData.indices)
+        {
+            totalIndexCount += meshIndices.size();
+        }
 
-        indexBuffer = std::make_unique<IndexBuffer>();
-        indexBuffer->Create(device, inds.data(), sizeof(unsigned int), static_cast<UINT>(inds.size()));
+        std::vector<ModelVertexGPU> gpuVertices;
+        gpuVertices.reserve(totalVertexCount);
 
-        std::cout << "[TestRenderer] Buffers created.\n";
+        std::vector<unsigned int> gpuIndices;
+        gpuIndices.reserve(totalIndexCount);
+
+        size_t vertexOffset = 0;
+        for (size_t meshIndex = 0; meshIndex < modelData.vertices.size(); ++meshIndex)
+        {
+            const auto& meshVertices = modelData.vertices[meshIndex];
+            for (const auto& vertex : meshVertices)
+            {
+                ModelVertexGPU gpuVertex{};
+                gpuVertex.position = { vertex.pos.x, vertex.pos.y, vertex.pos.z };
+                gpuVertex.normal = { vertex.normal.x, vertex.normal.y, vertex.normal.z };
+                gpuVertices.emplace_back(gpuVertex);
+            }
+
+            if (meshIndex < modelData.indices.size())
+            {
+                const auto& meshIndices = modelData.indices[meshIndex];
+                for (auto index : meshIndices)
+                {
+                    gpuIndices.emplace_back(static_cast<unsigned int>(index + vertexOffset));
+                }
+            }
+
+            vertexOffset += meshVertices.size();
+        }
+
+        if (!gpuVertices.empty())
+        {
+            vertexBuffer = std::make_unique<VertexBuffer>();
+            vertexBuffer->Create(device, gpuVertices.data(), sizeof(ModelVertexGPU), static_cast<UINT>(gpuVertices.size()));
+        }
+
+        if (!gpuIndices.empty())
+        {
+            indexBuffer = std::make_unique<IndexBuffer>();
+            indexBuffer->Create(device, gpuIndices.data(), sizeof(unsigned int), static_cast<UINT>(gpuIndices.size()));
+        }
+
+        if (vertexBuffer && indexBuffer)
+        {
+            std::cout << "[TestRenderer] Buffers created.\n";
+        }
     }
 
     // シェーダー取得

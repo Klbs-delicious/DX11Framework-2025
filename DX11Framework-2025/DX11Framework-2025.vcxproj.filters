@@ -293,6 +293,9 @@
     <ClCompile Include="Code\Source\Tests\TestMoveComponent.cpp">
       <Filter>ソース ファイル\Test</Filter>
     </ClCompile>
+    <ClCompile Include="Code\Source\Tests\TestTransformInitialization.cpp">
+      <Filter>ソース ファイル\Test</Filter>
+    </ClCompile>
     <ClCompile Include="Code\Source\Scenes\TestScene.cpp">
       <Filter>ソース ファイル\Test</Filter>
     </ClCompile>

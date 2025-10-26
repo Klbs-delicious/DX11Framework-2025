@@ -22,19 +22,14 @@ public:
 
 /** @class	IDrawable
  *	@brief	描画フェーズ抽象化クラス
+ *	@details	- 毎フレーム呼び出される描画処理を定義するためのインターフェース
  */
-
-
- /** @class　	IDrawable
-  *  @brief		更新フェーズ抽象化クラス
-  *  @details	- 毎フレーム呼び出される描画処理を定義するためのインターフェース
-  */
 class IDrawable
 {
 public:
 	/// @brief デストラクタ
 	virtual ~IDrawable() = default;
 
-	 /// @brief 描画処理
+	/// @brief 描画処理
 	virtual void Draw() = 0;
 };

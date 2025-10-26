@@ -150,7 +150,7 @@
     <ClInclude Include="Code\Include\Framework\Shaders\ShaderBase.h">
       <Filter>ヘッダー ファイル\Framework\Scenes</Filter>
     </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Graphics\Sprite.h">
+    <ClInclude Include="Code\Include\Framework\Graphics\TextureResource.h">
       <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Code\Include\Framework\Shaders\ShaderCommon.h">
@@ -223,7 +223,10 @@
       <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClInclude>
     <ClInclude Include="Code\Include\Framework\Entities\Camera3D.h">
-      <Filter>ソース ファイル\Framework\Entities</Filter>
+      <Filter>ヘッダー ファイル\Framework\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\MeshComponent.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -3,7 +3,7 @@
  */
 #pragma once
 #include "Include/Framework/Entities/Component.h"
-#include "Include/Framework/Graphics/Sprite.h"
+#include "Include/Framework/Graphics/TextureResource.h"
 #include "Include/Framework/Entities/GameObject.h"
 
  /** @class	SpriteComponent
@@ -22,14 +22,14 @@ public:
 	void Dispose() override;
 
 	/**	@brief 画像情報の設定
-	 *	@param Sprite* _sprite	画像情報
+	 *	@param TextureResource* _sprite	画像情報
 	 */
-	void SetSprite(Sprite* _sprite);
+	void SetSprite(TextureResource* _sprite);
 
 	/**	@brief	画像情報の取得
-	 *	@return	Sprite*	画像情報
+	 *	@return	TextureResource*	画像情報
 	 */
-	const Sprite* GetSprite()const;
+	const TextureResource* GetSprite()const;
 
 	/** @brief 画像を適用する
 	 *  @param ID3D11DeviceContext* _context
@@ -37,5 +37,5 @@ public:
 	void Apply(ID3D11DeviceContext* _context);
 
 private :
-	const Sprite* sprite;	///< 画像をまとめたデータ構造
+	const TextureResource* sprite;	///< 画像をまとめたデータ構造
 };

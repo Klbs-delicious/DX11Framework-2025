@@ -37,17 +37,17 @@ void SpriteComponent::Dispose()
 }
 
 /**	@brief 画像情報の設定
- *	@param Sprite* _sprite	画像情報
+ *	@param TextureResource* _sprite	画像情報
  */
-void SpriteComponent::SetSprite(Sprite* _sprite)
+void SpriteComponent::SetSprite(TextureResource* _sprite)
 {
 	this->sprite = _sprite;
 }
 
 /**	@brief	画像情報の取得
- *	@return	Sprite*	画像情報
+ *	@return	TextureResource*	画像情報
  */
-const Sprite* SpriteComponent::GetSprite()const 
+const TextureResource* SpriteComponent::GetSprite()const 
 {
 	return this->sprite;
 }

@@ -95,7 +95,6 @@ void GameObject::Dispose()
     this->drawableComponents.clear();
     this->children.clear();
     this->name.clear();
-
 }
 
 /** @brief  オブジェクトの削除申請を行う

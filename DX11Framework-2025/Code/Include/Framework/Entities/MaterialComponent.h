@@ -27,9 +27,9 @@ public:
 	void SetMaterial(Material* _baseMaterial);
 
 	/**	@brief 画像情報の設定
-	 *	@param Sprite* _overrideSprite	画像情報
+	 *	@param TextureResource* _overrideSprite	画像情報
 	 */
-	void SetTexture(Sprite* _overrideSprite);
+	void SetTexture(TextureResource* _overrideSprite);
 
 	/**	@brief パラメータ情報の設定
 	 *	@param const MaterialParams& _params	パラメータ情報の参照
@@ -48,7 +48,7 @@ public:
 	void Apply(ID3D11DeviceContext* _context, RenderSystem* _renderSystem);
 
 private:
-	Material* baseMaterial;		///< 描画に必要な共通リソースをまとめたデータ構造
-	Sprite* overrideTexture;	///< 個別設定用のテクスチャ
-	MaterialParams param;		///< オブジェクトごとに変化するパラメータ
+	Material* baseMaterial;				///< 描画に必要な共通リソースをまとめたデータ構造
+	TextureResource* overrideTexture;	///< 個別設定用のテクスチャ
+	MaterialParams param;				///< オブジェクトごとに変化するパラメータ
 };

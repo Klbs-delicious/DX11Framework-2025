@@ -6,17 +6,8 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include"Include/Framework/Graphics/SpriteManager.h"
-#include"Include/Framework/Core/SystemLocator.h"
-#include"Include/Framework/Core/D3D11System.h"
 #include"Include/Framework/Utils/CommonTypes.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#define STBI_NO_TGA			// ← TGA ローダ自体を無効化（switchのフォーススルー警告を消す）
-#define STBI_NO_GIF			// ← GIF ローダ自体を無効化（関数で確保している自動変数（スタック上のローカル領域）が大きい警告を消す）
-#include "../External/stb/stb_image.h"
-
-#include	<filesystem>
-#include	<fstream>
 #include	<iostream>
 
 //-----------------------------------------------------------------------------
@@ -32,10 +23,13 @@ void SpriteManager::TexturepathRegister()
 }
 
 //// @brief コンストラクタ
-SpriteManager::SpriteManager() :spriteMap(), spritePathMap(), defaultSprite(nullptr)
+SpriteManager::SpriteManager() :textureLorder(nullptr), spriteMap(), spritePathMap(), defaultSprite(nullptr)
 {
 	// 画像の読み込みパスを登録
 	this->TexturepathRegister();
+
+	// テクスチャ読み込みクラスの生成
+	this->textureLorder = std::make_unique<TextureLoader>();
 
 	// デフォルト画像を設定しておく
 	this->defaultSprite = this->Get("Default");
@@ -50,9 +44,9 @@ SpriteManager::~SpriteManager()
 
 /** @brief  リソースを登録する
  *	@param  const std::string& _key	リソースのキー
- *  @return Sprite* 登録されていない場合nullptr
+ *  @return TextureResource* 登録されていない場合nullptr
  */
-Sprite* SpriteManager::Register(const std::string& _key)
+TextureResource* SpriteManager::Register(const std::string& _key)
 {
 	// すでに登録済みならそのまま返す
 	if (this->spriteMap.contains(_key)) return this->Get(_key);
@@ -62,11 +56,11 @@ Sprite* SpriteManager::Register(const std::string& _key)
 	if (it == this->spritePathMap.end()) { return nullptr; }
 
 	// 画像読み込み処理
-	auto tex = LoadTexture(it->second);
+	auto tex = this->textureLorder->FromFile(it->second);
 	if (!tex) { return nullptr; }
 
 	// 登録
-	Sprite* rawPtr = tex.get();
+	TextureResource* rawPtr = tex.get();
 	this->spriteMap.emplace(_key, std::move(tex));
 	return rawPtr;
 }
@@ -89,9 +83,9 @@ void SpriteManager::Unregister(const std::string& _key)
 
 /**	@brief	キーに対応するリソースを取得する
  *	@param	const std::string& _key	リソースのキー
- *	@return	const Sprite*	リソースのポインタ、見つからなかった場合は nullptr
+ *	@return	const TextureResource*	リソースのポインタ、見つからなかった場合は nullptr
  */
-Sprite* SpriteManager::Get(const std::string& _key)
+TextureResource* SpriteManager::Get(const std::string& _key)
 {
 	// すでに登録済みならそのまま返す
 	auto it = this->spriteMap.find(_key);
@@ -103,7 +97,7 @@ Sprite* SpriteManager::Get(const std::string& _key)
 	auto pathIt = this->spritePathMap.find(_key);
 	if (pathIt == this->spritePathMap.end()) 
 	{
-		std::cerr << "Sprite path not found for key: " << _key << std::endl;
+		std::cerr << "TextureResource path not found for key: " << _key << std::endl;
 		return nullptr;
 	}
 
@@ -114,139 +108,4 @@ Sprite* SpriteManager::Get(const std::string& _key)
 	}
 
 	return this->spriteMap.at(_key).get();
-}
-
-/**	@brief	画像の読み込み
- *	@param	const std::u8string& _path	画像のファイルパス
- *	@return	std::unique_ptr<Sprite>	画像データ（失敗した場合は nullptr）
- */
-std::unique_ptr<Sprite> SpriteManager::LoadTexture(const std::string& _path)const
-{
-	std::filesystem::path filepath = _path;
-
-	std::ifstream ifs(filepath, std::ios::binary | std::ios::ate);
-	if (!ifs) {
-		std::cerr << "Failed to open file: " << filepath << std::endl;
-		return nullptr;
-	}
-
-	// Spriteの生成
-	std::unique_ptr<Sprite> sprite = std::make_unique<Sprite>();
-
-	std::streamsize size = ifs.tellg();
-	ifs.seekg(0, std::ios::beg);
-
-	// ファイルの読み込み
-	std::vector<unsigned char> buffer(size);
-	if (!ifs.read(reinterpret_cast<char*>(buffer.data()), size)) {
-		std::cerr << "Failed to read file: " << filepath << std::endl;
-		return nullptr;
-	}
-
-	// 画像をデコード（ピクセル配列に変換）
-	unsigned char* pixels = stbi_load_from_memory(
-		buffer.data(), static_cast<int>(buffer.size()),
-		&sprite->width, &sprite->height, &sprite->bpp, STBI_rgb_alpha);
-
-	if (!pixels) {
-		std::cerr << "Failed to decode image: " << filepath << std::endl;
-		return nullptr;
-	}
-
-	// テクスチャの作成
-	DX::ComPtr<ID3D11Texture2D> pTexture;
-	D3D11_TEXTURE2D_DESC desc{};
-	desc.Width = sprite->width;
-	desc.Height = sprite->height;
-	desc.MipLevels = 1;
-	desc.ArraySize = 1;
-	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	desc.SampleDesc.Count = 1;
-	desc.Usage = D3D11_USAGE_DEFAULT;
-	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-
-	D3D11_SUBRESOURCE_DATA subResource{};
-	subResource.pSysMem = pixels;
-	subResource.SysMemPitch = sprite->width * 4;
-
-	auto& d3d11 = SystemLocator::Get<D3D11System>();
-	HRESULT hr = d3d11.GetDevice()->CreateTexture2D(&desc, &subResource, pTexture.GetAddressOf());
-	if (FAILED(hr)) {
-		stbi_image_free(pixels);
-		return nullptr;
-	}
-
-	// ShaderResourceViewの作成
-	hr = d3d11.GetDevice()->CreateShaderResourceView(pTexture.Get(), nullptr, sprite->texture.GetAddressOf());
-	stbi_image_free(pixels);
-	if (FAILED(hr)) {
-		std::cerr << "Failed to CreateShaderResourceView: " << filepath << std::endl;
-		return nullptr;
-	}
-
-	return std::move(sprite);
-}
-
-/**	@brief 画像データをメモリから読み込む
-*	@param	const unsigned char*	_data	画像のバイナリデータ（メモリ上にある）
-*	@param	int						_len	そのデータのサイズ（バイト数）
- */
-std::unique_ptr<Sprite> SpriteManager::LoadFromMemory(const unsigned char* _data, int _len)
-{
-	bool sts = true;
-	unsigned char* pixels;
-
-	// Spriteの生成
-	std::unique_ptr<Sprite> sprite = std::make_unique<Sprite>();
-
-	// 画像をデコード（ピクセル配列に変換）
-	pixels = stbi_load_from_memory(_data,
-		_len,
-		&sprite->width,
-		&sprite->height,
-		&sprite->bpp,
-		STBI_rgb_alpha);
-
-	// テクスチャ2Dリソース生成
-	ComPtr<ID3D11Texture2D> pTexture;
-
-	D3D11_TEXTURE2D_DESC desc;
-	ZeroMemory(&desc, sizeof(desc));
-
-	desc.Width = sprite->width;
-	desc.Height = sprite->height;
-	desc.MipLevels = 1;
-	desc.ArraySize = 1;
-	desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;			// RGBA
-	desc.SampleDesc.Count = 1;
-	desc.Usage = D3D11_USAGE_DEFAULT;
-	desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	desc.CPUAccessFlags = 0;
-
-	// ピクセルデータを渡す
-	D3D11_SUBRESOURCE_DATA subResource{};
-	subResource.pSysMem = pixels;
-	subResource.SysMemPitch = desc.Width * 4;			// RGBA = 4 bytes per pixel
-	subResource.SysMemSlicePitch = 0;
-
-	ID3D11Device* device = SystemLocator::Get<D3D11System>().GetDevice();
-
-	// テクスチャの作成
-	HRESULT hr = device->CreateTexture2D(&desc, &subResource, pTexture.GetAddressOf());
-	if (FAILED(hr)) {
-		stbi_image_free(pixels);
-		return nullptr;
-	}
-
-	// ShaderResourceViewの生成
-	hr = device->CreateShaderResourceView(pTexture.Get(), nullptr, sprite->texture.GetAddressOf());
-	if (FAILED(hr)) {
-		stbi_image_free(pixels);
-		return nullptr;
-	}
-
-	// ピクセルイメージを解放
-	stbi_image_free(pixels);
-
-	return std::move(sprite);
 }

@@ -50,9 +50,9 @@ void MaterialComponent::SetMaterial(Material* _baseMaterial)
 }
 
 /**	@brief 画像情報の設定
- *	@param Sprite* _overrideSprite	画像情報
+ *	@param TextureResource* _overrideSprite	画像情報
  */
-void MaterialComponent::SetTexture(Sprite* _overrideSprite)
+void MaterialComponent::SetTexture(TextureResource* _overrideSprite)
 {
     this->overrideTexture = _overrideSprite;
 }
@@ -86,7 +86,7 @@ void MaterialComponent::Apply(ID3D11DeviceContext* _context, RenderSystem* _rend
     _renderSystem->SetSampler(this->baseMaterial->samplerType);
 
     // Texture（個別設定を優先）
-    Sprite* useTexture = (this->overrideTexture) ? this->overrideTexture : this->baseMaterial->albedoMap;
+    TextureResource* useTexture = (this->overrideTexture) ? this->overrideTexture : this->baseMaterial->albedoMap;
     if (useTexture)
     {
         ID3D11ShaderResourceView* srv = useTexture->texture.Get();

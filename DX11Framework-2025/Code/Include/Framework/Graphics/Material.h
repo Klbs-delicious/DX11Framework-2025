@@ -4,7 +4,7 @@
 #pragma once
 #include"Include/Framework/Utils/CommonTypes.h"
 #include"Include/Framework/Shaders/ShaderCommon.h"
-#include"Include/Framework/Graphics/Sprite.h"
+#include"Include/Framework/Graphics/TextureResource.h"
 #include"Include/Framework/Graphics/DynamicConstantBuffer.h"
 #include"Include/Framework/Core/RenderSystem.h"
 
@@ -39,7 +39,7 @@ struct MaterialParams
 struct Material
 {
     ShaderCommon::ShaderProgram* shaders;                                   ///< シェーダー
-    Sprite* albedoMap;                                                      ///< テクスチャ（ベースカラー）
+    TextureResource* albedoMap;                                             ///< テクスチャ（ベースカラー）
     SamplerType samplerType;                                                ///< サンプラーの種類
     std::unique_ptr<DynamicConstantBuffer<MaterialParams>> materialBuffer;  ///< 定数バッファ
 

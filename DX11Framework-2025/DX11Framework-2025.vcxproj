@@ -51,9 +51,9 @@
     <ClInclude Include="Code\Include\Framework\Graphics\IndexBuffer.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\Material.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\MaterialManager.h" />
-    <ClInclude Include="Code\Include\Framework\Graphics\ModelInporter.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\Sprite.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\SpriteManager.h" />
+    <ClInclude Include="Code\Include\Framework\Graphics\TextureLoader.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\VertexBuffer.h" />
     <ClInclude Include="Code\Include\Framework\Scenes\SceneFactory.h" />
     <ClInclude Include="Code\Include\Framework\Scenes\SceneType.h" />
@@ -92,6 +92,7 @@
     <ClCompile Include="Code\Source\Framework\Graphics\IndexBuffer.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\MaterialManager.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\SpriteManager.cpp" />
+    <ClCompile Include="Code\Source\Framework\Graphics\TextureLoader.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\VertexBuffer.cpp" />
     <ClCompile Include="Code\Source\Framework\main.cpp" />
     <ClCompile Include="Code\Source\Framework\Scenes\BaseScene.cpp" />
@@ -227,7 +228,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>assimp-vc143-mtd.lib;zlibstaticd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)External\assimp\lib\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>

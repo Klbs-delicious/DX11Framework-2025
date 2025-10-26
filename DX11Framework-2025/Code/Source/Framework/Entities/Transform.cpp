@@ -20,9 +20,16 @@
  */
 Transform::Transform(GameObject* _owner, bool _isActive) :
     Component(_owner, _isActive),
-    isDirty(false), parent(_owner->transform), children(),
-	position(), rotation(), scale(1.0f, 1.0f, 1.0f),
-    localPosition(), localRotation(), localScale(1.0f, 1.0f, 1.0f)
+    isDirty(true),
+    parent(_owner ? _owner->transform : nullptr),
+    children(),
+    position(DX::Vector3::Zero),
+    rotation(DX::Quaternion::Identity),
+    scale(DX::Vector3::One),
+    localPosition(DX::Vector3::Zero),
+    localRotation(DX::Quaternion::Identity),
+    localScale(DX::Vector3::One),
+    worldMatrix(DX::Matrix4x4::Identity)
 {
     std::cout << "Transformコンポーネントの生成" << std::endl;
 }

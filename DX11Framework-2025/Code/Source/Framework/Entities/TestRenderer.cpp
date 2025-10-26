@@ -34,7 +34,20 @@ void TestRenderer::Initialize()
     auto device = d3d.GetDevice();
 
     // コンポーネント取得
-    this->camera = SystemLocator::Get<GameObjectManager>().GetFindObjectByName("Camera3D")->GetComponent<Camera3D>();
+    auto* cameraObject = SystemLocator::Get<GameObjectManager>().GetFindObjectByName("Camera3D");
+    if (!cameraObject)
+    {
+        OutputDebugStringA("[TestRenderer] Camera3D object not found.\n");
+        return;
+    }
+
+    this->camera = cameraObject->GetComponent<Camera3D>();
+    if (!this->camera)
+    {
+        OutputDebugStringA("[TestRenderer] Camera3D component missing.\n");
+        return;
+    }
+
     this->transform = this->Owner()->GetComponent<Transform>();
 
     // モデル読み込み

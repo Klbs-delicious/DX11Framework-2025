@@ -111,6 +111,7 @@
     <ClCompile Include="Code\Source\Scenes\TestScene.cpp" />
     <ClCompile Include="Code\Source\Scenes\TitleScene.cpp" />
     <ClCompile Include="Code\Source\Tests\TestMoveComponent.cpp" />
+    <ClCompile Include="Code\Source\Tests\TestTransformInitialization.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Code\Shaders\Common.hlsli" />

@@ -167,6 +167,9 @@ void TestRenderer::Draw()
     render.SetViewMatrix(&view);
     render.SetProjectionMatrix(&proj);
 
+    // ブレンドステートを設定
+    render.SetBlendState(BlendStateType::BS_NONE);
+
     // 簡易ライト設定
     struct LightBuffer
     {

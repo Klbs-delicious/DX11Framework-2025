@@ -11,21 +11,16 @@ struct PS_IN
     float3 worldPos : POSITION1;
 };
 
-//float4 main(PS_IN input) : SV_TARGET
-//{
-//    float3 N = normalize(input.normal);
-//    float3 L = normalize(-lightDir);
-
-//    // ŠgUŒõ (Lambert)
-//    float diffuse = saturate(dot(N, L));
-
-//    // ŠÈˆÕƒAƒ“ƒrƒGƒ“ƒg{ŠgU
-//    float3 color = baseColor.rgb * (0.2 + 0.8 * diffuse);
-
-//    return float4(color, 1.0f);
-//}
-
 float4 main(PS_IN input) : SV_TARGET
 {
-    return float4(1, 0, 0, 1); // ÔˆêF
+    float3 N = normalize(input.normal);
+    float3 L = normalize(-lightDir);
+
+    // ŠgUŒõ (Lambert)
+    float diffuse = saturate(dot(N, L));
+
+    // ŠÈˆÕƒAƒ“ƒrƒGƒ“ƒg{ŠgU
+    float3 color = baseColor.rgb * (0.2 + 0.8 * diffuse);
+
+    return float4(color, 1.0f);
 }

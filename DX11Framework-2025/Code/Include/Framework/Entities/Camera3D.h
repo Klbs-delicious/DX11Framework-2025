@@ -88,6 +88,7 @@ private:
 
 private:
     bool isDirty;               ///< 行列再計算が必要かどうか
+    bool transformChanged;      ///< Transformからの通知用
     Transform* transform;       ///< 所有オブジェクトのTransform
 
     DX::Matrix4x4 viewMatrix;       ///< ビュー行列

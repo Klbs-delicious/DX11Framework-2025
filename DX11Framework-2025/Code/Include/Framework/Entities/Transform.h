@@ -7,6 +7,7 @@
 #include"Include/Framework/Utils/CommonTypes.h"
 
 #include<vector>
+#include <functional>
 
 /**	@class	Transform
  *	@brief	座標系を管理するコンポーネント
@@ -14,6 +15,19 @@
 class Transform :public Component
 {
 public:
+	using OnChangedCallback = std::function<void(Transform*)>;
+
+	/// @brief Transformの変更時コールバックを登録 
+	void RegisterOnChanged(const OnChangedCallback& callback)
+	{
+		this->onChangedCallbacks.push_back(callback);
+	}
+
+	/// @brief 全コールバックを解除 
+	void UnregisterAllCallbacks()
+	{
+		this->onChangedCallbacks.clear();
+	}
 
 	/** @brief  コンストラクタ
 	 *  @param GameObject* _owner	このコンポーネントがアタッチされるオブジェクト
@@ -211,7 +225,10 @@ public:
 	 */
 	DX::Vector3 QuaternionToEuler(const DX::Quaternion& _quat) const;
 
+protected:
+		void NotifyChanged(bool propagateToChildren = true);
 private:
+
 	bool isDirty;						///< 再計算するかフラグ
 	Transform* parent;					///< 親Transform
 	std::vector<Transform*> children;	///< 子Transformのリスト
@@ -225,4 +242,6 @@ private:
 	DX::Vector3		localScale;		///< 親Transformからの相対スケール
 
 	DX::Matrix4x4	worldMatrix;		///< ワールド変換行列
+
+	std::vector<OnChangedCallback> onChangedCallbacks;
 };

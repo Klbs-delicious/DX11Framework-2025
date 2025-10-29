@@ -39,6 +39,7 @@ void TestScene::SetupObjects()
 	// カメラオブジェクト
 	auto camera3D = this->gameObjectManager.Instantiate("Camera3D", GameTags::Tag::Camera);
 	camera3D->AddComponent<Camera3D>();
+	camera3D->AddComponent<TestMoveComponent>();
 	camera3D->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, -10.0f));
 
 	// カメラオブジェクト
@@ -46,6 +47,11 @@ void TestScene::SetupObjects()
 	camera2D->AddComponent<Camera2D>();
 
 	// オブジェクトを生成する
+	auto obj_2 = this->gameObjectManager.Instantiate("obj_2");
+	obj_2->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 0.0f));
+	obj_2->transform->SetLocalScale(DX::Vector3(0.05f, 0.05f, 0.05f));
+	obj_2->AddComponent<TestRenderer>();
+
 	auto obj_1 = this->gameObjectManager.Instantiate("obj_1");
 	std::cout << obj_1->GetName() << " : " << std::to_string(obj_1->transform->GetWorldPosition().x) << std::endl;
 	obj_1->transform->SetLocalPosition(DX::Vector3(320.0f, 240.0f, 0.0f));
@@ -54,9 +60,4 @@ void TestScene::SetupObjects()
 	obj_1->AddComponent<SpriteRenderer>();
 	obj_1->AddComponent<TestMoveComponent>();
 	obj_1->GetComponent<SpriteComponent>()->SetSprite(spriteManager.Get("Eidan"));
-
-	auto obj_2 =this->gameObjectManager.Instantiate("obj_2");
-	obj_2->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f , 0.0f));
-	obj_2->transform->SetLocalScale(DX::Vector3(0.01f, 0.01f, 0.01f));
-	obj_2->AddComponent<TestRenderer>();
 }

@@ -1,4 +1,4 @@
-#include "Include/Framework/Entities/GameObject.h"
+﻿#include "Include/Framework/Entities/GameObject.h"
 
 #include <cassert>
 #include <cmath>
@@ -52,3 +52,4 @@ struct TransformInitializationTestSuite
 TransformInitializationTestSuite g_transformInitializationTests;
 
 } // namespace
+

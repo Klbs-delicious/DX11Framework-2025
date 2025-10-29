@@ -21,8 +21,9 @@
  *  @param bool _isActive コンポーネントの有効/無効
  */
 Camera3D::Camera3D(GameObject* _owner, bool _isActive)
-    : Component(_owner),
+    : Component(_owner, _isActive),
     isDirty(true),
+    transformChanged(false) ,
     target(DX::Vector3(0.0f, 0.0f, 1.0f)),
     up(DX::Vector3::Up),
     fovY(DirectX::XMConvertToRadians(60.0f)),
@@ -38,6 +39,14 @@ Camera3D::Camera3D(GameObject* _owner, bool _isActive)
     );
 
     this->transform = this->Owner()->GetComponent<Transform>();
+    if (this->transform)
+    {
+        // もしTransformが変更されたらカメラの再計算を行う
+        this->transform->RegisterOnChanged([this](Transform*)
+            {
+                this->transformChanged = true;
+            });
+    }
 }
 
 /** @brief 初期化処理
@@ -55,12 +64,23 @@ void Camera3D::Initialize()
 void Camera3D::Update(float _deltaTime)
 {
     // Transform の変化に合わせて更新
-    this->UpdateMatrix();
+    if (this->isDirty||this->transformChanged)
+    {
+        this->UpdateMatrix();
+        this->isDirty = false;
+        this->transformChanged = false;
+    }
 }
 
 /** @brief 終了処理
  */
-void Camera3D::Dispose() {}
+void Camera3D::Dispose()
+{
+    if (this->transform)
+    {
+        this->transform->UnregisterAllCallbacks();
+    }
+}
 
 /** @brief ビュー行列の取得
  *  @return 現在のビュー行列
@@ -127,19 +147,14 @@ void Camera3D::SetUp(const DX::Vector3& _up)
  */
 void Camera3D::UpdateMatrix()
 {
-    if (!this->isDirty && !this->transform->GetIsDirty()) { return; }
-
     DX::Vector3 pos = this->transform->GetWorldPosition();
 
     // TransformのForwardベクトルを利用して注視点を求める
     DX::Vector3 forward = this->transform->Forward();
     DX::Vector3 target = pos + forward;
 
-    std::cout << "[Camera3D] pos: ("
-        << pos.x << ", " << pos.y << ", " << pos.z
-        << "), forward: ("
-        << forward.x << ", " << forward.y << ", " << forward.z
-        << ")\n";
+    std::cout << "[Camera3D] pos=(" << pos.x << "," << pos.y << "," << pos.z
+        << ") target=(" << target.x << "," << target.y << "," << target.z << ")\n";
 
     // ビュー行列を作成
     this->viewMatrix = DirectX::XMMatrixLookAtLH(
@@ -155,8 +170,6 @@ void Camera3D::UpdateMatrix()
         this->nearZ,
         this->farZ
     );
-
-    this->isDirty = false;
 }
 
 

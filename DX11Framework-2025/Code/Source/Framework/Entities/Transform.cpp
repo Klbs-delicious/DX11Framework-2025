@@ -20,9 +20,16 @@
  */
 Transform::Transform(GameObject* _owner, bool _isActive) :
     Component(_owner, _isActive),
-    isDirty(false), parent(_owner->transform), children(),
-	position(), rotation(), scale(1.0f, 1.0f, 1.0f),
-    localPosition(), localRotation(), localScale(1.0f, 1.0f, 1.0f)
+    isDirty(true),
+    parent(nullptr), 
+    children(),
+    position(DX::Vector3::Zero),
+    rotation(DX::Quaternion::Identity),
+    scale(DX::Vector3::One),
+    localPosition(DX::Vector3::Zero),
+    localRotation(DX::Quaternion::Identity),
+    localScale(DX::Vector3::One),
+    worldMatrix(DX::Matrix4x4::Identity)
 {
     std::cout << "Transformコンポーネントの生成" << std::endl;
 }
@@ -80,6 +87,7 @@ void Transform::SetWorldPosition(const DX::Vector3& _position)
 {
 	this->localPosition = WorldToLocalPosition(_position);
     this->isDirty = true;
+    NotifyChanged(true);
 }
 
 /**@brief ワールド空間の座標を取得
@@ -98,6 +106,7 @@ void Transform::SetWorldRotation(const DX::Quaternion& _rotation)
 {
     this->localRotation = WorldToLocalRotation(_rotation);
     this->isDirty = true;
+    NotifyChanged(true);
 }
 
 
@@ -117,6 +126,7 @@ void Transform::SetWorldScale(const DX::Vector3& _scale)
 {
     this->localScale = WorldToLocalScale(_scale);
     this->isDirty = true;
+    NotifyChanged(true);
 }
 
 /**@brief ワールド空間のスケールを取得
@@ -137,6 +147,7 @@ void Transform::SetLocalPosition(const DX::Vector3& _localPosition)
 {
     this->localPosition = _localPosition;
     this->isDirty = true;
+    NotifyChanged(true);
 }
 
 /**@brief ローカル空間の座標を取得
@@ -154,6 +165,7 @@ void Transform::SetLocalRotation(const DX::Quaternion& _localRotation)
 {
     this->localRotation = _localRotation;
     this->isDirty = true;
+    NotifyChanged(true);
 }
 
 /**@brief ローカル空間の回転を取得
@@ -171,6 +183,7 @@ void Transform::SetLocalScale(const DX::Vector3& _localScale)
 {
     this->localScale = _localScale;
     this->isDirty = true;
+    NotifyChanged(true);
 }
 
 /**@brief ローカル空間のスケールを取得
@@ -195,8 +208,8 @@ void Transform::SetParent(Transform* _parent)
     Transform* ancestor = _parent;
     while (ancestor)
     {
-        if (ancestor == this)
-            return; // 循環参照になるので何もしない
+        // 循環参照になるので何もしない
+        if (ancestor == this) { return; }
         ancestor = ancestor->parent;
     }
 
@@ -219,34 +232,48 @@ void Transform::SetParent(Transform* _parent)
     this->isDirty = true;
 }
 
-/**@brief 子Transformを追加
- * @param Transform* _child 追加する子Transform
+/** @brief 子Transformを追加
+ *  @param Transform* _child 追加する子Transform
  */
 void Transform::AddChild(Transform* _child)
 {
-    if (!_child) return;
+    // 自己参照防止
+    if (!_child || _child == this) return; 
 
     // 重複追加防止
     for (Transform* child : this->children)
     {
-        if (child == _child)
-            return;
+        if (child == _child) { return; }        
+    }
+
+    // 既存の親から外す
+    if (_child->parent && _child->parent != this)
+    {
+        _child->parent->RemoveChild(_child);
     }
 
     this->children.push_back(_child);
+
+    // 親リンクを更新
+    _child->parent = this; 
 }
 
-/**@brief 子Transformを削除
- * @param Transform* _child 削除する子Transform
+/** @brief 子Transformを削除
+ *  @param Transform* _child 削除する子Transform
  */
 void Transform::RemoveChild(Transform* _child)
 {
-    if (!_child) return;
+    if (!_child) { return; }
 
     auto it = std::find(this->children.begin(), this->children.end(), _child);
     if (it != this->children.end())
     {
         this->children.erase(it);
+        if (_child->parent == this)
+        {
+            // 親リンクを解除
+            _child->parent = nullptr;
+        }
     }
 }
 
@@ -309,9 +336,11 @@ const DX::Matrix4x4& Transform::GetWorldMatrix() const
  */
 DX::Vector3 Transform::Forward() const
 {
-    const_cast<Transform*>(this)->UpdateWorldMatrix();
+    // +Zを正面にする（DirectX標準）
+    const_cast<Transform*>(this)->UpdateWorldMatrix();  
     return DX::Vector3(this->worldMatrix._31, this->worldMatrix._32, this->worldMatrix._33);
 }
+
 /**@brief   上方向ベクトルを取得
  * @return DX::Vector3  上方向ベクトル
  */
@@ -471,5 +500,27 @@ DX::Vector3 Transform::WorldToLocalScale(const DX::Vector3& worldScale) const
     else
     {
         return worldScale;
+    }
+}
+
+void Transform::NotifyChanged(bool propagateToChildren)
+{
+    // 自身の登録コールバックを呼ぶ
+    for (auto& cb : this->onChangedCallbacks)
+    {
+        if (cb) cb(this);
+    }
+
+    // 子Transformにも伝播
+    if (propagateToChildren)
+    {
+        for (auto* child : this->children)
+        {
+            if (child)
+            {
+                child->isDirty = true;
+                child->NotifyChanged(true); // ← 再帰的に通知！
+            }
+        }
     }
 }

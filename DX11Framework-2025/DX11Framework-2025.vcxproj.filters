@@ -150,9 +150,6 @@
     <ClInclude Include="Code\Include\Framework\Shaders\ShaderBase.h">
       <Filter>ヘッダー ファイル\Framework\Scenes</Filter>
     </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Graphics\TextureResource.h">
-      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="Code\Include\Framework\Shaders\ShaderCommon.h">
       <Filter>ヘッダー ファイル\Framework\Shader</Filter>
     </ClInclude>
@@ -219,14 +216,26 @@
     <ClInclude Include="Code\Include\Framework\Entities\MaterialComponent.h">
       <Filter>ヘッダー ファイル\Framework\Entities</Filter>
     </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Entities\SpriteRenderer.h">
-      <Filter>ソース ファイル\Framework\Entities</Filter>
-    </ClInclude>
     <ClInclude Include="Code\Include\Framework\Entities\Camera3D.h">
       <Filter>ヘッダー ファイル\Framework\Entities</Filter>
     </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Graphics\MeshComponent.h">
-      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    <ClInclude Include="Code\Include\Framework\Graphics\ModelData.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\ModelInporter.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\Sprite.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\TextureLoader.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Utils\TreeNode.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\SpriteRenderer.h">
+      <Filter>ヘッダー ファイル\Framework\Entities</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -293,6 +302,9 @@
     <ClCompile Include="Code\Source\Tests\TestMoveComponent.cpp">
       <Filter>ソース ファイル\Test</Filter>
     </ClCompile>
+    <ClCompile Include="Code\Source\Tests\TestTransformInitialization.cpp">
+      <Filter>ソース ファイル\Test</Filter>
+    </ClCompile>
     <ClCompile Include="Code\Source\Scenes\TestScene.cpp">
       <Filter>ソース ファイル\Test</Filter>
     </ClCompile>
@@ -335,6 +347,12 @@
     <ClCompile Include="Code\Source\Framework\Entities\Camera3D.cpp">
       <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\ModelInporter.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\TextureLoader.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Code\Shaders\Common.hlsli">
@@ -348,5 +366,7 @@
     <FxCompile Include="Code\Shaders\VertexShader\VS_Test.hlsl">
       <Filter>リソース ファイル\VertexShader</Filter>
     </FxCompile>
+    <FxCompile Include="Code\Shaders\PixelShader\PS_ModelTest.hlsl" />
+    <FxCompile Include="Code\Shaders\VertexShader\VS_ModelTest.hlsl" />
   </ItemGroup>
 </Project>

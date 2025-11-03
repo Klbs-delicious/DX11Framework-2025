@@ -24,6 +24,7 @@ struct VS_OUT
     float4 color : COLOR;
     float2 uv : TEXCOORD0;
 };
+
     
 struct PS_IN
 {
@@ -34,6 +35,9 @@ struct PS_IN
 
 Texture2D tex : register(t0);       // テクスチャリソース
 SamplerState samp : register(s0);   // サンプラーステート
+
+
+
 
 //struct MATERIAL
 //{

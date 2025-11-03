@@ -14,6 +14,6 @@ public:
 	void Dispose() override;
 private:
 	Transform* transform;
-	float speed = 100.0f; // 移動速度（ピクセル/秒）
+	float speed = 50.0f; // 移動速度（ピクセル/秒）
 	InputSystem& inputSystem;
 };

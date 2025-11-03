@@ -19,13 +19,25 @@
  *  @param bool _active	コンポーネントの有効/無効
  */
 Camera2D::Camera2D(GameObject* _owner, bool _isActive)
-    : Component(_owner), isDirty(true), zoom(1.0f), originMode(OriginMode::TopLeft)
+    : Component(_owner), 
+    isDirty(true), 
+    transformChanged(false), 
+    zoom(1.0f), 
+    originMode(OriginMode::TopLeft)
 {
 	// 画面サイズを取得
     auto& window = SystemLocator::Get<WindowSystem>();
     this->screenSize = DX::Vector2(static_cast<float>(window.GetWidth()), static_cast<float>(window.GetHeight()));
 
     this->transform = this->Owner()->GetComponent<Transform>();
+    if (this->transform)
+    {
+        // もしTransformが変更されたらカメラの再計算を行う
+        this->transform->RegisterOnChanged([this](Transform*)
+            {
+                this->transformChanged = true;
+            });
+    }
 }
 
 /** @brief 初期化処理
@@ -42,14 +54,25 @@ void Camera2D::Initialize()
  */
 void Camera2D::Update(float _deltaTime)
 {
-	// Transformの位置に応じてビュー、プロジェクション行列を更新
-    this->UpdateMatrix();
+    // Transform の変化に合わせて更新
+    if (this->isDirty || this->transformChanged)
+    {
+        this->UpdateMatrix();
+        this->isDirty = false;
+        this->transformChanged = false;
+    }
 }
 
 /** @brief 終了処理
  *  @details リソースの解放などがあればここで行う
  */
-void Camera2D::Dispose() {}
+void Camera2D::Dispose()
+{
+    if (this->transform)
+    {
+        this->transform->UnregisterAllCallbacks();
+    }
+}
 
 /** @brief 画面サイズの設定
  *  @param float _width 画面の幅
@@ -82,8 +105,9 @@ const DX::Matrix4x4& Camera2D::GetProjectionMatrix() const
  */
 void Camera2D::SetZoom(float _zoom)
 {
-    this->zoom = _zoom;
-	this->isDirty = true;   // 再計算する
+    // 極端に小さい値で描画が崩れないように下限を設定
+    this->zoom = std::max(_zoom, 0.001f);
+    this->isDirty = true;
 }
 
 /** @brief ズーム倍率の取得
@@ -100,7 +124,7 @@ float Camera2D::GetZoom() const
 void Camera2D::SetScreenSize(const DX::Vector2& size)
 {
     this->screenSize = size;
-    // projectionMatrix を再計算する必要あり
+    this->isDirty = true;
 }
 
 /** @brief 画面サイズの取得
@@ -137,7 +161,7 @@ DX::Vector2 Camera2D::ScreenToWorld(const DX::Vector2& _screenPos) const
 /// @brief ビュー・プロジェクション行列を内部的に更新
 void Camera2D::UpdateMatrix()
 {
-    if (!this->isDirty && !this->transform->GetIsDirty()) { return; }
+    if (!this->isDirty && !this->transformChanged && !this->transform->GetIsDirty()) { return; }
 
     DX::Vector3 pos = this->transform->GetWorldPosition();
 
@@ -155,6 +179,8 @@ void Camera2D::UpdateMatrix()
             -1.0f, 1.0f);
 
         // 描画や座標変換に使用するため、ビュー×プロジェクション行列を計算しておく
+        // zoom > 1.0f の場合は拡大（視野が狭くなる）
+        // zoom < 1.0f の場合は縮小（視野が広がる）
         DX::Matrix4x4 invView = DX::Matrix4x4::CreateTranslation(pos.x, pos.y, 0.0f);
         float scaleX = this->zoom / this->screenSize.x;
         float scaleY = this->zoom / this->screenSize.y;

@@ -43,7 +43,7 @@ SpriteRenderer::~SpriteRenderer() {}
 void SpriteRenderer::Initialize()
 {
     // コンポーネントの取得
-    this->camera = SystemLocator::Get<GameObjectManager>().GetFindObjectWithTag(GameTags::Tag::Camera)->GetComponent<Camera2D>();
+    this->camera = SystemLocator::Get<GameObjectManager>().GetFindObjectByName("Camera2D")->GetComponent<Camera2D>();
     this->transform = this->Owner()->GetComponent<Transform>();
 
     auto& d3d11 = SystemLocator::Get<D3D11System>();
@@ -82,6 +82,9 @@ void SpriteRenderer::Draw()
     render.SetWorldMatrix(&world);
     render.SetViewMatrix(&view);
     render.SetProjectionMatrix(&proj);
+
+    // ブレンドステートを設定
+    render.SetBlendState(BlendStateType::BS_ALPHABLEND);
 
     // バッファを送る
     auto ctx = d3d11.GetContext();

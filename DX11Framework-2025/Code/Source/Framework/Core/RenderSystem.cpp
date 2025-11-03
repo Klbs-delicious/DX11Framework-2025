@@ -163,6 +163,9 @@ bool RenderSystem::Initialize()
     }
     this->SetSampler(SamplerType::LinearWrap);
 
+    // ラスタライザの設定（カリングOFF）
+    this->DisableCulling();
+
     // 定数バッファの作成
     D3D11_BUFFER_DESC bufferDesc{};
     bufferDesc.ByteWidth = sizeof(DX::Matrix4x4);

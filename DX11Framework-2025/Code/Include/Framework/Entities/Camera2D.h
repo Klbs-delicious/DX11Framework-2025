@@ -84,13 +84,18 @@ public:
 	/** @brief カメラの原点モードを設定
 	 *  @param OriginMode _mode 原点モード
 	 */
-	void SetOriginMode(OriginMode _mode) { this->originMode = this->originMode; this->isDirty = true; }
+	void SetOriginMode(OriginMode _mode) 
+    { 
+        this->originMode = this->originMode; 
+        this->isDirty = true; 
+    }
 private:
     /// @brief ビュー・プロジェクション行列を内部的に更新
     void UpdateMatrix();
 private:
 	bool isDirty;                   ///< 行列の再計算が必要かどうか
     Transform* transform;
+    bool transformChanged;          ///< Transformからの通知用
 
 	DX::Matrix4x4 viewMatrix;           ///< ビュー変換行列
 	DX::Matrix4x4 projectionMatrix;     ///< プロジェクション変換行列

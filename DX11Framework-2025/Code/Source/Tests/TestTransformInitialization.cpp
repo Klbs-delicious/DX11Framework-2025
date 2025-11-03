@@ -1,4 +1,5 @@
-﻿#include "Include/Framework/Entities/GameObject.h"
+﻿#ifdef _DEBUG
+#include "Include/Framework/Entities/GameObject.h"
 
 #include <cassert>
 #include <cmath>
@@ -28,6 +29,24 @@ struct TransformInitializationTestSuite
         Transform* transform = gameObject.transform;
         assert(transform != nullptr);
 
+        // --- Local系の初期値チェック ---
+        const auto& localPos = transform->GetLocalPosition();
+        AssertNear(localPos.x, 0.0f);
+        AssertNear(localPos.y, 0.0f);
+        AssertNear(localPos.z, 0.0f);
+
+        const auto& localRot = transform->GetLocalRotation();
+        AssertNear(localRot.x, 0.0f);
+        AssertNear(localRot.y, 0.0f);
+        AssertNear(localRot.z, 0.0f);
+        AssertNear(localRot.w, 1.0f);
+
+        const auto& localScale = transform->GetLocalScale();
+        AssertNear(localScale.x, 1.0f);
+        AssertNear(localScale.y, 1.0f);
+        AssertNear(localScale.z, 1.0f);
+
+        // --- World系の確認（行列とforwardベクトル） ---
         const auto& worldMatrix = transform->GetWorldMatrix();
         AssertNear(worldMatrix._11, 1.0f);
         AssertNear(worldMatrix._22, 1.0f);
@@ -35,12 +54,6 @@ struct TransformInitializationTestSuite
         AssertNear(worldMatrix._41, 0.0f);
         AssertNear(worldMatrix._42, 0.0f);
         AssertNear(worldMatrix._43, 0.0f);
-
-        const auto rotation = transform->GetWorldRotation();
-        AssertNear(rotation.x, 0.0f);
-        AssertNear(rotation.y, 0.0f);
-        AssertNear(rotation.z, 0.0f);
-        AssertNear(rotation.w, 1.0f);
 
         const auto forward = transform->Forward();
         AssertNear(forward.x, 0.0f);
@@ -52,4 +65,4 @@ struct TransformInitializationTestSuite
 TransformInitializationTestSuite g_transformInitializationTests;
 
 } // namespace
-
+#endif // DEBUG

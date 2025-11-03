@@ -28,7 +28,7 @@ namespace Graphics::Import
     //----------------------------------------------------
     // ノードツリー生成（安全版）
     //----------------------------------------------------
-    void ModelImporter::CreateNodeTree(aiNode* _node, Framework::Utils::TreeNode<std::string>* _tree)
+    void ModelImporter::CreateNodeTree(aiNode* _node, TreeNode_t* _tree)
     {
         // ----------------------------
         // NULL ガード

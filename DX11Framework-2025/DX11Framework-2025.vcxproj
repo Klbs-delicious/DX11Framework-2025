@@ -51,6 +51,7 @@
     <ClInclude Include="Code\Include\Framework\Graphics\IndexBuffer.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\Material.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\MaterialManager.h" />
+    <ClInclude Include="Code\Include\Framework\Graphics\Mesh.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\ModelData.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\ModelInporter.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\Sprite.h" />
@@ -94,6 +95,7 @@
     <ClCompile Include="Code\Source\Framework\Graphics\BufferBase.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\IndexBuffer.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\MaterialManager.cpp" />
+    <ClCompile Include="Code\Source\Framework\Graphics\Mesh.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\ModelInporter.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\SpriteManager.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\TextureLoader.cpp" />

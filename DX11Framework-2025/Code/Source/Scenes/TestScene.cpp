@@ -17,6 +17,7 @@
 
 #include"Include/Framework/Graphics/Mesh.h"
 #include"Include/Framework/Graphics/SpriteManager.h"
+#include"Include/Framework/Graphics/MeshManager.h"
 #include"Include/Framework/Graphics/ModelImporter.h"
 #include"Include/Framework/Shaders/ShaderManager.h"
 
@@ -85,15 +86,23 @@ void TestScene::SetupObjects()
 		return;
 	}
 
-	// メッシュの作成
-	Graphics::Mesh* p_mesh = new Graphics::Mesh();
-	p_mesh->Create(SystemLocator::Get<D3D11System>().GetDevice(),
-		SystemLocator::Get<D3D11System>().GetContext(), 
+	//// メッシュの作成
+	//Graphics::Mesh* p_mesh = new Graphics::Mesh();
+	//p_mesh->Create(SystemLocator::Get<D3D11System>().GetDevice(),
+	//	SystemLocator::Get<D3D11System>().GetContext(), 
+	//	&ResourceHub::Get<ShaderManager>(),
+	//	*p_modelData);
+
+	auto& meshes = ResourceHub::Get<MeshManager>();
+	/*meshes.Register("Woman", p_mesh);*/
+	auto mesh = meshes.Register("Woman");
+	mesh->Create(SystemLocator::Get<D3D11System>().GetDevice(),
+		SystemLocator::Get<D3D11System>().GetContext(),
 		&ResourceHub::Get<ShaderManager>(),
 		*p_modelData);
 
-	// テスト的にメッシュをセット（現状メモリリークを起こす）
-	meshComp->SetMesh(p_mesh);
+	// メッシュをセット
+	meshComp->SetMesh(meshes.Get("Woman"));
 	obj_2->AddComponent<MeshRenderer>();
 
 	auto obj_1 = this->gameObjectManager.Instantiate("obj_1");

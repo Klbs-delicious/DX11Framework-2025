@@ -6,6 +6,7 @@
 #include"Include/Framework/Core/InputSystem.h"
 #include"Include/Framework/Graphics/SpriteManager.h"
 #include"Include/Framework/Graphics/MaterialManager.h"
+#include"Include/Framework/Graphics/MeshManager.h"
 #include"Include/Framework/Shaders/ShaderManager.h"
 #include"Include/Framework/Entities/GameObjectManager.h"
 #include"Include/Scenes/SceneManager.h"
@@ -70,6 +71,7 @@ private:
 	std::unique_ptr<SpriteManager> spriteManager;			///< 画像データの管理
 	std::unique_ptr<ShaderManager> shaderManager;			///< シェーダーの管理
 	std::unique_ptr<MaterialManager> materialManager;		///< マテリアルの管理
+	std::unique_ptr<MeshManager> meshManager;				///< メッシュの管理
 	///< [TODO]物理、衝突の処理
 	///< [TODO]サウンドの処理
 	///< [TODO]UIの管理

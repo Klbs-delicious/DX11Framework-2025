@@ -246,6 +246,9 @@
     <ClInclude Include="Code\Include\Framework\Entities\MeshRenderer.h">
       <Filter>ヘッダー ファイル\Framework\Entities</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\MeshManager.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Code\Source\Framework\main.cpp">
@@ -370,6 +373,9 @@
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Entities\MeshRenderer.cpp">
       <Filter>ソース ファイル\Framework\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\MeshManager.cpp">
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

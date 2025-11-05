@@ -5,7 +5,7 @@
 // 重いヘッダを避ける
 class SpriteManager;
 class MaterialManager;
-//struct Mesh;
+class MeshManager;
 class ShaderManager;
 
 /** @struct     EngineServices
@@ -16,6 +16,6 @@ struct EngineServices final
 {
     SpriteManager* sprites = nullptr;
     MaterialManager* materials = nullptr;
-    //IResourceManager<Mesh>* meshes = nullptr;
+    MeshManager* meshes = nullptr;
     ShaderManager* shaders = nullptr;
 };

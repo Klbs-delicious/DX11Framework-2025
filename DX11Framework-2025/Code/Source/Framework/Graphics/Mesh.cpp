@@ -25,76 +25,76 @@ namespace Graphics
         // --- サブセット構築 ---
         this->subsets.clear();
         this->subsets.reserve(_modelData.subsets.size());
+
         for (const auto& subset : _modelData.subsets)
         {
-            // NOTE: Assimp のメッシュが独立した頂点を持つ場合は vertexBase による補正が必要
             MeshSubset meshSubset{};
             meshSubset.indexStart = subset.indexBase;
-            meshSubset.indexCount = subset.indexCount;
+            meshSubset.indexCount = subset.indexNum;
             meshSubset.vertexBase = subset.vertexBase;
-            meshSubset.vertexCount = subset.vertexCount;
+            meshSubset.vertexCount = subset.vertexNum;
             meshSubset.materialIndex = subset.materialIndex;
             this->subsets.push_back(meshSubset);
         }
 
-        // --- 頂点統合 ---
-        // 総頂点数を事前にカウントして実際のサイズで確保する
-        size_t totalVertexCount = 0;
-        for (const auto& meshVertices : _modelData.vertices)
-        {
-            totalVertexCount += meshVertices.size();
-        }
+        // --- 頂点・インデックス統合 ---
         std::vector<ModelVertexGPU> vertexData;
-        vertexData.reserve(totalVertexCount);
-
-        for (const auto& meshVertices : _modelData.vertices)
-        {
-            for (const auto& vertex : meshVertices)
-            {
-                ModelVertexGPU vtx{};
-                vtx.position = { vertex.pos.x, vertex.pos.y, vertex.pos.z };
-                vtx.normal = { vertex.normal.x, vertex.normal.y, vertex.normal.z };
-                vtx.texcoord = { vertex.texcoord.x, vertex.texcoord.y };
-                vertexData.push_back(vtx);
-            }
-        }
-
-        // --- 頂点バッファ作成 ---
-        this->vertexBuffer = std::make_unique<VertexBuffer>();
-        this->vertexBuffer->Create(_device, vertexData.data(), sizeof(ModelVertexGPU),
-            static_cast<UINT>(vertexData.size()), false);
-
-        // --- インデックス統合 ---
-        size_t totalIndexCount = 0;
-        for (const auto& meshIndices : _modelData.indices)
-        {
-            totalIndexCount += meshIndices.size();
-        }
-
         std::vector<UINT> indexData;
-        indexData.reserve(totalIndexCount);
 
-        for (const auto& meshIndices : _modelData.indices)
+        vertexData.reserve(100000); // 適宜
+        indexData.reserve(300000);
+
+        unsigned int vertexOffset = 0;
+
+        for (size_t meshIndex = 0; meshIndex < _modelData.vertices.size(); ++meshIndex)
         {
-            indexData.insert(indexData.end(), meshIndices.begin(), meshIndices.end());
+            const auto& meshVertices = _modelData.vertices[meshIndex];
+            const auto& meshIndices = _modelData.indices[meshIndex];
+
+            // 頂点統合
+            for (const auto& v : meshVertices)
+            {
+                ModelVertexGPU gpu{};
+                gpu.position = { v.pos.x, v.pos.y, v.pos.z };
+                gpu.normal = { v.normal.x, v.normal.y, v.normal.z };
+                gpu.texcoord = { v.texCoord.x, v.texCoord.y };
+                vertexData.push_back(gpu);
+            }
+
+            // インデックス統合（頂点オフセットを考慮）
+            for (const auto& i : meshIndices)
+                indexData.push_back(i + vertexOffset);
+
+            vertexOffset += static_cast<unsigned int>(meshVertices.size());
         }
 
-        // --- インデックスバッファ作成 ---
-        this->indexBuffer = std::make_unique<IndexBuffer>();
-        this->indexBuffer->Create(_device, indexData.data(),
-            static_cast<UINT>(indexData.size()), false);
+        // --- 頂点バッファ生成 ---
+        this->vertexBuffer = std::make_unique<VertexBuffer>();
+        this->vertexBuffer->Create(
+            _device,
+            vertexData.data(),
+            sizeof(ModelVertexGPU),
+            static_cast<UINT>(vertexData.size()),
+            false);
 
-        // --- マテリアル作成 ---
+        // --- インデックスバッファ生成 ---
+        this->indexBuffer = std::make_unique<IndexBuffer>();
+        this->indexBuffer->Create(
+            _device,
+            indexData.data(),
+            sizeof(UINT),
+            static_cast<UINT>(indexData.size()));
+
+        // --- マテリアル生成 ---
         this->materials.reserve(_modelData.materials.size());
         for (size_t i = 0; i < _modelData.materials.size(); ++i)
         {
             const auto& srcMat = _modelData.materials[i];
             auto mat = std::make_unique<Material>();
 
-            mat->shaders = _shaderManager->GetShaderProgram("ModelTest"); // 統一命名推奨
+            mat->shaders = _shaderManager->GetShaderProgram("ModelBasic");
 
             MaterialParams params{};
-
             if (i < _modelData.diffuseTextures.size() && _modelData.diffuseTextures[i])
             {
                 mat->albedoMap = _modelData.diffuseTextures[i].get();
@@ -106,13 +106,14 @@ namespace Graphics
                 params.TextureEnable = FALSE;
             }
 
-            params.Ambient = DX::Color(srcMat.Ambient.r, srcMat.Ambient.g, srcMat.Ambient.b, 1.0f);
-            params.Diffuse = DX::Color(srcMat.Diffuse.r, srcMat.Diffuse.g, srcMat.Diffuse.b, 1.0f);
-            params.Specular = DX::Color(srcMat.Specular.r, srcMat.Specular.g, srcMat.Specular.b, 1.0f);
-            params.Emission = DX::Color(srcMat.Emission.r, srcMat.Emission.g, srcMat.Emission.b, 1.0f);
-            params.Shiness = srcMat.Shininess;
+            params.Ambient = DX::Color(srcMat.ambient.r, srcMat.ambient.g, srcMat.ambient.b, 1.0f);
+            params.Diffuse = DX::Color(srcMat.diffuse.r, srcMat.diffuse.g, srcMat.diffuse.b, 1.0f);
+            params.Specular = DX::Color(srcMat.specular.r, srcMat.specular.g, srcMat.specular.b, 1.0f);
+            params.Emission = DX::Color(srcMat.emission.r, srcMat.emission.g, srcMat.emission.b, 1.0f);
+            params.Shiness = srcMat.shiness;
 
-            mat->materialBuffer->Update(_context,params);
+            mat->materialBuffer->Create(_device);
+            mat->materialBuffer->Update(_context, params);
             this->materials.emplace_back(std::move(mat));
         }
     }

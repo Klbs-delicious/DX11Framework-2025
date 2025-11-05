@@ -55,9 +55,10 @@ const TextureResource* SpriteComponent::GetSprite()const
 /** @brief 画像を適用する
  *  @param ID3D11DeviceContext* _context
  */
-void SpriteComponent::Apply(ID3D11DeviceContext* _context)
+void SpriteComponent::Apply(ID3D11DeviceContext* context)
 {
-	// テクスチャを送る
-	ID3D11ShaderResourceView* srv = this->sprite ? this->sprite->texture.Get() : nullptr;
-	_context->PSSetShaderResources(0, 1, &srv);
+	if (this->sprite)
+		this->sprite->Bind(context, 0);
+	else
+		TextureResource::Unbind(context, 0);
 }

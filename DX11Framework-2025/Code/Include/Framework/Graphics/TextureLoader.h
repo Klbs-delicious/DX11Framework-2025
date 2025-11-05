@@ -34,4 +34,6 @@ public:
      * @return 生成されたTextureResourceのunique_ptr。失敗時はnullptr
      */
     std::unique_ptr<TextureResource> FromMemory(const unsigned char* _data, int _len) const;
+
+    std::unique_ptr<TextureResource> FromRawRGBA(const unsigned char* data, unsigned int width, unsigned int height);
 };

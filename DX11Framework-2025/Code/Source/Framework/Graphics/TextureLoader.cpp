@@ -91,3 +91,43 @@ std::unique_ptr<TextureResource> TextureLoader::FromMemory(const unsigned char* 
 
     return std::move(tex);
 }
+
+std::unique_ptr<TextureResource> TextureLoader::FromRawRGBA(
+    const unsigned char* data,
+    unsigned int width,
+    unsigned int height)
+{
+    if (!data || width == 0 || height == 0)
+        return nullptr;
+
+    D3D11_TEXTURE2D_DESC texDesc = {};
+    texDesc.Width = width;
+    texDesc.Height = height;
+    texDesc.MipLevels = 1;
+    texDesc.ArraySize = 1;
+    texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texDesc.SampleDesc.Count = 1;
+    texDesc.Usage = D3D11_USAGE_DEFAULT;
+    texDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+
+    D3D11_SUBRESOURCE_DATA initData = {};
+    initData.pSysMem = data;
+    initData.SysMemPitch = width * 4; // 1ピクセル4バイト(RGBA)
+
+    auto device = SystemLocator::Get<D3D11System>().GetDevice();
+    Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
+    HRESULT hr = device->CreateTexture2D(&texDesc, &initData, &texture);
+    if (FAILED(hr))
+        return nullptr;
+
+    Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv;
+    hr = device->CreateShaderResourceView(texture.Get(), nullptr, &srv);
+    if (FAILED(hr))
+        return nullptr;
+
+    auto result = std::make_unique<TextureResource>();
+    result->texture = srv;
+    result->width = width;
+    result->height = height;
+    return result;
+}

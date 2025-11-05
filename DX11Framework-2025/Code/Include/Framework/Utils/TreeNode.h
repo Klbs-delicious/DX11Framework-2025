@@ -5,7 +5,7 @@
 #include<memory>
 #include<vector>
 
-namespace Framework::Utils
+namespace Utils
 {
     template <typename T>
     class TreeNode

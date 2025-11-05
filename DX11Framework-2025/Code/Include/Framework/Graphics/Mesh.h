@@ -18,6 +18,9 @@ namespace Graphics
         DirectX::XMFLOAT3 position;
         DirectX::XMFLOAT3 normal;
         DirectX::XMFLOAT2 texcoord;
+
+        UINT  boneIndex[4] = { 0,0,0,0 };
+        float boneWeight[4] = { 0,0,0,0 };
     };
 
     /** @struct MeshSubset
@@ -38,7 +41,6 @@ namespace Graphics
     class Mesh
     {
     public:
-        Mesh() = default;
         ~Mesh() = default;
 
         /**@brief メッシュ生成（頂点・インデックス・サブセットを統合）

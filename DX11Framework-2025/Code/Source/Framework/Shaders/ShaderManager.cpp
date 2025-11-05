@@ -30,12 +30,17 @@ ShaderManager::ShaderManager() :
 	this->PreRegisterShaderInfo("TestVS", ShaderInfo(ShaderType::VertexShader, L"VertexShader/VS_Test"));
 	this->PreRegisterShaderInfo("TestPS", ShaderInfo(ShaderType::PixelShader, L"PixelShader/PS_Test"));
 
-	this->PreRegisterShaderInfo("VS_Model", ShaderInfo(ShaderType::VertexShader, L"VertexShader/VS_ModelTest", LayoutType::TestModel));
-	this->PreRegisterShaderInfo("PS_Model", ShaderInfo(ShaderType::PixelShader, L"PixelShader/PS_ModelTest", LayoutType::TestModel));
+	this->PreRegisterShaderInfo("VS_TestModel", ShaderInfo(ShaderType::VertexShader, L"VertexShader/VS_ModelTest", LayoutType::TestModel));
+	this->PreRegisterShaderInfo("PS_TestModel", ShaderInfo(ShaderType::PixelShader, L"PixelShader/PS_ModelTest", LayoutType::TestModel));
+
+	this->PreRegisterShaderInfo("VS_Model", ShaderInfo(ShaderType::VertexShader, L"VertexShader/VS_Model", LayoutType::ModelBasic));
+	this->PreRegisterShaderInfo("PS_Model", ShaderInfo(ShaderType::PixelShader, L"PixelShader/PS_Model", LayoutType::ModelBasic));
 
 	// シェーダープログラムの登録
 	this->CreateShaderProgram("Default", { "TestVS","TestPS","","","" });
-	this->CreateShaderProgram("ModelTest", { "VS_Model","PS_Model","","","" });
+	this->CreateShaderProgram("ModelTest", { "VS_TestModel","PS_TestModel","","","" });
+
+	this->CreateShaderProgram("ModelBasic", { "VS_Model","PS_Model","","","" });
 
 	// デフォルト設定のシェーダーリソースを登録
 	this->defaultShadersMap[ShaderType::VertexShader] = this->Get("TestVS");

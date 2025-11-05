@@ -6,13 +6,22 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include"Include/Scenes/TestScene.h"
+#include"Include/Framework/Core/ResourceHub.h"
+#include"Include/Framework/Core/SystemLocator.h"
+
 #include"Include/Framework/Entities/SpriteRenderer.h"
-#include"Include/Framework/Entities/TestRenderer.h"
+#include"Include/Framework/Entities/MeshRenderer.h"
 #include"Include/Framework/Entities/Camera2D.h"
 #include"Include/Framework/Entities/Camera3D.h"
-#include"Include/Tests/TestMoveComponent.h"
-#include"Include/Framework/Core/ResourceHub.h"
+#include"Include/Framework/Entities/MeshComponent.h"
+
+#include"Include/Framework/Graphics/Mesh.h"
 #include"Include/Framework/Graphics/SpriteManager.h"
+#include"Include/Framework/Graphics/ModelImporter.h"
+#include"Include/Framework/Shaders/ShaderManager.h"
+
+#include"Include/Tests/TestMoveComponent.h"
+//#include"Include/Framework/Entities/TestRenderer.h"
 
 #include<iostream>
 
@@ -50,13 +59,47 @@ void TestScene::SetupObjects()
 	auto obj_2 = this->gameObjectManager.Instantiate("obj_2");
 	obj_2->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 0.0f));
 	obj_2->transform->SetLocalScale(DX::Vector3(0.05f, 0.05f, 0.05f));
-	obj_2->AddComponent<TestRenderer>();
+	auto meshComp = obj_2->AddComponent<MeshComponent>();
+
+	// モデル読み込み（現状p_modelDataはメモリリークを起こす）
+	Graphics::Import::ModelData* p_modelData = new Graphics::Import::ModelData();
+	Graphics::Import::ModelImporter importer;
+	bool isModelLoaded = importer.Load(
+		"Assets/Models/Woman/woman.fbx",   // モデルパス
+		"",                                // テクスチャフォルダ（空でOK）
+
+		//"Assets/Models/akai/Akai.fbx",   // モデルパス
+		//"",                                // テクスチャフォルダ（空でOK）
+
+		//"Assets/Models/Man/man.fbx",   // モデルパス
+		//"",                                // テクスチャフォルダ（空でOK）
+
+		//"Assets/Models/jack2/jack2.pmx",   // モデルパス
+		//"Assets/Models/jack2/tx",			// テクスチャフォルダ
+		*p_modelData
+	);
+
+	if (!isModelLoaded)
+	{
+		std::cout << "[MeshRenderer] Failed to load model.\n";
+		return;
+	}
+
+	// メッシュの作成
+	Graphics::Mesh* p_mesh = new Graphics::Mesh();
+	p_mesh->Create(SystemLocator::Get<D3D11System>().GetDevice(),
+		SystemLocator::Get<D3D11System>().GetContext(), 
+		&ResourceHub::Get<ShaderManager>(),
+		*p_modelData);
+
+	// テスト的にメッシュをセット（現状メモリリークを起こす）
+	meshComp->SetMesh(p_mesh);
+	obj_2->AddComponent<MeshRenderer>();
 
 	auto obj_1 = this->gameObjectManager.Instantiate("obj_1");
 	std::cout << obj_1->GetName() << " : " << std::to_string(obj_1->transform->GetWorldPosition().x) << std::endl;
 	obj_1->transform->SetLocalPosition(DX::Vector3(320.0f, 240.0f, 0.0f));
 	obj_1->transform->SetLocalScale(DX::Vector3(150.0f, 150.0f, 0.0f));
-
 	obj_1->AddComponent<SpriteRenderer>();
 	obj_1->AddComponent<TestMoveComponent>();
 	obj_1->GetComponent<SpriteComponent>()->SetSprite(spriteManager.Get("Eidan"));

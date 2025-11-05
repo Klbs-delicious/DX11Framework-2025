@@ -14,62 +14,59 @@
 
 namespace Graphics::Import
 {
-    struct Vertex
-    {
-        std::string meshname;
-        aiVector3D pos;
-        aiVector3D normal;
-        aiColor4D  color;
-        aiVector3D texcoord;
-        int materialIndex;
-        std::string materialName;
+    struct Vertex {
+        std::string meshName;           // メッシュ名
+        aiVector3D pos;                 // 位置
+        aiVector3D normal;              // 法線
+        aiColor4D color;                // 頂点カラー
+        aiVector3D texCoord;            // テクスチャ座標
+        int materialIndex;              // マテリアルインデックス
+        std::string materialName;       // マテリアル名
 
-        int BoneIndex[4]{};
-        float BoneWeight[4]{};
-        std::string BoneName[4];
-        int boneCount = 0;
+        int boneIndex[4];               // ボーンインデックス
+        float boneWeight[4];            // ボーンウェイト
+        std::string boneName[4];        // ボーン名
+        int boneCount = 0;              // ボーン数
     };
 
-    struct Subset
-    {
-        std::string meshname;
-        int materialIndex;
-        unsigned int vertexBase;
-        unsigned int vertexCount;
-        unsigned int indexBase;
-        unsigned int indexCount;
-        std::string materialName;
+    struct Subset {
+        std::string meshName;           // メッシュ名
+        int materialIndex;              // マテリアルインデックス
+        unsigned int vertexBase;        // 頂点バッファのベース
+        unsigned int vertexNum;         // 頂点数
+        unsigned int indexBase;         // インデックスバッファのベース
+        unsigned int indexNum;          // インデックス数
+        std::string materialName;       // マテリアル名
     };
 
-    struct Material
-    {
-        std::string name;
-        aiColor4D Ambient;
-        aiColor4D Diffuse;
-        aiColor4D Specular;
-        aiColor4D Emission;
-        float Shininess = 0.0f;
-        std::string diffuseTextureName;
+    struct Material {
+        std::string materialName;       // マテリアル名
+        aiColor4D ambient;              // アンビエント
+        aiColor4D diffuse;              // ディフューズ
+        aiColor4D specular;             // スペキュラ
+        aiColor4D emission;             // エミッション
+        float shiness;                  // シャイネス
+        std::string diffuseTextureName; // ディフューズテクスチャ名
     };
 
-    struct Weight
-    {
-        std::string boneName;
-        std::string meshName;
-        float weight;
-        int vertexIndex;
+    // ウェイト情報
+    struct Weight {
+        std::string boneName;           // ボーン名
+        std::string meshName;           // メッシュ名
+        float weight;                   // ウェイト値
+        int vertexIndex;                // 頂点インデックス
     };
 
-    struct Bone
-    {
-        std::string boneName;
-        std::string meshName;
-        std::string armatureName;
-        aiMatrix4x4 Matrix{};
-        aiMatrix4x4 AnimationMatrix{};
-        aiMatrix4x4 OffsetMatrix{};
-        int index = 0;
-        std::vector<Weight> weights;
+    // ボーン構造体
+    struct Bone {
+        std::string boneName;           // ボーン名
+        std::string meshName;           // メッシュ名
+        std::string armatureName;       // アーマチュア名
+        aiMatrix4x4 matrix{};           // 親子関係を考慮した行列
+        aiMatrix4x4 animationMatrix{};  // 自分の事だけを考えた行列
+        aiMatrix4x4 offsetMatrix{};     // ボーンオフセット行列
+        int index;                      // 配列の何番目か
+        std::vector<Weight> weights;    // このボーンが影響を与える頂点インデックス・ウェイト値
     };
 
     struct ModelData
@@ -80,6 +77,6 @@ namespace Graphics::Import
         std::vector<Material> materials;
         std::vector<std::unique_ptr<TextureResource>> diffuseTextures;
         std::unordered_map<std::string, Bone> boneDictionary;
-        Framework::Utils::TreeNode<std::string> boneTree;
+        Utils::TreeNode<std::string> boneTree;
     };
 }

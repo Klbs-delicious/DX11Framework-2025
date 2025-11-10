@@ -15,7 +15,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STBI_NO_TGA			// ← TGA ローダ自体を無効化（switchのフォーススルー警告を消す）
 #define STBI_NO_GIF			// ← GIF ローダ自体を無効化（関数で確保している自動変数（スタック上のローカル領域）が大きい警告を消す）
-#include "../External/stb/stb_image.h"
+#include "../External/stb/include/stb_image.h"
 
 //-----------------------------------------------------------------------------
 // ファイルからテクスチャを読み込む

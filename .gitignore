@@ -3,11 +3,10 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
-# 追加ライブラリ
-DX11Framework-2025/directxtk/
-
-# Assetディレクトリを除外
-DX11Framework-2025/DX11Framework-2025/Asset/
+#----------------------------------------
+# Asset ディレクトリ除外
+#----------------------------------------
+DX11Framework-2025/Assets/
 
 # アセット関連
 *.png

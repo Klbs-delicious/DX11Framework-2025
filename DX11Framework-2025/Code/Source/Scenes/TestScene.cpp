@@ -50,7 +50,7 @@ void TestScene::SetupObjects()
 	auto camera3D = this->gameObjectManager.Instantiate("Camera3D", GameTags::Tag::Camera);
 	camera3D->AddComponent<Camera3D>();
 	camera3D->AddComponent<TestMoveComponent>();
-	camera3D->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, -10.0f));
+	camera3D->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 5.0f));
 
 	// カメラオブジェクト
 	auto camera2D = this->gameObjectManager.Instantiate("Camera2D", GameTags::Tag::Camera);
@@ -58,10 +58,35 @@ void TestScene::SetupObjects()
 
 	// オブジェクトを生成する
 	auto obj_2 = this->gameObjectManager.Instantiate("obj_2");
-	obj_2->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 0.0f));
-	obj_2->transform->SetLocalScale(DX::Vector3(0.05f, 0.05f, 0.05f));
+	obj_2->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 10.0f));
+	obj_2->transform->SetLocalScale(DX::Vector3(2.0f, 2.0f, 2.0f));
+	//obj_2->transform->SetLocalScale(DX::Vector3(0.05f, 0.05f, 0.05f));
+	auto& meshManager = ResourceHub::Get<MeshManager>();
 	auto meshComp = obj_2->AddComponent<MeshComponent>();
+	meshComp->SetMesh(meshManager.Get("Sphere"));
+	obj_2->AddComponent<MeshRenderer>();
 
+	auto obj_3 = this->gameObjectManager.Instantiate("obj_3");
+	obj_3->transform->SetLocalPosition(DX::Vector3(5.0f, 0.0f, 5.0f));
+	meshComp = obj_3->AddComponent<MeshComponent>();
+	meshComp->SetMesh(meshManager.Get("Box"));
+	obj_3->AddComponent<MeshRenderer>();
+
+	auto obj_4 = this->gameObjectManager.Instantiate("obj_4");
+	obj_4->transform->SetLocalPosition(DX::Vector3(0.0f, -5.0f, 0.0f));
+	obj_4->transform->SetLocalScale(DX::Vector3(20.0f, 1.0f, 20.0f));
+	meshComp = obj_4->AddComponent<MeshComponent>();
+	meshComp->SetMesh(meshManager.Get("Plane"));
+	obj_4->AddComponent<MeshRenderer>();
+
+	auto obj_5 = this->gameObjectManager.Instantiate("obj_5");
+	obj_5->transform->SetLocalPosition(DX::Vector3(0.0f, 7.0f, 3.0f));
+	obj_5->transform->SetLocalScale(DX::Vector3(5.0f, 5.0f, 5.0f));
+	meshComp = obj_5->AddComponent<MeshComponent>();
+	meshComp->SetMesh(meshManager.Get("Capsule"));
+	obj_5->AddComponent<MeshRenderer>();
+
+	/*
 	// モデル読み込み（現状p_modelDataはメモリリークを起こす）
 	Graphics::Import::ModelData* p_modelData = new Graphics::Import::ModelData();
 	Graphics::Import::ModelImporter importer;
@@ -93,23 +118,24 @@ void TestScene::SetupObjects()
 	//	&ResourceHub::Get<ShaderManager>(),
 	//	*p_modelData);
 
-	auto& meshes = ResourceHub::Get<MeshManager>();
-	/*meshes.Register("Woman", p_mesh);*/
-	auto mesh = meshes.Register("Woman");
-	mesh->Create(SystemLocator::Get<D3D11System>().GetDevice(),
-		SystemLocator::Get<D3D11System>().GetContext(),
-		&ResourceHub::Get<ShaderManager>(),
-		*p_modelData);
+	//auto& meshes = ResourceHub::Get<MeshManager>();
+	//meshes.Register("Woman", p_mesh);
+	//auto mesh = meshes.Register("Woman");
+	//mesh->Create(SystemLocator::Get<D3D11System>().GetDevice(),
+	//	SystemLocator::Get<D3D11System>().GetContext(),
+	//	&ResourceHub::Get<ShaderManager>(),
+	//	*p_modelData);
 
-	// メッシュをセット
-	meshComp->SetMesh(meshes.Get("Woman"));
-	obj_2->AddComponent<MeshRenderer>();
+	//// メッシュをセット
+	//meshComp->SetMesh(meshes.Get("Woman"));
+	//obj_2->AddComponent<MeshRenderer>();
+	*/
 
-	auto obj_1 = this->gameObjectManager.Instantiate("obj_1");
-	std::cout << obj_1->GetName() << " : " << std::to_string(obj_1->transform->GetWorldPosition().x) << std::endl;
-	obj_1->transform->SetLocalPosition(DX::Vector3(320.0f, 240.0f, 0.0f));
-	obj_1->transform->SetLocalScale(DX::Vector3(150.0f, 150.0f, 0.0f));
-	obj_1->AddComponent<SpriteRenderer>();
-	obj_1->AddComponent<TestMoveComponent>();
-	obj_1->GetComponent<SpriteComponent>()->SetSprite(spriteManager.Get("Eidan"));
+	//auto obj_1 = this->gameObjectManager.Instantiate("obj_1");
+	//std::cout << obj_1->GetName() << " : " << std::to_string(obj_1->transform->GetWorldPosition().x) << std::endl;
+	//obj_1->transform->SetLocalPosition(DX::Vector3(320.0f, 240.0f, 0.0f));
+	//obj_1->transform->SetLocalScale(DX::Vector3(150.0f, 150.0f, 0.0f));
+	//obj_1->AddComponent<SpriteRenderer>();
+	//obj_1->AddComponent<TestMoveComponent>();
+	//obj_1->GetComponent<SpriteComponent>()->SetSprite(spriteManager.Get("Eidan"));
 }

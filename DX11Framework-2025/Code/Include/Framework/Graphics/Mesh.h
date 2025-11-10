@@ -43,12 +43,6 @@ namespace Graphics
     public:
         ~Mesh() = default;
 
-        /**@brief メッシュ生成（頂点・インデックス・サブセットを統合）
-         * @param _device
-         * @param _modelData 読み込んだモデル情報
-         */
-        void Create(ID3D11Device* _device, ID3D11DeviceContext* _context, ShaderManager* _shaderManager, const Graphics::Import::ModelData& _modelData);
-
         /**@brief メッシュをバインド
          * @param _context
          */
@@ -59,27 +53,47 @@ namespace Graphics
          */
         const std::vector<MeshSubset>& GetSubsets() const { return this->subsets; }
 
-        /**@brief 特定のマテリアルを取得する
-         * @param _index マテリアルのインデックス
-         * @return Material* マテリアルが存在しなければ nullptr を返す
+		/**@brief インデックスバッファの取得
+         * @return 
          */
-        Material* GetMaterial(size_t _index) const
-        {
-            return _index < this->materials.size() ? this->materials[_index].get() : nullptr;
-        }
+        const  IndexBuffer& GetIndex() const { return *this->indexBuffer.get(); }
 
-        /**@brief マテリアルを追加する
-         * @param _mat マテリアル情報
+        /**@brief 頂点バッファの設定
+         * @param _vb 
          */
-        void AddMaterial(std::unique_ptr<Material> _mat)
-        {
-            this->materials.emplace_back(std::move(_mat));
-        }
+        void SetVertexBuffer(std::unique_ptr<VertexBuffer> _vb) { this->vertexBuffer = std::move(_vb); }
+        
+        /**@brief インデックスバッファの設定
+         * @param _ib 
+         */
+        void SetIndexBuffer(std::unique_ptr<IndexBuffer> _ib) { this->indexBuffer = std::move(_ib); }
+
+		/**@brief サブセット情報の設定
+         * @param _subsets 
+         */
+        void SetSubsets(std::vector<MeshSubset>&& _subsets) { this->subsets = std::move(_subsets); }
+
+        ///**@brief 特定のマテリアルを取得する
+        // * @param _index マテリアルのインデックス
+        // * @return Material* マテリアルが存在しなければ nullptr を返す
+        // */
+        //Material* GetMaterial(size_t _index) const
+        //{
+        //    return _index < this->materials.size() ? this->materials[_index].get() : nullptr;
+        //}
+
+        ///**@brief マテリアルを追加する
+        // * @param _mat マテリアル情報
+        // */
+        //void AddMaterial(std::unique_ptr<Material> _mat)
+        //{
+        //    this->materials.emplace_back(std::move(_mat));
+        //}
 
     private:
         std::unique_ptr<VertexBuffer> vertexBuffer;         ///< 頂点バッファ
         std::unique_ptr<IndexBuffer> indexBuffer;           ///< インデックスバッファ
         std::vector<MeshSubset> subsets;                    ///< サブセット情報
-        std::vector<std::unique_ptr<Material>> materials;   ///< マテリアル群
+        //std::vector<std::unique_ptr<Material>> materials;   ///< マテリアル群
     };
 }// namespace Graphics

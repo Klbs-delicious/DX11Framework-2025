@@ -54,13 +54,13 @@ void MeshRenderer::Initialize()
     }
     this->transform = this->Owner()->GetComponent<Transform>();
 
-    // シェーダー取得
+    // マテリアル情報を取得
     auto& materials = this->Owner()->Services()->materials;
-    materialComponent->SetMaterial(materials->Get("ModelBasic"));
+    materialComponent->SetMaterial(materials->Default());
 
     // ライト定数バッファの作成
-    this->light.lightDir = { 0.3f, -1.0f, 0.2f };
-    this->light.baseColor = { 0.8f, 0.7f, 0.6f, 1.0f };
+    this->light.lightDir = { 0.4f, -1.0f, 0.3f };
+    this->light.baseColor = { 1.0f, 0.85f, 0.7f, 1.0f };
 
     this->lightBuffer = std::make_unique<DynamicConstantBuffer<LightBuffer>>();
 	this->lightBuffer->Create(device);
@@ -93,23 +93,18 @@ void MeshRenderer::Draw()
 
 	// メッシュを描画する
     auto mesh = this->meshComponent->GetMesh();
+    if (!mesh) return;
+
     mesh->Bind(*ctx);
     ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    for (auto& subset : mesh->GetSubsets())
-    {
-        auto* material = mesh->GetMaterial(subset.materialIndex);
-        if (material)
-        {
-            material->shaders->Bind(*ctx);
-            material->materialBuffer->BindVS(ctx, 3);
-            material->materialBuffer->BindPS(ctx, 1);
-            if (material->albedoMap) { material->albedoMap->Bind(ctx, 0); }
+	// マテリアルを適用する
+	this->materialComponent->Apply(ctx, &render);
 
-            // 既存のユーティリティを使用する
-            render.SetSampler(material->samplerType); 
-        }
-        ctx->DrawIndexed(subset.indexCount, subset.indexStart,0);
+    // --- Subsetをループ描画（今は単一マテリアルを使い回す） ---
+    for (const auto& subset : mesh->GetSubsets())
+    {
+        ctx->DrawIndexed(subset.indexCount, subset.indexStart, 0);
     }
 }
 

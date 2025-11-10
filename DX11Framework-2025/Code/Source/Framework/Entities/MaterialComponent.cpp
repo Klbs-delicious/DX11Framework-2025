@@ -6,8 +6,10 @@
  // Includes
  //-----------------------------------------------------------------------------
 #include "Include/Framework/Entities/MaterialComponent.h"
+#include "Include/Framework/Core/SystemLocator.h"
 #include "Include/Framework/Core/RenderSystem.h"
 #include "Include/Framework/Graphics/MaterialManager.h"
+#include "Include/Framework/Graphics/SpriteManager.h"
 
 //-----------------------------------------------------------------------------
 // MaterialComponent class
@@ -36,6 +38,15 @@ void MaterialComponent::Initialize()
     if (!this->baseMaterial) {
         auto materialManager = this->Owner()->Services()->materials;
         this->baseMaterial = materialManager->Default();
+
+        // GPUに送る
+        this->baseMaterial->materialBuffer->Update(SystemLocator::Get<D3D11System>().GetContext(), this->param);
+    }
+    if (!this->baseMaterial->albedoMap)
+    {
+		// デフォルトテクスチャを設定する
+        auto& texMgr = this->Owner()->Services()->sprites;
+        this->baseMaterial->albedoMap = texMgr->Default();
     }
 }
 void MaterialComponent::Dispose() 
@@ -97,6 +108,7 @@ void MaterialComponent::Apply(ID3D11DeviceContext* _context, RenderSystem* _rend
     if (this->baseMaterial->materialBuffer)
     {
         this->baseMaterial->materialBuffer->Update(_context, this->param);
-        this->baseMaterial->materialBuffer->BindPS(_context, 2);
+        this->baseMaterial->materialBuffer->BindVS(_context, 3);
+        this->baseMaterial->materialBuffer->BindPS(_context, 1);
     }
 }

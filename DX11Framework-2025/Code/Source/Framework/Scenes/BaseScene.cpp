@@ -55,8 +55,8 @@ void BaseScene::Update(float _deltaTime)
 	if (input.IsActionPressed("Space")) { std::cout << "Space：Press" << std::endl; }
 	if (input.IsActionTriggered("Space")) { std::cout << "Space：Trigger" << std::endl; }
 
-    if (input.IsActionTriggered("SceneChangeTest")) { scenemanager.RequestSceneChange(SceneType::Test); }
-    if (input.IsActionTriggered("SceneChangeTitle")) { scenemanager.RequestSceneChange(SceneType::Title); }
+    //if (input.IsActionTriggered("SceneChangeTest")) { scenemanager.RequestSceneChange(SceneType::Test); }
+    //if (input.IsActionTriggered("SceneChangeTitle")) { scenemanager.RequestSceneChange(SceneType::Title); }
 }
 
 /**	@brief		ゲームオブジェクトの描画処理を行う

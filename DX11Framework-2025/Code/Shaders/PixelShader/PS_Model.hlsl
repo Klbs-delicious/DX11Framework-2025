@@ -2,35 +2,10 @@
 // PS_Model.hlsl
 // ピクセルシェーダー：ハーフランバート＋Phong＋テクスチャ対応
 //-----------------------------------------------------------------------------
-
-cbuffer MaterialBuffer : register(b1)
-{
-    float4 Ambient;
-    float4 Diffuse;
-    float4 Specular;
-    float4 Emission;
-    float Shiness;
-    bool TextureEnable;
-    float2 Dummy;
-};
-
-cbuffer LightBuffer : register(b3)
-{
-    float3 lightDir; // ワールド空間でのライト方向（ライト→モデル方向）
-    float pad1;
-    float4 baseColor;
-};
+#include "../Common.hlsli"
 
 Texture2D albedoMap : register(t0);
 SamplerState samLinear : register(s0);
-
-struct PS_IN
-{
-    float4 pos : SV_POSITION;
-    float3 worldPos : POSITION1;
-    float3 normal : NORMAL;
-    float2 tex : TEXCOORD0;
-};
 
 // ---------------------------------------------
 // 彩度補正（Saturation調整）

@@ -142,7 +142,7 @@ namespace Graphics::Primitives
     namespace Capsule
     {
         inline constexpr float DefaultRadius = 0.5f;
-        inline constexpr float DefaultHeight = 1.0f;
+        inline constexpr float DefaultHeight = 2.0f;
         inline constexpr uint32_t DefaultSegments = 16;
         inline constexpr uint32_t DefaultRings = 8;
 

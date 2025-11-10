@@ -1,43 +1,78 @@
+//-----------------------------------------------------------------------------
+// ModelCommon.hlsl
+// 共通定数バッファ・構造体定義
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// 定数バッファ
+//-----------------------------------------------------------------------------
+
 cbuffer WorldBuffer : register(b0)
 {
-    matrix world;
+    matrix world;       // ワールド変換行列
 }
+
 cbuffer ViewBuffer : register(b1)
 {
-    matrix view;
+    matrix view;        // ビュー行列
 }
+
 cbuffer ProjectionBuffer : register(b2)
 {
-    matrix projection;
+    matrix projection;  // プロジェクション行列
 }
+
+cbuffer MaterialBuffer : register(b3)
+{
+    float4 Ambient;     // 環境光反射成分
+    float4 Diffuse;     // 拡散反射成分
+    float4 Specular;    // 鏡面反射成分
+    float4 Emission;    // 自己発光成分
+    float Shiness;      // 鋭さ（鏡面反射強度）
+    bool TextureEnable; // テクスチャ使用フラグ
+    float2 Dummy;       // アライメント調整
+}
+
+cbuffer LightBuffer : register(b4)
+{
+    float3 lightDir;    // ワールド空間でのライト方向（ライト→モデル方向）
+    float pad1;
+    float4 baseColor;   // ライトの基本色
+}
+
+//-----------------------------------------------------------------------------
+// 入出力構造体
+//-----------------------------------------------------------------------------
 
 struct VS_IN
 {
-    float3 position : POSITION;
-    float4 color : COLOR;
-    float2 uv : TEXCOORD0;
+    float3 pos : POSITION;  // 頂点位置
+    float3 normal : NORMAL; // 法線
+    float2 tex : TEXCOORD0; // テクスチャ座標
 };
 
 struct VS_OUT
 {
-    float4 position : SV_POSITION;
-    float4 color : COLOR;
-    float2 uv : TEXCOORD0;
+    float4 pos : SV_POSITION;       // クリップ空間座標
+    float3 worldPos : POSITION1;    // ワールド座標
+    float3 normal : NORMAL;         // 法線
+    float2 tex : TEXCOORD0;         // テクスチャ座標
 };
 
-    
 struct PS_IN
 {
-    float4 position : SV_POSITION;
-    float4 color : COLOR;
-    float2 uv : TEXCOORD0;
+    float4 pos : SV_POSITION;       // クリップ空間座標
+    float3 worldPos : POSITION1;    // ワールド座標
+    float3 normal : NORMAL;         // 法線
+    float2 tex : TEXCOORD0;         // テクスチャ座標
 };
+
+//-----------------------------------------------------------------------------
+// リソース
+//-----------------------------------------------------------------------------
 
 Texture2D tex : register(t0);       // テクスチャリソース
 SamplerState samp : register(s0);   // サンプラーステート
-
-
-
 
 //struct MATERIAL
 //{

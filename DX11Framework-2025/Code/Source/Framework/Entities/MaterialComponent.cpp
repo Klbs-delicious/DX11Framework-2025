@@ -109,6 +109,6 @@ void MaterialComponent::Apply(ID3D11DeviceContext* _context, RenderSystem* _rend
     {
         this->baseMaterial->materialBuffer->Update(_context, this->param);
         this->baseMaterial->materialBuffer->BindVS(_context, 3);
-        this->baseMaterial->materialBuffer->BindPS(_context, 1);
+        this->baseMaterial->materialBuffer->BindPS(_context, 3);
     }
 }

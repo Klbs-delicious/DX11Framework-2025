@@ -89,7 +89,7 @@ void MeshRenderer::Draw()
 
 	// ライト用定数バッファを更新
 	this->lightBuffer->Update(ctx, this->light);
-	this->lightBuffer->BindPS(ctx, 3);
+	this->lightBuffer->BindPS(ctx, 4);
 
 	// メッシュを描画する
     auto mesh = this->meshComponent->GetMesh();

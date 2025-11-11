@@ -57,7 +57,7 @@
     <ClInclude Include="Code\Include\Framework\Graphics\MeshManager.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\ModelData.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\ModelImporter.h" />
-    <ClInclude Include="Code\Include\Framework\Graphics\Sprite.h" />
+    <ClInclude Include="Code\Include\Framework\Graphics\PrimitiveMeshData.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\SpriteManager.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\TextureLoader.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\VertexBuffer.h" />

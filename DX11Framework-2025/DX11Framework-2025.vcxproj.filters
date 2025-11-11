@@ -219,35 +219,35 @@
     <ClInclude Include="Code\Include\Framework\Entities\Camera3D.h">
       <Filter>ヘッダー ファイル\Framework\Entities</Filter>
     </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Graphics\ModelData.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Graphics\ModelImporter.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Graphics\Sprite.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Graphics\TextureLoader.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Utils\TreeNode.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="Code\Include\Framework\Entities\SpriteRenderer.h">
       <Filter>ヘッダー ファイル\Framework\Entities</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Entities\MeshComponent.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Graphics\Mesh.h">
-      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Code\Include\Framework\Entities\MeshRenderer.h">
       <Filter>ヘッダー ファイル\Framework\Entities</Filter>
     </ClInclude>
     <ClInclude Include="Code\Include\Framework\Graphics\MeshManager.h">
       <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\PrimitiveMeshData.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\ModelData.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\ModelImporter.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\TextureLoader.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Utils\TreeNode.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\Mesh.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\MeshComponent.h">
+      <Filter>ヘッダー ファイル\Framework\Entities</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -359,22 +359,22 @@
     <ClCompile Include="Code\Source\Framework\Entities\Camera3D.cpp">
       <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="Code\Source\Framework\Graphics\ModelImporter.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Code\Source\Framework\Graphics\TextureLoader.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Code\Source\Framework\Entities\MeshComponent.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Code\Source\Framework\Graphics\Mesh.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="Code\Source\Framework\Entities\MeshRenderer.cpp">
       <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Graphics\MeshManager.cpp">
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\TextureLoader.cpp">
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\Mesh.cpp">
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Entities\MeshComponent.cpp">
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\ModelImporter.cpp">
       <Filter>ソース ファイル\Framework\Graphics</Filter>
     </ClCompile>
   </ItemGroup>
@@ -390,9 +390,17 @@
     <FxCompile Include="Code\Shaders\VertexShader\VS_Test.hlsl">
       <Filter>リソース ファイル\VertexShader</Filter>
     </FxCompile>
-    <FxCompile Include="Code\Shaders\PixelShader\PS_ModelTest.hlsl" />
-    <FxCompile Include="Code\Shaders\VertexShader\VS_ModelTest.hlsl" />
-    <FxCompile Include="Code\Shaders\PixelShader\PS_Model.hlsl" />
-    <FxCompile Include="Code\Shaders\VertexShader\VS_Model.hlsl" />
+    <FxCompile Include="Code\Shaders\PixelShader\PS_Model.hlsl">
+      <Filter>リソース ファイル\PixelShader</Filter>
+    </FxCompile>
+    <FxCompile Include="Code\Shaders\PixelShader\PS_ModelTest.hlsl">
+      <Filter>リソース ファイル\PixelShader</Filter>
+    </FxCompile>
+    <FxCompile Include="Code\Shaders\VertexShader\VS_Model.hlsl">
+      <Filter>リソース ファイル\VertexShader</Filter>
+    </FxCompile>
+    <FxCompile Include="Code\Shaders\VertexShader\VS_ModelTest.hlsl">
+      <Filter>リソース ファイル\VertexShader</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

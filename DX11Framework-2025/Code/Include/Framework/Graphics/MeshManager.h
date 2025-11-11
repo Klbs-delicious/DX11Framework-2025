@@ -3,6 +3,7 @@
  */
 #pragma once
 #include "Include/Framework/Graphics/Mesh.h"
+#include "Include/Framework/Graphics/PrimitiveMeshData.h"
 #include "Include/Framework/Core/IResourceManager.h"
 
 #include <unordered_map>
@@ -15,7 +16,7 @@
 class MeshManager : public IResourceManager<Graphics::Mesh>
 {
 public:
-    MeshManager() = default;
+    MeshManager();
     ~MeshManager() override = default;
 
     /** @brief メッシュを登録
@@ -49,7 +50,22 @@ public:
     /// @brief 全メッシュを削除
     void Clear();
 
+    /**@brief プリミティブなメッシュを生成する
+     * @param _type 
+     * @return 
+     */
+    std::unique_ptr<Graphics::Mesh> CreatePrimitiveMesh(const Graphics::Primitives::PrimitiveType _type);
+
+    /**@brief プリミティブなメッシュを生成する
+     * @param _modelData
+     * @return
+     */
+    std::unique_ptr<Graphics::Mesh> CreateFromModelData(const Graphics::Import::ModelData& _modelData);
+
 private:
     std::unordered_map<std::string, std::unique_ptr<Graphics::Mesh>> meshTable; ///< 名前で管理するメッシュ辞書
     std::unique_ptr<Graphics::Mesh> defaultMesh;                                ///< デフォルトメッシュ
+
+	ShaderManager& shaderManager;   ///< シェーダーマネージャー
+	D3D11System& d3d11System;       ///< D3D11システム
 };

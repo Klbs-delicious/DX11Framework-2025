@@ -24,8 +24,8 @@ MaterialManager::MaterialManager()
     // デフォルトマテリアルを設定する
     this->InitializeDefaultMaterial(*this->defaultMaterial);
 
-    auto model = this->Register("ModelTest");
-    model->shaders = ResourceHub::Get<ShaderManager>().GetShaderProgram("ModelTest");
+    auto model = this->Register("ModelBasic");
+    model->shaders = ResourceHub::Get<ShaderManager>().GetShaderProgram("ModelBasic");
 }
 
 MaterialManager::~MaterialManager()

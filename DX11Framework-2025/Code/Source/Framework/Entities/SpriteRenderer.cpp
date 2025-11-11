@@ -92,7 +92,7 @@ void SpriteRenderer::Draw()
     this->indexBuffer->Bind(ctx);
     ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    // SpriteComponentの画像をMaterialComponentにセット
+    // SpriteComponentの画像をMaterialComponentにセットする
     this->materialComponent->SetTexture(const_cast<TextureResource*>(this->spriteComponent->GetSprite()));
 
     // マテリアルの適用

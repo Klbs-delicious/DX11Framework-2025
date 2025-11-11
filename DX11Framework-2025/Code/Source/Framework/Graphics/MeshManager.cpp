@@ -216,7 +216,9 @@ std::unique_ptr<Graphics::Mesh> MeshManager::CreateFromModelData(
         }
 
         for (const auto& i : idx)
+        {
             indexData.push_back(i + vertexOffset);
+        }
 
         vertexOffset += static_cast<uint32_t>(verts.size());
     }
@@ -228,13 +230,15 @@ std::unique_ptr<Graphics::Mesh> MeshManager::CreateFromModelData(
     vb->Create(device, vertexData.data(),
         sizeof(Graphics::ModelVertexGPU),
         static_cast<UINT>(vertexData.size()),
-        false);
+        false
+    );
     mesh->SetVertexBuffer(std::move(vb));
 
     auto ib = std::make_unique<IndexBuffer>();
     ib->Create(device, indexData.data(),
         sizeof(uint32_t),
-        static_cast<UINT>(indexData.size()));
+        static_cast<UINT>(indexData.size())
+    );
     mesh->SetIndexBuffer(std::move(ib));
 
     return mesh;

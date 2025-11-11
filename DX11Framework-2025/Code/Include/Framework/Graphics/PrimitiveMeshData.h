@@ -18,6 +18,7 @@ namespace Graphics::Primitives
     {
         float len = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
         if (len <= 1e-6f) return { 0, 0, 0 };
+
         float inv = 1.0f / len;
         return { v.x * inv, v.y * inv, v.z * inv };
     }
@@ -161,6 +162,7 @@ namespace Graphics::Primitives
             {
                 float v = static_cast<float>(y) / static_cast<float>(_rings);
                 float theta = (v * 0.5f) * PI;
+
                 for (uint32_t x = 0; x <= _segments; ++x)
                 {
                     float u = static_cast<float>(x) / static_cast<float>(_segments);
@@ -181,6 +183,7 @@ namespace Graphics::Primitives
             {
                 float height = (y == 0) ? -halfCylinderHeight : halfCylinderHeight;
                 float v = (y == 0) ? 0.5f : 0.5f + 0.5f;
+
                 for (uint32_t x = 0; x <= _segments; ++x)
                 {
                     float u = static_cast<float>(x) / static_cast<float>(_segments);
@@ -199,6 +202,7 @@ namespace Graphics::Primitives
             {
                 float v = static_cast<float>(y) / static_cast<float>(_rings);
                 float theta = (v * 0.5f) * PI + (PI / 2.0f);
+
                 for (uint32_t x = 0; x <= _segments; ++x)
                 {
                     float u = static_cast<float>(x) / static_cast<float>(_segments);
@@ -231,19 +235,33 @@ namespace Graphics::Primitives
                 };
 
             for (uint32_t y = 0; y < _rings; ++y)
-                for (uint32_t x = 0; x < _segments; ++x)
+            {
+                for (uint32_t x = 0; x < _segments; ++x) 
+                {
                     AddQuad(topStart + y * ringStride + x, topStart + y * ringStride + x + 1,
                         topStart + (y + 1) * ringStride + x, topStart + (y + 1) * ringStride + x + 1);
+                }
+            }
+                    
 
             for (uint32_t y = 0; y < 1; ++y)
+            {
                 for (uint32_t x = 0; x < _segments; ++x)
+                {
                     AddQuad(cylStart + y * ringStride + x, cylStart + y * ringStride + x + 1,
                         cylStart + (y + 1) * ringStride + x, cylStart + (y + 1) * ringStride + x + 1);
+                }
+            }
+                   
 
             for (uint32_t y = 0; y < _rings; ++y)
+            {
                 for (uint32_t x = 0; x < _segments; ++x)
+                {
                     AddQuad(bottomStart + y * ringStride + x, bottomStart + y * ringStride + x + 1,
                         bottomStart + (y + 1) * ringStride + x, bottomStart + (y + 1) * ringStride + x + 1);
+                } 
+            }
 
             return indices;
         }

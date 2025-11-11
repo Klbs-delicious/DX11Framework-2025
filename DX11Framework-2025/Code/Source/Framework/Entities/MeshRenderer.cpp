@@ -19,11 +19,14 @@ MeshRenderer::MeshRenderer(GameObject* _owner, bool _active)
 {
     // 必要なコンポーネントが存在しなければ追加する
     this->materialComponent = this->Owner()->GetComponent<MaterialComponent>();
-    if (!this->materialComponent) {
+    if (!this->materialComponent)
+    {
         this->materialComponent = this->Owner()->AddComponent<MaterialComponent>();
     }
+
     this->meshComponent = this->Owner()->GetComponent<MeshComponent>();
-    if (!this->meshComponent) {
+    if (!this->meshComponent) 
+    {
         this->meshComponent = this->Owner()->AddComponent<MeshComponent>();
     }
 }
@@ -38,7 +41,7 @@ void MeshRenderer::Initialize()
     auto& d3d = SystemLocator::Get<D3D11System>();
     auto device = d3d.GetDevice();
 
-    // コンポーネント取得
+    // 必要なコンポーネントを取得
     auto* cameraObject = SystemLocator::Get<GameObjectManager>().GetFindObjectByName("Camera3D");
     if (!cameraObject)
     {
@@ -56,9 +59,9 @@ void MeshRenderer::Initialize()
 
     // マテリアル情報を取得
     auto& materials = this->Owner()->Services()->materials;
-    materialComponent->SetMaterial(materials->Default());
+    this->materialComponent->SetMaterial(materials->Default());
 
-    // ライト定数バッファの作成
+    // ライト定数バッファを作成
     this->light.lightDir = { 0.4f, -1.0f, 0.3f };
     this->light.baseColor = { 1.0f, 0.85f, 0.7f, 1.0f };
 
@@ -76,7 +79,7 @@ void MeshRenderer::Draw()
     auto dev = d3d.GetDevice();
 
 	// 変換行列を送る
-    Matrix world = transform ? transform->GetWorldMatrix() : Matrix::Identity;
+    Matrix world = this->transform ? this->transform->GetWorldMatrix() : Matrix::Identity;
     Matrix view = camera->GetViewMatrix();
     Matrix proj = camera->GetProjectionMatrix();
 

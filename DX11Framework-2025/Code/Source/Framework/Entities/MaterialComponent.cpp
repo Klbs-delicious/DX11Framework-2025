@@ -35,7 +35,8 @@ MaterialComponent::~MaterialComponent()
 void MaterialComponent::Initialize()
 {
     // マテリアルが未設定の場合はデフォルトマテリアルを設定する
-    if (!this->baseMaterial) {
+    if (!this->baseMaterial) 
+    {
         auto materialManager = this->Owner()->Services()->materials;
         this->baseMaterial = materialManager->Default();
 

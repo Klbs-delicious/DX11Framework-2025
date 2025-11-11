@@ -7,9 +7,9 @@
 //------------------------------------------------------
 // メイン
 //------------------------------------------------------
-VS_OUT main(VS_IN input)
+VS_OUT_MODEL main(VS_IN_MODEL input)
 {
-    VS_OUT output;
+    VS_OUT_MODEL output;
 
     // ワールド・ビュー・プロジェクション
     float4 worldPos = mul(float4(input.pos, 1.0f), world);

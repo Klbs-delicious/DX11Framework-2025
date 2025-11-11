@@ -47,7 +47,7 @@ ShaderManager::ShaderManager() :
 	this->defaultShadersMap[ShaderType::PixelShader] = this->Get("TestPS");
 
 	// デフォルト設定のシェーダープログラムを登録
-	this->deafultProgram = this->GetShaderProgram("ModelBasic");
+	this->deafultProgram = this->GetShaderProgram("Default");
 }
 
 ShaderManager::~ShaderManager()

@@ -41,17 +41,16 @@ cbuffer LightBuffer : register(b4)
 }
 
 //-----------------------------------------------------------------------------
-// 入出力構造体
+// モデル描画用構造体
 //-----------------------------------------------------------------------------
-
-struct VS_IN
+struct VS_IN_MODEL
 {
     float3 pos : POSITION;  // 頂点位置
     float3 normal : NORMAL; // 法線
     float2 tex : TEXCOORD0; // テクスチャ座標
 };
 
-struct VS_OUT
+struct VS_OUT_MODEL
 {
     float4 pos : SV_POSITION;       // クリップ空間座標
     float3 worldPos : POSITION1;    // ワールド座標
@@ -59,20 +58,36 @@ struct VS_OUT
     float2 tex : TEXCOORD0;         // テクスチャ座標
 };
 
-struct PS_IN
+struct PS_IN_MODEL
 {
     float4 pos : SV_POSITION;       // クリップ空間座標
     float3 worldPos : POSITION1;    // ワールド座標
     float3 normal : NORMAL;         // 法線
     float2 tex : TEXCOORD0;         // テクスチャ座標
+};
+
+//-----------------------------------------------------------------------------
+// スプライト描画用構造体
+//-----------------------------------------------------------------------------
+struct VS_IN_SPRITE
+{
+    float3 pos : POSITION;
+    float4 color : COLOR;
+    float2 uv : TEXCOORD0;
+};
+
+struct VS_OUT_SPRITE
+{
+    float4 pos : SV_POSITION;
+    float4 color : COLOR;
+    float2 uv : TEXCOORD0;
 };
 
 //-----------------------------------------------------------------------------
 // リソース
 //-----------------------------------------------------------------------------
-
-Texture2D tex : register(t0);       // テクスチャリソース
-SamplerState samp : register(s0);   // サンプラーステート
+Texture2D tex : register(t0);       // テクスチャ（モデル・スプライト共通）
+SamplerState samp : register(s0);   // サンプラー（共通）
 
 //struct MATERIAL
 //{

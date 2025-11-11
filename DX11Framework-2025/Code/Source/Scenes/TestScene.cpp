@@ -131,11 +131,11 @@ void TestScene::SetupObjects()
 	//obj_2->AddComponent<MeshRenderer>();
 	*/
 
-	//auto obj_1 = this->gameObjectManager.Instantiate("obj_1");
-	//std::cout << obj_1->GetName() << " : " << std::to_string(obj_1->transform->GetWorldPosition().x) << std::endl;
-	//obj_1->transform->SetLocalPosition(DX::Vector3(320.0f, 240.0f, 0.0f));
-	//obj_1->transform->SetLocalScale(DX::Vector3(150.0f, 150.0f, 0.0f));
-	//obj_1->AddComponent<SpriteRenderer>();
-	//obj_1->AddComponent<TestMoveComponent>();
-	//obj_1->GetComponent<SpriteComponent>()->SetSprite(spriteManager.Get("Eidan"));
+	auto obj_1 = this->gameObjectManager.Instantiate("obj_1");
+	std::cout << obj_1->GetName() << " : " << std::to_string(obj_1->transform->GetWorldPosition().x) << std::endl;
+	obj_1->transform->SetLocalPosition(DX::Vector3(320.0f, 240.0f, 0.0f));
+	obj_1->transform->SetLocalScale(DX::Vector3(150.0f, 150.0f, 0.0f));
+	obj_1->AddComponent<SpriteRenderer>();
+	obj_1->AddComponent<TestMoveComponent>();
+	obj_1->GetComponent<SpriteComponent>()->SetSprite(spriteManager.Get("Eidan"));
 }

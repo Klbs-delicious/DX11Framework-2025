@@ -59,7 +59,7 @@ void MeshRenderer::Initialize()
 
     // マテリアル情報を取得
     auto& materials = this->Owner()->Services()->materials;
-    this->materialComponent->SetMaterial(materials->Default());
+    this->materialComponent->SetMaterial(materials->Get("ModelBasic"));
 
     // ライト定数バッファを作成
     this->light.lightDir = { 0.4f, -1.0f, 0.3f };

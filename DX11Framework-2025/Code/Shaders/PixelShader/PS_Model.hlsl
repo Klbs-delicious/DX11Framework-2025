@@ -4,9 +4,6 @@
 //-----------------------------------------------------------------------------
 #include "../Common.hlsli"
 
-Texture2D albedoMap : register(t0);
-SamplerState samLinear : register(s0);
-
 // ---------------------------------------------
 // 彩度補正（Saturation調整）
 // ---------------------------------------------
@@ -20,7 +17,7 @@ float3 AdjustSaturation(float3 color, float saturation)
 //------------------------------------------------------
 // メイン
 //------------------------------------------------------
-float4 main(PS_IN input) : SV_TARGET
+float4 main(PS_IN_MODEL input) : SV_TARGET
 {
     // 法線・ライト方向を正規化
     float3 N = normalize(input.normal);
@@ -38,7 +35,7 @@ float4 main(PS_IN input) : SV_TARGET
     float4 texColor = Diffuse;
     if (TextureEnable)
     {
-        texColor *= albedoMap.Sample(samLinear, input.tex);
+        texColor *= tex.Sample(samp, input.tex);
         if (dot(texColor.rgb, texColor.rgb) < 1e-5)
         {
             texColor = float4(1, 0, 1, 1);

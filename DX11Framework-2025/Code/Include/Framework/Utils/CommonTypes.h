@@ -7,9 +7,9 @@
 #include	<numbers>
 #include	"SimpleMath.h"
 
-/**@namespace	DX
- * @brief		DirectXの型エイリアスを簡略化した定義を纏めている
- */
+ /**@namespace	DX
+  * @brief		DirectXの型エイリアスを簡略化した定義を纏めている
+  */
 namespace DX
 {
 	// 基本型のエイリアス
@@ -18,12 +18,22 @@ namespace DX
 	using Vector2 = DirectX::SimpleMath::Vector2;
 
 	using Matrix4x4 = DirectX::SimpleMath::Matrix;
-
 	using Color = DirectX::SimpleMath::Color;
-
 	using Quaternion = DirectX::SimpleMath::Quaternion;
 
 	using Microsoft::WRL::ComPtr;
 
 	constexpr float PI = std::numbers::pi_v<float>;
+
+	/// @brief 度数をラジアンに変換
+	constexpr float ToRadians(float degrees)
+	{
+		return degrees * (PI / 180.0f);
+	}
+
+	/// @brief ラジアンを度数に変換
+	constexpr float ToDegrees(float radians)
+	{
+		return radians * (180.0f / PI);
+	}
 }

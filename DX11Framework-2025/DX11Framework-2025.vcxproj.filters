@@ -76,6 +76,18 @@
     <Filter Include="ヘッダー ファイル\Test">
       <UniqueIdentifier>{d73fd882-447d-46e6-a032-e0502ac3223c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ヘッダー ファイル\Game">
+      <UniqueIdentifier>{189f7986-fd27-4101-bebf-825f63058d55}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Game\Entities">
+      <UniqueIdentifier>{40f1b8b6-8fa7-4dee-990d-61795572fe25}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Framework\Game">
+      <UniqueIdentifier>{0b868e0f-2d9f-4c4c-8316-31eb8151495f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ソース ファイル\Framework\Game\Entities">
+      <UniqueIdentifier>{41ffed4d-7ec4-497c-82c0-17396bc8f31e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Code\Include\Framework\Core\Application.h">
@@ -249,6 +261,9 @@
     <ClInclude Include="Code\Include\Framework\Entities\MeshComponent.h">
       <Filter>ヘッダー ファイル\Framework\Entities</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Include\Game\Entities\CharacterController.h">
+      <Filter>ヘッダー ファイル\Game\Entities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Code\Source\Framework\main.cpp">
@@ -376,6 +391,9 @@
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Graphics\ModelImporter.cpp">
       <Filter>ソース ファイル\Framework\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Game\Entities\CharacterController.cpp">
+      <Filter>ソース ファイル\Framework\Game\Entities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

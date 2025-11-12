@@ -14,69 +14,90 @@
 
 namespace Graphics::Import
 {
-    struct Vertex {
-        std::string meshName;           // メッシュ名
-        aiVector3D pos;                 // 位置
-        aiVector3D normal;              // 法線
-        aiColor4D color;                // 頂点カラー
-        aiVector3D texCoord;            // テクスチャ座標
-        int materialIndex;              // マテリアルインデックス
-        std::string materialName;       // マテリアル名
+    /** @struct Vertex
+     *  @brief モデルの頂点情報
+     */
+    struct Vertex
+    {
+        std::string meshName = "";          ///< メッシュ名
+        aiVector3D pos = {};                ///< 位置
+        aiVector3D normal = {};             ///< 法線
+        aiColor4D color = { 1, 1, 1, 1 };   ///< 頂点カラー（デフォルト白）
+        aiVector3D texCoord = {};           ///< テクスチャ座標
+        int materialIndex = -1;             ///< マテリアルインデックス
+        std::string materialName = "";      ///< マテリアル名
 
-        int boneIndex[4];               // ボーンインデックス
-        float boneWeight[4];            // ボーンウェイト
-        std::string boneName[4];        // ボーン名
-        int boneCount = 0;              // ボーン数
+        int boneIndex[4] = { -1, -1, -1, -1 };              ///< ボーンインデックス
+        float boneWeight[4] = { 0.0f, 0.0f, 0.0f, 0.0f };   ///< ボーンウェイト
+        std::string boneName[4] = { "", "", "", "" };       ///< ボーン名
+        int boneCount = 0;                                  ///< ボーン数
     };
 
-    struct Subset {
-        std::string meshName;           // メッシュ名
-        int materialIndex;              // マテリアルインデックス
-        unsigned int vertexBase;        // 頂点バッファのベース
-        unsigned int vertexNum;         // 頂点数
-        unsigned int indexBase;         // インデックスバッファのベース
-        unsigned int indexNum;          // インデックス数
-        std::string materialName;       // マテリアル名
+    /** @struct Subset
+     *  @brief メッシュごとの描画サブセット情報
+     */
+    struct Subset
+    {
+        std::string meshName = "";      ///< メッシュ名
+        int materialIndex = -1;         ///< マテリアルインデックス
+        unsigned int vertexBase = 0;    ///< 頂点バッファのベース
+        unsigned int vertexNum = 0;     ///< 頂点数
+        unsigned int indexBase = 0;     ///< インデックスバッファのベース
+        unsigned int indexNum = 0;      ///< インデックス数
+        std::string materialName = "";  ///< マテリアル名
     };
 
-    struct Material {
-        std::string materialName;       // マテリアル名
-        aiColor4D ambient;              // アンビエント
-        aiColor4D diffuse;              // ディフューズ
-        aiColor4D specular;             // スペキュラ
-        aiColor4D emission;             // エミッション
-        float shiness;                  // シャイネス
-        std::string diffuseTextureName; // ディフューズテクスチャ名
+    /** @struct Material
+     *  @brief マテリアル（マテリアル色・テクスチャ名）
+     */
+    struct Material
+    {
+        std::string materialName = "";          ///< マテリアル名
+        aiColor4D ambient = { 0, 0, 0, 1 };     ///< アンビエント
+        aiColor4D diffuse = { 1, 1, 1, 1 };     ///< ディフューズ
+        aiColor4D specular = { 1, 1, 1, 1 };    ///< スペキュラ
+        aiColor4D emission = { 0, 0, 0, 1 };    ///< エミッション
+        float shiness = 0.0f;                   ///< シャイネス
+        std::string diffuseTextureName = "";    ///< ディフューズテクスチャ名
     };
 
-    // ウェイト情報
-    struct Weight {
-        std::string boneName;           // ボーン名
-        std::string meshName;           // メッシュ名
-        float weight;                   // ウェイト値
-        int vertexIndex;                // 頂点インデックス
+    /** @struct Weight
+     *  @brief 頂点ごとのボーンウェイト情報
+     */
+    struct Weight
+    {
+        std::string boneName = "";      ///< ボーン名
+        std::string meshName = "";      ///< メッシュ名
+        float weight = 0.0f;            ///< ウェイト値
+        int vertexIndex = -1;           ///< 頂点インデックス
     };
 
-    // ボーン構造体
-    struct Bone {
-        std::string boneName;           // ボーン名
-        std::string meshName;           // メッシュ名
-        std::string armatureName;       // アーマチュア名
-        aiMatrix4x4 matrix{};           // 親子関係を考慮した行列
-        aiMatrix4x4 animationMatrix{};  // 自分の事だけを考えた行列
-        aiMatrix4x4 offsetMatrix{};     // ボーンオフセット行列
-        int index;                      // 配列の何番目か
-        std::vector<Weight> weights;    // このボーンが影響を与える頂点インデックス・ウェイト値
+    /** @struct Bone
+     *  @brief ボーン情報（階層・オフセット・ウェイト）
+     */
+    struct Bone
+    {
+        std::string boneName = "";      ///< ボーン名
+        std::string meshName = "";      ///< メッシュ名
+        std::string armatureName = "";  ///< アーマチュア名
+        aiMatrix4x4 matrix{};           ///< 親子関係を考慮した行列
+        aiMatrix4x4 animationMatrix{};  ///< 自分の事だけを考えた行列
+        aiMatrix4x4 offsetMatrix{};     ///< ボーンオフセット行列
+        int index = -1;                 ///< 配列の何番目か
+        std::vector<Weight> weights{};  ///< このボーンが影響を与える頂点情報
     };
 
+    /** @struct ModelData
+     *  @brief モデル全体の統合データ構造
+     */
     struct ModelData
     {
-        std::vector<std::vector<Vertex>> vertices;
-        std::vector<std::vector<unsigned int>> indices;
-        std::vector<Subset> subsets;
-        std::vector<Material> materials;
-        std::vector<std::unique_ptr<TextureResource>> diffuseTextures;
-        std::unordered_map<std::string, Bone> boneDictionary;
-        Utils::TreeNode<std::string> boneTree;
+        std::vector<std::vector<Vertex>> vertices{};                        ///< 頂点配列
+        std::vector<std::vector<unsigned int>> indices{};                   ///< インデックス配列
+        std::vector<Subset> subsets{};                                      ///< サブセット配列
+        std::vector<Material> materials{};                                  ///< マテリアル配列
+        std::vector<std::unique_ptr<TextureResource>> diffuseTextures{};    ///< テクスチャ配列
+        std::unordered_map<std::string, Bone> boneDictionary{};             ///< ボーン辞書
+        Utils::TreeNode<std::string> boneTree{};                            ///< ボーン階層ツリー
     };
 }

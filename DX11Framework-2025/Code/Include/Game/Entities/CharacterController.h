@@ -5,7 +5,6 @@
 #pragma once
 #include "Include/Framework/Entities/Component.h"
 #include "Include/Framework/Entities/PhaseInterfaces.h"
-
 #include "Include/Framework/Core/InputSystem.h"
 
  /** @class CharacterController
@@ -32,8 +31,8 @@ public:
 	void Update(float _deltaTime) override;
 
 private:
-	InputSystem& inputSystem;	// 入力処理を管理している
+	InputSystem& inputSystem;	///< 入力処理を管理している
 
-	float moveSpeed;		// 移動速度
+	float moveSpeed;		///< 移動速度
 };
 

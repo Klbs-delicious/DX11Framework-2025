@@ -7,9 +7,10 @@
  // Includes
  //-----------------------------------------------------------------------------
 #include "Include/Game/Entities/CharacterController.h"
+#include "Include/Framework/Entities/GameObject.h"
+
 #include "Include/Framework/Core/SystemLocator.h"
 #include "Include/Framework/Core/DirectInputDevice.h"
-#include "Include/Framework/Entities/GameObject.h"
 
 //-----------------------------------------------------------------------------
 // CharacterController class
@@ -21,8 +22,7 @@
  */
 CharacterController::CharacterController(GameObject* _owner, bool _active)
 	: Component(_owner, _active), inputSystem(SystemLocator::Get<InputSystem>()), moveSpeed(5.0f)
-{
-}
+{}
 
 /// @brief 初期化処理
 void CharacterController::Initialize()
@@ -49,8 +49,8 @@ void CharacterController::Update(float _deltaTime)
 	// ------------------------------------------------------
 	// 入力方向（ワールド座標系ベース）
 	// ------------------------------------------------------
-	if (this->inputSystem.IsActionPressed("MoveForward")) { moveDir.z -= 1.0f; }
-	if (this->inputSystem.IsActionPressed("MoveBackward")) { moveDir.z += 1.0f; }
+	if (this->inputSystem.IsActionPressed("MoveForward")) { moveDir.z += 1.0f; }
+	if (this->inputSystem.IsActionPressed("MoveBackward")) { moveDir.z -= 1.0f; }
 	if (this->inputSystem.IsActionPressed("MoveLeft")) { moveDir.x -= 1.0f; }
 	if (this->inputSystem.IsActionPressed("MoveRight")) { moveDir.x += 1.0f; }
 
@@ -64,7 +64,7 @@ void CharacterController::Update(float _deltaTime)
 		// --- 方向回転 ---
 		DX::Quaternion currentRot = transform->GetLocalRotation();
 		DX::Quaternion targetRot = DX::Quaternion::CreateFromRotationMatrix(
-			DX::Matrix4x4::CreateLookAt(DX::Vector3::Zero, moveDir, DX::Vector3::UnitY)
+			DX::CreateWorldLH(DX::Vector3::Zero, moveDir, DX::Vector3::UnitY)
 		);
 
 		// --- 向きの更新 ---

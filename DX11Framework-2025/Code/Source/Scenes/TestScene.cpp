@@ -93,6 +93,8 @@ void TestScene::SetupObjects()
 	obj_3->transform->SetLocalPosition(DX::Vector3(5.0f, 0.0f, 5.0f));
 	meshComp = obj_3->AddComponent<MeshComponent>();
 	meshComp->SetMesh(meshManager.Get("Box"));
+	auto matComp = obj_3->AddComponent<MaterialComponent>();
+	matComp->SetTexture(spriteManager.Get("Eidan"));
 	obj_3->AddComponent<MeshRenderer>();
 	obj_3->AddComponent<CharacterController>();
 

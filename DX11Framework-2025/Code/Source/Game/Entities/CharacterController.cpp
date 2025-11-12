@@ -21,7 +21,7 @@
  *  @param bool _active コンポーネントの有効/無効
  */
 CharacterController::CharacterController(GameObject* _owner, bool _active)
-	: Component(_owner, _active), inputSystem(SystemLocator::Get<InputSystem>()), moveSpeed(5.0f)
+	: Component(_owner, _active), inputSystem(SystemLocator::Get<InputSystem>()), moveSpeed(10.0f)
 {}
 
 /// @brief 初期化処理

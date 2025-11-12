@@ -264,6 +264,9 @@
     <ClInclude Include="Code\Include\Game\Entities\CharacterController.h">
       <Filter>ヘッダー ファイル\Game\Entities</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Include\Game\Entities\FollowCamera.h">
+      <Filter>ヘッダー ファイル\Game\Entities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Code\Source\Framework\main.cpp">
@@ -394,6 +397,9 @@
     </ClCompile>
     <ClCompile Include="Code\Source\Game\Entities\CharacterController.cpp">
       <Filter>ソース ファイル\Framework\Game\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Game\Entities\FollowCamera.cpp">
+      <Filter>ソース ファイル\Framework\Game</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -14,6 +14,7 @@
 #include"Include/Framework/Entities/Camera2D.h"
 #include"Include/Framework/Entities/Camera3D.h"
 #include"Include/Framework/Entities/MeshComponent.h"
+#include"Include/Game/Entities/FollowCamera.h"
 
 #include"Include/Game/Entities/CharacterController.h"
 
@@ -98,6 +99,10 @@ void TestScene::SetupObjects()
 	obj_3->AddComponent<MeshRenderer>();
 	obj_3->AddComponent<CharacterController>();
 
+	// カメラ追従コンポーネントを追加する
+	auto followCamera = camera3D->AddComponent<FollowCamera>();
+	followCamera->SetTarget(obj_3->transform);
+	followCamera->SetPivot(obj_3->transform);
 
 	// 平面オブジェクト
 	auto obj_4 = this->gameObjectManager.Instantiate("obj_4");

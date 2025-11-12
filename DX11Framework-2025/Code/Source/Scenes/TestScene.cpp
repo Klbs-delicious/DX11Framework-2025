@@ -62,7 +62,7 @@ void TestScene::SetupObjects()
 	camera3D->transform->SetLocalRotation(DX::Quaternion::CreateFromYawPitchRoll(0.0f, DX::ToRadians(45.0f), 0.0f));
 	camera3D->AddComponent<Camera3D>();
 
-	//camera3D->AddComponent<TestMoveComponent>();
+	camera3D->AddComponent<TestMoveComponent>();
 
 	// 2Dカメラオブジェクト
 	auto camera2D = this->gameObjectManager.Instantiate("Camera2D", GameTags::Tag::Camera);
@@ -99,10 +99,10 @@ void TestScene::SetupObjects()
 	obj_3->AddComponent<MeshRenderer>();
 	obj_3->AddComponent<CharacterController>();
 
-	// カメラ追従コンポーネントを追加する
-	auto followCamera = camera3D->AddComponent<FollowCamera>();
-	followCamera->SetTarget(obj_3->transform);
-	followCamera->SetPivot(obj_3->transform);
+	//// カメラ追従コンポーネントを追加する
+	//auto followCamera = camera3D->AddComponent<FollowCamera>();
+	//followCamera->SetTarget(obj_3->transform);
+	//followCamera->SetPivot(obj_3->transform);
 
 	// 平面オブジェクト
 	auto obj_4 = this->gameObjectManager.Instantiate("obj_4");

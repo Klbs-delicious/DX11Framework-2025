@@ -58,6 +58,20 @@ public:
 	 */
 	bool IsActionTriggered(const std::string& _action) const;
 
+	/** @brief マウスの現在座標を取得
+	 *  @param int& _x X座標
+	 *  @param int& _y Y座標
+	 *  @return bool 座標を取得できた場合は true
+	 */
+	bool GetMousePosition(int& _x, int& _y) const;
+
+	/** @brief マウスの移動量（Δ）を取得
+	 *  @param int& _dx X方向の変化量
+	 *  @param int& _dy Y方向の変化量
+	 *  @return bool 移動が検出された場合は true
+	 */
+	bool GetMouseDelta(int& _dx, int& _dy) const;
+
 private:
 	std::vector<std::unique_ptr<IInputDevice>> devices;	///< 入力デバイスのリスト
 	std::unordered_map<std::string, int> keyMap;		///< アクションに対応したキーマップ

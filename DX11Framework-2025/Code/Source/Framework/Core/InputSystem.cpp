@@ -105,3 +105,54 @@ bool InputSystem::IsActionTriggered(const std::string& _action) const
     // 入力が無かった
     return false;
 }
+
+/** @brief マウスの現在座標を取得
+ *  @param _x 取得したX座標を格納
+ *  @param _y 取得したY座標を格納
+ *  @return 対応デバイスから座標を取得できた場合は true、それ以外は false
+ */
+bool InputSystem::GetMousePosition(int& _x, int& _y) const
+{
+    for (const auto& device : this->devices)
+    {
+        int x = device->GetMouseX();
+        int y = device->GetMouseY();
+
+		// マウスに対応していない場合は無効値を返す
+        if (x >= 0 && y >= 0)
+        {
+            _x = x;
+            _y = y;
+            return true;
+        }
+    }
+
+    _x = _y = -1;
+    return false;
+}
+
+/** @brief マウスの移動量（Δ）を取得
+ *  @param _dx X方向の変化量を格納
+ *  @param _dy Y方向の変化量を格納
+ *  @return いずれかのデバイスで移動を検出した場合は true
+ */
+bool InputSystem::GetMouseDelta(int& _dx, int& _dy) const
+{
+    _dx = _dy = 0;
+
+    for (const auto& device : this->devices)
+    {
+        int dx = 0, dy = 0;
+        device->GetMouseDelta(dx, dy);
+
+		// 移動があった
+        if (dx != 0 || dy != 0)
+        {
+            _dx = dx;
+            _dy = dy;
+            return true;
+        }
+    }
+
+    return false;
+}

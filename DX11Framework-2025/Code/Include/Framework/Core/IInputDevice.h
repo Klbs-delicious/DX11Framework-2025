@@ -43,6 +43,13 @@ public:
      */
     virtual int GetMouseY() const { return -1; }
 
+    /** @brief マウスの移動量（Δ）を取得
+     *  @param int& _dx X方向の変化量
+     *  @param int& _dy Y方向の変化量
+     *  @details デフォルトは (0,0) を返す
+     */
+    virtual void GetMouseDelta(int& _dx, int& _dy) const { _dx = _dy = 0; }
+
     /** @struct MotorForce
      *  @brief  振動の大きさ
      *	@details - 振動のモーターが単一の場合と左右の場合で分けられるように

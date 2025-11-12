@@ -7,19 +7,21 @@
 //-----------------------------------------------------------------------------
 #include"Include/Scenes/TestScene.h"
 #include"Include/Framework/Core/ResourceHub.h"
-#include"Include/Framework/Core/SystemLocator.h"
+//#include"Include/Framework/Core/SystemLocator.h"
 
-#include"Include/Framework/Entities/SpriteRenderer.h"
+//#include"Include/Framework/Entities/SpriteRenderer.h"
 #include"Include/Framework/Entities/MeshRenderer.h"
 #include"Include/Framework/Entities/Camera2D.h"
 #include"Include/Framework/Entities/Camera3D.h"
 #include"Include/Framework/Entities/MeshComponent.h"
 
-#include"Include/Framework/Graphics/Mesh.h"
+#include"Include/Game/Entities/CharacterController.h"
+
+//#include"Include/Framework/Graphics/Mesh.h"
 #include"Include/Framework/Graphics/SpriteManager.h"
 #include"Include/Framework/Graphics/MeshManager.h"
-#include"Include/Framework/Graphics/ModelImporter.h"
-#include"Include/Framework/Shaders/ShaderManager.h"
+//#include"Include/Framework/Graphics/ModelImporter.h"
+//#include"Include/Framework/Shaders/ShaderManager.h"
 
 #include"Include/Tests/TestMoveComponent.h"
 //#include"Include/Framework/Entities/TestRenderer.h"
@@ -43,35 +45,61 @@ void TestScene::SetupObjects()
 {
 	std::cout << "シーン名" << "TestScene" << std::endl;
 
-	// 未設定の場合はデフォルト画像を設定する
+	//--------------------------------------------------------------
+	// リソースマネージャの取得
+	//--------------------------------------------------------------
 	auto& spriteManager= ResourceHub::Get<SpriteManager>();
+	auto& meshManager = ResourceHub::Get<MeshManager>();
 
-	// カメラオブジェクト
+	//--------------------------------------------------------------
+	// カメラの生成
+	//--------------------------------------------------------------
+
+	// 3Dカメラオブジェクト
 	auto camera3D = this->gameObjectManager.Instantiate("Camera3D", GameTags::Tag::Camera);
+	camera3D->transform->SetLocalPosition({ 0.0f, 10.0f, -10.0f });
+	camera3D->transform->SetLocalRotation(DX::Quaternion::CreateFromYawPitchRoll(0.0f, DX::ToRadians(45.0f), 0.0f));
 	camera3D->AddComponent<Camera3D>();
-	camera3D->AddComponent<TestMoveComponent>();
-	camera3D->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 5.0f));
 
-	// カメラオブジェクト
+	//camera3D->AddComponent<TestMoveComponent>();
+
+	// 2Dカメラオブジェクト
 	auto camera2D = this->gameObjectManager.Instantiate("Camera2D", GameTags::Tag::Camera);
 	camera2D->AddComponent<Camera2D>();
 
-	// オブジェクトを生成する
+	//--------------------------------------------------------------
+	// オブジェクトの生成
+	//--------------------------------------------------------------
+
+	//// スプライトオブジェクト
+	//auto obj_1 = this->gameObjectManager.Instantiate("obj_1");
+	//std::cout << obj_1->GetName() << " : " << std::to_string(obj_1->transform->GetWorldPosition().x) << std::endl;
+	//obj_1->transform->SetLocalPosition(DX::Vector3(320.0f, 240.0f, 0.0f));
+	//obj_1->transform->SetLocalScale(DX::Vector3(150.0f, 150.0f, 0.0f));
+	//obj_1->AddComponent<SpriteRenderer>();
+	//obj_1->AddComponent<TestMoveComponent>();
+	//obj_1->GetComponent<SpriteComponent>()->SetSprite(spriteManager.Get("Eidan"));
+
+	// 球体オブジェクト
 	auto obj_2 = this->gameObjectManager.Instantiate("obj_2");
 	obj_2->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 10.0f));
 	obj_2->transform->SetLocalScale(DX::Vector3(2.0f, 2.0f, 2.0f));
-	//obj_2->transform->SetLocalScale(DX::Vector3(0.05f, 0.05f, 0.05f));
-	auto& meshManager = ResourceHub::Get<MeshManager>();
 	auto meshComp = obj_2->AddComponent<MeshComponent>();
 	meshComp->SetMesh(meshManager.Get("Sphere"));
 	obj_2->AddComponent<MeshRenderer>();
 
+	// 立方体オブジェクト
 	auto obj_3 = this->gameObjectManager.Instantiate("obj_3");
 	obj_3->transform->SetLocalPosition(DX::Vector3(5.0f, 0.0f, 5.0f));
 	meshComp = obj_3->AddComponent<MeshComponent>();
 	meshComp->SetMesh(meshManager.Get("Box"));
+	auto matComp = obj_3->AddComponent<MaterialComponent>();
+	matComp->SetTexture(spriteManager.Get("Eidan"));
 	obj_3->AddComponent<MeshRenderer>();
+	obj_3->AddComponent<CharacterController>();
 
+
+	// 平面オブジェクト
 	auto obj_4 = this->gameObjectManager.Instantiate("obj_4");
 	obj_4->transform->SetLocalPosition(DX::Vector3(0.0f, -5.0f, 0.0f));
 	obj_4->transform->SetLocalScale(DX::Vector3(20.0f, 1.0f, 20.0f));
@@ -79,12 +107,13 @@ void TestScene::SetupObjects()
 	meshComp->SetMesh(meshManager.Get("Plane"));
 	obj_4->AddComponent<MeshRenderer>();
 
-	auto obj_5 = this->gameObjectManager.Instantiate("obj_5");
-	obj_5->transform->SetLocalPosition(DX::Vector3(0.0f, 7.0f, 3.0f));
-	obj_5->transform->SetLocalScale(DX::Vector3(5.0f, 5.0f, 5.0f));
-	meshComp = obj_5->AddComponent<MeshComponent>();
-	meshComp->SetMesh(meshManager.Get("Capsule"));
-	obj_5->AddComponent<MeshRenderer>();
+	//// カプセルオブジェクト
+	//auto obj_5 = this->gameObjectManager.Instantiate("obj_5");
+	//obj_5->transform->SetLocalPosition(DX::Vector3(0.0f, 7.0f, 3.0f));
+	//obj_5->transform->SetLocalScale(DX::Vector3(5.0f, 5.0f, 5.0f));
+	//meshComp = obj_5->AddComponent<MeshComponent>();
+	//meshComp->SetMesh(meshManager.Get("Capsule"));
+	//obj_5->AddComponent<MeshRenderer>();
 
 	/*
 	// モデル読み込み（現状p_modelDataはメモリリークを起こす）
@@ -130,12 +159,4 @@ void TestScene::SetupObjects()
 	//meshComp->SetMesh(meshes.Get("Woman"));
 	//obj_2->AddComponent<MeshRenderer>();
 	*/
-
-	auto obj_1 = this->gameObjectManager.Instantiate("obj_1");
-	std::cout << obj_1->GetName() << " : " << std::to_string(obj_1->transform->GetWorldPosition().x) << std::endl;
-	obj_1->transform->SetLocalPosition(DX::Vector3(320.0f, 240.0f, 0.0f));
-	obj_1->transform->SetLocalScale(DX::Vector3(150.0f, 150.0f, 0.0f));
-	obj_1->AddComponent<SpriteRenderer>();
-	obj_1->AddComponent<TestMoveComponent>();
-	obj_1->GetComponent<SpriteComponent>()->SetSprite(spriteManager.Get("Eidan"));
 }

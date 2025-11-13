@@ -98,7 +98,8 @@ void TestScene::SetupObjects()
 	auto matComp = player->AddComponent<MaterialComponent>();
 	matComp->SetTexture(spriteManager.Get("Eidan"));
 	player->AddComponent<MeshRenderer>();
-	player->AddComponent<CharacterController>();
+	auto charaController = player->AddComponent<CharacterController>();
+	//charaController->SetTurnSpeed(10.0f);
 
 	// カメラピボットオブジェクトを生成する
 	auto pivotObj = gameObjectManager.Instantiate("CameraPivot");
@@ -115,7 +116,7 @@ void TestScene::SetupObjects()
 	auto followCamera = camera3D->AddComponent<FollowCamera>();
 	followCamera->SetTarget(player->transform);
 	followCamera->SetPivot(pivotObj->transform);
-	followCamera->SetSmoothSpeed(12.0f);
+	followCamera->SetSmoothSpeed(5.0f);
 
 	// 平面オブジェクト
 	auto obj_4 = this->gameObjectManager.Instantiate("obj_4");

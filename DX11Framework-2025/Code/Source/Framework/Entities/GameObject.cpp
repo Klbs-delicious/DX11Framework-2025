@@ -26,8 +26,6 @@ GameObject::GameObject(IGameObjectObserver& _gameobjctObs, const std::string& _n
 	// Transformコンポーネントを追加
     // 生成、破棄などは一緒に行えるようにしたが処理はコンポーネントのリストとは別で回す
     this->transform = this->AddComponent<Transform>();
-
-    std::cout << "生成した" << std::endl;
 };
 
 /// @brief	デストラクタ

@@ -35,12 +35,22 @@ CharacterController::CharacterController(GameObject* _owner, bool _active)
 void CharacterController::Initialize()
 {
 	// カメラオブジェクトのTransformを取得する
-	this->cameraTransform = SystemLocator::Get<GameObjectManager>().GetFindObjectByName("Camera3D")->GetComponent<Transform>();	
-	if(!this->cameraTransform)
-	{
-		std::cout << "[CharacterController] Camera3D component missing.\n";
-		return;
-	}
+    auto& mgr = SystemLocator::Get<GameObjectManager>();
+    GameObject* camObj = mgr.GetFindObjectByName("Camera3D");
+
+    if (!camObj)
+    {
+        std::cout << "[CharacterController] Camera3D not found.\n";
+        return;
+    }
+
+    this->cameraTransform = camObj->GetComponent<Transform>();
+
+    if (!this->cameraTransform)
+    {
+        std::cout << "[CharacterController] Camera3D has no Transform.\n";
+        return;
+    }
 
 	// ------------------------------------------------------
 	// キーバインドの登録

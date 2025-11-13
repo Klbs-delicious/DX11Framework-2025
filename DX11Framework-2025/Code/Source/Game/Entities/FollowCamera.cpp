@@ -21,8 +21,8 @@ FollowCamera::FollowCamera(GameObject* _owner, bool _active)
 	: Component(_owner, _active),
 	pivot(nullptr),
 	target(nullptr),
-	distance(6.0f),
-	height(2.0f),
+	distance(0.0f),
+	height(0.0f),
 	smoothSpeed(5.0f)
 {}
 

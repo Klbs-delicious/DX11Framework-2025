@@ -17,6 +17,7 @@
 #include"Include/Game/Entities/FollowCamera.h"
 
 #include"Include/Game/Entities/CharacterController.h"
+#include"Include/Game/Entities/CameraLookComponent.h"
 
 //#include"Include/Framework/Graphics/Mesh.h"
 #include"Include/Framework/Graphics/SpriteManager.h"
@@ -62,7 +63,7 @@ void TestScene::SetupObjects()
 	camera3D->transform->SetLocalRotation(DX::Quaternion::CreateFromYawPitchRoll(0.0f, DX::ToRadians(45.0f), 0.0f));
 	camera3D->AddComponent<Camera3D>();
 
-	camera3D->AddComponent<TestMoveComponent>();
+	//camera3D->AddComponent<TestMoveComponent>();
 
 	// 2Dカメラオブジェクト
 	auto camera2D = this->gameObjectManager.Instantiate("Camera2D", GameTags::Tag::Camera);
@@ -90,19 +91,31 @@ void TestScene::SetupObjects()
 	obj_2->AddComponent<MeshRenderer>();
 
 	// 立方体オブジェクト
-	auto obj_3 = this->gameObjectManager.Instantiate("obj_3");
-	obj_3->transform->SetLocalPosition(DX::Vector3(5.0f, 0.0f, 5.0f));
-	meshComp = obj_3->AddComponent<MeshComponent>();
+	auto player = this->gameObjectManager.Instantiate("Player", GameTags::Tag::Player);
+	player->transform->SetLocalPosition(DX::Vector3(5.0f, 0.0f, 5.0f));
+	meshComp = player->AddComponent<MeshComponent>();
 	meshComp->SetMesh(meshManager.Get("Box"));
-	auto matComp = obj_3->AddComponent<MaterialComponent>();
+	auto matComp = player->AddComponent<MaterialComponent>();
 	matComp->SetTexture(spriteManager.Get("Eidan"));
-	obj_3->AddComponent<MeshRenderer>();
-	obj_3->AddComponent<CharacterController>();
+	player->AddComponent<MeshRenderer>();
+	player->AddComponent<CharacterController>();
 
-	//// カメラ追従コンポーネントを追加する
-	//auto followCamera = camera3D->AddComponent<FollowCamera>();
-	//followCamera->SetTarget(obj_3->transform);
-	//followCamera->SetPivot(obj_3->transform);
+	// カメラピボットオブジェクトを生成する
+	auto pivotObj = gameObjectManager.Instantiate("CameraPivot");
+	//meshComp = pivotObj->AddComponent<MeshComponent>();
+	//meshComp->SetMesh(meshManager.Get("Box"));
+	//pivotObj->AddComponent<MeshRenderer>();
+	
+	// カメラ注視コンポーネントを追加する
+	auto cameraLook = pivotObj->AddComponent<CameraLookComponent>();
+	cameraLook->SetTarget(player->transform);
+	cameraLook->SetOffset(DX::Vector3(6.0f, 3.0f, 0.0f)); // 少し右上にオフセット
+
+	// カメラ追従コンポーネントを追加する
+	auto followCamera = camera3D->AddComponent<FollowCamera>();
+	followCamera->SetTarget(player->transform);
+	followCamera->SetPivot(pivotObj->transform);
+	followCamera->SetSmoothSpeed(12.0f);
 
 	// 平面オブジェクト
 	auto obj_4 = this->gameObjectManager.Instantiate("obj_4");

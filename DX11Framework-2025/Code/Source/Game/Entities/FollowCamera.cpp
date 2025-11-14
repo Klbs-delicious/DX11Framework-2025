@@ -73,7 +73,11 @@ void FollowCamera::Update(float _deltaTime)
     // 現在位置を取得して追従する
     //---------------------------------------------------------
     DX::Vector3 currentPos = this->Owner()->transform->GetWorldPosition();
-    DX::Vector3 newPos = DX::Vector3::Lerp(currentPos, desiredPos, _deltaTime * this->smoothSpeed);
+
+    // tが0~1で補間処理を行う
+    float t = _deltaTime * this->smoothSpeed;
+    if (t > 1.0f) t = 1.0f;
+    DX::Vector3 newPos = DX::Vector3::Lerp(currentPos, desiredPos, t);
     this->Owner()->transform->SetWorldPosition(newPos);
 
     //---------------------------------------------------------

@@ -151,6 +151,16 @@ void Camera3D::UpdateMatrix()
 
     // TransformのForwardベクトルを利用して注視点を求める
     DX::Vector3 forward = this->transform->Forward();
+
+    if (forward.LengthSquared() < 1e-6f)
+    {
+        // +Z 方向をデフォルトにする
+        forward = DX::Vector3::Forward;
+         // 必要ならログ出してもいい
+         std::cout << "[Camera3D] Forward was zero. Fallback to +Z.\n";
+    }
+
+
     DX::Vector3 target = pos + forward;
 
     //std::cout << "[Camera3D] pos=(" << pos.x << "," << pos.y << "," << pos.z

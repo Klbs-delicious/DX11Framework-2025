@@ -89,18 +89,18 @@ void Application::Run()
 void Application::MainLoop()
 {
     MSG msg{};
-    FPS fps(70);
+    FPS fps(144);
 
     Application::gameLoop->Initialize();
 
     while (msg.message != WM_QUIT && Application::gameLoop->IsRunning())
     {
         fps.Tick();
-        fps.Measure();
+
+        float deltaTime = fps.DeltaSec();
 
         // 瞬間FPS
-        float FPS = 1.0f / fps.DeltaSec();
-        //std::cout << "Measured FPS: " << 1.0f / fps.DeltaSec() << std::endl;
+        std::cout << "FPS: " << fps.GetFPS() << std::endl;
 
         // 以下、普段の更新・描画
         if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
@@ -122,7 +122,7 @@ void Application::MainLoop()
         if (input.IsActionTriggered("GameExit")) { Application::gameLoop->RequestExit(); }
         // -------------------------------------------------------------------------------------------
 
-        Application::gameLoop->Update(fps.DeltaSec());
+        Application::gameLoop->Update(deltaTime);
         Application::renderSystem->BeginRender();
         Application::gameLoop->Draw();
         Application::renderSystem->EndRender();

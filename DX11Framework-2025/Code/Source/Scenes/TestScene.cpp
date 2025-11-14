@@ -110,7 +110,7 @@ void TestScene::SetupObjects()
 	// カメラ注視コンポーネントを追加する
 	auto cameraLook = pivotObj->AddComponent<CameraLookComponent>();
 	cameraLook->SetTarget(player->transform);
-	cameraLook->SetOffset(DX::Vector3(6.0f, 3.0f, 0.0f)); // 少し右上にオフセット
+	cameraLook->SetOffset(DX::Vector3(6.0f, 3.0f, -5.0f)); // 少し右上にオフセット
 
 	// カメラ追従コンポーネントを追加する
 	auto followCamera = camera3D->AddComponent<FollowCamera>();

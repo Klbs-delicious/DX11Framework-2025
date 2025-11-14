@@ -20,10 +20,10 @@
  *  @param _active コンポーネントの有効/無効
  */
 CameraLookComponent::CameraLookComponent(GameObject* _owner, bool _active)
-	: Component(_owner, _active), 
-	inputSystem(SystemLocator::Get<InputSystem>()),
-	target(nullptr),
-	offset(DX::Vector3::Zero),
+    : Component(_owner, _active),
+    inputSystem(SystemLocator::Get<InputSystem>()),
+    target(nullptr),
+    offset(DX::Vector3(0.0f, 2.0f, -5.0f)), 
 	yaw(0.0f),
 	pitch(0.0f),
 	sensitivity(0.1f),

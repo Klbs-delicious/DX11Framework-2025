@@ -14,8 +14,9 @@
 #include"Include/Framework/Entities/Camera2D.h"
 #include"Include/Framework/Entities/Camera3D.h"
 #include"Include/Framework/Entities/MeshComponent.h"
-#include"Include/Game/Entities/FollowCamera.h"
+#include"Include/Framework/Entities/TimeScaleComponent.h"
 
+#include"Include/Game/Entities/FollowCamera.h"
 #include"Include/Game/Entities/CharacterController.h"
 #include"Include/Game/Entities/CameraLookComponent.h"
 
@@ -84,20 +85,18 @@ void TestScene::SetupObjects()
 	//obj_1->AddComponent<TestMoveComponent>();
 	//obj_1->GetComponent<SpriteComponent>()->SetSprite(spriteManager.Get("Eidan"));
 
-	SpawnManyBoxes(10,10,10);
-
-	// 球体オブジェクト
-	auto obj_2 = this->gameObjectManager.Instantiate("obj_2");
-	obj_2->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 10.0f));
-	obj_2->transform->SetLocalScale(DX::Vector3(2.0f, 2.0f, 2.0f));
-	auto meshComp = obj_2->AddComponent<MeshComponent>();
-	meshComp->SetMesh(meshManager.Get("Sphere"));
-	obj_2->AddComponent<MeshRenderer>();
+	//// 球体オブジェクト
+	//auto obj_2 = this->gameObjectManager.Instantiate("obj_2");
+	//obj_2->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 10.0f));
+	//obj_2->transform->SetLocalScale(DX::Vector3(2.0f, 2.0f, 2.0f));
+	//auto meshComp = obj_2->AddComponent<MeshComponent>();
+	//meshComp->SetMesh(meshManager.Get("Sphere"));
+	//obj_2->AddComponent<MeshRenderer>();
 
 	// 立方体オブジェクト（プレイヤー）
 	auto player = this->gameObjectManager.Instantiate("Player", GameTags::Tag::Player);
 	player->transform->SetLocalPosition(DX::Vector3(5.0f, 0.0f, 5.0f));
-	meshComp = player->AddComponent<MeshComponent>();
+	auto meshComp = player->AddComponent<MeshComponent>();
 	meshComp->SetMesh(meshManager.Get("Box"));
 	auto matComp = player->AddComponent<MaterialComponent>();
 	matComp->SetTexture(spriteManager.Get("Eidan"));
@@ -130,6 +129,9 @@ void TestScene::SetupObjects()
 	meshComp = obj_4->AddComponent<MeshComponent>();
 	meshComp->SetMesh(meshManager.Get("Plane"));
 	obj_4->AddComponent<MeshRenderer>();
+
+	// 大量オブジェクト生成テスト
+	SpawnManyBoxes(10, 10, 10);
 
 	//// カプセルオブジェクト
 	//auto obj_5 = this->gameObjectManager.Instantiate("obj_5");
@@ -198,6 +200,14 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 
 	auto& gameObjectManager = this->gameObjectManager;
 
+	auto player = gameObjectManager.GetFindObjectByName("Player");
+	if(!player)
+	{
+		std::cout << "[Test] Player object not found. Cannot register TimeScaleComponents.\n";
+		return;
+	}
+	auto playerTimeScale = player->GetComponent<TimeScaleTestComponent>();
+
 	for (int x = 0; x < _countX; x++)
 	{
 		for (int z = 0; z < _countZ; z++)
@@ -225,6 +235,9 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 
 			// 自由移動コンポーネントを追加する
 			obj->AddComponent<FreeMoveTestComponent>();
+
+			// TimeScaleComponentを追加して、プレイヤーのTimeScaleTestComponentに登録する
+			playerTimeScale->AddTimeScaleComponent(obj->GetComponent<TimeScaleComponent>());
 		}
 	}
 

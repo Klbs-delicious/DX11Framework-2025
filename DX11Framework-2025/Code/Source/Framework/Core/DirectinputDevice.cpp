@@ -131,6 +131,20 @@ bool DirectInputDevice::IsTriggered(int _code) const {
     return false;
 }
 
+/**@brief リリース状態の取得
+ * @param int _code 入力コード（DIK_* またはマウスボタンID）
+ * @return bool 前フレームから離された瞬間であれば true
+ */
+bool DirectInputDevice::IsReleased(int _code) const {
+    if (_code >= 0 && _code < 256) {
+        return (this->oldKeyBuffer[_code] & 0x80) && !(this->keyBuffer[_code] & 0x80);
+    }
+    if (_code >= 0 && _code < 8) {
+        return (this->mouseStateOld.rgbButtons[_code] & 0x80) && !(this->mouseState.rgbButtons[_code] & 0x80);
+    }
+	return false;
+}
+
 /**@brief マウスX座標の取得
  * @return int クライアント座標系でのX位置。対応していない場合は -1
  */

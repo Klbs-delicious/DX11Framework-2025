@@ -5,6 +5,7 @@
 #pragma once
 #include "Include/Framework/Entities/Component.h"
 #include "Include/Framework/Entities/PhaseInterfaces.h"
+#include "Include/Framework/Entities/Camera3D.h"
 #include "Include/Framework/Core/InputSystem.h"
 
  /** @class CharacterController
@@ -30,9 +31,20 @@ public:
 	 */
 	void Update(float _deltaTime) override;
 
+	/**@brief  移動速度を設定
+	 * @param _speed 移動速度
+	 */
+	void SetMoveSpeed(float _speed) { this->moveSpeed = _speed; }
+
+	/**@brief  回転速度を設定
+	 * @param _speed 回転速度
+	 */
+	void SetTurnSpeed(float _speed) { this->turnSpeed = _speed; }
+
 private:
 	InputSystem& inputSystem;	///< 入力処理を管理している
+	Transform* cameraTransform;	///< カメラの座標系
 
 	float moveSpeed;		///< 移動速度
+	float turnSpeed;		///< 回転速度
 };
-

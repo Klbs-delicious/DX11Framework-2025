@@ -30,9 +30,7 @@ Transform::Transform(GameObject* _owner, bool _isActive) :
     localRotation(DX::Quaternion::Identity),
     localScale(DX::Vector3::One),
     worldMatrix(DX::Matrix4x4::Identity)
-{
-    std::cout << "Transformコンポーネントの生成" << std::endl;
-}
+{}
 
 /// @brief デストラクタ
 Transform::~Transform() {}

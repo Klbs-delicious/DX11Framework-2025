@@ -69,6 +69,13 @@ public:
      */
     int GetMouseY() const override;
 
+    /** @brief マウスの移動量（Δ）を取得
+     *  @param int& _dx X方向の変化量
+     *  @param int& _dy Y方向の変化量
+     *  @return なし
+     */
+    void GetMouseDelta(int& _dx, int& _dy) const override;
+
     /**@brief 振動の制御
      * @param const MotorForce& _force 振動の強さ（左右モーター）
      * @details DirectInput では振動制御に対応していないため、空実装

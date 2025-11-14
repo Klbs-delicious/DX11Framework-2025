@@ -153,8 +153,8 @@ void Camera3D::UpdateMatrix()
     DX::Vector3 forward = this->transform->Forward();
     DX::Vector3 target = pos + forward;
 
-    std::cout << "[Camera3D] pos=(" << pos.x << "," << pos.y << "," << pos.z
-        << ") target=(" << target.x << "," << target.y << "," << target.z << ")\n";
+    //std::cout << "[Camera3D] pos=(" << pos.x << "," << pos.y << "," << pos.z
+    //    << ") target=(" << target.x << "," << target.y << "," << target.z << ")\n";
 
     // ビュー行列を作成
     this->viewMatrix = DirectX::XMMatrixLookAtLH(

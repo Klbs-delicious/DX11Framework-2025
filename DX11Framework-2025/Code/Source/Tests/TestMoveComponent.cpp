@@ -50,11 +50,20 @@ void TestMoveComponent::Update(float _deltaTime)
     if (this->inputSystem.IsActionPressed("MoveForward")) movement.z += 1.0f;
     if (this->inputSystem.IsActionPressed("MoveBack"))    movement.z -= 1.0f;
 
-    // --- 回転入力（クォータニオンベース） ---
+    // --- 回転入力（キーボード） ---
     if (this->inputSystem.IsActionPressed("RotateLeft"))  rotationInput.y -= 1.0f;
     if (this->inputSystem.IsActionPressed("RotateRight")) rotationInput.y += 1.0f;
     if (this->inputSystem.IsActionPressed("RotateUp"))    rotationInput.x -= 1.0f;
     if (this->inputSystem.IsActionPressed("RotateDown"))  rotationInput.x += 1.0f;
+
+    // --- マウス移動による回転入力 ---
+    int mouseDX = 0, mouseDY = 0;
+    if (this->inputSystem.GetMouseDelta(mouseDX, mouseDY))
+    {
+        constexpr float MOUSE_SENSITIVITY = 0.1f; // 感度
+        rotationInput.y += static_cast<float>(mouseDX) * MOUSE_SENSITIVITY; // 左右（Yaw）
+        rotationInput.x += static_cast<float>(mouseDY) * MOUSE_SENSITIVITY; // 上下（Pitch）
+    }
 
     // --- 移動処理 ---
     if (movement.LengthSquared() > 0.0f)
@@ -72,20 +81,16 @@ void TestMoveComponent::Update(float _deltaTime)
     {
         rotationInput *= this->rotationSpeed * _deltaTime;
 
-        // 現在の回転を取得
         DX::Quaternion currentRot = this->transform->GetLocalRotation();
-
-        // 回転入力をクォータニオンに変換（YawPitchRoll順で適用）
         DX::Quaternion deltaRot = DX::Quaternion::CreateFromYawPitchRoll(
             rotationInput.y, rotationInput.x, rotationInput.z
         );
 
-        // 合成
         DX::Quaternion newRot = deltaRot * currentRot;
         newRot.Normalize();
-
         this->transform->SetLocalRotation(newRot);
     }
 }
+
 
 void TestMoveComponent::Dispose() {}

@@ -8,9 +8,12 @@
  //-----------------------------------------------------------------------------
 #include "Include/Game/Entities/CharacterController.h"
 #include "Include/Framework/Entities/GameObject.h"
+#include "Include/Framework/Entities/GameObjectManager.h"
 
 #include "Include/Framework/Core/SystemLocator.h"
 #include "Include/Framework/Core/DirectInputDevice.h"
+
+#include<iostream>
 
 //-----------------------------------------------------------------------------
 // CharacterController class
@@ -21,12 +24,34 @@
  *  @param bool _active コンポーネントの有効/無効
  */
 CharacterController::CharacterController(GameObject* _owner, bool _active)
-	: Component(_owner, _active), inputSystem(SystemLocator::Get<InputSystem>()), moveSpeed(5.0f)
+	: Component(_owner, _active), 
+	inputSystem(SystemLocator::Get<InputSystem>()), 
+	cameraTransform(nullptr),
+	moveSpeed(10.0f),
+	turnSpeed(15.0f)
 {}
 
 /// @brief 初期化処理
 void CharacterController::Initialize()
 {
+	// カメラオブジェクトのTransformを取得する
+    auto& mgr = SystemLocator::Get<GameObjectManager>();
+    GameObject* camObj = mgr.GetFindObjectByName("Camera3D");
+
+    if (!camObj)
+    {
+        std::cout << "[CharacterController] Camera3D not found.\n";
+        return;
+    }
+
+    this->cameraTransform = camObj->GetComponent<Transform>();
+
+    if (!this->cameraTransform)
+    {
+        std::cout << "[CharacterController] Camera3D has no Transform.\n";
+        return;
+    }
+
 	// ------------------------------------------------------
 	// キーバインドの登録
 	// ------------------------------------------------------
@@ -41,40 +66,64 @@ void CharacterController::Initialize()
  */
 void CharacterController::Update(float _deltaTime)
 {
+	// 
 	auto transform = this->Owner()->transform;
 	if (!transform) { return; }
-
-	DX::Vector3 moveDir = DX::Vector3::Zero;
-
-	// ------------------------------------------------------
-	// 入力方向（ワールド座標系ベース）
-	// ------------------------------------------------------
-	if (this->inputSystem.IsActionPressed("MoveForward")) { moveDir.z += 1.0f; }
-	if (this->inputSystem.IsActionPressed("MoveBackward")) { moveDir.z -= 1.0f; }
-	if (this->inputSystem.IsActionPressed("MoveLeft")) { moveDir.x -= 1.0f; }
-	if (this->inputSystem.IsActionPressed("MoveRight")) { moveDir.x += 1.0f; }
+	if (!this->cameraTransform) { return; }
 
 	// ------------------------------------------------------
-	// 移動処理
+	// 入力処理
 	// ------------------------------------------------------
+	float inputX = 0.0f;	// 左(-1) ～ 右(+1)
+	float inputZ = 0.0f;	// 後ろ(-1) ～ 前(+1)
+
+	if (this->inputSystem.IsActionPressed("MoveForward")) { inputZ += 1.0f; }
+	if (this->inputSystem.IsActionPressed("MoveBackward")) { inputZ -= 1.0f; }
+	if (this->inputSystem.IsActionPressed("MoveLeft")) { inputX -= 1.0f; }
+	if (this->inputSystem.IsActionPressed("MoveRight")) { inputX += 1.0f; }
+
+	// 入力なし
+	if (inputX == 0.0f && inputZ == 0.0f) { return; }
+
+	// ------------------------------------------------------
+	// カメラの前方向・右方向（水平成分のみ）
+	// ------------------------------------------------------
+	DX::Vector3 camForward = this->cameraTransform->Forward();
+	camForward.y = 0.0f;
+	camForward.Normalize();
+
+	DX::Vector3 camRight = this->cameraTransform->Right();
+	camRight.y = 0.0f;
+	camRight.Normalize();
+
+	// ------------------------------------------------------
+	// カメラ基準入力 → ワールド方向ベクトルへ変換
+	// ------------------------------------------------------
+	DX::Vector3 moveDir = camForward * inputZ + camRight * inputX;
+
+	// 斜め移動のときも速度一定にするため正規化
 	if (moveDir.LengthSquared() > 0.0f)
 	{
 		moveDir.Normalize();
-
-		// --- 方向回転 ---
-		DX::Quaternion currentRot = transform->GetLocalRotation();
-		DX::Quaternion targetRot = DX::Quaternion::CreateFromRotationMatrix(
-			DX::CreateWorldLH(DX::Vector3::Zero, moveDir, DX::Vector3::UnitY)
-		);
-
-		// --- 向きの更新 ---
-		float turnSpeed = 15.0f;
-		DX::Quaternion newRot = DX::Quaternion::Slerp(currentRot, targetRot, turnSpeed * _deltaTime);
-		transform->SetLocalRotation(newRot);
-
-		// --- 前進 ---
-		DX::Vector3 pos = transform->GetLocalPosition();
-		pos += transform->Forward() * moveSpeed * _deltaTime;
-		transform->SetLocalPosition(pos);
 	}
+	else { return; }
+
+	// ------------------------------------------------------
+	// 向きの更新（キャラの正面を moveDir に向ける）
+	// ------------------------------------------------------
+	DX::Quaternion currentRot = transform->GetLocalRotation();
+	DX::Quaternion targetRot = DX::Quaternion::CreateFromRotationMatrix(
+		DX::CreateWorldLH(DX::Vector3::Zero, moveDir, DX::Vector3::UnitY)
+	);
+
+	// 球形補間で回転を滑らかに行う
+	DX::Quaternion newRot = DX::Quaternion::Slerp(currentRot, targetRot, turnSpeed * _deltaTime);
+	transform->SetLocalRotation(newRot);
+
+	// ------------------------------------------------------
+	// 実際の移動処理
+	// ------------------------------------------------------
+	DX::Vector3 pos = transform->GetLocalPosition();
+	pos += moveDir * this->moveSpeed * _deltaTime;
+	transform->SetLocalPosition(pos);
 }

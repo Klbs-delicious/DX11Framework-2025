@@ -15,8 +15,8 @@
 int main()
 {
     Application::AppConfig config = {
+        1280,
         720,
-        400,
     };
 
     Application application(config);

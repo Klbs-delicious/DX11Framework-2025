@@ -264,6 +264,12 @@
     <ClInclude Include="Code\Include\Game\Entities\CharacterController.h">
       <Filter>ヘッダー ファイル\Game\Entities</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Include\Game\Entities\FollowCamera.h">
+      <Filter>ヘッダー ファイル\Game\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Game\Entities\CameraLookComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Code\Source\Framework\main.cpp">
@@ -393,6 +399,12 @@
       <Filter>ソース ファイル\Framework\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Game\Entities\CharacterController.cpp">
+      <Filter>ソース ファイル\Framework\Game\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Game\Entities\FollowCamera.cpp">
+      <Filter>ソース ファイル\Framework\Game\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Game\Entities\CameraLookComponent.cpp">
       <Filter>ソース ファイル\Framework\Game\Entities</Filter>
     </ClCompile>
   </ItemGroup>

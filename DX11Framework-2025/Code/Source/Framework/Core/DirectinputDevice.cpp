@@ -145,3 +145,8 @@ int DirectInputDevice::GetMouseY() const {
     return this->mousePoint.y;
 }
 
+void DirectInputDevice::GetMouseDelta(int& _dx, int& _dy) const
+{
+    _dx = static_cast<int>(mouseState.lX);
+    _dy = static_cast<int>(mouseState.lY);
+}

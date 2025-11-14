@@ -7,7 +7,7 @@
 //-----------------------------------------------------------------------------
 #include"Include/Framework/Core/Application.h"
 #include "Include/Framework/Core/SystemLocator.h"
-#include"Include/Framework/Core/FPS.h"
+#include"Include/Framework/Core/TimeSystem.h"
 
 #include "Include/Framework/Utils/DebugHooks.h"
 
@@ -89,18 +89,19 @@ void Application::Run()
 void Application::MainLoop()
 {
     MSG msg{};
-    FPS fps(144);
+    TimeSystem timeSystem(60);
 
     Application::gameLoop->Initialize();
 
     while (msg.message != WM_QUIT && Application::gameLoop->IsRunning())
     {
-        fps.Tick();
-
-        float deltaTime = fps.DeltaSec();
-
+        // デルタタイムの計算
+       timeSystem.TickRawDelta();
+       float delta = timeSystem.RawDelta();
+       float fixedDelta = timeSystem.FixedDelta();
         // 瞬間FPS
-        std::cout << "FPS: " << fps.GetFPS() << std::endl;
+       std::cout << "可変FPS: " << 1.0f / delta << std::endl;
+       std::cout << "固定FPS: " << 1.0f / fixedDelta << std::endl;
 
         // 以下、普段の更新・描画
         if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE)) {
@@ -122,7 +123,7 @@ void Application::MainLoop()
         if (input.IsActionTriggered("GameExit")) { Application::gameLoop->RequestExit(); }
         // -------------------------------------------------------------------------------------------
 
-        Application::gameLoop->Update(deltaTime);
+        Application::gameLoop->Update(delta);
         Application::renderSystem->BeginRender();
         Application::gameLoop->Draw();
         Application::renderSystem->EndRender();

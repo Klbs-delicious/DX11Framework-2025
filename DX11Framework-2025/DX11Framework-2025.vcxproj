@@ -23,7 +23,6 @@
     <ClInclude Include="Code\Include\Framework\Core\D3D11System.h" />
     <ClInclude Include="Code\Include\Framework\Core\DirectInputDevice.h" />
     <ClInclude Include="Code\Include\Framework\Core\EngineServices.h" />
-    <ClInclude Include="Code\Include\Framework\Core\FPS.h" />
     <ClInclude Include="Code\Include\Framework\Core\GameLoop.h" />
     <ClInclude Include="Code\Include\Framework\Core\IInputDevice.h" />
     <ClInclude Include="Code\Include\Framework\Core\InputSystem.h" />
@@ -31,6 +30,7 @@
     <ClInclude Include="Code\Include\Framework\Core\RenderSystem.h" />
     <ClInclude Include="Code\Include\Framework\Core\ResourceHub.h" />
     <ClInclude Include="Code\Include\Framework\Core\SystemLocator.h" />
+    <ClInclude Include="Code\Include\Framework\Core\TimeSystem.h" />
     <ClInclude Include="Code\Include\Framework\Core\WindowSystem.h" />
     <ClInclude Include="Code\Include\Framework\Entities\Camera2D.h" />
     <ClInclude Include="Code\Include\Framework\Entities\Camera3D.h" />
@@ -87,6 +87,7 @@
     <ClCompile Include="Code\Source\Framework\Core\GameLoop.cpp" />
     <ClCompile Include="Code\Source\Framework\Core\InputSystem.cpp" />
     <ClCompile Include="Code\Source\Framework\Core\RenderSystem.cpp" />
+    <ClCompile Include="Code\Source\Framework\Core\TimeSystem.cpp" />
     <ClCompile Include="Code\Source\Framework\Core\WindowsSystem.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\Camera2D.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\Camera3D.cpp" />

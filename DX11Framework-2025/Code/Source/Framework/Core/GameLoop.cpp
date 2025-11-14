@@ -22,7 +22,7 @@
 /// @brief	コンストラクタ
 GameLoop::GameLoop() :isRunning(true), gameState(GameState::Play) {}
 /// @brief	デストラクタ
-GameLoop::~GameLoop(){ this->Dispose(); }
+GameLoop::~GameLoop() { this->Dispose(); }
 
 /**	@brief		初期化処理を行う
  */

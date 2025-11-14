@@ -82,6 +82,8 @@ void TestScene::SetupObjects()
 	//obj_1->AddComponent<TestMoveComponent>();
 	//obj_1->GetComponent<SpriteComponent>()->SetSprite(spriteManager.Get("Eidan"));
 
+	SpawnManyBoxes(50,50);
+
 	// 球体オブジェクト
 	auto obj_2 = this->gameObjectManager.Instantiate("obj_2");
 	obj_2->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 10.0f));
@@ -178,4 +180,47 @@ void TestScene::SetupObjects()
 	//meshComp->SetMesh(meshes.Get("Woman"));
 	//obj_2->AddComponent<MeshRenderer>();
 	*/
+}
+
+//-----------------------------------------------------------------------------
+// 大量オブジェクト生成テスト
+//-----------------------------------------------------------------------------
+void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float _spacing)
+{
+	//--------------------------------------------------------------
+	// リソースマネージャの取得
+	//--------------------------------------------------------------
+	auto& spriteManager = ResourceHub::Get<SpriteManager>();
+	auto& meshManager = ResourceHub::Get<MeshManager>();
+
+	auto& gameObjectManager = this->gameObjectManager;
+
+	for (int x = 0; x < _countX; x++)
+	{
+		for (int z = 0; z < _countZ; z++)
+		{
+			std::string name = "Box_" + std::to_string(x) + "_" + std::to_string(z);
+
+			auto obj = gameObjectManager.Instantiate(name);
+
+			obj->transform->SetLocalPosition(
+				DX::Vector3(
+					x * _spacing,
+					0.0f,
+					z * _spacing
+				)
+			);
+
+			obj->transform->SetLocalScale(DX::Vector3(2.0f, 2.0f, 2.0f));
+
+			// メッシュ設定（Sphere を Box として使う例）
+			auto meshComp = obj->AddComponent<MeshComponent>();
+			meshComp->SetMesh(meshManager.Get("Sphere"));
+
+			// Renderer
+			obj->AddComponent<MeshRenderer>();
+		}
+	}
+
+	std::cout << "[Test] Spawned " << (_countX * _countZ) << " boxes.\n";
 }

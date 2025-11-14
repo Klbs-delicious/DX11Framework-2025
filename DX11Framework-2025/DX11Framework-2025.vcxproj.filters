@@ -279,6 +279,9 @@
     <ClInclude Include="Code\Include\Tests\TimeScaleTestComponent.h">
       <Filter>ヘッダー ファイル\Test</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\TimeScaleComponent.h">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Code\Source\Framework\main.cpp">
@@ -427,6 +430,9 @@
     </ClCompile>
     <ClCompile Include="Code\Source\Tests\TimeScaleTestComponent.cpp">
       <Filter>ソース ファイル\Test</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Entities\TimeScaleComponent.cpp">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

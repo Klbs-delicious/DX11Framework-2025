@@ -5,6 +5,8 @@
 #include"Include/Framework/Entities/Component.h"
 #include"Include/Framework/Entities/PhaseInterfaces.h"
 #include"Include/Framework/Entities/Transform.h"
+#include"Include/Framework/Entities/TimeScaleComponent.h"
+
 #include"Include/Framework/Event/GameObjectEvent.h"
 
 #include<string>
@@ -239,6 +241,7 @@ public:
 private:
 	IGameObjectObserver& gameObjectObs;			///< GameObjectの状態を通知するObserver
 	const EngineServices* services = nullptr;	///< リソース関連の参照
+	TimeScaleComponent* timeScaleComponent;		///< オブジェクト固有の時間スケールコンポーネント
 
 	bool isPendingDestroy;	///< オブジェクトの削除フラグ
 	bool isActive;			///< オブジェクトの有効/無効フラグ

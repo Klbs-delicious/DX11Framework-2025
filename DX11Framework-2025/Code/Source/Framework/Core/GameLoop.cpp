@@ -28,32 +28,17 @@ GameLoop::~GameLoop() { this->Dispose(); }
  */
 void GameLoop::Initialize()
 {
-    // 入力管理を行うクラスの生成と登録
+    //--------------------------------------------------------------------------    
+    // SystemLocatorに登録・管理する
+    //--------------------------------------------------------------------------  
+
+    // 時間スケールの管理
+    this->timeScaleSystem = std::make_unique<TimeScaleSystem>();
+    SystemLocator::Register<TimeScaleSystem>(this->timeScaleSystem.get());
+
+    // 入力管理
     this->inputSystem = std::make_unique<InputSystem>();
     SystemLocator::Register<InputSystem>(this->inputSystem.get());
-
-    // 画像管理クラスをリソース管理クラスに登録
-    this->spriteManager = std::make_unique<SpriteManager>();
-    ResourceHub::Register(this->spriteManager.get());
-
-    // シェーダー管理クラスをリソース管理クラスに登録
-    this->shaderManager = std::make_unique<ShaderManager>();
-    ResourceHub::Register(this->shaderManager.get());
-
-    // マテリアル管理クラスをリソース管理クラスに登録
-    this->materialManager = std::make_unique<MaterialManager>();
-    ResourceHub::Register(this->materialManager.get());
-
-    // メッシュ管理クラスをリソース管理クラスに登録
-    this->meshManager = std::make_unique<MeshManager>();
-    ResourceHub::Register(this->meshManager.get());
-
-    this->services = {
-        &ResourceHub::Get<SpriteManager>(),
-        &ResourceHub::Get<MaterialManager>(),
-        &ResourceHub::Get<MeshManager>(),
-        &ResourceHub::Get<ShaderManager>(),
-    };
 
     // ゲームオブジェクトの管理を行うクラスの生成と登録
     this->gameObjectManager = std::make_unique<GameObjectManager>(&services);
@@ -78,6 +63,37 @@ void GameLoop::Initialize()
     // シーン管理を登録
     SystemLocator::Register<SceneManager>(this->sceneManager.get());
 
+    //--------------------------------------------------------------------------    
+    // ResourceHubに登録・管理する
+    //--------------------------------------------------------------------------    
+
+    // 画像管理クラスをリソース管理クラスに登録
+    this->spriteManager = std::make_unique<SpriteManager>();
+    ResourceHub::Register(this->spriteManager.get());
+
+    // シェーダー管理クラスをリソース管理クラスに登録
+    this->shaderManager = std::make_unique<ShaderManager>();
+    ResourceHub::Register(this->shaderManager.get());
+
+    // マテリアル管理クラスをリソース管理クラスに登録
+    this->materialManager = std::make_unique<MaterialManager>();
+    ResourceHub::Register(this->materialManager.get());
+
+    // メッシュ管理クラスをリソース管理クラスに登録
+    this->meshManager = std::make_unique<MeshManager>();
+    ResourceHub::Register(this->meshManager.get());
+
+    this->services = {
+        &ResourceHub::Get<SpriteManager>(),
+        &ResourceHub::Get<MaterialManager>(),
+        &ResourceHub::Get<MeshManager>(),
+        &ResourceHub::Get<ShaderManager>(),
+    };
+
+    //--------------------------------------------------------------------------    
+    // 各システムの設定
+    //--------------------------------------------------------------------------    
+
     // 入力デバイスの登録
     auto& window = SystemLocator::Get<WindowSystem>();
     auto directInput = std::make_unique<DirectInputDevice>();
@@ -100,8 +116,12 @@ void GameLoop::Update(float _deltaTime)
 {
     if (!this->isRunning) { return; }
 
+    // 時間の管理
+    float scaledDeltaTime = this->timeScaleSystem->GlobalScale() * _deltaTime;
+
+
     this->inputSystem->Update();
-    this->sceneManager->Update(_deltaTime);
+    this->sceneManager->Update(scaledDeltaTime);
 }
 
 /**	@brief		描画処理を行う
@@ -119,13 +139,13 @@ void GameLoop::Draw()
 void GameLoop::Dispose()
 {
     this->meshManager.reset();
-    SystemLocator::Unregister<MeshManager>();
+    ResourceHub::Unregister<MeshManager>();
 
     this->materialManager.reset();
-    SystemLocator::Unregister<MaterialManager>();
+    ResourceHub::Unregister<MaterialManager>();
 
     this->shaderManager.reset();
-    SystemLocator::Unregister<ShaderManager>();
+    ResourceHub::Unregister<ShaderManager>();
 
     this->spriteManager.reset();
     ResourceHub::Unregister<SpriteManager>();
@@ -138,4 +158,7 @@ void GameLoop::Dispose()
 
     this->inputSystem.reset();
     SystemLocator::Unregister<InputSystem>();
+
+    this->timeScaleSystem.reset();
+    SystemLocator::Unregister<TimeScaleSystem>();
 }

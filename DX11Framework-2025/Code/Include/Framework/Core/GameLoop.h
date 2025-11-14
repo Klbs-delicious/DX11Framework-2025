@@ -4,6 +4,7 @@
 #pragma once
 #include"Include/Framework/Utils/NonCopyable.h"
 #include"Include/Framework/Core/InputSystem.h"
+#include"Include/Framework/Core/TimeScaleSystem.h"
 #include"Include/Framework/Graphics/SpriteManager.h"
 #include"Include/Framework/Graphics/MaterialManager.h"
 #include"Include/Framework/Graphics/MeshManager.h"
@@ -76,4 +77,5 @@ private:
 	///< [TODO]サウンドの処理
 	///< [TODO]UIの管理
 	///< [TODO]ゲームの状態
+	std::unique_ptr<TimeScaleSystem> timeScaleSystem;		///< 時間スケールの管理
 };

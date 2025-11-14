@@ -26,6 +26,8 @@
 //#include"Include/Framework/Shaders/ShaderManager.h"
 
 #include"Include/Tests/TestMoveComponent.h"
+#include"Include/Tests/TimeScaleTestComponent.h"
+#include"Include/Tests/FreeMoveTestComponent.h"
 //#include"Include/Framework/Entities/TestRenderer.h"
 
 #include<iostream>
@@ -82,7 +84,7 @@ void TestScene::SetupObjects()
 	//obj_1->AddComponent<TestMoveComponent>();
 	//obj_1->GetComponent<SpriteComponent>()->SetSprite(spriteManager.Get("Eidan"));
 
-	SpawnManyBoxes(50,50);
+	SpawnManyBoxes(10,10,10);
 
 	// 球体オブジェクト
 	auto obj_2 = this->gameObjectManager.Instantiate("obj_2");
@@ -92,7 +94,7 @@ void TestScene::SetupObjects()
 	meshComp->SetMesh(meshManager.Get("Sphere"));
 	obj_2->AddComponent<MeshRenderer>();
 
-	// 立方体オブジェクト
+	// 立方体オブジェクト（プレイヤー）
 	auto player = this->gameObjectManager.Instantiate("Player", GameTags::Tag::Player);
 	player->transform->SetLocalPosition(DX::Vector3(5.0f, 0.0f, 5.0f));
 	meshComp = player->AddComponent<MeshComponent>();
@@ -101,6 +103,7 @@ void TestScene::SetupObjects()
 	matComp->SetTexture(spriteManager.Get("Eidan"));
 	player->AddComponent<MeshRenderer>();
 	auto charaController = player->AddComponent<CharacterController>();
+	player->AddComponent<TimeScaleTestComponent>();
 	//charaController->SetTurnSpeed(10.0f);
 
 	// カメラピボットオブジェクトを生成する
@@ -219,6 +222,9 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 
 			// Renderer
 			obj->AddComponent<MeshRenderer>();
+
+			// 自由移動コンポーネントを追加する
+			obj->AddComponent<FreeMoveTestComponent>();
 		}
 	}
 

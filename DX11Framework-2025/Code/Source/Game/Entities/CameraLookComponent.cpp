@@ -65,14 +65,30 @@ void CameraLookComponent::Update(float _deltaTime)
     DX::Vector3 targetPos = target->GetWorldPosition();
 
     // 半径（オフセット長）を保持
-    float radius = offset.Length();
-    if (radius < 0.001f) { radius = 0.001f; } // 安定化用
+    float radius = this->offset.Length();
+    if (radius < 0.001f)
+    {
+        radius = 0.001f; // 安定化用
+    }
 
-    // offsetを回転させて新しい位置を計算する
-    DX::Matrix4x4 rotation = DX::Matrix4x4::CreateRotationY(DX::ToRadians(yaw));
-    DX::Vector3 rotatedOffset = DX::Vector3::Transform(offset, rotation);
+    // 基準となるローカルオフセット方向を決める
+    DX::Vector3 localOffsetDir = this->offset;
 
-    // 新しいPivot位置を設定する
+    // ゼロ長だった場合は、後ろ方向をデフォルトとする
+    if (localOffsetDir.LengthSquared() < 0.000001f)
+    {
+        localOffsetDir = DX::Vector3(0.0f, 0.0f, -1.0f);
+    }
+    else { localOffsetDir.Normalize(); }
+
+    // yaw で回転させる
+    DX::Matrix4x4 rotation = DX::Matrix4x4::CreateRotationY(DX::ToRadians(this->yaw));
+    DX::Vector3 rotatedDir = DX::Vector3::TransformNormal(localOffsetDir, rotation);
+
+    // 半径を掛けて最終的なオフセットにする
+    DX::Vector3 rotatedOffset = rotatedDir * radius;
+
+    // 新しい Pivot 位置を設定する
     DX::Vector3 newPos = targetPos + rotatedOffset;
     this->Owner()->transform->SetWorldPosition(newPos);
 

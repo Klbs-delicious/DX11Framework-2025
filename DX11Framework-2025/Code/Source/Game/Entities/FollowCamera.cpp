@@ -28,13 +28,11 @@ FollowCamera::FollowCamera(GameObject* _owner, bool _active)
 
 /// @brief 初期化処理
 void FollowCamera::Initialize()
-{
-	if (!this->target)
-	{
-        // 追跡対象が設定されていない場合、オーナーオブジェクトを追跡対象に設定する
-		std::cout << "[FollowCamera]: No target specified. Defaulting to owner object." << std::endl;
-		this->target = this->Owner()->transform;
-	}
+{ 
+    if (!this->target)
+    {
+        std::cout << "[FollowCamera]: No target specified. Using pivot forward fallback." << std::endl;
+    }
 }
 
 /// @brief 終了処理

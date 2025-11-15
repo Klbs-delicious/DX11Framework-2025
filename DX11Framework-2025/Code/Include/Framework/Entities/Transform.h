@@ -221,9 +221,9 @@ public:
 
 protected:
 	/**@brief	Transformの変更を通知する
-	* @param _propagate 
+	* @param _propagateToChildren 
 	*/
-	void NotifyChanged(bool _propagate = true);
+	void NotifyChanged(bool _propagateToChildren = true);
 private:
 	/**@brief 子Transformを追加
 	 * @param Transform* _child 追加する子Transform

@@ -280,7 +280,10 @@
       <Filter>ヘッダー ファイル\Test</Filter>
     </ClInclude>
     <ClInclude Include="Code\Include\Framework\Entities\TimeScaleComponent.h">
-      <Filter>ソース ファイル\Framework\Entities</Filter>
+      <Filter>ヘッダー ファイル\Framework\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\TimeScaleGroup.h">
+      <Filter>ヘッダー ファイル\Framework\Entities</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -429,6 +432,9 @@
       <Filter>ソース ファイル\Test</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Entities\TimeScaleComponent.cpp">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Entities\TimeScaleGroup.cpp">
       <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
   </ItemGroup>

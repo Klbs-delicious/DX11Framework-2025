@@ -59,7 +59,7 @@ void GameObject::Update(float _deltaTime)
     if (this->timeScaleComponent)
     {
         // 時間スケールを考慮したデルタタイムを計算する
-        scaledDeltaTime = _deltaTime * this->timeScaleComponent->GetTimeScale();
+        scaledDeltaTime = this->timeScaleComponent->ApplyTimeScale(_deltaTime);
     }
 
     for (auto* updatable : this->updatableComponents)

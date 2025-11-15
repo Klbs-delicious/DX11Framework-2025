@@ -60,6 +60,7 @@ void TimeScaleTestComponent::Update(float _deltaTime)
 		for (auto& timeScale : this->timeScaleComponents)
 		{
 			timeScale->SetTimeScale(0.1f);
+			this->Owner()->TimeScale()->SetTimeScale(0.1f);
 		}
 	}
 
@@ -69,6 +70,7 @@ void TimeScaleTestComponent::Update(float _deltaTime)
 		for (auto& timeScale : this->timeScaleComponents)
 		{
 			timeScale->SetTimeScale(1.0f);
+			this->Owner()->TimeScale()->SetTimeScale(1.0f);
 		}
 	}
 }

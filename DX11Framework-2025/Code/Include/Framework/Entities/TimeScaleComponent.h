@@ -4,6 +4,7 @@
  */
 #pragma once
 #include "Include/Framework/Entities/Component.h"
+#include "Include/Framework/Core/TimeScaleSystem.h"
 
  /** @class TimeScaleComponent
   *  @brief オブジェクトごとの時間スケールを保持・管理するコンポーネント
@@ -33,6 +34,17 @@ public:
 	/// @brief 時間スケールを取得する
 	[[nodiscard]] float GetTimeScale() const;
 
+	/// @brief 蓄積された時間スケールを取得する
+	[[nodiscard]] float GetAccumulatedScale() const;
+
+	/**@brief デルタタイムに時間スケールを適用する
+	 * @param _baseDelta	
+	 * @return 
+	 */
+	[[nodiscard]] float ApplyTimeScale(float _baseDelta) const;
+
 private:
-	float timeScale; ///< オブジェクト固有の時間倍率
+	TimeScaleSystem& timeScaleSystem;	///< 時間スケール管理システムの参照
+
+	float timeScale;					///< オブジェクト固有の時間倍率
 };

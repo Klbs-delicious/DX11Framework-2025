@@ -236,6 +236,16 @@ public:
 	 */
 	void SetServices(const EngineServices* _services) { this->services = _services; }
 
+	/**	@brief	親オブジェクトの取得
+	 *	@return	GameObject*
+	 */
+	[[nodiscard]] GameObject* Parent() const { return this->parent; }
+
+	/**	@brief	オブジェクト固有の時間スケールコンポーネントを取得
+	 *	@return	TimeScaleComponent*
+	 */
+	[[nodiscard]] TimeScaleComponent* TimeScale() const { return this->timeScaleComponent; }
+
 public:
 		Transform* transform;	///< 位置、回転、スケール情報
 private:

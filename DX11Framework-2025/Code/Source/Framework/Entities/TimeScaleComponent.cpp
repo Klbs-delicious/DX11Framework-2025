@@ -7,6 +7,8 @@
  // Includes
  //-----------------------------------------------------------------------------
 #include "Include/Framework/Entities/TimeScaleComponent.h"
+#include "Include/Framework/Entities/GameObject.h"
+#include "Include/Framework/Core/SystemLocator.h"
 
 //-----------------------------------------------------------------------------
 // TimeScaleComponent class
@@ -17,7 +19,8 @@
  *  @param _active コンポーネントの有効/無効
  */
 TimeScaleComponent::TimeScaleComponent(GameObject* _owner, bool _active)
-	: Component(_owner, _active),
+    : Component(_owner, _active),
+    timeScaleSystem(SystemLocator::Get<TimeScaleSystem>()), 
 	timeScale(1.0f)
 {}
 
@@ -43,4 +46,34 @@ void TimeScaleComponent::SetTimeScale(float _scale)
 float TimeScaleComponent::GetTimeScale() const
 {
 	return this->timeScale;
+}
+
+/// @brief 蓄積された時間スケールを取得する
+float TimeScaleComponent::GetAccumulatedScale() const
+{
+    float scale = this->timeScale;
+
+    GameObject* p = this->Owner()->Parent();
+    while (p)
+    {
+		// 親のTimeScaleComponentを取得してスケールを掛ける
+        auto t = p->TimeScale();
+        if (t) { scale *= t->GetTimeScale(); }
+
+        p = p->Parent();
+    }
+
+	// グローバルスケールを掛ける
+    scale *= this->timeScaleSystem.GlobalScale();
+
+    return scale;
+}
+
+/**@brief デルタタイムに時間スケールを適用する
+ * @param _baseDelta
+ * @return
+ */
+float TimeScaleComponent::ApplyTimeScale(float _baseDelta) const
+{
+    return _baseDelta * this->GetAccumulatedScale();
 }

@@ -116,12 +116,8 @@ void GameLoop::Update(float _deltaTime)
 {
     if (!this->isRunning) { return; }
 
-    // 時間の管理
-    float scaledDeltaTime = this->timeScaleSystem->GlobalScale() * _deltaTime;
-
-
     this->inputSystem->Update();
-    this->sceneManager->Update(scaledDeltaTime);
+    this->sceneManager->Update(_deltaTime);
 }
 
 /**	@brief		描画処理を行う

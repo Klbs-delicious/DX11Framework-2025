@@ -105,6 +105,15 @@ void TestScene::SetupObjects()
 	player->AddComponent<TimeScaleTestComponent>();
 	//charaController->SetTurnSpeed(10.0f);
 
+	// 立方体オブジェクト（親子テスト）
+	auto child = this->gameObjectManager.Instantiate("Child");
+	child->transform->SetLocalPosition(DX::Vector3(3.0f, 3.0f, 3.0f));
+	child->transform->SetParent(player->transform);
+	meshComp = child->AddComponent<MeshComponent>();
+	meshComp->SetMesh(meshManager.Get("Box"));
+	child->AddComponent<MeshRenderer>();
+	child->AddComponent<FreeMoveTestComponent>();
+
 	// カメラピボットオブジェクトを生成する
 	auto pivotObj = gameObjectManager.Instantiate("CameraPivot");
 	//meshComp = pivotObj->AddComponent<MeshComponent>();

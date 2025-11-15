@@ -133,7 +133,6 @@
     <ClCompile Include="Code\Source\Scenes\TitleScene.cpp" />
     <ClCompile Include="Code\Source\Tests\FreeMoveTestComponent.cpp" />
     <ClCompile Include="Code\Source\Tests\TestMoveComponent.cpp" />
-    <ClCompile Include="Code\Source\Tests\TestTransformInitialization.cpp" />
     <ClCompile Include="Code\Source\Tests\TimeScaleTestComponent.cpp" />
   </ItemGroup>
   <ItemGroup>

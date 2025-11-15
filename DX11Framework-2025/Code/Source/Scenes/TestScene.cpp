@@ -107,8 +107,8 @@ void TestScene::SetupObjects()
 
 	// 立方体オブジェクト（親子テスト）
 	auto child = this->gameObjectManager.Instantiate("Child");
-	child->transform->SetLocalPosition(DX::Vector3(3.0f, 3.0f, 3.0f));
-	child->transform->SetParent(player->transform);
+	child->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 0.0f));
+	child->SetParent(player);
 	meshComp = child->AddComponent<MeshComponent>();
 	meshComp->SetMesh(meshManager.Get("Box"));
 	child->AddComponent<MeshRenderer>();

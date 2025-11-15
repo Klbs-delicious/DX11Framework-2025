@@ -123,6 +123,11 @@ public:
 	 */
 	bool IsDrawable() const { return !this->drawableComponents.empty(); }
 
+	/** @brief  親オブジェクトの設定
+	 *  @param	GameObject* _parent	親オブジェクト
+	 */
+	void SetParent(GameObject* _parent);
+
 	/** @brief  子オブジェクトの追加
 	 *  @param	GameObject* _child	子オブジェクト
 	 */

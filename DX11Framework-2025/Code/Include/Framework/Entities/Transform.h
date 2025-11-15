@@ -120,27 +120,21 @@ public:
 
 	/// -------------------------------------------------------------
 
-	/**@brief 親Transformを設定
-	 * @param Transform* _parent 親Transform
+	/** @brief 親Transformを設定する（内部専用）
+	 *  @param  _parent 親となる Transform
+	 *  @details
+	 *      - GameObject が階層構造を変更する際にのみ使用する
+	 *      - 自己参照および循環参照を防止する安全チェックを含む
+	 *      - 外部コードはこの関数を直接呼び出さないこと（階層破壊の原因になる）
 	 */
-	void SetParent(Transform* _parent);
+	void SetParentInternal(Transform* _parent);
 
-	/**@brief 親Transformを取得
+	/**@brief 親Transformを取得する
 	 * @return Transform* 親Transform
 	 */
 	Transform* GetParent()const { return this->parent; }
 
-	/**@brief 子Transformを追加
-	 * @param Transform* _child 追加する子Transform
-	 */
-	void AddChild(Transform* _child);
-
-	/**@brief 子Transformを削除
-	 * @param Transform* _child 削除する子Transform
-	 */
-	void RemoveChild(Transform* _child);
-
-	/**@brief 子Transformのリストを取得
+	/**@brief 子Transformのリストを取得する
 	 * @return const std::vector<Transform*>& 子Transformのリスト
 	 */
 	const std::vector<Transform*>& GetChildren()const { return this->children; }
@@ -226,9 +220,22 @@ public:
 	DX::Vector3 QuaternionToEuler(const DX::Quaternion& _quat) const;
 
 protected:
-		void NotifyChanged(bool propagateToChildren = true);
+	/**@brief	Transformの変更を通知する
+	* @param _propagate 
+	*/
+	void NotifyChanged(bool _propagate = true);
 private:
+	/**@brief 子Transformを追加
+	 * @param Transform* _child 追加する子Transform
+	 */
+	void AddChild(Transform* _child);
 
+	/**@brief 子Transformを削除
+	 * @param Transform* _child 削除する子Transform
+	 */
+	void RemoveChild(Transform* _child);
+
+private:
 	bool isDirty;						///< 再計算するかフラグ
 	Transform* parent;					///< 親Transform
 	std::vector<Transform*> children;	///< 子Transformのリスト

@@ -3,9 +3,9 @@
  *  @date   2025/11/12
  */
 
- //-----------------------------------------------------------------------------
- // Includes
- //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// Includes
+//-----------------------------------------------------------------------------
 #include "Include/Tests/FreeMoveTestComponent.h"
 #include "Include/Framework/Entities/GameObject.h"
 
@@ -40,7 +40,7 @@ void FreeMoveTestComponent::Update(float _deltaTime)
 {
     // 乱数生成器
     static std::mt19937 engine(std::random_device{}());
-    static std::uniform_real_distribution<float> dist(-20.0f, 20.0f);
+    static std::uniform_real_distribution<float> dist(-5.0f, 5.0f);
 
     // 目標地点がない場合はランダムに決める
     if (!this->hasTarget)
@@ -71,44 +71,3 @@ void FreeMoveTestComponent::Update(float _deltaTime)
     DX::Vector3 newPos = current + dir * this->speed * _deltaTime;
     this->transform->SetLocalPosition(newPos);
 }
-//
-///** @brief 更新処理
-// *  @param _deltaTime 前フレームからの経過時間（秒）
-// */
-//void FreeMoveTestComponent::Update(float _deltaTime)
-//{
-//    // 乱数生成器
-//    static std::mt19937 engine(std::random_device{}());
-//    static std::uniform_real_distribution<float> dist(-5.0f, 5.0f); // 相対オフセットの大きさ
-//
-//    DX::Vector3 current = this->transform->GetLocalPosition();
-//
-//    // 目標地点がない場合は「現在位置 + ランダム値」で決める
-//    if (!this->hasTarget)
-//    {
-//        this->targetPos = current + DX::Vector3(
-//            dist(engine),   // X 方向の増分
-//            dist(engine),   // Y 方向の増分
-//            dist(engine)    // Z 方向の増分
-//        );
-//
-//        this->hasTarget = true;
-//    }
-//
-//    DX::Vector3 diff = this->targetPos - current;
-//    float distLen = diff.Length();
-//
-//    // 近づいたら新しい地点を選ぶ
-//    if (distLen < 0.1f)
-//    {
-//        this->hasTarget = false;
-//        return;
-//    }
-//
-//    // 方向ベクトルを正規化
-//    DX::Vector3 dir = diff / distLen;
-//
-//    // 移動処理
-//    DX::Vector3 newPos = current + dir * this->speed * _deltaTime;
-//    this->transform->SetLocalPosition(newPos);
-//}

@@ -121,6 +121,24 @@ void GameObject::OnDestroy()
     }
 }
 
+/** @brief  親オブジェクトの設定
+ *  @param	GameObject* _parent	親オブジェクト
+ */
+void GameObject::SetParent(GameObject* _parent)
+{
+    if (this->parent)
+    {
+        this->parent->RemoveChildObject(this);
+    }
+
+    this->parent = _parent;
+    
+    if (_parent)
+    {
+        _parent->AddChildObject(this);
+    }
+}
+
 /** @brief  子オブジェクトの追加
  *  @param	GameObject* _child	子オブジェクト
  */
@@ -130,6 +148,7 @@ void GameObject::AddChildObject(GameObject* _child)
     {
         this->children.push_back(_child);
         _child->parent = this;
+        _child->transform->SetParentInternal(this->transform);
     }
 }
 
@@ -142,5 +161,9 @@ void GameObject::RemoveChildObject(GameObject* _child)
         std::remove(this->children.begin(), this->children.end(), _child),
         this->children.end()
     );
-    if (_child) _child->parent = nullptr;
+    if (_child)
+    {
+        _child->parent = nullptr;
+		_child->transform->SetParentInternal(nullptr);
+    }
 }

@@ -5,7 +5,7 @@
 #pragma once
 #include "Include/Framework/Entities/Component.h"
 #include "Include/Framework/Entities/PhaseInterfaces.h"
-#include "Include/Framework/Entities/TimeScaleComponent.h"
+#include "Include/Framework/Entities/TimeScaleGroup.h"
 
 #include "Include/Framework/Core/InputSystem.h"
 #include "Include/Framework/Core/TimeScaleSystem.h"
@@ -37,14 +37,14 @@ public:
 	 */
 	void Update(float _deltaTime) override;
 
-	/**@brief TimeScaleComponentを追加する
-	 * @param _component 
+	/**@brief 時間スケール管理システムを設定する
+	 * @param _timeScaleGroup 
 	 */
-	void AddTimeScaleComponent(TimeScaleComponent* _component);
+	void SetTimeScaleGroup(TimeScaleGroup* _timeScaleGroup) { this->timeScaleGroup = _timeScaleGroup; }
 
 private:
-	InputSystem& inputSystem;
-	TimeScaleSystem& timeScaleSystem;
+	InputSystem& inputSystem;			///< 入力システムの参照
+	TimeScaleSystem& timeScaleSystem;	///< 時間スケールシステムの参照
 
-	std::vector<TimeScaleComponent*> timeScaleComponents;
+	TimeScaleGroup* timeScaleGroup;		///< 時間スケールグループの参照
 };

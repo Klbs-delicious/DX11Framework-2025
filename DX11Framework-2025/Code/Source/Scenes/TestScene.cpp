@@ -15,6 +15,7 @@
 #include"Include/Framework/Entities/Camera3D.h"
 #include"Include/Framework/Entities/MeshComponent.h"
 #include"Include/Framework/Entities/TimeScaleComponent.h"
+#include"Include/Framework/Entities/TimeScaleGroup.h"
 
 #include"Include/Game/Entities/FollowCamera.h"
 #include"Include/Game/Entities/CharacterController.h"
@@ -76,6 +77,10 @@ void TestScene::SetupObjects()
 	// オブジェクトの生成
 	//--------------------------------------------------------------
 
+	// 時間制御グループオブジェクトを生成する
+	auto timeScaleGroup = this->gameObjectManager.Instantiate("TimeScaleGroup");
+	auto timeGroup = timeScaleGroup->AddComponent<TimeScaleGroup>();
+
 	//// スプライトオブジェクト
 	//auto obj_1 = this->gameObjectManager.Instantiate("obj_1");
 	//std::cout << obj_1->GetName() << " : " << std::to_string(obj_1->transform->GetWorldPosition().x) << std::endl;
@@ -102,8 +107,10 @@ void TestScene::SetupObjects()
 	matComp->SetTexture(spriteManager.Get("Eidan"));
 	player->AddComponent<MeshRenderer>();
 	auto charaController = player->AddComponent<CharacterController>();
-	player->AddComponent<TimeScaleTestComponent>();
+	auto testComp = player->AddComponent<TimeScaleTestComponent>();
+	testComp->SetTimeScaleGroup(timeGroup);
 	//charaController->SetTurnSpeed(10.0f);
+	timeGroup->AddGroup("PlayerGroup", player->GetComponent<TimeScaleComponent>());
 
 	// 立方体オブジェクト（親子テスト）
 	auto child = this->gameObjectManager.Instantiate("Child");
@@ -209,46 +216,42 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 
 	auto& gameObjectManager = this->gameObjectManager;
 
-	auto player = gameObjectManager.GetFindObjectByName("Player");
-	if(!player)
-	{
-		std::cout << "[Test] Player object not found. Cannot register TimeScaleComponents.\n";
-		return;
-	}
-	auto playerTimeScale = player->GetComponent<TimeScaleTestComponent>();
+	// 時間スケールグループの取得
+	auto timeScaleGroup = gameObjectManager.GetFindObjectByName("TimeScaleGroup");
+	auto timeGroup = timeScaleGroup->GetComponent<TimeScaleGroup>();
 
-	for (int x = 0; x < _countX; x++)
+	//--------------------------------------------------------------
+	// 敵オブジェクトの生成
+	//--------------------------------------------------------------
+	int index = 0;
+	for (int z = 0; z < _countZ; z++)
 	{
-		for (int z = 0; z < _countZ; z++)
+		for (int x = 0; x < _countX; x++)
 		{
 			std::string name = "Box_" + std::to_string(x) + "_" + std::to_string(z);
 
 			auto obj = gameObjectManager.Instantiate(name);
 
 			obj->transform->SetLocalPosition(
-				DX::Vector3(
-					x * _spacing,
-					0.0f,
-					z * _spacing
-				)
+				DX::Vector3(x * _spacing, 0.0f, z * _spacing)
 			);
 
 			obj->transform->SetLocalScale(DX::Vector3(2.0f, 2.0f, 2.0f));
 
-			// メッシュ設定（Sphere を Box として使う例）
 			auto meshComp = obj->AddComponent<MeshComponent>();
 			meshComp->SetMesh(meshManager.Get("Sphere"));
-
-			// Renderer
+			
 			obj->AddComponent<MeshRenderer>();
-
-			// 自由移動コンポーネントを追加する
 			obj->AddComponent<FreeMoveTestComponent>();
 
-			// TimeScaleComponentを追加して、プレイヤーのTimeScaleTestComponentに登録する
-			playerTimeScale->AddTimeScaleComponent(obj->GetComponent<TimeScaleComponent>());
+			//  3グループに均等に分ける
+			int groupId = index % 3 + 1;
+			std::string groupName = "EnemyGroup_" + std::to_string(groupId);
+
+			timeGroup->AddGroup(groupName, obj->GetComponent<TimeScaleComponent>());
+
+			index++;
 		}
 	}
-
 	std::cout << "[Test] Spawned " << (_countX * _countZ) << " boxes.\n";
 }

@@ -25,7 +25,7 @@ TimeScaleTestComponent::TimeScaleTestComponent(GameObject* _owner, bool _active)
 	: Component(_owner, _active),
 	inputSystem(SystemLocator::Get<InputSystem>()),
 	timeScaleSystem(SystemLocator::Get<TimeScaleSystem>()),
-	timeScaleComponents()
+	timeScaleGroup(nullptr)
 {}
 
 /// @brief 初期化処理
@@ -35,7 +35,9 @@ void TimeScaleTestComponent::Initialize()
 	// キーバインドの登録
 	// ------------------------------------------------------
 	this->inputSystem.RegisterKeyBinding("Slow_Global", static_cast<int>(DirectInputDevice::KeyboardKey::Space));
-	this->inputSystem.RegisterKeyBinding("Slow_GameObject", static_cast<int>(DirectInputDevice::KeyboardKey::V));
+	this->inputSystem.RegisterKeyBinding("Slow_GameObject_1", static_cast<int>(DirectInputDevice::KeyboardKey::Num1));
+	this->inputSystem.RegisterKeyBinding("Slow_GameObject_2", static_cast<int>(DirectInputDevice::KeyboardKey::Num2));
+	this->inputSystem.RegisterKeyBinding("Slow_GameObject_3", static_cast<int>(DirectInputDevice::KeyboardKey::Num3));
 }
 
 /// @brief 終了処理
@@ -47,6 +49,8 @@ void TimeScaleTestComponent::Dispose()
  */
 void TimeScaleTestComponent::Update(float _deltaTime)
 {
+	if (!this->timeScaleGroup) { return; }
+
 	// スペースキーでグローバルタイムスケールを0.1に変更する
 	if (this->inputSystem.IsActionPressed("Slow_Global"))
 	{
@@ -54,31 +58,19 @@ void TimeScaleTestComponent::Update(float _deltaTime)
 	}
 	else { this->timeScaleSystem.SetGlobalScale(1.0f); }
 
-	// Vキーでこのオブジェクトのタイムスケールを0.1に変更する
-	if (this->inputSystem.IsActionTriggered("Slow_GameObject"))
+	// 1～3キーで各ゲームオブジェクトのタイムスケールを0.1に変更する
+	for (int i = 1; i <= 3; i++)
 	{
-		for (auto& timeScale : this->timeScaleComponents)
+		std::string actionName = "Slow_GameObject_" + std::to_string(i);
+		std::string groupName = "EnemyGroup_" + std::to_string(i);
+
+		if (this->inputSystem.IsActionTriggered(actionName))
 		{
-			timeScale->SetTimeScale(0.1f);
-			this->Owner()->TimeScale()->SetTimeScale(0.1f);
+			this->timeScaleGroup->SetGroupScale(groupName, 0.1f);
+		}
+		if (this->inputSystem.isActionReleased(actionName))
+		{
+			this->timeScaleGroup->SetGroupScale(groupName, 1.0f);
 		}
 	}
-
-	// Vキーを離したら元に戻す
-	if (this->inputSystem.isActionReleased("Slow_GameObject"))
-	{
-		for (auto& timeScale : this->timeScaleComponents)
-		{
-			timeScale->SetTimeScale(1.0f);
-			this->Owner()->TimeScale()->SetTimeScale(1.0f);
-		}
-	}
-}
-
-/**@brief TimeScaleComponentを追加する
- * @param _component
- */
-void TimeScaleTestComponent::AddTimeScaleComponent(TimeScaleComponent* _component)
-{
-	this->timeScaleComponents.push_back(_component);
 }

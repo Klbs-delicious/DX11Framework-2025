@@ -7,6 +7,7 @@
  // Includes
  //-----------------------------------------------------------------------------
 #include "Include/Framework/Entities/TimeScaleComponent.h"
+#include "Include/Framework/Entities/TimeScaleGroup.h"
 #include "Include/Framework/Entities/GameObject.h"
 #include "Include/Framework/Core/SystemLocator.h"
 
@@ -21,13 +22,17 @@
 TimeScaleComponent::TimeScaleComponent(GameObject* _owner, bool _active)
     : Component(_owner, _active),
     timeScaleSystem(SystemLocator::Get<TimeScaleSystem>()), 
-	timeScale(1.0f)
+	timeScale(1.0f),
+	timeScaleLayer(TimeScaleLayer::Default),
+	ignoreGlobal(false),
+	ignoreLayer(false),
+	ignoreGroup(false)
 {}
 
 /// @brief 初期化処理
 void TimeScaleComponent::Initialize()
 {
-	timeScale = 1.0f;
+	this->timeScale = 1.0f;
 }
 
 /// @brief 終了処理
@@ -62,10 +67,6 @@ float TimeScaleComponent::GetAccumulatedScale() const
 
         p = p->Parent();
     }
-
-	// グローバルスケールを掛ける
-    scale *= this->timeScaleSystem.GlobalScale();
-
     return scale;
 }
 
@@ -73,7 +74,41 @@ float TimeScaleComponent::GetAccumulatedScale() const
  * @param _baseDelta
  * @return
  */
-float TimeScaleComponent::ApplyTimeScale(float _baseDelta) const
+float TimeScaleComponent::ApplyTimeScale(float baseDelta) const
 {
-    return _baseDelta * this->GetAccumulatedScale();
+	// parent x self
+    float scale = GetAccumulatedScale(); 
+
+    // group
+    float groupScale = 1.0f;
+    if (!this->ignoreGroup && this->groupInfo)
+    {
+        groupScale = this->groupInfo->timeScale;
+    }
+    scale *= groupScale;
+
+    // layer & global
+    if (!this->ignoreLayer && !this->ignoreGlobal)
+    {
+		// 両方考慮する場合は合成済みスケールを使う
+        scale *= this->timeScaleSystem.CombinedScale(this->timeScaleLayer);
+    }
+    else
+    {
+        if (!this->ignoreLayer)
+        {
+            scale *= this->timeScaleSystem.LayerScale(this->timeScaleLayer);
+        }
+
+        if (!this->ignoreGlobal)
+        {
+            scale *= this->timeScaleSystem.GlobalScale();
+        }
+    }
+    return baseDelta * scale;
+}
+
+const ScaleGroupInfo* TimeScaleComponent::GetGroupInfo() const
+{
+    return this->groupInfo;
 }

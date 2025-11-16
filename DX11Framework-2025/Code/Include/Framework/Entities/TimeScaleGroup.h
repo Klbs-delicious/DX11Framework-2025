@@ -56,26 +56,21 @@ public:
 	/** @brief 時間スケールを設定する
 	 *  @param const std::string& std::string& _name グループ名
 	 */
-	void SetTimeScale(const std::string& _name, float _scale);
+	void SetGroupScale(const std::string& _name, float _scale);
 
 	/**@brief 時間スケールを取得する
 	 * @param const std::string& _groupName グループ名
 	 * @return float グループの時間スケール値
 	 */
-	[[nodiscard]] float GetTimeScale(const std::string& _groupName) const;
-
-	/** @brief 指定のグループを削除する
-	 *	@param const std::string& _groupName グループ名
-	 */
-	void ResetGroup(const std::string& _groupName);
+	[[nodiscard]] float GetGroupScale(const std::string& _groupName) const;
 
 	/// @brief 全グループ情報をクリアする
-	void ClearGroups() { this->scaleGroups.clear(); }
+	void ClearGroups();
 
 	/** @brief 指定したグループ情報を削除する
 	 *  @param const std::string& _groupName グループ名
 	 */
-	void RemoveGroup(const std::string& _groupName) { this->scaleGroups.erase(_groupName); }
+	void RemoveGroup(const std::string& _groupName);
 private:
 	std::unordered_map<std::string, ScaleGroupInfo> scaleGroups;	///< グループ名をキーとしたスケールグループ情報のマップ
 };

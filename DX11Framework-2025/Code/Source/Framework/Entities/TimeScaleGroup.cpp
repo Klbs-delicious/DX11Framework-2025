@@ -54,6 +54,7 @@ bool TimeScaleGroup::AddGroup(const std::string& _groupName, TimeScaleComponent*
 
 	// メンバーに追加する
 	groupInfo.members.push_back(_timeScaleComponent);
+	_timeScaleComponent->SetGroupInfo(&groupInfo);
 
 	return true;
 }
@@ -76,24 +77,19 @@ bool TimeScaleGroup::AddGroup(const std::string& _groupName)
 /** @brief 時間スケールを設定する
  *  @param const std::string& _name グループ名
  */
-void TimeScaleGroup::SetTimeScale(const std::string& _name, float _scale)
+void TimeScaleGroup::SetGroupScale(const std::string& _name, float _scale)
 {
     auto it = scaleGroups.find(_name);
 	if (it == scaleGroups.end()) { return; }
 
     it->second.timeScale = _scale;
-
-	for (auto* m : it->second.members)
-	{
-		m->SetTimeScale(_scale);
-	}
 }
 
 /**@brief 時間スケールを取得する
  * @param const std::string& _groupName グループ名
  * @return float グループの時間スケール値
  */
-float TimeScaleGroup::GetTimeScale(const std::string& _groupName) const
+float TimeScaleGroup::GetGroupScale(const std::string& _groupName) const
 {
 	// 同じ名前のグループが存在しない場合は何もしない
 	if (this->scaleGroups.contains(_groupName))
@@ -109,13 +105,31 @@ float TimeScaleGroup::GetTimeScale(const std::string& _groupName) const
 	}
 }
 
-/** @brief 指定のグループを削除する
- *	@param const std::string& _groupName グループ名
- */
-void TimeScaleGroup::ResetGroup(const std::string& _groupName)
+/// @brief 全グループ情報をクリアする
+void TimeScaleGroup::ClearGroups()
 {
-	if (this->scaleGroups.contains(_groupName))
+	for (auto& [name, info] : scaleGroups)
 	{
-		this->scaleGroups.erase(_groupName);
+		for (auto* m : info.members)
+		{
+			m->SetGroupInfo(nullptr);
+		}
 	}
+	scaleGroups.clear();
+}
+
+/** @brief 指定したグループ情報を削除する
+ *  @param const std::string& _groupName グループ名
+ */
+void TimeScaleGroup::RemoveGroup(const std::string& _groupName)
+{
+	if (!this->scaleGroups.contains(_groupName)) { return; }
+
+	ScaleGroupInfo& groupInfo = this->scaleGroups.at(_groupName);
+	for (auto& timeScaleComp : groupInfo.members)
+	{
+		// メンバーのグループ情報をクリアする
+		timeScaleComp->SetGroupInfo(nullptr);
+	}
+	this->scaleGroups.erase(_groupName);	
 }

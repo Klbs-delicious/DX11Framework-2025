@@ -59,6 +59,12 @@ public:
      */
     bool IsTriggered(int _code) const override;
 
+    /**@brief リリース状態の取得
+     * @param int _code 入力コード（DIK_* またはマウスボタンID）
+     * @return bool 前フレームから離された瞬間であれば true
+	 */
+	bool IsReleased(int _code) const override;
+
     /**@brief マウスX座標の取得
      * @return int クライアント座標系でのX位置。対応していない場合は -1
      */

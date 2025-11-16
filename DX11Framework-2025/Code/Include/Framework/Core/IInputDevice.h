@@ -33,6 +33,13 @@ public:
      */
     virtual bool IsTriggered(int code) const = 0;
 
+    /** @brief  リリース状態の取得
+     *  @param  int _code  入力コード
+     *  @return bool 押されていなければtrue
+     *  @details デフォルトは false を返す
+	 */
+    virtual bool IsReleased(int _code) const = 0;
+
     /** @brief  マウスX座標の取得
      *  @return int 対応していない場合は無効値
      */

@@ -5,6 +5,8 @@
 #include"Include/Framework/Entities/Component.h"
 #include"Include/Framework/Entities/PhaseInterfaces.h"
 #include"Include/Framework/Entities/Transform.h"
+#include"Include/Framework/Entities/TimeScaleComponent.h"
+
 #include"Include/Framework/Event/GameObjectEvent.h"
 
 #include<string>
@@ -121,6 +123,11 @@ public:
 	 */
 	bool IsDrawable() const { return !this->drawableComponents.empty(); }
 
+	/** @brief  親オブジェクトの設定
+	 *  @param	GameObject* _parent	親オブジェクト
+	 */
+	void SetParent(GameObject* _parent);
+
 	/** @brief  子オブジェクトの追加
 	 *  @param	GameObject* _child	子オブジェクト
 	 */
@@ -234,11 +241,22 @@ public:
 	 */
 	void SetServices(const EngineServices* _services) { this->services = _services; }
 
+	/**	@brief	親オブジェクトの取得
+	 *	@return	GameObject*
+	 */
+	[[nodiscard]] GameObject* Parent() const { return this->parent; }
+
+	/**	@brief	オブジェクト固有の時間スケールコンポーネントを取得
+	 *	@return	TimeScaleComponent*
+	 */
+	[[nodiscard]] TimeScaleComponent* TimeScale() const { return this->timeScaleComponent; }
+
 public:
 		Transform* transform;	///< 位置、回転、スケール情報
 private:
 	IGameObjectObserver& gameObjectObs;			///< GameObjectの状態を通知するObserver
 	const EngineServices* services = nullptr;	///< リソース関連の参照
+	TimeScaleComponent* timeScaleComponent;		///< オブジェクト固有の時間スケールコンポーネント
 
 	bool isPendingDestroy;	///< オブジェクトの削除フラグ
 	bool isActive;			///< オブジェクトの有効/無効フラグ

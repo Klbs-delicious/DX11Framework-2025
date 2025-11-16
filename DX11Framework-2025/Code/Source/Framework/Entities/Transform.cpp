@@ -194,10 +194,14 @@ DX::Vector3 Transform::GetLocalScale() const
 
 /// -------------------------------------------------------------
 
-/**@brief 親Transformを設定
- * @param Transform* _parent 親Transform
+/** @brief 親Transformを設定する（内部専用）
+ *  @param  _parent 親となる Transform
+ *  @details
+ *      - GameObject が階層構造を変更する際にのみ使用する
+ *      - 自己参照および循環参照を防止する安全チェックを含む
+ *      - 外部コードはこの関数を直接呼び出さないこと（階層破壊の原因になる）
  */
-void Transform::SetParent(Transform* _parent)
+void Transform::SetParentInternal(Transform* _parent)
 {
     // 自己参照防止
 	if (_parent == this) { return; }
@@ -210,7 +214,6 @@ void Transform::SetParent(Transform* _parent)
         if (ancestor == this) { return; }
         ancestor = ancestor->parent;
     }
-
     if (this->parent == _parent) { return; }
 
     // 旧親から自分を削除
@@ -454,54 +457,57 @@ DX::Vector3 Transform::QuaternionToEuler(const DX::Quaternion& _quat) const
 }
 
 // ワールド座標→ローカル座標変換
-DX::Vector3 Transform::WorldToLocalPosition(const DX::Vector3& worldPos) const
+DX::Vector3 Transform::WorldToLocalPosition(const DX::Vector3& _worldPos) const
 {
     if (this->parent)
     {
         DX::Matrix4x4 invParent = this->parent->GetLocalToWorldMatrix();
         invParent.Invert();
-        return DX::Vector3::Transform(worldPos, invParent);
+        return DX::Vector3::Transform(_worldPos, invParent);
     }
     else
     {
-        return worldPos;
+        return _worldPos;
     }
 }
 
 // ワールド回転→ローカル回転変換
-DX::Quaternion Transform::WorldToLocalRotation(const DX::Quaternion& worldRot) const
+DX::Quaternion Transform::WorldToLocalRotation(const DX::Quaternion& _worldRot) const
 {
     if (this->parent)
     {
         DX::Quaternion invParentRot;
         this->parent->GetWorldRotation().Inverse(invParentRot);
-        return DX::Quaternion::Concatenate(invParentRot, worldRot);
+        return DX::Quaternion::Concatenate(invParentRot, _worldRot);
     }
     else
     {
-        return worldRot;
+        return _worldRot;
     }
 }
 
 // ワールドスケール→ローカルスケール変換
-DX::Vector3 Transform::WorldToLocalScale(const DX::Vector3& worldScale) const
+DX::Vector3 Transform::WorldToLocalScale(const DX::Vector3& _worldScale) const
 {
     if (this->parent)
     {
         DX::Vector3 parentScale = this->parent->GetWorldScale();
         return DX::Vector3(
-            parentScale.x != 0.0f ? worldScale.x / parentScale.x : worldScale.x,
-            parentScale.y != 0.0f ? worldScale.y / parentScale.y : worldScale.y,
-            parentScale.z != 0.0f ? worldScale.z / parentScale.z : worldScale.z
+            parentScale.x != 0.0f ? _worldScale.x / parentScale.x : _worldScale.x,
+            parentScale.y != 0.0f ? _worldScale.y / parentScale.y : _worldScale.y,
+            parentScale.z != 0.0f ? _worldScale.z / parentScale.z : _worldScale.z
         );
     }
     else
     {
-        return worldScale;
+        return _worldScale;
     }
 }
 
-void Transform::NotifyChanged(bool propagateToChildren)
+/**@brief	Transformの変更を通知する
+* @param _propagateToChildren
+*/
+void Transform::NotifyChanged(bool _propagateToChildren)
 {
     // 自身の登録コールバックを呼ぶ
     for (auto& cb : this->onChangedCallbacks)
@@ -510,7 +516,7 @@ void Transform::NotifyChanged(bool propagateToChildren)
     }
 
     // 子Transformにも伝播
-    if (propagateToChildren)
+    if (_propagateToChildren)
     {
         for (auto* child : this->children)
         {

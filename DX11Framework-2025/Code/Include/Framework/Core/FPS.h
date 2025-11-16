@@ -1,78 +1,44 @@
-﻿/**
- * @file   FPS.h
- * @brief  指定したFPSレートで処理を制御するユーティリティクラス（絶対時刻待機版）
- * @date   2025/07/04
+﻿/** @file   FPS.h
+ *  @brief  FPS制御（絶対時刻方式＋遅延補正つき）
+ *  @date   2025/11/13
  */
 #pragma once
 
 #include <chrono>
-#include <thread>
 
- /**
-  * @class  FPS
-  * @brief  フレームタイミングを安定化するためのFPS制御クラス
-  * @details
-  *  - 絶対時刻待機方式（sleep_until）を採用し、累積誤差をリセット
-  *  - コンストラクタで求めた frameInterval_ をもとに、
-  *    次フレームの理想開始時刻 nextTime_ を更新し続ける
+ /** @class  FPS
+  *  @brief  フレームレート制御クラス（sleep_until方式）
+  *  @details
+  *          - 絶対時刻方式のため累積誤差が発生しにくい
+  *          - 重いフレームで遅れた場合は補正して追いつく
+  *          - Tick() 内で自動的にδ時間（ΔTime）を計測する
   */
-class FPS {
+class FPS
+{
 public:
-    /**
-     * @brief  コンストラクタ
-     * @param  _targetFps 目標フレームレート（FPS）
+    /** @brief コンストラクタ
+     *  @param _targetFps 目標フレームレート
      */
-    explicit FPS(uint64_t _targetFps)
-        : frameInterval(std::chrono::microseconds(1'000'000 / _targetFps)),
-        nextTime(std::chrono::steady_clock::now() + this->frameInterval),
-        deltaMicrosec(0)
-    {}
+    explicit FPS(uint64_t _targetFps);
 
-    /// @brief  次フレームの理想開始時刻を更新する
-    void Tick() 
-    {
-        std::this_thread::sleep_until(this->nextTime);      // 次のフレームの理想開始時刻まで待機     
-        this->nextTime += this->frameInterval;              // 次フレームの理想開始時刻を更新
-    }
+    /// @brief 次フレームまで待機し、ΔTime を更新する
+    void Tick();
 
-    /// @brief  実際のフレーム間隔を計測する
-    void Measure() 
-    {
-        // 前回の計測から今回までにかかった実時間（差分）を計算
-        auto now = std::chrono::steady_clock::now();
-        this->deltaMicrosec = std::chrono::duration_cast<std::chrono::microseconds>(now - this->lastTime).count();
+    /// @brief 経過時間（秒）を取得
+    float DeltaSec() const;
 
-        // 現在時刻を保持
-        this->lastTime = now;    
-    }
+    /// @brief 経過時間（マイクロ秒）を取得
+    uint64_t DeltaMicrosec() const;
 
-    /// @brief	次フレームの理想開始時刻のリセット
-    void ResetTime()
-    {
-        this->nextTime = std::chrono::steady_clock::now() + this->frameInterval;
-    }
+    /// @brief 次フレームの理想時刻を現在時刻から再設定
+    void ResetTime();
 
-    /**
-     * @brief  前回 Tick からの経過時間を秒で取得
-     * @return 経過時間（秒）
-     */
-    float DeltaSec() const
-    {
-        return static_cast<float>(this->deltaMicrosec) * 1e-6f;
-    }
-
-    /**
-     * @brief  前回 Tick からの経過時間をマイクロ秒で取得
-     * @return 経過時間（マイクロ秒）
-     */
-    uint64_t DeltaMicrosec() const
-    {
-        return this->deltaMicrosec;
-    }
+    /// @brief  FPS値を返す
+    float GetFPS()const;
 
 private:
-    const std::chrono::steady_clock::duration   frameInterval;  ///< 目標フレーム間隔（µs）
-    std::chrono::steady_clock::time_point        nextTime;      ///< 次フレームの理想開始時刻
-    std::chrono::steady_clock::time_point        lastTime;      ///< 前回のフレーム計測を行った時刻
-    uint64_t                                     deltaMicrosec; ///< 実際のフレーム間隔（µs）
+    const std::chrono::steady_clock::duration frameInterval; ///< 1フレームの理想間隔
+    std::chrono::steady_clock::time_point     nextTime;      ///< 次フレームの理想時刻
+    std::chrono::steady_clock::time_point     lastTime;      ///< 前フレーム計測時刻
+    uint64_t                                  deltaMicrosec; ///< 実フレーム間隔(μs)
 };

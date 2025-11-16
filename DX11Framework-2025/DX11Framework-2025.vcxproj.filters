@@ -111,9 +111,6 @@
     <ClInclude Include="Code\Include\Framework\Core\DirectInputDevice.h">
       <Filter>ヘッダー ファイル\Framework\Core</Filter>
     </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Core\FPS.h">
-      <Filter>ヘッダー ファイル\Framework\Core</Filter>
-    </ClInclude>
     <ClInclude Include="Code\Include\Framework\Core\GameLoop.h">
       <Filter>ヘッダー ファイル\Framework\Core</Filter>
     </ClInclude>
@@ -267,8 +264,29 @@
     <ClInclude Include="Code\Include\Game\Entities\FollowCamera.h">
       <Filter>ヘッダー ファイル\Game\Entities</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Core\TimeSystem.h">
+      <Filter>ヘッダー ファイル\Framework\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Core\TimeScaleSystem.h">
+      <Filter>ヘッダー ファイル\Framework\Core</Filter>
+    </ClInclude>
     <ClInclude Include="Code\Include\Game\Entities\CameraLookComponent.h">
-      <Filter>ヘッダー ファイル</Filter>
+      <Filter>ヘッダー ファイル\Game\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Tests\FreeMoveTestComponent.h">
+      <Filter>ヘッダー ファイル\Test</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Tests\TimeScaleTestComponent.h">
+      <Filter>ヘッダー ファイル\Test</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\TimeScaleComponent.h">
+      <Filter>ヘッダー ファイル\Framework\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\TimeScaleGroup.h">
+      <Filter>ヘッダー ファイル\Framework\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\TextureFactory.h">
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -333,9 +351,6 @@
       <Filter>ソース ファイル\Framework\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Tests\TestMoveComponent.cpp">
-      <Filter>ソース ファイル\Test</Filter>
-    </ClCompile>
-    <ClCompile Include="Code\Source\Tests\TestTransformInitialization.cpp">
       <Filter>ソース ファイル\Test</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Scenes\TestScene.cpp">
@@ -406,6 +421,27 @@
     </ClCompile>
     <ClCompile Include="Code\Source\Game\Entities\CameraLookComponent.cpp">
       <Filter>ソース ファイル\Framework\Game\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Core\TimeSystem.cpp">
+      <Filter>ソース ファイル\Framework\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Core\TimeScaleSystem.cpp">
+      <Filter>ソース ファイル\Framework\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Tests\FreeMoveTestComponent.cpp">
+      <Filter>ソース ファイル\Test</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Tests\TimeScaleTestComponent.cpp">
+      <Filter>ソース ファイル\Test</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Entities\TimeScaleComponent.cpp">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Entities\TimeScaleGroup.cpp">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\TextureFactory.cpp">
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

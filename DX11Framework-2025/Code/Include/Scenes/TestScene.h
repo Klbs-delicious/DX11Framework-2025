@@ -20,6 +20,11 @@ public:
 
 	 /// @brief	オブジェクトの生成、登録等を行う
 	void SetupObjects()override;
+
+	//-----------------------------------------------------------------------------
+	// 大量オブジェクト生成テスト
+	//-----------------------------------------------------------------------------
+	void SpawnManyBoxes(const int _countX = 50, const int _countZ = 50, const float _spacing = 3.0f);
 private:
 
 };

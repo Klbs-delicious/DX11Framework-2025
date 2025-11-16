@@ -58,6 +58,12 @@ public:
 	 */
 	bool IsActionTriggered(const std::string& _action) const;
 
+	/**	@brief	アクションに対応したキー、ボタンがリリース状態か取得する
+	 *	@param	const std::string& _action	キーアクション
+	 * @return bool 前フレームから離された瞬間であれば true
+	 */
+	bool isActionReleased(const std::string& _action) const;
+
 	/** @brief マウスの現在座標を取得
 	 *  @param int& _x X座標
 	 *  @param int& _y Y座標

@@ -229,7 +229,8 @@ void RenderSystem::BeginRender()
 void RenderSystem::EndRender()
 {
     // バックバッファとフロントバッファを入れ替えて画面に表示
-    HRESULT hr = this->d3d11->GetSwapChain()->Present(1, 0);
+    // 可変フレームレートで処理を行いたいためフラグを 0 に設定してVSyncをoffにしている
+    HRESULT hr = this->d3d11->GetSwapChain()->Present(0, 0);
     if (FAILED(hr)) { OutputDebugString(L"Present failed!\n"); }
 }
 

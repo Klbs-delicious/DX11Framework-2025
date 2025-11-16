@@ -22,15 +22,50 @@
 /// @brief	コンストラクタ
 GameLoop::GameLoop() :isRunning(true), gameState(GameState::Play) {}
 /// @brief	デストラクタ
-GameLoop::~GameLoop(){ this->Dispose(); }
+GameLoop::~GameLoop() { this->Dispose(); }
 
 /**	@brief		初期化処理を行う
  */
 void GameLoop::Initialize()
 {
-    // 入力管理を行うクラスの生成と登録
+    //--------------------------------------------------------------------------    
+    // SystemLocatorに登録・管理する
+    //--------------------------------------------------------------------------  
+
+    // 時間スケールの管理
+    this->timeScaleSystem = std::make_unique<TimeScaleSystem>();
+    SystemLocator::Register<TimeScaleSystem>(this->timeScaleSystem.get());
+
+    // 入力管理
     this->inputSystem = std::make_unique<InputSystem>();
     SystemLocator::Register<InputSystem>(this->inputSystem.get());
+
+    // ゲームオブジェクトの管理を行うクラスの生成と登録
+    this->gameObjectManager = std::make_unique<GameObjectManager>(&services);
+    SystemLocator::Register<GameObjectManager>(this->gameObjectManager.get());
+
+    // シーン構成の初期化
+    auto factory = std::make_unique<SceneFactory>();
+    factory->Register(SceneType::Test, [](GameObjectManager& manager) {
+        return std::make_unique<TestScene>(manager);
+        });
+    factory->Register(SceneType::Title, [](GameObjectManager& manager) {
+        return std::make_unique<TitleScene>(manager);
+        });
+
+    // シーン管理の作成
+    this->sceneManager = std::make_unique<SceneManager>(std::move(factory));
+    this->sceneManager->SetTransitionCallback([raw = this->sceneManager.get()](SceneType _next) {
+        std::cout << "シーン遷移時の演出を行いました。\n";
+        raw->NotifyTransitionReady(_next);
+        });
+
+    // シーン管理を登録
+    SystemLocator::Register<SceneManager>(this->sceneManager.get());
+
+    //--------------------------------------------------------------------------    
+    // ResourceHubに登録・管理する
+    //--------------------------------------------------------------------------    
 
     // 画像管理クラスをリソース管理クラスに登録
     this->spriteManager = std::make_unique<SpriteManager>();
@@ -55,28 +90,9 @@ void GameLoop::Initialize()
         &ResourceHub::Get<ShaderManager>(),
     };
 
-    // ゲームオブジェクトの管理を行うクラスの生成と登録
-    this->gameObjectManager = std::make_unique<GameObjectManager>(&services);
-    SystemLocator::Register<GameObjectManager>(this->gameObjectManager.get());
-
-    // シーン構成の初期化
-    auto factory = std::make_unique<SceneFactory>();
-    factory->Register(SceneType::Test, [](GameObjectManager& manager) {
-        return std::make_unique<TestScene>(manager);
-        });
-    factory->Register(SceneType::Title, [](GameObjectManager& manager) {
-        return std::make_unique<TitleScene>(manager);
-        });
-
-    // シーン管理の作成
-    this->sceneManager = std::make_unique<SceneManager>(std::move(factory));
-    this->sceneManager->SetTransitionCallback([raw = this->sceneManager.get()](SceneType _next) {
-        std::cout << "シーン遷移時の演出を行いました。\n";
-        raw->NotifyTransitionReady(_next);
-        });
-
-    // シーン管理を登録
-    SystemLocator::Register<SceneManager>(this->sceneManager.get());
+    //--------------------------------------------------------------------------    
+    // 各システムの設定
+    //--------------------------------------------------------------------------    
 
     // 入力デバイスの登録
     auto& window = SystemLocator::Get<WindowSystem>();
@@ -119,13 +135,13 @@ void GameLoop::Draw()
 void GameLoop::Dispose()
 {
     this->meshManager.reset();
-    SystemLocator::Unregister<MeshManager>();
+    ResourceHub::Unregister<MeshManager>();
 
     this->materialManager.reset();
-    SystemLocator::Unregister<MaterialManager>();
+    ResourceHub::Unregister<MaterialManager>();
 
     this->shaderManager.reset();
-    SystemLocator::Unregister<ShaderManager>();
+    ResourceHub::Unregister<ShaderManager>();
 
     this->spriteManager.reset();
     ResourceHub::Unregister<SpriteManager>();
@@ -138,4 +154,7 @@ void GameLoop::Dispose()
 
     this->inputSystem.reset();
     SystemLocator::Unregister<InputSystem>();
+
+    this->timeScaleSystem.reset();
+    SystemLocator::Unregister<TimeScaleSystem>();
 }

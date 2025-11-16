@@ -4,6 +4,7 @@
 #pragma once
 #include"Include/Framework/Utils/NonCopyable.h"
 #include"Include/Framework/Core/InputSystem.h"
+#include"Include/Framework/Core/TimeScaleSystem.h"
 #include"Include/Framework/Graphics/SpriteManager.h"
 #include"Include/Framework/Graphics/MaterialManager.h"
 #include"Include/Framework/Graphics/MeshManager.h"
@@ -65,13 +66,16 @@ private:
 	// リソース関連の参照
 	EngineServices services;
 
+	std::unique_ptr<TimeScaleSystem> timeScaleSystem;		///< 時間スケールの管理
 	std::unique_ptr<SceneManager> sceneManager;				///< シーン管理
 	std::unique_ptr<InputSystem> inputSystem;				///< 入力の管理
 	std::unique_ptr<GameObjectManager> gameObjectManager;	///< ゲームオブジェクトの管理
+
 	std::unique_ptr<SpriteManager> spriteManager;			///< 画像データの管理
 	std::unique_ptr<ShaderManager> shaderManager;			///< シェーダーの管理
 	std::unique_ptr<MaterialManager> materialManager;		///< マテリアルの管理
 	std::unique_ptr<MeshManager> meshManager;				///< メッシュの管理
+
 	///< [TODO]物理、衝突の処理
 	///< [TODO]サウンドの処理
 	///< [TODO]UIの管理

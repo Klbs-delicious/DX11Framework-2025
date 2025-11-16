@@ -106,6 +106,25 @@ bool InputSystem::IsActionTriggered(const std::string& _action) const
     return false;
 }
 
+/**	@brief	アクションに対応したキー、ボタンがリリース状態か取得する
+ *	@param	const std::string& _action	キーアクション
+ * @return bool 前フレームから離された瞬間であれば true
+ */
+bool InputSystem::isActionReleased(const std::string& _action) const
+{
+    // キーマップに対応した入力コードの取得
+    auto it = this->keyMap.find(_action);
+    if (it == this->keyMap.end()) { return false; }   // [TODO] 未定義のアクションの場合Logを出す
+    int code = it->second;
+    for (const auto& device : this->devices)
+    {
+        // 離された瞬間の入力があった
+        if (device->IsReleased(code)) { return true; }
+    }
+    // 入力が無かった
+	return false;
+}
+
 /** @brief マウスの現在座標を取得
  *  @param _x 取得したX座標を格納
  *  @param _y 取得したY座標を格納

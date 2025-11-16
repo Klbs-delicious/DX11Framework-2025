@@ -88,6 +88,12 @@
     <Filter Include="ソース ファイル\Framework\Game\Entities">
       <UniqueIdentifier>{41ffed4d-7ec4-497c-82c0-17396bc8f31e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\Framework\Physics">
+      <UniqueIdentifier>{e6f2306d-acb4-4533-a974-316c1ba7fce0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Framework\Physics">
+      <UniqueIdentifier>{4d50212a-6fcb-43d2-af7b-45ac98bd1ef1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Code\Include\Framework\Core\Application.h">
@@ -288,6 +294,12 @@
     <ClInclude Include="Code\Include\Framework\Graphics\TextureFactory.h">
       <Filter>ソース ファイル\Framework\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Core\PhysicsSystem.h">
+      <Filter>ヘッダー ファイル\Framework\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Physics\PhysicsLayers.h">
+      <Filter>ソース ファイル\Framework\Physics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Code\Source\Framework\main.cpp">
@@ -442,6 +454,12 @@
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Graphics\TextureFactory.cpp">
       <Filter>ソース ファイル\Framework\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Core\PhysicsSystem.cpp">
+      <Filter>ソース ファイル\Framework\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Physics\PhysicsLayers.cpp">
+      <Filter>ヘッダー ファイル\Framework\Physics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

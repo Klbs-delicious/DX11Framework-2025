@@ -40,7 +40,7 @@ void FreeMoveTestComponent::Update(float _deltaTime)
 {
     // 乱数生成器
     static std::mt19937 engine(std::random_device{}());
-    static std::uniform_real_distribution<float> dist(-5.0f, 5.0f);
+    static std::uniform_real_distribution<float> dist(-20.0f, 20.0f);
 
     // 目標地点がない場合はランダムに決める
     if (!this->hasTarget)

@@ -7,7 +7,7 @@
 //-----------------------------------------------------------------------------
 #include"Include/Scenes/TestScene.h"
 #include"Include/Framework/Core/ResourceHub.h"
-//#include"Include/Framework/Core/SystemLocator.h"
+#include"Include/Framework/Core/SystemLocator.h"
 
 //#include"Include/Framework/Entities/SpriteRenderer.h"
 #include"Include/Framework/Entities/MeshRenderer.h"
@@ -24,6 +24,7 @@
 //#include"Include/Framework/Graphics/Mesh.h"
 #include"Include/Framework/Graphics/SpriteManager.h"
 #include"Include/Framework/Graphics/MeshManager.h"
+#include"Include/Framework/Graphics/TextureFactory.h"
 //#include"Include/Framework/Graphics/ModelImporter.h"
 //#include"Include/Framework/Shaders/ShaderManager.h"
 
@@ -33,6 +34,7 @@
 //#include"Include/Framework/Entities/TestRenderer.h"
 
 #include<iostream>
+#include<array>
 
 //-----------------------------------------------------------------------------
 // TestScene Class
@@ -208,6 +210,8 @@ void TestScene::SetupObjects()
 //-----------------------------------------------------------------------------
 void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float _spacing)
 {
+	auto device = SystemLocator::Get<D3D11System>().GetDevice();
+
 	//--------------------------------------------------------------
 	// リソースマネージャの取得
 	//--------------------------------------------------------------
@@ -219,6 +223,13 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 	// 時間スケールグループの取得
 	auto timeScaleGroup = gameObjectManager.GetFindObjectByName("TimeScaleGroup");
 	auto timeGroup = timeScaleGroup->GetComponent<TimeScaleGroup>();
+
+	// 色リストの作成
+	std::array < DX::Color,3 > colors = {
+		DX::Color(1.0f, 0.0f, 0.0f, 1.0f), // 赤
+		DX::Color(0.0f, 1.0f, 0.0f, 1.0f), // 緑
+		DX::Color(0.0f, 0.0f, 1.0f, 1.0f)  // 青
+	};
 
 	//--------------------------------------------------------------
 	// 敵オブジェクトの生成
@@ -238,6 +249,7 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 
 			obj->transform->SetLocalScale(DX::Vector3(2.0f, 2.0f, 2.0f));
 
+			auto matComp = obj->AddComponent<MaterialComponent>();
 			auto meshComp = obj->AddComponent<MeshComponent>();
 			meshComp->SetMesh(meshManager.Get("Sphere"));
 			
@@ -247,6 +259,10 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 			//  3グループに均等に分ける
 			int groupId = index % 3 + 1;
 			std::string groupName = "EnemyGroup_" + std::to_string(groupId);
+
+			auto tex = TextureFactory::CreateSolidColorTexture(device, colors[groupId - 1]);
+			TextureResource* raw = tex.release();   // 所有権を放棄 → 自動破棄されなくなる
+			matComp->SetTexture(raw);
 
 			timeGroup->AddGroup(groupName, obj->GetComponent<TimeScaleComponent>());
 

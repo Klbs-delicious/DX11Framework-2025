@@ -285,6 +285,9 @@
     <ClInclude Include="Code\Include\Framework\Entities\TimeScaleGroup.h">
       <Filter>ヘッダー ファイル\Framework\Entities</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\TextureFactory.h">
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Code\Source\Framework\main.cpp">
@@ -436,6 +439,9 @@
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Entities\TimeScaleGroup.cpp">
       <Filter>ソース ファイル\Framework\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\TextureFactory.cpp">
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

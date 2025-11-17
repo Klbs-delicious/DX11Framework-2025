@@ -4,9 +4,10 @@
  */
 #pragma once
 
+#include <memory>
+
 #include "Include/Framework/Physics/PhysicsLayers.h"
 
-#include <memory>
 #include <Jolt/Jolt.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
 #include <Jolt/Physics/PhysicsSystem.h>

@@ -33,8 +33,21 @@ void TimeSystem::TickRawDelta()
 
 	this->rawDeltaSec = std::chrono::duration<float>(delta).count();
 
+	if (this->rawDeltaSec < 0.000001f) 
+	{
+		// 最小値の保証
+		this->rawDeltaSec = this->fixedDeltaSec;
+	}
+
 	// Fixed用に累積する
 	this->accumulator += this->rawDeltaSec;
+
+	// 暴走防止（最大5ステップまで）
+	float maxAcc = this->fixedDeltaSec * 5.0f;
+	if (this->accumulator > maxAcc)
+	{
+		this->accumulator = maxAcc;
+	}
 }
 
 /** @brief TimeScale を適用する
@@ -49,12 +62,6 @@ void TimeSystem::ApplyTimeScale(float _timeScale)
 float TimeSystem::RawDelta() const
 {
 	return this->rawDeltaSec;
-}
-
-/// @brief scaledDeltaTime（秒）
-float TimeSystem::ScaledDelta() const
-{
-	return this->scaledDeltaSec;
 }
 
 /// @brief 固定ステップ幅（秒）
@@ -80,4 +87,3 @@ void TimeSystem::Reset()
 {
 	this->accumulator = 0.0f;
 }
-

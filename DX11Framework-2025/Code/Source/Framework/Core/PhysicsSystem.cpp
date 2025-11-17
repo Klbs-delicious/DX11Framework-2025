@@ -6,11 +6,11 @@
  //-----------------------------------------------------------------------------
  // Includes
  //-----------------------------------------------------------------------------
-#include "Include/Framework/Core/PhysicsSystem.h"
-#include "Include/Framework/Physics/PhysicsLayers.h"
-
 #include <cstdarg>
 #include <cstdio>
+
+#include "Include/Framework/Core/PhysicsSystem.h"
+#include "Include/Framework/Physics/PhysicsLayers.h"
 
 #include <Jolt/RegisterTypes.h>
 #include <Jolt/Core/TempAllocator.h>
@@ -96,6 +96,10 @@ void PhysicsSystem::Step(float _deltaTime)
 /// @brief リソース破棄処理
 void PhysicsSystem::Dispose()
 {
+	// 終了処理
+	this->ShutdownJolt();
+
+	// 内部リソースの解放
 	this->physics.reset();
 	this->jobSystem.reset();
 	this->tempAllocator.reset();

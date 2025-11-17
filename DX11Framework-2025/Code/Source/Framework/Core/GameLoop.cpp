@@ -78,13 +78,13 @@ void GameLoop::Initialize()
     SystemLocator::Register<SceneManager>(this->sceneManager.get());
 
     // 物理システムの管理
-	this->physicsSystem = std::make_unique<PhysicsSystem>();
+	this->physicsSystem = std::make_unique<Framework::Physics::PhysicsSystem>();
     if (!this->physicsSystem->Initialize()) 
     {
         std::cerr << "PhysicsSystemの初期化に失敗しました。\n";
         return;
 	}
-    SystemLocator::Register<PhysicsSystem>(this->physicsSystem.get());
+    SystemLocator::Register<Framework::Physics::PhysicsSystem>(this->physicsSystem.get());
 
     // ゲームオブジェクトの管理を行うクラスの生成と登録
     this->gameObjectManager = std::make_unique<GameObjectManager>(&services);
@@ -167,14 +167,14 @@ void GameLoop::Dispose()
     SystemLocator::Unregister<TimeScaleSystem>();
     this->timeScaleSystem.reset();
 
-    SystemLocator::Unregister<PhysicsSystem>();
-    this->physicsSystem.reset();
-    
+    SystemLocator::Unregister<SceneManager>();
+    this->sceneManager.reset();
+
     SystemLocator::Unregister<GameObjectManager>();
     this->gameObjectManager.reset();
 
-    SystemLocator::Unregister<SceneManager>();
-    this->sceneManager.reset();
+    SystemLocator::Unregister<Framework::Physics::PhysicsSystem>();
+    this->physicsSystem.reset();
 
     ResourceHub::Unregister<MeshManager>();
     this->meshManager.reset();

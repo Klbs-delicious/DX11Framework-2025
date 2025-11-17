@@ -301,6 +301,9 @@
       <Filter>ソース ファイル\Framework\Physics</Filter>
     </ClInclude>
     <ClInclude Include="Code\Include\Framework\Entities\Collider3DComponent.h">
+      <Filter>ヘッダー ファイル\Framework\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\Rigidbody3D.h">
       <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClInclude>
   </ItemGroup>
@@ -465,6 +468,9 @@
       <Filter>ヘッダー ファイル\Framework\Physics</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Entities\Collider3DComponent.cpp">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Entities\Rigidbody3D.cpp">
       <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
   </ItemGroup>

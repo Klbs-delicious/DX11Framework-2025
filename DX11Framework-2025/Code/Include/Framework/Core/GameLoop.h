@@ -70,7 +70,7 @@ private:
 	std::unique_ptr<SceneManager> sceneManager;				///< シーン管理
 	std::unique_ptr<InputSystem> inputSystem;				///< 入力の管理
 	std::unique_ptr<GameObjectManager> gameObjectManager;	///< ゲームオブジェクトの管理
-	std::unique_ptr<PhysicsSystem> physicsSystem;			///< 物理システムの管理
+	std::unique_ptr<Framework::Physics::PhysicsSystem> physicsSystem;			///< 物理システムの管理
 
 	EngineServices services;								///< リソース関連の参照
 	std::unique_ptr<SpriteManager> spriteManager;			///< 画像データの管理

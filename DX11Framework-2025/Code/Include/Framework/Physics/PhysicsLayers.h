@@ -8,7 +8,6 @@
  // Includes
  //-----------------------------------------------------------------------------
 #include <Jolt/Jolt.h>
-
 #include <Jolt/Physics/Collision/BroadPhase/BroadPhaseLayer.h>
 
 namespace Framework::Physics
@@ -22,6 +21,7 @@ namespace Framework::Physics
         {
             Static = 0,   ///< 動かない物（床・壁など）
             Dynamic = 1,  ///< 動く物（プレイヤー・敵など）
+            Kinematic = 2,///< 動くが物理影響を受けない物（移動プラットフォームなど）
 
             NUM_LAYERS
         };
@@ -34,8 +34,9 @@ namespace Framework::Physics
     {
         static constexpr JPH::BroadPhaseLayer Static{ 0 };
         static constexpr JPH::BroadPhaseLayer Dynamic{ 1 };
+        static constexpr JPH::BroadPhaseLayer Kinematic{ 2 };
 
-        static constexpr JPH::uint NUM_LAYERS = 2;
+        static constexpr JPH::uint NUM_LAYERS = 3;
     }
 
     /** @class  BPLayerInterfaceImpl
@@ -52,6 +53,9 @@ namespace Framework::Physics
 
         /// @brief ObjectLayer が属する BroadPhaseLayer を返す
         JPH::BroadPhaseLayer GetBroadPhaseLayer(JPH::ObjectLayer _layer) const override;
+
+        /// @brief BroadPhaseLayer の名称を返す（←★ これが必須）
+        const char* GetBroadPhaseLayerName(JPH::BroadPhaseLayer _bpLayer) const override;
 
     private:
         JPH::BroadPhaseLayer objectToBroadPhase[PhysicsLayer::NUM_LAYERS];

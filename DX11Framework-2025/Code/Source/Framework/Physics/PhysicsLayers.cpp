@@ -17,8 +17,9 @@ namespace Framework::Physics
     /// @brief コンストラクタ
     BPLayerInterfaceImpl::BPLayerInterfaceImpl()
     {
-        this->objectToBroadPhase[PhysicsLayer::Static] = BroadPhaseLayerDef::Static;
-        this->objectToBroadPhase[PhysicsLayer::Dynamic] = BroadPhaseLayerDef::Dynamic;
+        objectToBroadPhase[PhysicsLayer::Static] = BroadPhaseLayerDef::Static;
+        objectToBroadPhase[PhysicsLayer::Dynamic] = BroadPhaseLayerDef::Dynamic;
+        objectToBroadPhase[PhysicsLayer::Kinematic] = BroadPhaseLayerDef::Kinematic;
     }
 
     /// @brief 利用可能なレイヤー数
@@ -33,6 +34,18 @@ namespace Framework::Physics
         return this->objectToBroadPhase[_layer];
     }
 
+    /// @brief BroadPhaseLayer の名前を返す（←コレが必須）
+    const char* BPLayerInterfaceImpl::GetBroadPhaseLayerName(JPH::BroadPhaseLayer _bpLayer) const
+    {
+        switch (static_cast<JPH::uint>(_bpLayer.GetValue()))
+        {
+        case 0: return "Static";
+        case 1: return "Dynamic";
+        case 2: return "Kinematic";
+        default: return "Unknown";
+        }
+    }
+
     //-----------------------------------------------------------------------------
     // ObjectVsBroadPhaseLayerFilterImpl
     //-----------------------------------------------------------------------------
@@ -43,12 +56,13 @@ namespace Framework::Physics
         switch (_layer)
         {
         case PhysicsLayer::Static:
-            // 静的物体は Dynamic とだけ衝突
-            return _bpLayer == BroadPhaseLayerDef::Dynamic;
+            return _bpLayer == BroadPhaseLayerDef::Dynamic || _bpLayer == BroadPhaseLayerDef::Kinematic;
 
         case PhysicsLayer::Dynamic:
-            // 動的物体は両方と衝突
-            return true;
+            return true; // すべてと衝突する
+
+        case PhysicsLayer::Kinematic:
+            return _bpLayer == BroadPhaseLayerDef::Static || _bpLayer == BroadPhaseLayerDef::Dynamic;
 
         default:
             return false;
@@ -62,13 +76,12 @@ namespace Framework::Physics
     /// @brief ObjectLayer 同士の最終衝突可否
     bool ObjectLayerPairFilterImpl::ShouldCollide(JPH::ObjectLayer _layer1, JPH::ObjectLayer _layer2) const
     {
-        // Static 同士は衝突不要
         if (_layer1 == PhysicsLayer::Static && _layer2 == PhysicsLayer::Static)
-        {
             return false;
-        }
 
-        // 他は全て衝突させる
-        return true;
+        if (_layer1 == PhysicsLayer::Kinematic && _layer2 == PhysicsLayer::Kinematic)
+            return false;
+
+        return true; // その他は全て衝突する
     }
 }

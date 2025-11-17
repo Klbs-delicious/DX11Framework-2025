@@ -13,106 +13,107 @@
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
-//#include <Jolt/Physics/Collision/Shape/CylinderShape.h>
-//#include <Jolt/Physics/Collision/Shape/ConvexHullShape.h>
-//#include <Jolt/Physics/Collision/Shape/MeshShape.h>
 
-//-----------------------------------------------------------------------------
-// Collider3DComponent Class
-//-----------------------------------------------------------------------------
-
-Collider3DComponent::Collider3DComponent(GameObject* _owner, bool _active) :
-	Component(_owner, _active),
-	shapeType(ColliderShapeType::Box),
-	shape(nullptr),
-	transform(nullptr),
-	boxHalfExtent(0.5f, 0.5f, 0.5f),
-	sphereRadius(0.5f),
-	capsuleRadius(0.5f),
-	capsuleHalfHeight(0.5f)
-{}
-
-void Collider3DComponent::Initialize()
+namespace Framework::Physics
 {
-	this->transform = this->Owner()->transform;
+	//-----------------------------------------------------------------------------
+	// Collider3DComponent Class
+	//-----------------------------------------------------------------------------
 
-	// 形状を生成する
-	this->BuildShape();
-}
+	Collider3DComponent::Collider3DComponent(GameObject* _owner, bool _active)
+		: Component(_owner, _active)
+		, shapeType(ColliderShapeType::Box)
+		, shape(nullptr)
+		, transform(nullptr)
+		, boxHalfExtent(0.5f, 0.5f, 0.5f)
+		, sphereRadius(0.5f)
+		, capsuleRadius(0.5f)
+		, capsuleHalfHeight(0.5f)
+	{
+	}
 
-void Collider3DComponent::Dispose()
-{
-	this->shape = nullptr;
-}
+	void Collider3DComponent::Initialize()
+	{
+		this->transform = this->Owner()->transform;
 
-void Collider3DComponent::SetShape(ColliderShapeType _shapeType)
-{
-	this->shapeType = _shapeType;
-}
+		// 形状を生成する
+		this->BuildShape();
+	}
 
-void Collider3DComponent::SetBoxHalfExtent(const DX::Vector3& _half)
-{
-	this->boxHalfExtent = _half;
-}
+	void Collider3DComponent::Dispose()
+	{
+		this->shape = nullptr;
+		this->transform = nullptr;
+	}
 
-void Collider3DComponent::SetSphereRadius(float _radius)
-{
-	this->sphereRadius = _radius;
-}
+	void Collider3DComponent::SetShape(ColliderShapeType _shapeType)
+	{
+		this->shapeType = _shapeType;
+	}
 
-void Collider3DComponent::SetCapsule(float _radius, float _halfHeight)
-{
-	this->capsuleRadius = _radius;
-	this->capsuleHalfHeight = _halfHeight;
-}
+	void Collider3DComponent::SetBoxHalfExtent(const DX::Vector3& _half)
+	{
+		this->boxHalfExtent = _half;
+	}
 
-void Collider3DComponent::BuildShape()
-{
-    switch (this->shapeType)
-    {
-    case ColliderShapeType::Box:
-    {
-        JPH::BoxShapeSettings settings(
-            JPH::Vec3(
-                this->boxHalfExtent.x,
-                this->boxHalfExtent.y,
-                this->boxHalfExtent.z
-            )
-        );
-        this->shape = settings.Create().Get(); 
-        break;
-    }
+	void Collider3DComponent::SetSphereRadius(float _radius)
+	{
+		this->sphereRadius = _radius;
+	}
 
-    case ColliderShapeType::Sphere:
-    {
-        JPH::SphereShapeSettings settings(this->sphereRadius);
-        this->shape = settings.Create().Get();
-        break;
-    }
+	void Collider3DComponent::SetCapsule(float _radius, float _halfHeight)
+	{
+		this->capsuleRadius = _radius;
+		this->capsuleHalfHeight = _halfHeight;
+	}
 
-    case ColliderShapeType::Capsule:
-    {
-        JPH::CapsuleShapeSettings settings(
-            this->capsuleHalfHeight,
-            this->capsuleRadius
-        );
-        this->shape = settings.Create().Get();
-        break;
-    }
+	void Collider3DComponent::BuildShape()
+	{
+		switch (this->shapeType)
+		{
+		case ColliderShapeType::Box:
+		{
+			JPH::BoxShapeSettings settings(
+				JPH::Vec3(
+					this->boxHalfExtent.x,
+					this->boxHalfExtent.y,
+					this->boxHalfExtent.z
+				)
+			);
+			this->shape = settings.Create().Get();
+			break;
+		}
 
-    case ColliderShapeType::Mesh:
-        // 未実装
-        // ここは後でメッシュ用ロジックを入れる
-        this->shape = nullptr;   
-        break;
+		case ColliderShapeType::Sphere:
+		{
+			JPH::SphereShapeSettings settings(this->sphereRadius);
+			this->shape = settings.Create().Get();
+			break;
+		}
 
-    default:
-        this->shape = nullptr;
-        break;
-    }
-}
+		case ColliderShapeType::Capsule:
+		{
+			JPH::CapsuleShapeSettings settings(
+				this->capsuleHalfHeight,
+				this->capsuleRadius
+			);
+			this->shape = settings.Create().Get();
+			break;
+		}
 
-JPH::ShapeRefC Collider3DComponent::GetShape() const
-{
-	return this->shape;
+		case ColliderShapeType::Mesh:
+			// 未実装
+			this->shape = nullptr;
+			break;
+
+		default:
+			this->shape = nullptr;
+			break;
+		}
+	}
+
+	JPH::ShapeRefC Collider3DComponent::GetShape() const
+	{
+		return this->shape;
+	}
 }

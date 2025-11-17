@@ -300,6 +300,9 @@
     <ClInclude Include="Code\Include\Framework\Physics\PhysicsLayers.h">
       <Filter>ソース ファイル\Framework\Physics</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\Collider3DComponent.h">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Code\Source\Framework\main.cpp">
@@ -460,6 +463,9 @@
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Physics\PhysicsLayers.cpp">
       <Filter>ヘッダー ファイル\Framework\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Entities\Collider3DComponent.cpp">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

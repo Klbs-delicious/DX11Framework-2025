@@ -36,6 +36,7 @@
     <ClInclude Include="Code\Include\Framework\Core\WindowSystem.h" />
     <ClInclude Include="Code\Include\Framework\Entities\Camera2D.h" />
     <ClInclude Include="Code\Include\Framework\Entities\Camera3D.h" />
+    <ClInclude Include="Code\Include\Framework\Entities\Collider3DComponent.h" />
     <ClInclude Include="Code\Include\Framework\Entities\Component.h" />
     <ClInclude Include="Code\Include\Framework\Entities\GameObject.h" />
     <ClInclude Include="Code\Include\Framework\Entities\GameObjectManager.h" />
@@ -101,6 +102,7 @@
     <ClCompile Include="Code\Source\Framework\Core\WindowsSystem.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\Camera2D.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\Camera3D.cpp" />
+    <ClCompile Include="Code\Source\Framework\Entities\Collider3DComponent.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\Component.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\GameObject.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\GameObjectManager.cpp" />

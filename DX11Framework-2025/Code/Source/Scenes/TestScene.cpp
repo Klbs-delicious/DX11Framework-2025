@@ -16,6 +16,8 @@
 #include"Include/Framework/Entities/MeshComponent.h"
 #include"Include/Framework/Entities/TimeScaleComponent.h"
 #include"Include/Framework/Entities/TimeScaleGroup.h"
+#include"Include/Framework/Entities/Rigidbody3D.h"
+#include"Include/Framework/Entities/Collider3DComponent.h"
 
 #include"Include/Game/Entities/FollowCamera.h"
 #include"Include/Game/Entities/CharacterController.h"
@@ -65,8 +67,8 @@ void TestScene::SetupObjects()
 
 	// 3Dカメラオブジェクト
 	auto camera3D = this->gameObjectManager.Instantiate("Camera3D", GameTags::Tag::Camera);
-	camera3D->transform->SetLocalPosition({ 0.0f, 10.0f, -10.0f });
-	camera3D->transform->SetLocalRotation(DX::Quaternion::CreateFromYawPitchRoll(0.0f, DX::ToRadians(45.0f), 0.0f));
+	camera3D->transform->SetLocalPosition({ 0.0f, 20.0f, -10.0f });
+	camera3D->transform->SetLocalRotation(DX::Quaternion::CreateFromYawPitchRoll(DX::ToRadians(30.0f), DX::ToRadians(30.0f), 0.0f));
 	camera3D->AddComponent<Camera3D>();
 
 	//camera3D->AddComponent<TestMoveComponent>();
@@ -109,6 +111,11 @@ void TestScene::SetupObjects()
 	matComp->SetTexture(spriteManager.Get("Eidan"));
 	player->AddComponent<MeshRenderer>();
 	auto charaController = player->AddComponent<CharacterController>();
+	auto coll3D = player->AddComponent<Framework::Physics::Collider3DComponent>();
+	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
+	coll3D->BuildShape();
+	auto rigidbody3D = player->AddComponent<Framework::Physics::Rigidbody3D>();
+	rigidbody3D->AddImpulse(DX::Vector3(5.0f, 0.0f, 0.0f)); // 上方向に初速を与える
 	auto testComp = player->AddComponent<TimeScaleTestComponent>();
 	testComp->SetTimeScaleGroup(timeGroup);
 	//charaController->SetTurnSpeed(10.0f);
@@ -134,11 +141,11 @@ void TestScene::SetupObjects()
 	cameraLook->SetTarget(player->transform);
 	cameraLook->SetOffset(DX::Vector3(6.0f, 3.0f, -5.0f)); // 少し右上にオフセット
 
-	// カメラ追従コンポーネントを追加する
-	auto followCamera = camera3D->AddComponent<FollowCamera>();
-	followCamera->SetTarget(player->transform);
-	followCamera->SetPivot(pivotObj->transform);
-	followCamera->SetSmoothSpeed(5.0f);
+	//// カメラ追従コンポーネントを追加する
+	//auto followCamera = camera3D->AddComponent<FollowCamera>();
+	//followCamera->SetTarget(player->transform);
+	//followCamera->SetPivot(pivotObj->transform);
+	//followCamera->SetSmoothSpeed(5.0f);
 
 	// 平面オブジェクト
 	auto obj_4 = this->gameObjectManager.Instantiate("obj_4");
@@ -147,6 +154,11 @@ void TestScene::SetupObjects()
 	meshComp = obj_4->AddComponent<MeshComponent>();
 	meshComp->SetMesh(meshManager.Get("Plane"));
 	obj_4->AddComponent<MeshRenderer>();
+	coll3D = obj_4->AddComponent<Framework::Physics::Collider3DComponent>();
+	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
+	coll3D->BuildShape();
+	rigidbody3D = obj_4->AddComponent<Framework::Physics::Rigidbody3D>();
+	rigidbody3D->SetMotionType(JPH::EMotionType::Static);
 
 	// 大量オブジェクト生成テスト
 	SpawnManyBoxes(10, 10, 10);
@@ -252,9 +264,18 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 			auto matComp = obj->AddComponent<MaterialComponent>();
 			auto meshComp = obj->AddComponent<MeshComponent>();
 			meshComp->SetMesh(meshManager.Get("Sphere"));
-			
+
+			auto coll3D = obj->AddComponent<Framework::Physics::Collider3DComponent>();
+			coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
+			coll3D->BuildShape();
+			auto rigidbody3D = obj->AddComponent<Framework::Physics::Rigidbody3D>();
+
+			// -1.0f ～ 1.0f
+			float randomScale = (static_cast<float>(rand()) / RAND_MAX) * 2.0f - 1.0f;
+			rigidbody3D->SetGravityScale(randomScale);
+
 			obj->AddComponent<MeshRenderer>();
-			obj->AddComponent<FreeMoveTestComponent>();
+			//obj->AddComponent<FreeMoveTestComponent>();
 
 			//  3グループに均等に分ける
 			int groupId = index % 3 + 1;

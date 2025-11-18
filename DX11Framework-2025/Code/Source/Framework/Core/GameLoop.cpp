@@ -133,9 +133,9 @@ void GameLoop::Update()
     std::cout << "固定FPS: " << 1.0f / fixedDelta << std::endl;
 #endif
 
-	//-------------------------------------------------------------
-	// 可変ステップ更新
-	//-------------------------------------------------------------
+    //-------------------------------------------------------------
+    // 可変ステップ更新
+    //-------------------------------------------------------------
     this->inputSystem->Update();
     this->sceneManager->Update(delta);
 
@@ -145,7 +145,6 @@ void GameLoop::Update()
     while (this->timeSystem.ShouldRunFixedStep())
     {
         this->physicsSystem->Step(fixedDelta);
-
         this->timeSystem.ConsumeFixedStep();
     }
 }

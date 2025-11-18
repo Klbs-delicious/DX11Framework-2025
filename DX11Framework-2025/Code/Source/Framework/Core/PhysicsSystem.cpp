@@ -40,10 +40,8 @@ namespace Framework::Physics
 	 */
 	bool PhysicsSystem::Initialize()
 	{
-		if (this->physics)
-		{
-			return true;
-		}
+		// すでに初期化されていたら何もしない
+		if (this->physics){ return true; }
 
 		// メモリ管理
 		JPH::RegisterDefaultAllocator();
@@ -61,8 +59,29 @@ namespace Framework::Physics
 		// 一時アロケータ
 		this->tempAllocator = std::make_unique<JPH::TempAllocatorImpl>(10 * 1024 * 1024);
 
-		// ジョブシステム
+		//-------------
+		// スレッド数を決定
+		//-------------
+		unsigned int hwThreads = std::thread::hardware_concurrency();
+		if (hwThreads == 0)
+		{
+			hwThreads = 1;
+		}
+
+		int numThreads = static_cast<int>(hwThreads) - 1;
+		if (numThreads < 0)
+		{
+			numThreads = 0;
+		}
+
+		//-------------
+		// ジョブシステム初期化
+		//-------------
+		const JPH::uint maxJobs = JPH::cMaxPhysicsJobs;
+		const JPH::uint maxBarriers = JPH::cMaxPhysicsBarriers;
+
 		this->jobSystem = std::make_unique<JPH::JobSystemThreadPool>();
+		this->jobSystem->Init(maxJobs, maxBarriers, numThreads);
 
 		// PhysicsSystem
 		this->physics = std::make_unique<JPH::PhysicsSystem>();
@@ -139,6 +158,17 @@ namespace Framework::Physics
 	JPH::BodyInterface& PhysicsSystem::GetBodyInterface()
 	{
 		return this->physics->GetBodyInterface();
+	}
+
+	/** @brief 剛体ロック用のインターフェースを取得
+	 *  @return 剛体ロックインターフェースの参照
+	 */
+	JPH::BodyLockInterface& PhysicsSystem::GetBodyLockInterface()
+	{
+		// Jolt 側は const BodyLockInterfaceLocking& を返すので、
+		// 基底クラス BodyLockInterface にアップキャストしてから const_cast する
+		const JPH::BodyLockInterface& iface = this->physics->GetBodyLockInterface();
+		return const_cast<JPH::BodyLockInterface&>(iface);
 	}
 
 	/// @brief Jolt ログ出力

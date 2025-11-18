@@ -49,6 +49,11 @@ namespace Framework::Physics
 		 */
 		[[nodiscard]] JPH::BodyInterface& GetBodyInterface();
 
+		/** @brief 剛体ロック用のインターフェースを取得
+		 *  @return 剛体ロックインターフェースの参照
+		 */
+		[[nodiscard]] JPH::BodyLockInterface& GetBodyLockInterface();
+
 	private:
 		/// @brief ログ出力（Jolt から呼ばれる）
 		static void TraceImpl(const char* _fmt, ...);

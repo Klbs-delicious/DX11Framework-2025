@@ -8,6 +8,8 @@
  // Includes
  //-----------------------------------------------------------------------------
 #include "Include/Framework/Entities/Component.h"
+#include "Include/Framework/Entities/PhaseInterfaces.h"
+#include "Include/Framework/Entities/Transform.h"
 #include "Include/Framework/Utils/CommonTypes.h"
 
 #include <Jolt/Jolt.h>
@@ -23,7 +25,7 @@ namespace Framework::Physics
 	/** @class  Rigidbody3D
 	 *  @brief  Jolt の Body をラップする 3D 物理コンポーネント
 	 */
-	class Rigidbody3D final : public Component
+	class Rigidbody3D final : public Component, public IUpdatable
 	{
 	public:
 		/** @brief コンストラクタ
@@ -35,8 +37,16 @@ namespace Framework::Physics
 		/// @brief デストラクタ（Jolt の Body を破棄する）
 		~Rigidbody3D() noexcept override;
 
+		/// @brief 初期化処理
+		void Initialize() override;
+
 		/// @brief 物理ボディを生成する（まだ生成されていない場合のみ）
 		void InitializeBody();
+
+		/** @brief 更新処理
+		 *  @param float _deltaTime 経過時間
+		 */
+		void Update(float _deltaTime) override;
 
 		/// @brief 物理ボディを明示的に破棄する
 		void DestroyBody();
@@ -72,28 +82,47 @@ namespace Framework::Physics
 		 */
 		void AddForce(const DX::Vector3& _force);
 
+		/** @brief インパルスを加える（Dynamic のみ有効）
+		 *  @param const DX::Vector3& impulse 加えるインパルス（kg・m/s）
+		 */
+		void AddImpulse(const DX::Vector3& impulse);
+
 		/// @brief Jolt の BodyID を取得する（有効でない場合は無効 ID）
 		const JPH::BodyID& GetBodyID() const { return this->bodyID; }
 
 		/// @brief Body が生成済みかどうか
 		bool HasBody() const { return this->hasBody; }
 
-	private:
-		/// @brief エンジン側 PhysicsSystem を取得するヘルパ
-		PhysicsSystem* GetPhysicsSystem();
+		/** @brief 重力スケールを設定する
+		 *  @param float _scale 重力スケール
+		 */
+		void SetGravityScale(float _scale);
 
-		/// @brief Transform から Jolt 用の位置・回転を取得するヘルパ
+	private:
+		/**@brief Transform から Jolt 用の位置・回転を取得するヘルパ
+		 * @param outPosition
+		 * @param outRotation
+		 */
 		void GetInitialTransform(DX::Vector3& outPosition, DX::Quaternion& outRotation) const;
 
-		/// @brief Body 生成時の共通設定を行う
+		/** @brief BodyCreationSettings をセットアップするヘルパ
+		 *  @param BodyCreationSettings& _settings 設定オブジェクト
+		 */
 		void SetupBodyCreationSettings(JPH::BodyCreationSettings& _settings) const;
+
+		/// @brief Transform の位置・回転を物理ボディに同期する
+		void SyncTransform();
 
 	private:
 		JPH::BodyID			bodyID;		///< Jolt のボディ ID（無効の場合もある）
 		bool				hasBody;	///< 現在 Body が生成されているか
 		float				mass;		///< 質量（kg）
+		float gravityScale = 1.0f;		///< 重力スケール
+
 		JPH::EMotionType	motionType;	///< 運動タイプ
 
 		Collider3DComponent* collider;	///< 形状を提供するコライダー
+		Transform* transform;			///< 所属するオブジェクトの Transform
+		PhysicsSystem& physicsSystem;;	///< 物理システムの参照
 	};
 }

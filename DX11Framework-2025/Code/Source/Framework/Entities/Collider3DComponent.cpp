@@ -69,38 +69,36 @@ namespace Framework::Physics
 
 	void Collider3DComponent::BuildShape()
 	{
+		DX::Vector3 scale = this->Owner()->transform->GetWorldScale();  // 追加
+
 		switch (this->shapeType)
 		{
 		case ColliderShapeType::Box:
 		{
-			JPH::BoxShapeSettings settings(
-				JPH::Vec3(
-					this->boxHalfExtent.x,
-					this->boxHalfExtent.y,
-					this->boxHalfExtent.z
-				)
-			);
+			DX::Vector3 size = this->boxHalfExtent * scale;
+
+			JPH::BoxShapeSettings settings(JPH::Vec3(size.x, size.y, size.z));
 			this->shape = settings.Create().Get();
 			break;
 		}
 
 		case ColliderShapeType::Sphere:
 		{
-			JPH::SphereShapeSettings settings(this->sphereRadius);
+			float radius = this->sphereRadius * scale.x;
+			JPH::SphereShapeSettings settings(radius);
 			this->shape = settings.Create().Get();
 			break;
 		}
 
 		case ColliderShapeType::Capsule:
 		{
-			JPH::CapsuleShapeSettings settings(
-				this->capsuleHalfHeight,
-				this->capsuleRadius
-			);
+			float r = this->capsuleRadius * scale.x;
+			float h = this->capsuleHalfHeight * scale.y;
+
+			JPH::CapsuleShapeSettings settings(h, r);
 			this->shape = settings.Create().Get();
 			break;
 		}
-
 		case ColliderShapeType::Mesh:
 			// 未実装
 			this->shape = nullptr;

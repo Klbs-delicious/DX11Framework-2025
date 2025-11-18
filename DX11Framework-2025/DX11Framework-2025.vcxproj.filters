@@ -304,7 +304,10 @@
       <Filter>ヘッダー ファイル\Framework\Entities</Filter>
     </ClInclude>
     <ClInclude Include="Code\Include\Framework\Entities\Rigidbody3D.h">
-      <Filter>ソース ファイル\Framework\Entities</Filter>
+      <Filter>ヘッダー ファイル\Framework\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Game\Entities\FreeCamera.h">
+      <Filter>ヘッダー ファイル\Game\Entities</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -472,6 +475,9 @@
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Entities\Rigidbody3D.cpp">
       <Filter>ソース ファイル\Framework\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Game\Entities\FreeCamera.cpp">
+      <Filter>ソース ファイル\Framework\Game\Entities</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

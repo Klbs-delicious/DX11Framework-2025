@@ -20,6 +20,7 @@
 #include"Include/Framework/Entities/Collider3DComponent.h"
 
 #include"Include/Game/Entities/FollowCamera.h"
+#include"Include/Game/Entities/DebugFreeMoveComponent.h"
 #include"Include/Game/Entities/CharacterController.h"
 #include"Include/Game/Entities/CameraLookComponent.h"
 
@@ -70,6 +71,8 @@ void TestScene::SetupObjects()
 	camera3D->transform->SetLocalPosition({ 0.0f, 20.0f, -10.0f });
 	camera3D->transform->SetLocalRotation(DX::Quaternion::CreateFromYawPitchRoll(DX::ToRadians(30.0f), DX::ToRadians(30.0f), 0.0f));
 	camera3D->AddComponent<Camera3D>();
+	auto debugMove = camera3D->AddComponent<DebugFreeMoveComponent>();
+	debugMove->SetSpeed(50.0f);
 
 	//camera3D->AddComponent<TestMoveComponent>();
 
@@ -149,8 +152,16 @@ void TestScene::SetupObjects()
 
 	// 平面オブジェクト
 	auto obj_4 = this->gameObjectManager.Instantiate("obj_4");
-	obj_4->transform->SetLocalPosition(DX::Vector3(0.0f, -5.0f, 0.0f));
-	obj_4->transform->SetLocalScale(DX::Vector3(20.0f, 1.0f, 20.0f));
+	obj_4->transform->SetLocalPosition(DX::Vector3(0.0f, -20.0f, 0.0f));
+	obj_4->transform->SetLocalScale(DX::Vector3(100.0f, 1.0f,100.0f));
+	DX::Quaternion q =
+		DX::Quaternion::CreateFromAxisAngle(
+			DX::Vector3(1.0f, 0.0f, 0.0f),   // X軸
+			DX::ToRadians(30.0f)             // 角度
+		);
+
+	obj_4->transform->SetLocalRotation(q);
+
 	meshComp = obj_4->AddComponent<MeshComponent>();
 	meshComp->SetMesh(meshManager.Get("Plane"));
 	obj_4->AddComponent<MeshRenderer>();
@@ -218,48 +229,55 @@ void TestScene::SetupObjects()
 }
 
 //-----------------------------------------------------------------------------
-// 大量オブジェクト生成テスト
+// 大量オブジェクト生成テスト（中心基準）
 //-----------------------------------------------------------------------------
 void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float _spacing)
 {
 	auto device = SystemLocator::Get<D3D11System>().GetDevice();
 
-	//--------------------------------------------------------------
-	// リソースマネージャの取得
-	//--------------------------------------------------------------
 	auto& spriteManager = ResourceHub::Get<SpriteManager>();
 	auto& meshManager = ResourceHub::Get<MeshManager>();
-
 	auto& gameObjectManager = this->gameObjectManager;
 
-	// 時間スケールグループの取得
 	auto timeScaleGroup = gameObjectManager.GetFindObjectByName("TimeScaleGroup");
 	auto timeGroup = timeScaleGroup->GetComponent<TimeScaleGroup>();
 
-	// 色リストの作成
-	std::array < DX::Color,3 > colors = {
-		DX::Color(1.0f, 0.0f, 0.0f, 1.0f), // 赤
-		DX::Color(0.0f, 1.0f, 0.0f, 1.0f), // 緑
-		DX::Color(0.0f, 0.0f, 1.0f, 1.0f)  // 青
+	std::array<DX::Color, 3> colors = {
+		DX::Color(1,0,0,1),
+		DX::Color(0,1,0,1),
+		DX::Color(0,0,1,1)
 	};
 
-	//--------------------------------------------------------------
-	// 敵オブジェクトの生成
-	//--------------------------------------------------------------
+	//==============================================================
+	// 生成範囲の中心計算
+	//==============================================================
+	float totalWidth = (_countX - 1) * _spacing;
+	float totalDepth = (_countZ - 1) * _spacing;
+
+	DX::Vector3 center(totalWidth * 0.5f, 0.0f, totalDepth * 0.5f);
+
 	int index = 0;
+
 	for (int z = 0; z < _countZ; z++)
 	{
 		for (int x = 0; x < _countX; x++)
 		{
 			std::string name = "Box_" + std::to_string(x) + "_" + std::to_string(z);
-
 			auto obj = gameObjectManager.Instantiate(name);
 
-			obj->transform->SetLocalPosition(
-				DX::Vector3(x * _spacing, 0.0f, z * _spacing)
+			//==============================================================
+			// 中心からの相対座標に補正
+			//==============================================================
+			DX::Vector3 pos(
+				x * _spacing,
+				0.0f,
+				z * _spacing
 			);
 
-			obj->transform->SetLocalScale(DX::Vector3(2.0f, 2.0f, 2.0f));
+			pos -= center; // ← これが中心基準化の本体
+
+			obj->transform->SetLocalPosition(pos);
+			obj->transform->SetLocalScale(DX::Vector3(2, 2, 2));
 
 			auto matComp = obj->AddComponent<MaterialComponent>();
 			auto meshComp = obj->AddComponent<MeshComponent>();
@@ -268,21 +286,19 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 			auto coll3D = obj->AddComponent<Framework::Physics::Collider3DComponent>();
 			coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
 			coll3D->BuildShape();
+
 			auto rigidbody3D = obj->AddComponent<Framework::Physics::Rigidbody3D>();
 
-			// -1.0f ～ 1.0f
 			float randomScale = (static_cast<float>(rand()) / RAND_MAX) * 2.0f - 1.0f;
 			rigidbody3D->SetGravityScale(randomScale);
 
 			obj->AddComponent<MeshRenderer>();
-			//obj->AddComponent<FreeMoveTestComponent>();
 
-			//  3グループに均等に分ける
 			int groupId = index % 3 + 1;
 			std::string groupName = "EnemyGroup_" + std::to_string(groupId);
 
 			auto tex = TextureFactory::CreateSolidColorTexture(device, colors[groupId - 1]);
-			TextureResource* raw = tex.release();   // 所有権を放棄 → 自動破棄されなくなる
+			TextureResource* raw = tex.release();
 			matComp->SetTexture(raw);
 
 			timeGroup->AddGroup(groupName, obj->GetComponent<TimeScaleComponent>());
@@ -290,5 +306,6 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 			index++;
 		}
 	}
+
 	std::cout << "[Test] Spawned " << (_countX * _countZ) << " boxes.\n";
 }

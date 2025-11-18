@@ -83,6 +83,7 @@
     <ClInclude Include="Code\Include\Game\Entities\CameraLookComponent.h" />
     <ClInclude Include="Code\Include\Game\Entities\CharacterController.h" />
     <ClInclude Include="Code\Include\Game\Entities\FollowCamera.h" />
+    <ClInclude Include="Code\Include\Game\Entities\DebugFreeMoveComponent.h" />
     <ClInclude Include="Code\Include\Scenes\SceneManager.h" />
     <ClInclude Include="Code\Include\Scenes\TestScene.h" />
     <ClInclude Include="Code\Include\Scenes\TitleScene.h" />
@@ -140,6 +141,7 @@
     <ClCompile Include="Code\Source\Game\Entities\CameraLookComponent.cpp" />
     <ClCompile Include="Code\Source\Game\Entities\CharacterController.cpp" />
     <ClCompile Include="Code\Source\Game\Entities\FollowCamera.cpp" />
+    <ClCompile Include="Code\Source\Game\Entities\DebugFreeMoveComponent.cpp" />
     <ClCompile Include="Code\Source\Scenes\SceneManager.cpp" />
     <ClCompile Include="Code\Source\Scenes\TestScene.cpp" />
     <ClCompile Include="Code\Source\Scenes\TitleScene.cpp" />

@@ -3,7 +3,6 @@
  *  @date   2025/11/14
  */
 #pragma once
-
 #include <chrono>
 
  /** @class  TimeSystem
@@ -32,9 +31,6 @@ public:
 
 	/// @brief rawDeltaTime（秒）を返す
 	[[nodiscard]] float RawDelta() const;
-
-	/// @brief scaledDeltaTime（秒）を返す
-	[[nodiscard]] float ScaledDelta() const;
 
 	/// @brief 固定ステップ幅（秒）を返す
 	[[nodiscard]] float FixedDelta() const;

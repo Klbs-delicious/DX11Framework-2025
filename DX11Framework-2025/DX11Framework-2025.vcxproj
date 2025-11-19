@@ -27,6 +27,7 @@
     <ClInclude Include="Code\Include\Framework\Core\IInputDevice.h" />
     <ClInclude Include="Code\Include\Framework\Core\InputSystem.h" />
     <ClInclude Include="Code\Include\Framework\Core\IResourceManager.h" />
+    <ClInclude Include="Code\Include\Framework\Core\PhysicsSystem.h" />
     <ClInclude Include="Code\Include\Framework\Core\RenderSystem.h" />
     <ClInclude Include="Code\Include\Framework\Core\ResourceHub.h" />
     <ClInclude Include="Code\Include\Framework\Core\SystemLocator.h" />
@@ -35,6 +36,7 @@
     <ClInclude Include="Code\Include\Framework\Core\WindowSystem.h" />
     <ClInclude Include="Code\Include\Framework\Entities\Camera2D.h" />
     <ClInclude Include="Code\Include\Framework\Entities\Camera3D.h" />
+    <ClInclude Include="Code\Include\Framework\Entities\Collider3DComponent.h" />
     <ClInclude Include="Code\Include\Framework\Entities\Component.h" />
     <ClInclude Include="Code\Include\Framework\Entities\GameObject.h" />
     <ClInclude Include="Code\Include\Framework\Entities\GameObjectManager.h" />
@@ -42,6 +44,7 @@
     <ClInclude Include="Code\Include\Framework\Entities\MeshComponent.h" />
     <ClInclude Include="Code\Include\Framework\Entities\MeshRenderer.h" />
     <ClInclude Include="Code\Include\Framework\Entities\PhaseInterfaces.h" />
+    <ClInclude Include="Code\Include\Framework\Entities\Rigidbody3D.h" />
     <ClInclude Include="Code\Include\Framework\Entities\SpriteComponent.h" />
     <ClInclude Include="Code\Include\Framework\Entities\SpriteRenderer.h" />
     <ClInclude Include="Code\Include\Framework\Entities\TestComponent.h" />
@@ -65,6 +68,7 @@
     <ClInclude Include="Code\Include\Framework\Graphics\TextureFactory.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\TextureLoader.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\VertexBuffer.h" />
+    <ClInclude Include="Code\Include\Framework\Physics\PhysicsLayers.h" />
     <ClInclude Include="Code\Include\Framework\Scenes\SceneFactory.h" />
     <ClInclude Include="Code\Include\Framework\Scenes\SceneType.h" />
     <ClInclude Include="Code\Include\Framework\Shaders\PixelShader.h" />
@@ -79,6 +83,7 @@
     <ClInclude Include="Code\Include\Game\Entities\CameraLookComponent.h" />
     <ClInclude Include="Code\Include\Game\Entities\CharacterController.h" />
     <ClInclude Include="Code\Include\Game\Entities\FollowCamera.h" />
+    <ClInclude Include="Code\Include\Game\Entities\DebugFreeMoveComponent.h" />
     <ClInclude Include="Code\Include\Scenes\SceneManager.h" />
     <ClInclude Include="Code\Include\Scenes\TestScene.h" />
     <ClInclude Include="Code\Include\Scenes\TitleScene.h" />
@@ -92,18 +97,21 @@
     <ClCompile Include="Code\Source\Framework\Core\DirectinputDevice.cpp" />
     <ClCompile Include="Code\Source\Framework\Core\GameLoop.cpp" />
     <ClCompile Include="Code\Source\Framework\Core\InputSystem.cpp" />
+    <ClCompile Include="Code\Source\Framework\Core\PhysicsSystem.cpp" />
     <ClCompile Include="Code\Source\Framework\Core\RenderSystem.cpp" />
     <ClCompile Include="Code\Source\Framework\Core\TimeScaleSystem.cpp" />
     <ClCompile Include="Code\Source\Framework\Core\TimeSystem.cpp" />
     <ClCompile Include="Code\Source\Framework\Core\WindowsSystem.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\Camera2D.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\Camera3D.cpp" />
+    <ClCompile Include="Code\Source\Framework\Entities\Collider3DComponent.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\Component.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\GameObject.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\GameObjectManager.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\MaterialComponent.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\MeshComponent.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\MeshRenderer.cpp" />
+    <ClCompile Include="Code\Source\Framework\Entities\Rigidbody3D.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\SpriteComponent.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\SpriteRenderer.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\TestRenderer.cpp" />
@@ -121,6 +129,7 @@
     <ClCompile Include="Code\Source\Framework\Graphics\TextureLoader.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\VertexBuffer.cpp" />
     <ClCompile Include="Code\Source\Framework\main.cpp" />
+    <ClCompile Include="Code\Source\Framework\Physics\PhysicsLayers.cpp" />
     <ClCompile Include="Code\Source\Framework\Scenes\BaseScene.cpp" />
     <ClCompile Include="Code\Source\Framework\Scenes\SceneFactory.cpp" />
     <ClCompile Include="Code\Source\Framework\Shaders\PixelShader.cpp" />
@@ -132,6 +141,7 @@
     <ClCompile Include="Code\Source\Game\Entities\CameraLookComponent.cpp" />
     <ClCompile Include="Code\Source\Game\Entities\CharacterController.cpp" />
     <ClCompile Include="Code\Source\Game\Entities\FollowCamera.cpp" />
+    <ClCompile Include="Code\Source\Game\Entities\DebugFreeMoveComponent.cpp" />
     <ClCompile Include="Code\Source\Scenes\SceneManager.cpp" />
     <ClCompile Include="Code\Source\Scenes\TestScene.cpp" />
     <ClCompile Include="Code\Source\Scenes\TitleScene.cpp" />
@@ -272,10 +282,10 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_WINDOWS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;NOMINMAX;JPH_DEBUG_RENDERER=1;JPH_PROFILE_ENABLED=1;JPH_OBJECT_STREAM=1;JPH_FLOATING_POINT_EXCEPTIONS_ENABLED=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Code;$(ProjectDir)External\assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Code;$(ProjectDir)External\assimp\include;$(ProjectDir)External\joltphysics\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalOptions>/Zc:char8_t- %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -283,8 +293,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>assimp-vc143-mtd.lib;zlibstaticd.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)External\assimp\lib\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc143-mtd.lib;zlibstaticd.lib;Jolt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)External\assimp\lib\Debug;$(ProjectDir)External\joltphysics\lib\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
       <Command>powershell -ExecutionPolicy Bypass -File "$(ProjectDir)SaveAsUTF8.ps1" "$(ProjectDir)"</Command>
@@ -296,10 +306,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_WINDOWS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_WINDOWS;NOMINMAX;JPH_DEBUG_RENDERER=0;JPH_PROFILE_ENABLED=0;JPH_OBJECT_STREAM=0;JPH_FLOATING_POINT_EXCEPTIONS_ENABLED=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)Code;$(ProjectDir)External\assimp\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)Code;$(ProjectDir)External\assimp\include;$(ProjectDir)External\joltphysics\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <AdditionalOptions>/Zc:char8_t- %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
@@ -308,8 +318,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(ProjectDir)External\assimp\lib\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)External\assimp\lib\Release;$(ProjectDir)External\joltphysics\lib\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>assimp-vc143-mt.lib;zlibstaticd.lib;Jolt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

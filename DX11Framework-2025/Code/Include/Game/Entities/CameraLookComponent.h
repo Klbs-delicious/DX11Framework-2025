@@ -66,4 +66,3 @@ private:
 	float sensitivity;   ///< 入力感度
 	float smoothSpeed;   ///< 回転補間速度
 };
-

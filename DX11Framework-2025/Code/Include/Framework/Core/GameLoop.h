@@ -2,18 +2,25 @@
  * @date   2025/09/12
  */
 #pragma once
+#include <memory>
+
 #include"Include/Framework/Utils/NonCopyable.h"
+
 #include"Include/Framework/Core/InputSystem.h"
 #include"Include/Framework/Core/TimeScaleSystem.h"
+#include"Include/Framework/Core/PhysicsSystem.h"
+#include"Include/Framework/Core/EngineServices.h"
+#include"Include/Framework/Core/TimeSystem.h"
+
 #include"Include/Framework/Graphics/SpriteManager.h"
 #include"Include/Framework/Graphics/MaterialManager.h"
 #include"Include/Framework/Graphics/MeshManager.h"
+
 #include"Include/Framework/Shaders/ShaderManager.h"
 #include"Include/Framework/Entities/GameObjectManager.h"
-#include"Include/Scenes/SceneManager.h"
-#include"Include/Framework/Core/EngineServices.h"
 
-#include <memory>
+#include"Include/Scenes/SceneManager.h"
+
 
  /**@class	GameLoop
   *	@brief	ゲーム進行の管理を行う
@@ -26,21 +33,16 @@ public:
 	/// @brief	デストラクタ
 	~GameLoop();
 
-	/**	@brief		初期化処理を行う
-	 */
+	/// @brief		初期化処理を行う
 	void Initialize();
 
-	/**	@brief		更新処理を行う
-	 *	@param		float _deltaTime	デルタタイム
-	 */
-	void Update(float _deltaTime);
+	/// @brief		更新処理を行う
+	void Update();
 
-	/**	@brief		描画処理を行う
-	 */
+	/// @brief		描画処理を行う
 	void Draw();
 
-	/**	@brief		終了処理を行う
-	 */
+	/// @brief		終了処理を行う
 	void Dispose();
 
 	/**	@brief	ゲームが進行中かどうかを返す
@@ -63,20 +65,19 @@ private:
 	};
 	GameState gameState;	///< ゲームの状態
 
-	// リソース関連の参照
-	EngineServices services;
-
+	TimeSystem timeSystem;									///< 時間管理システム
 	std::unique_ptr<TimeScaleSystem> timeScaleSystem;		///< 時間スケールの管理
 	std::unique_ptr<SceneManager> sceneManager;				///< シーン管理
 	std::unique_ptr<InputSystem> inputSystem;				///< 入力の管理
 	std::unique_ptr<GameObjectManager> gameObjectManager;	///< ゲームオブジェクトの管理
+	std::unique_ptr<Framework::Physics::PhysicsSystem> physicsSystem;			///< 物理システムの管理
 
+	EngineServices services;								///< リソース関連の参照
 	std::unique_ptr<SpriteManager> spriteManager;			///< 画像データの管理
 	std::unique_ptr<ShaderManager> shaderManager;			///< シェーダーの管理
 	std::unique_ptr<MaterialManager> materialManager;		///< マテリアルの管理
 	std::unique_ptr<MeshManager> meshManager;				///< メッシュの管理
 
-	///< [TODO]物理、衝突の処理
 	///< [TODO]サウンドの処理
 	///< [TODO]UIの管理
 	///< [TODO]ゲームの状態

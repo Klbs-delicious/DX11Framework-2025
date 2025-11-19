@@ -54,7 +54,7 @@ TestScene::~TestScene() {}
 /// @brief	オブジェクトの生成、登録等を行う
 void TestScene::SetupObjects()
 {
-	std::cout << "シーン名" << "TestScene" << std::endl;
+	std::cout << "[TestScene] シーン名" << "TestScene" << std::endl;
 
 	//--------------------------------------------------------------
 	// リソースマネージャの取得
@@ -76,9 +76,9 @@ void TestScene::SetupObjects()
 
 	//camera3D->AddComponent<TestMoveComponent>();
 
-	// 2Dカメラオブジェクト
-	auto camera2D = this->gameObjectManager.Instantiate("Camera2D", GameTags::Tag::Camera);
-	camera2D->AddComponent<Camera2D>();
+	//// 2Dカメラオブジェクト
+	//auto camera2D = this->gameObjectManager.Instantiate("Camera2D", GameTags::Tag::Camera);
+	//camera2D->AddComponent<Camera2D>();
 
 	//--------------------------------------------------------------
 	// オブジェクトの生成
@@ -104,6 +104,7 @@ void TestScene::SetupObjects()
 	//auto meshComp = obj_2->AddComponent<MeshComponent>();
 	//meshComp->SetMesh(meshManager.Get("Sphere"));
 	//obj_2->AddComponent<MeshRenderer>();
+	//obj_2->OnDestroy();
 
 	// 立方体オブジェクト（プレイヤー）
 	auto player = this->gameObjectManager.Instantiate("Player", GameTags::Tag::Player);
@@ -288,13 +289,14 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 			coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
 			coll3D->BuildShape();
 
-			auto rigidbody3D = obj->AddComponent<Framework::Physics::Rigidbody3D>();
+			//auto rigidbody3D = obj->AddComponent<Framework::Physics::Rigidbody3D>();
 
-			float randomScale = (static_cast<float>(rand()) / RAND_MAX) * 2.0f - 1.0f;
-			//rigidbody3D->SetGravityScale(randomScale);
-			rigidbody3D->SetRestitution(randomScale);
+			//float randomScale = (static_cast<float>(rand()) / RAND_MAX) * 2.0f - 1.0f;
+			////rigidbody3D->SetGravityScale(randomScale);
+			//rigidbody3D->SetRestitution(randomScale);
 
 			obj->AddComponent<MeshRenderer>();
+			obj->AddComponent<FreeMoveTestComponent>();
 
 			int groupId = index % 3 + 1;
 			std::string groupName = "EnemyGroup_" + std::to_string(groupId);

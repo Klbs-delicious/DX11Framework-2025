@@ -3,7 +3,10 @@
  *	@date   2025/09/18
  */
 #pragma once
+#include<string>
+
 class GameObject;
+class Component;
 
 /**	@enum	GameObjectEvent
  *	@brief	GameObjectに関する軽量イベント種別
@@ -12,8 +15,8 @@ enum class GameObjectEvent {
 	Refreshed,
 	Destroyed,
 	Initialized,
-	GameObjectEnable,
-	GameObjectDisable,
+	GameObjectEnabled,
+	GameObjectDisabled,
 	ComponentEnabled,
 	ComponentDisabled,
 	ComponentAdded,

@@ -88,7 +88,21 @@ public:
 	/** @brief  オブジェクトの有効状態を設定する
 	 *  @param bool _active	オブジェクトの有効/無効
 	 */
-	void SetActive(bool _active) { this->isActive = _active; }
+	void SetActive(bool _active)
+	{
+		if (this->isActive == _active) { return; }
+
+		// オブジェクトの追加通知
+		GameObjectEventContext eventContext =
+		{
+			this->name,
+			nullptr,
+			_active ? GameObjectEvent::GameObjectEnabled : GameObjectEvent::GameObjectDisabled
+		};
+		this->NotifyEvent(eventContext);
+
+		this->isActive = _active;
+	}
 
 	/** @brief  オブジェクトが有効かどうかを取得する
 	 *  @return bool オブジェクトが有効なら true
@@ -152,6 +166,15 @@ public:
 		T* rawPtr = component.get();
 		this->components.emplace_back(std::move(component));
 
+		// コンポーネントの追加通知
+		GameObjectEventContext eventContext = 
+		{
+			this->name,
+			rawPtr,
+			GameObjectEvent::ComponentAdded
+		};
+		this->NotifyEvent(eventContext);
+
 		// IUpdatable,IDrawableがあるか取得
 		bool isUpdatable = this->IsUpdatable();
 		bool isDrawable = this->IsDrawable();
@@ -202,33 +225,61 @@ public:
 		return nullptr;
 	}
 
-	template<typename T>
 	/** @brief  コンポーネントの削除
 	 */
+	template<typename T>
 	void RemoveComponent()
 	{
-		static_assert(std::is_base_of<Component, T>::value, "クラス T はComponentから派生する必要があります。");
+		static_assert(std::is_base_of<Component, T>::value,
+			"T は Component の派生である必要があります。");
+
+		Component* removedComponent = nullptr;
 
 		for (auto it = this->components.begin(); it != this->components.end(); ++it)
 		{
 			if (auto casted = dynamic_cast<T*>(it->get()))
 			{
-				// Updatable/Drawable リストからも削除
+				// 更新リストからの削除
 				this->updatableComponents.erase(
-					std::remove(this->updatableComponents.begin(), this->updatableComponents.end(), dynamic_cast<IUpdatable*>(casted)),
+					std::remove(this->updatableComponents.begin(), this->updatableComponents.end(),
+						dynamic_cast<IUpdatable*>(casted)),
 					this->updatableComponents.end()
 				);
+
+				// 描画リストからの削除
 				this->drawableComponents.erase(
-					std::remove(this->drawableComponents.begin(), this->drawableComponents.end(), dynamic_cast<IDrawable*>(casted)),
+					std::remove(this->drawableComponents.begin(), this->drawableComponents.end(),
+						dynamic_cast<IDrawable*>(casted)),
 					this->drawableComponents.end()
 				);
 
-				// コンポーネントを削除する
-				(*it)->Dispose();
-				this->components.erase(it);
+				removedComponent = casted;
+
+				// erase するのは GameObjectManager 側に任せるならここではしない
 				break;
 			}
 		}
+
+		if (removedComponent)
+		{
+			// コンポーネントの削除通知
+			GameObjectEventContext eventContext =
+			{
+				this->name,
+				removedComponent,                     
+				GameObjectEvent::ComponentRemoved
+			};
+
+			this->NotifyEvent(eventContext);
+		}
+	}
+
+	/** @brief オブジェクトの状態変化を通知する
+	 *  @param _eventContext 
+	 */
+	void NotifyEvent(const GameObjectEventContext _eventContext)
+	{
+		this->gameObjectObs.OnGameObjectEvent(_eventContext);
 	}
 
 	/**	@brief リソース関連の参照を取得する
@@ -249,7 +300,23 @@ public:
 	/**	@brief	オブジェクト固有の時間スケールコンポーネントを取得
 	 *	@return	TimeScaleComponent*
 	 */
-	[[nodiscard]] TimeScaleComponent* TimeScale() const { return this->timeScaleComponent; }
+	[[nodiscard]] TimeScaleComponent* TimeScale()
+	{
+		if (this->timeScaleComponent) { return this->timeScaleComponent; }
+
+		// キャッシュを更新する
+		this->timeScaleComponent = this->GetComponent<TimeScaleComponent>();
+		return this->timeScaleComponent;
+	}
+
+	[[nodiscard]] Transform* GetTransform()
+	{
+		if (this->transform) { return this->transform; }
+
+		// キャッシュを更新する
+		this->transform = this->GetComponent<Transform>();
+		return this->transform;
+	}
 
 	/**	@brief	コンポーネントリストの取得（読み取り専用）
 	 *	@return	const std::vector<std::unique_ptr<Component>>&

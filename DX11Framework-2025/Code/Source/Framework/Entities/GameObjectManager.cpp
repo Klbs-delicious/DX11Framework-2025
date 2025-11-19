@@ -6,6 +6,8 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include "Include/Framework/Entities/GameObjectManager.h"
+#include "Include/Framework/Entities/Transform.h"
+#include "Include/Framework/Entities/TimeScaleComponent.h"
 
 #include <algorithm>
 #include<iostream>
@@ -35,7 +37,7 @@ void GameObjectManager::Dispose()
 {
 	// すでに破棄済みなら何もしない
 	if (this->gameObjects.empty()) return;
-	std::cout << "Size: " << this->gameObjects.size() << std::endl;
+	std::cout << "[GameObjectManager] Size: " << this->gameObjects.size() << std::endl;
 
 	// オブジェクトの解放
 	for (auto& object : this->gameObjects)
@@ -69,16 +71,29 @@ void GameObjectManager::Dispose()
 /// @brief 未初期化オブジェクトを初期化する
 void GameObjectManager::FlushInitialize()
 {
-	while (!this->pendingInit.empty())
-	{
-		GameObject* obj = this->pendingInit.front();
-		this->pendingInit.pop_front();
+	//while (!this->pendingInit.empty())
+	//{
+	//	GameObject* obj = this->pendingInit.front();
+	//	this->pendingInit.pop_front();
 
-		if (!obj) continue;
+	//	if (!obj) continue;
+
+	//	// 初期化処理
+	//	obj->Initialize();
+	//}
+
+	while (!this->pendingInits.empty())
+	{
+		// コンポーネントを取り出す
+		Component* comp = this->pendingInits.front();
+		this->pendingInits.pop_front();
+
+		if (!comp) continue;
 
 		// 初期化処理
-		obj->Initialize();
+		comp->Initialize();
 	}
+	//std::cout << "pendingInits Size : " << pendingInits.size() << std::endl;
 }
 
 /** @brief 一括更新
@@ -86,14 +101,14 @@ void GameObjectManager::FlushInitialize()
  */
 void GameObjectManager::UpdateAll(float _deltaTime)
 {
-	for (auto& updatableObj : this->updateList)
-	{
-		if (updatableObj)
-		{
-			// [TODO] 一旦 Update を呼ぶようにしているが、将来的に IUpdatable の Update を呼ぶように修正する
-			updatableObj->Update(_deltaTime);
-		}
-	}
+	//for (auto& updatableObj : this->updateList)
+	//{
+	//	if (updatableObj)
+	//	{
+	//		// [TODO] 一旦 Update を呼ぶようにしているが、将来的に IUpdatable の Update を呼ぶように修正する
+	//		updatableObj->Update(_deltaTime);
+	//	}
+	//}
 
 	for (auto& update : this->updates)
 	{
@@ -112,28 +127,28 @@ void GameObjectManager::UpdateAll(float _deltaTime)
  */
 void GameObjectManager::FixedUpdateAll(float _deltaTime)
 {
-	// 固定更新を持つコンポーネントを更新
-	for (auto& fixedUpdate : this->fixedUpdates)
-	{
-		if (fixedUpdate)
-		{
-			// [TODO] FixedUpdateが未実装のため暫定でUpdateを呼ぶ
-			fixedUpdate->Update(_deltaTime);
-		}
-	}
+	//// 固定更新を持つコンポーネントを更新
+	//for (auto& fixedUpdate : this->fixedUpdates)
+	//{
+	//	if (fixedUpdate)
+	//	{
+	//		// [TODO] FixedUpdateが未実装のため暫定でUpdateを呼ぶ
+	//		fixedUpdate->Update(_deltaTime);
+	//	}
+	//}
 }
 
 /// @brief 3Dコンポーネントの一括描画
 void GameObjectManager::Render3DAll()
 {
-	for (auto& drawableObj : this->drawList)
-	{
-		if (drawableObj)
-		{
-			// [TODO] 一旦 Draw を呼ぶようにしているが、将来的に IDrawable の Draw を呼ぶように修正する
-			drawableObj->Draw();
-		}
-	}
+	//for (auto& drawableObj : this->drawList)
+	//{
+	//	if (drawableObj)
+	//	{
+	//		// [TODO] 一旦 Draw を呼ぶようにしているが、将来的に IDrawable の Draw を呼ぶように修正する
+	//		drawableObj->Draw();
+	//	}
+	//}
 
 	for (auto& render : this->render3D)
 	{
@@ -180,6 +195,10 @@ GameObject* GameObjectManager::Instantiate(const std::string& _name, const GameT
 
 	// 管理リストに追加して所有権を保持
 	this->gameObjects.push_back(std::move(newObject));
+
+	// 必須コンポーネントを追加
+	rawPtr->transform = rawPtr->AddComponent<Transform>();// 実行確認のためにpublicメンバに入れている、将来的にgetterのみに変更予定
+	rawPtr->AddComponent<TimeScaleComponent>();
 
 	return rawPtr;
 }
@@ -292,7 +311,7 @@ void GameObjectManager::OnGameObjectEvent(const GameObjectEventContext _ctx)
 	switch (_ctx.eventType)
 	{
 		// オブジェクト有効化
-	case GameObjectEvent::GameObjectEnable:
+	case GameObjectEvent::GameObjectEnabled:
 		for (auto& compUPtr : obj->GetComponents())
 		{
 			RegisterComponentToPhases(compUPtr.get());
@@ -300,7 +319,7 @@ void GameObjectManager::OnGameObjectEvent(const GameObjectEventContext _ctx)
 		break;
 
 		// オブジェクト無効化
-	case GameObjectEvent::GameObjectDisable:
+	case GameObjectEvent::GameObjectDisabled:
 		for (auto& compUPtr : obj->GetComponents())
 		{
 			UnregisterComponentFromPhases(compUPtr.get());
@@ -320,6 +339,9 @@ void GameObjectManager::OnGameObjectEvent(const GameObjectEventContext _ctx)
 		// コンポーネント追加
 	case GameObjectEvent::ComponentAdded:
 		RegisterComponentToPhases(_ctx.component);
+
+		// 初期化待ちキューに登録
+		this->pendingInits.push_back(_ctx.component);
 		break;
 
 		// コンポーネント削除
@@ -327,13 +349,35 @@ void GameObjectManager::OnGameObjectEvent(const GameObjectEventContext _ctx)
 		UnregisterComponentFromPhases(_ctx.component);
 		break;
 
-	case GameObjectEvent::Refreshed:
 	case GameObjectEvent::Destroyed:
+
+		// 破棄前に、更新/描画リストから確実に外す（外し漏れ防止）
+		EraseOne(this->updateList, obj);
+		EraseOne(this->drawList, obj);
+
+		// すでに破棄キューに入っていないか確認して追加する
+		if (std::find(this->destroyQueue.begin(), this->destroyQueue.end(), obj) == this->destroyQueue.end())
+		{
+			this->destroyQueue.push_back(obj);
+		}
+
+		// フェーズからも外す
+		for (auto& compUPtr : obj->GetComponents())
+		{
+			UnregisterComponentFromPhases(compUPtr.get());
+		}
+
+		break;
+	case GameObjectEvent::Refreshed:
 	case GameObjectEvent::Initialized:
 		// 旧システム互換のため残している処理
 		RefreshRegistration(obj);
 		break;
 	}
+
+	// std::cout << "Event: " << static_cast<int>(_ctx.eventType) << " Object: " << _ctx.objectName << std::endl;
+	// 現在のリストの数を表示
+	std::cout << "[GameObjectManager] UpdateList Size: " << this->updates.size() << " DrawList Size: " << this->render3D.size()<< " pendingInits Size: " << this->pendingInits.size() << std::endl;
 }
 
 /**	@brief 現在の状態（IsUpdatable/IsDrawable）に合わせて登録を正規化

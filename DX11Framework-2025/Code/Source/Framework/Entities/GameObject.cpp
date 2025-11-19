@@ -21,14 +21,7 @@
 */
 GameObject::GameObject(IGameObjectObserver& _gameobjctObs, const std::string& _name, const GameTags::Tag _tag, const bool _isActive)
     : gameObjectObs(_gameobjctObs), transform(nullptr), timeScaleComponent(nullptr) , isPendingDestroy(false), isActive(_isActive), parent(nullptr), name(_name), tag(_tag)
-{
-	// Transformコンポーネントを追加
-    // 生成、破棄などは一緒に行えるようにしたが処理はコンポーネントのリストとは別で回す
-    this->transform = this->AddComponent<Transform>();
-
-	// TimeScaleコンポーネントを追加する
-    this->timeScaleComponent = this->AddComponent<TimeScaleComponent>();
-};
+{};
 
 /// @brief	デストラクタ
 GameObject::~GameObject() {}
@@ -114,6 +107,15 @@ void GameObject::OnDestroy()
 
     // Observer に通知
     this->gameObjectObs.OnGameObjectEvent(this, GameObjectEvent::Destroyed);
+
+    // オブジェクトの削除通知
+    GameObjectEventContext eventContext =
+    {
+        this->name,
+        nullptr,
+        GameObjectEvent::Destroyed
+    };
+    this->NotifyEvent(eventContext);
 
     // 子オブジェクトにも通知
     for (auto* child : this->children) {

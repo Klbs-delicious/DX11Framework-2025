@@ -70,7 +70,7 @@ void GameLoop::Initialize()
     // シーン管理の作成
     this->sceneManager = std::make_unique<SceneManager>(std::move(factory));
     this->sceneManager->SetTransitionCallback([raw = this->sceneManager.get()](SceneType _next) {
-        std::cout << "シーン遷移時の演出を行いました。\n";
+        std::cout << "[GameLoop] シーン遷移時の演出を行いました。\n";
         raw->NotifyTransitionReady(_next);
         });
 
@@ -81,7 +81,7 @@ void GameLoop::Initialize()
 	this->physicsSystem = std::make_unique<Framework::Physics::PhysicsSystem>();
     if (!this->physicsSystem->Initialize()) 
     {
-        std::cerr << "PhysicsSystemの初期化に失敗しました。\n";
+        std::cerr << "[GameLoop]PhysicsSystemの初期化に失敗しました。\n";
         return;
 	}
     SystemLocator::Register<Framework::Physics::PhysicsSystem>(this->physicsSystem.get());
@@ -127,12 +127,12 @@ void GameLoop::Update()
     float delta = this->timeSystem.RawDelta();
     float fixedDelta = this->timeSystem.FixedDelta();
 
-#ifdef _DEBUG
-    // 瞬間FPS
-    std::cout << "可変FPS: " << 1.0f / delta << std::endl;
-    std::cout << "固定FPS: " << 1.0f / fixedDelta << std::endl;
-#endif
-
+//#ifdef _DEBUG
+//    // 瞬間FPS
+//    std::cout << "可変FPS: " << 1.0f / delta << std::endl;
+//    std::cout << "固定FPS: " << 1.0f / fixedDelta << std::endl;
+//#endif
+//
     //-------------------------------------------------------------
     // 可変ステップ更新
     //-------------------------------------------------------------

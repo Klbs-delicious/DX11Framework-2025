@@ -4,6 +4,8 @@
 #pragma once
 #include"Include/Framework/Utils/NonCopyable.h"
 #include"Include/Framework/Entities/GameObject.h"
+#include"Include/Framework/Entities/Component.h"
+#include"Include/Framework/Entities/PhaseInterfaces.h"
 #include"Include/Framework/Event/GameObjectEvent.h"
 
 #include<memory>
@@ -40,8 +42,16 @@ public:
 	 */
 	void UpdateAll(float _deltaTime);
 
-	/// @brief オブジェクトの一括描画
-	void DrawAll();
+	/**	@brief オブジェクトの一括固定更新
+	 *	@param		float _deltaTime	デルタタイム
+	 */
+	void FixedUpdateAll(float _deltaTime);
+
+	/// @brief 3Dコンポーネントの一括描画
+	void Render3DAll();
+
+	/// @brief UIコンポーネントの一括描画
+	void RenderUIAll();
 
 	/**	@brief	ゲームオブジェクトの作成
 	 *	@param	const std::string& _name						オブジェクトの名前
@@ -117,6 +127,15 @@ private:
 	std::vector<GameObject*> updateList;	///< 更新を行うオブジェクトの配列
 	std::vector<GameObject*> drawList;		///< 描画を行うオブジェクトの配列
 	std::deque<GameObject*> destroyQueue;	///< 遅延破棄対象キュー
+
+	// 外部コンポーネント管理用配列（オブジェクトIDと紐づけ）
+	std::deque<Component*> pendingInits;		///< 初期化を行うコンポーネントのキュー
+	std::vector<IUpdatable*> updates;			///< 更新を持つコンポーネントの配列
+	std::vector <IUpdatable*> fixedUpdates;		///< 固定更新を持つオブジェクトの配列
+
+	// 内部コンポーネント管理用配列
+	std::vector<IDrawable*> renderUI;		///< UI描画を持つコンポーネントの配列
+	std::vector<IDrawable*> render3D;		///< 3D描画を持つコンポーネントの配列
 
 	std::unordered_map<std::string, GameObject*> nameMap;	///< 名前検索用マップ
 	std::unordered_map<GameTags::Tag, GameObject*> tagMap;	///< タグ検索用マップ

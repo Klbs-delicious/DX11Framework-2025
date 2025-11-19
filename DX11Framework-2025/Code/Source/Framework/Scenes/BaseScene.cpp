@@ -46,8 +46,6 @@ void BaseScene::Update(float _deltaTime)
     // オブジェクトの一括更新
     this->gameObjectManager.UpdateAll(_deltaTime);
 
-
-
 	// テスト的にメンバに持たずに直接取得する
 	auto& input = SystemLocator::Get<InputSystem>();
 	auto& scenemanager = SystemLocator::Get<SceneManager>();
@@ -59,14 +57,25 @@ void BaseScene::Update(float _deltaTime)
     //if (input.IsActionTriggered("SceneChangeTitle")) { scenemanager.RequestSceneChange(SceneType::Title); }
 }
 
+
+/**	@brief 		オブジェクトの固定更新を行う
+ *	@param		float _deltaTime	デルタタイム
+ *	@details	継承を禁止する
+ */
+void BaseScene::FixedUpdate(float _deltaTime)
+{
+    // オブジェクトの一括固定更新
+	this->gameObjectManager.FixedUpdateAll(_deltaTime);
+}
+
 /**	@brief		ゲームオブジェクトの描画処理を行う
  *	@param		float _deltaTime	デルタタイム
  *	@details	継承を禁止する
  */
 void BaseScene::Draw()
 {
-    // オブジェクトの一括描画
-    this->gameObjectManager.DrawAll();
+    this->gameObjectManager.RenderUIAll();  // 3Dコンポーネントの一括描画
+    this->gameObjectManager.Render3DAll();
 }
 
 /**	@brief		終了処理を行う

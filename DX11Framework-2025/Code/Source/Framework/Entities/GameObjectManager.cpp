@@ -8,6 +8,8 @@
 #include "Include/Framework/Entities/GameObjectManager.h"
 
 #include <algorithm>
+#include<iostream>
+
 //-----------------------------------------------------------------------------
 // GameObjectManager Class
 //-----------------------------------------------------------------------------
@@ -18,6 +20,7 @@
 GameObjectManager::GameObjectManager(const EngineServices* _services) :
 	gameObjects(), services(_services),
 	pendingInit(),updateList(),drawList(), destroyQueue(),
+	pendingInits(), updates(), fixedUpdates(), renderUI(), render3D(),
 	nameMap(),tagMap()
 {}
 
@@ -26,7 +29,6 @@ GameObjectManager::~GameObjectManager()
 {
 	this->Dispose();
 }
-#include<iostream>
 
 /// @brief 解放処理
 void GameObjectManager::Dispose()
@@ -45,11 +47,21 @@ void GameObjectManager::Dispose()
 		}
 	}
 
-	// 配列の解放
+	// オブジェクト配列の解放
 	this->gameObjects.clear();
 	this->pendingInit.clear();
 	this->updateList.clear();
 	this->drawList.clear();
+	this->destroyQueue.clear();
+
+	// コンポーネント配列の解放
+	this->pendingInits.clear();
+	this->updates.clear();
+	this->fixedUpdates.clear();
+	this->renderUI.clear();
+	this->render3D.clear();
+
+	// マップの解放
 	this->nameMap.clear();
 	this->tagMap.clear();
 }
@@ -69,7 +81,7 @@ void GameObjectManager::FlushInitialize()
 	}
 }
 
-/** @brief オブジェクトの一括更新
+/** @brief 一括更新
  *  @param float _deltaTime デルタタイム
  */
 void GameObjectManager::UpdateAll(float _deltaTime)
@@ -78,7 +90,16 @@ void GameObjectManager::UpdateAll(float _deltaTime)
 	{
 		if (updatableObj)
 		{
+			// [TODO] 一旦 Update を呼ぶようにしているが、将来的に IUpdatable の Update を呼ぶように修正する
 			updatableObj->Update(_deltaTime);
+		}
+	}
+
+	for (auto& update : this->updates)
+	{
+		if (update)
+		{
+			update->Update(_deltaTime);
 		}
 	}
 
@@ -86,14 +107,51 @@ void GameObjectManager::UpdateAll(float _deltaTime)
 	this->FlushDestroyQueue();
 }
 
-/// @brief オブジェクトの一括描画
-void GameObjectManager::DrawAll() 
+/**	@brief 一括固定更新
+ *	@param		float _deltaTime	デルタタイム
+ */
+void GameObjectManager::FixedUpdateAll(float _deltaTime)
+{
+	// 固定更新を持つコンポーネントを更新
+	for (auto& fixedUpdate : this->fixedUpdates)
+	{
+		if (fixedUpdate)
+		{
+			// [TODO] FixedUpdateが未実装のため暫定でUpdateを呼ぶ
+			fixedUpdate->Update(_deltaTime);
+		}
+	}
+}
+
+/// @brief 3Dコンポーネントの一括描画
+void GameObjectManager::Render3DAll()
 {
 	for (auto& drawableObj : this->drawList)
 	{
 		if (drawableObj)
 		{
+			// [TODO] 一旦 Draw を呼ぶようにしているが、将来的に IDrawable の Draw を呼ぶように修正する
 			drawableObj->Draw();
+		}
+	}
+
+	for (auto& render : this->render3D)
+	{
+		if (render)
+		{
+			render->Draw();
+		}
+	}
+}
+
+/// @brief UIコンポーネントの一括描画
+void GameObjectManager::RenderUIAll()
+{
+	for (auto& render : this->renderUI)
+	{
+		if (render)
+		{
+			render->Draw();
 		}
 	}
 }
@@ -109,9 +167,6 @@ GameObject* GameObjectManager::Instantiate(const std::string& _name, const GameT
 	// GameObject を生成
 	auto newObject = std::make_unique<GameObject>(*this, _name, _tag, _isActive);
 	GameObject* rawPtr = newObject.get();
-
-	// [TODO]GameObjectクラス内でSetUp()を作成しコンストラクタ内でSetUp()を定義する
-	//rawPtr->SetUp();
 
 	// リソース関連の参照を設定
 	rawPtr->SetServices(this->services);

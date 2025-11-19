@@ -145,6 +145,7 @@ void GameLoop::Update()
     while (this->timeSystem.ShouldRunFixedStep())
     {
         this->physicsSystem->Step(fixedDelta);
+		this->gameObjectManager->FixedUpdateAll(fixedDelta);
         this->timeSystem.ConsumeFixedStep();
     }
 }

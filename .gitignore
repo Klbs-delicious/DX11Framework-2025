@@ -4,9 +4,10 @@
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
 #----------------------------------------
-# Asset ディレクトリ除外
+# ディレクトリ除外
 #----------------------------------------
 DX11Framework-2025/Assets/
+changes.txt
 
 # アセット関連
 *.png

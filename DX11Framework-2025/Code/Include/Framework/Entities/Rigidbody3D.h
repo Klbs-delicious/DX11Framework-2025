@@ -93,10 +93,38 @@ namespace Framework::Physics
 		/// @brief Body が生成済みかどうか
 		bool HasBody() const { return this->hasBody; }
 
-		/** @brief 重力スケールを設定する
-		 *  @param float _scale 重力スケール
+		/** @brief 重力の影響倍率を設定する
+		 *  @param _scale 重力倍率（0 で無重力、1 で通常）
+		 *  @details
+		 *          動的剛体にのみ有効。静的・キネマティックでは効果なし
 		 */
 		void SetGravityScale(float _scale);
+
+		/** @brief 摩擦係数を設定する
+		 *  @param _friction 摩擦（一般に 0～1）
+		 *  @details
+		 *          衝突時のすべりやすさに影響する。動作中に変更可能
+		 */
+		void SetFriction(float _friction);
+
+		/** @brief 反発係数を設定する
+		 *  @param _restitution 跳ね返り係数（0～1）
+		 *  @details
+		 *          0 は跳ねない、1 は完全に弾む。動作中に変更可能
+		 */
+		void SetRestitution(float _restitution);
+
+		/** @brief センサーかどうかを設定する
+		 *  @param _isTrigger true なら接触検知のみ行い、物理反応は発生しない
+		 *  @details
+		 *          Static センサーは軽量。Kinematic センサーは静的物体とも接触を検知できる
+		 */
+		void SetIsTrigger(bool _isTrigger);
+
+		[[nodiscard]] float GetGravityScale() const { return this->gravityScale; }
+		[[nodiscard]] float GetFriction() const { return this->friction; }
+		[[nodiscard]] float GetRestitution() const { return this->restitution; }
+		[[nodiscard]] bool GetIsTrigger() const { return this->isTrigger; }
 
 	private:
 		/**@brief Transform から Jolt 用の位置・回転を取得するヘルパ
@@ -114,15 +142,19 @@ namespace Framework::Physics
 		void SyncTransform();
 
 	private:
-		JPH::BodyID			bodyID;		///< Jolt のボディ ID（無効の場合もある）
-		bool				hasBody;	///< 現在 Body が生成されているか
-		float				mass;		///< 質量（kg）
-		float gravityScale = 1.0f;		///< 重力スケール
+		JPH::BodyID		bodyID;			///< Jolt のボディ ID（無効の場合もある）
+		bool			hasBody;		///< 現在 Body が生成されているか
 
-		JPH::EMotionType	motionType;	///< 運動タイプ
+		float			mass;			///< 質量（kg）
+		float			gravityScale;	///< 重力スケール
+		float			friction;		///< 摩擦係数
+		float			restitution;	///< 反発係数
+		bool			isTrigger;		///< トリガーかどうか
 
-		Collider3DComponent* collider;	///< 形状を提供するコライダー
-		Transform* transform;			///< 所属するオブジェクトの Transform
-		PhysicsSystem& physicsSystem;;	///< 物理システムの参照
+		JPH::EMotionType		motionType;		///< 運動タイプ
+
+		Collider3DComponent*	collider;		///< 形状を提供するコライダー
+		Transform*				transform;		///< 所属するオブジェクトの Transform
+		PhysicsSystem&			physicsSystem;;	///< 物理システムの参照
 	};
 }

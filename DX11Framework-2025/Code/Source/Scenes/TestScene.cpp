@@ -170,6 +170,7 @@ void TestScene::SetupObjects()
 	coll3D->BuildShape();
 	rigidbody3D = obj_4->AddComponent<Framework::Physics::Rigidbody3D>();
 	rigidbody3D->SetMotionType(JPH::EMotionType::Static);
+	rigidbody3D->SetRestitution(0.5f);
 
 	// 大量オブジェクト生成テスト
 	SpawnManyBoxes(10, 10, 10);
@@ -290,7 +291,8 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 			auto rigidbody3D = obj->AddComponent<Framework::Physics::Rigidbody3D>();
 
 			float randomScale = (static_cast<float>(rand()) / RAND_MAX) * 2.0f - 1.0f;
-			rigidbody3D->SetGravityScale(randomScale);
+			//rigidbody3D->SetGravityScale(randomScale);
+			rigidbody3D->SetRestitution(randomScale);
 
 			obj->AddComponent<MeshRenderer>();
 
@@ -306,6 +308,5 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 			index++;
 		}
 	}
-
 	std::cout << "[Test] Spawned " << (_countX * _countZ) << " boxes.\n";
 }

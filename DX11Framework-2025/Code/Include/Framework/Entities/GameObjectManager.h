@@ -65,19 +65,13 @@ public:
 	 *	@param	const std::string& _name	オブジェクトの名前
 	 *	@return GameObject*					ゲームオブジェクト
 	 */
-	GameObject* GetFindObjectByName(const std::string& _name);
-
-	/**	@brief	ゲームオブジェクトをタグ検索で取得する
-	 *	@param	const GameTags::Tag& _tag = GameTags::Tag::None	オブジェクトのタグ名
-	 *	@return GameObject*										ゲームオブジェクト
-	 */
-	GameObject* GetFindObjectWithTag(const GameTags::Tag& _tag);
+	[[nodiscard]] GameObject* GetFindObjectByName(const std::string& _name);
 
 	/**	@brief	ゲームオブジェクトをタグ検索で取得する
 	 *	@param	const GameTags::Tag& _tag = GameTags::Tag::None	オブジェクトのタグ名
 	 *	@return std::vector<GameObject*>						当てはまるゲームオブジェクトのリスト
 	 */
-	std::vector<GameObject*> GetFindObjectsWithTag(const GameTags::Tag& _tag);
+	[[nodiscard]] std::vector<GameObject*> GetFindObjectsWithTag(const GameTags::Tag& _tag);
 
 	/**	@brief 登録されたゲームオブジェクトを一括削除する
 	 *	@details
@@ -95,19 +89,36 @@ public:
 	 */
 	void OnGameObjectEvent(GameObject* _obj, GameObjectEvent _event)override;
 
-	/**	@brief  オブジェクトの重複を入れないユーティリティ
-	 *	@param std::vector<GameObject*>& _v
-	 *	@param GameObject* _p
+	/**@brief GameObjectからのイベント通知を受け取る（コンテキスト版）
+	 * @param GameObjectEventContext _eventContext	イベントコンテキスト情報
+	 * @detail
+	 *	-	GameObject が状態変化した際に呼び出される
+	 *	-	実装側では eventContext.eventType の種類に応じて処理を分岐させる
 	 */
-	static inline void push_unique(std::vector<GameObject*>& _v, GameObject* _p) {
-		if (std::find(_v.begin(), _v.end(), _p) == _v.end()) _v.push_back(_p);
+	void OnGameObjectEvent(const GameObjectEventContext _eventContext) override;
+
+	/** @brief 要素を重複なく追加する
+	 *  @tparam T 追加する要素のポインタ型
+	 *  @param _v 追加先のベクター
+	 *  @param _p 追加するポインタ
+	 */
+	template<typename T>
+	inline void PushUnique(std::vector<T*>& _v, T* _p)
+	{
+		if (std::find(_v.begin(), _v.end(), _p) == _v.end())
+		{
+			_v.push_back(_p);
+		}
 	}
 
-	/**	@brief  オブジェクトを確実に外すユーティリティ
-	 *	@param std::vector<GameObject*>& _v
-	 *	@param GameObject* _p
+	/** @brief 要素を 1 つ確実に削除する
+	 *  @tparam T 削除する要素のポインタ型
+	 *  @param _v 削除対象のベクター
+	 *  @param _p 削除したいポインタ
 	 */
-	static inline void erase_one(std::vector<GameObject*>& _v, GameObject* _p) {
+	template<typename T>
+	inline void EraseOne(std::vector<T*>& _v, T* _p)
+	{
 		_v.erase(std::remove(_v.begin(), _v.end(), _p), _v.end());
 	}
 
@@ -118,6 +129,10 @@ public:
 	 *		- Initialized/Refreshed から共通で呼ぶ
 	 */
 	void RefreshRegistration(GameObject* _obj);
+
+private:
+	void RegisterComponentToPhases(Component* component);
+	void UnregisterComponentFromPhases(Component* component);
 
 private:
 	std::list<std::unique_ptr<GameObject>> gameObjects;		///< 生成されたゲームオブジェクト
@@ -137,6 +152,6 @@ private:
 	std::vector<IDrawable*> renderUI;		///< UI描画を持つコンポーネントの配列
 	std::vector<IDrawable*> render3D;		///< 3D描画を持つコンポーネントの配列
 
-	std::unordered_map<std::string, GameObject*> nameMap;	///< 名前検索用マップ
-	std::unordered_map<GameTags::Tag, GameObject*> tagMap;	///< タグ検索用マップ
+	std::unordered_map<std::string, GameObject*> nameMap;				///< 名前検索用マップ
+	std::unordered_map<GameTags::Tag, std::vector<GameObject*>> tagMap;	///< タグ検索用マップ
 };

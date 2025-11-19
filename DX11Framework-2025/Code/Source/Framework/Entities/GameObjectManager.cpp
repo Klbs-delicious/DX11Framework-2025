@@ -176,7 +176,7 @@ GameObject* GameObjectManager::Instantiate(const std::string& _name, const GameT
 	
 	// 名前・タグマップに登録
 	this->nameMap[_name] = rawPtr;
-	this->tagMap[_tag] = rawPtr;
+	this->tagMap[_tag].push_back(rawPtr);
 
 	// 管理リストに追加して所有権を保持
 	this->gameObjects.push_back(std::move(newObject));
@@ -199,35 +199,11 @@ GameObject* GameObjectManager::GetFindObjectByName(const std::string& _name)
 
 /** @brief ゲームオブジェクトをタグ検索で取得する
  *  @param const GameTags::Tag& _tag = GameTags::Tag::None オブジェクトのタグ名
- *  @return GameObject* ゲームオブジェクト なければnullptr
- */
-GameObject* GameObjectManager::GetFindObjectWithTag(const GameTags::Tag& _tag)
-{
-	auto it = this->tagMap.find(_tag);
-	if (it != this->tagMap.end()) {
-		return it->second;
-	}
-	return nullptr;
-}
-
-/** @brief ゲームオブジェクトをタグ検索で取得する
- *  @param const GameTags::Tag& _tag = GameTags::Tag::None オブジェクトのタグ名
  *  @return std::vector<GameObject*> 当てはまるゲームオブジェクトのリスト
  */
 std::vector<GameObject*> GameObjectManager::GetFindObjectsWithTag(const GameTags::Tag& _tag)
 {
-	std::vector<GameObject*> result;
-
-	// 当てはまるオブジェクトがあれば格納していく
-	for (const auto& obj : this->gameObjects)
-	{
-		if (obj && obj->GetTag() == _tag)
-		{
-			result.push_back(obj.get());
-		}
-	}
-
-	return result;
+	return this->tagMap[_tag];
 }
 
 /**	@brief 登録されたゲームオブジェクトを一括削除する
@@ -290,14 +266,72 @@ void GameObjectManager::OnGameObjectEvent(GameObject* _obj, GameObjectEvent _eve
 		if (!_obj) return;
 
 		// 破棄前に、更新/描画リストから確実に外す（外し漏れ防止）
-		erase_one(this->updateList, _obj);
-		erase_one(this->drawList, _obj);
+		EraseOne(this->updateList, _obj);
+		EraseOne(this->drawList, _obj);
 
 		// すでに破棄キューに入っていないか確認して追加する
 		if (std::find(this->destroyQueue.begin(), this->destroyQueue.end(), _obj) == this->destroyQueue.end())
 		{
 			this->destroyQueue.push_back(_obj);
 		}
+		break;
+	}
+}
+
+/**@brief GameObjectからのイベント通知を受け取る（コンテキスト版）
+ * @param GameObjectEventContext _eventContext	イベントコンテキスト情報
+ * @detail
+ *	-	GameObject が状態変化した際に呼び出される
+ *	-	実装側では eventContext.eventType の種類に応じて処理を分岐させる
+ */
+void GameObjectManager::OnGameObjectEvent(const GameObjectEventContext _ctx)
+{
+	GameObject* obj = this->GetFindObjectByName(_ctx.objectName);
+	if (!obj) return;
+
+	switch (_ctx.eventType)
+	{
+		// オブジェクト有効化
+	case GameObjectEvent::GameObjectEnable:
+		for (auto& compUPtr : obj->GetComponents())
+		{
+			RegisterComponentToPhases(compUPtr.get());
+		}
+		break;
+
+		// オブジェクト無効化
+	case GameObjectEvent::GameObjectDisable:
+		for (auto& compUPtr : obj->GetComponents())
+		{
+			UnregisterComponentFromPhases(compUPtr.get());
+		}
+		break;
+
+		// コンポーネント有効化
+	case GameObjectEvent::ComponentEnabled:
+		RegisterComponentToPhases(_ctx.component);
+		break;
+
+		// コンポーネント無効化
+	case GameObjectEvent::ComponentDisabled:
+		UnregisterComponentFromPhases(_ctx.component);
+		break;
+
+		// コンポーネント追加
+	case GameObjectEvent::ComponentAdded:
+		RegisterComponentToPhases(_ctx.component);
+		break;
+
+		// コンポーネント削除
+	case GameObjectEvent::ComponentRemoved:
+		UnregisterComponentFromPhases(_ctx.component);
+		break;
+
+	case GameObjectEvent::Refreshed:
+	case GameObjectEvent::Destroyed:
+	case GameObjectEvent::Initialized:
+		// 旧システム互換のため残している処理
+		RefreshRegistration(obj);
 		break;
 	}
 }
@@ -313,10 +347,72 @@ void GameObjectManager::RefreshRegistration(GameObject* _obj)
 	if (!_obj) return;
 
 	// Update 対象の正規化
-	if (_obj->IsUpdatable())  { push_unique(this->updateList, _obj); }
-	else{ erase_one(this->updateList, _obj); }
+	if (_obj->IsUpdatable())  { PushUnique(this->updateList, _obj); }
+	else{ EraseOne(this->updateList, _obj); }
 
 	// Draw 対象の正規化
-	if (_obj->IsDrawable()){ push_unique(this->drawList, _obj); }
-	else { erase_one(this->drawList, _obj); }
+	if (_obj->IsDrawable()){ PushUnique(this->drawList, _obj); }
+	else { EraseOne(this->drawList, _obj); }
+}
+
+//-----------------------------------------------------------------------------
+// GameObjectManager - Component Phase Registration Helper
+//-----------------------------------------------------------------------------
+
+void GameObjectManager::RegisterComponentToPhases(Component* _component)
+{
+	if (!_component) return;
+
+	// Update フェーズ
+	if (auto u = dynamic_cast<IUpdatable*>(_component))
+	{
+		PushUnique(this->updates, u);
+	}
+
+	// FixedUpdate フェーズ
+	if (auto f = dynamic_cast<IUpdatable*>(_component))
+	{
+		PushUnique(this->fixedUpdates, f);
+	}
+
+	// 3D 描画
+	if (auto d3 = dynamic_cast<IDrawable*>(_component))
+	{
+		PushUnique(this->render3D, d3);
+	}
+
+	// UI 描画
+	if (auto dUI = dynamic_cast<IDrawable*>(_component))
+	{
+		PushUnique(this->renderUI, dUI);
+	}
+}
+
+void GameObjectManager::UnregisterComponentFromPhases(Component* _component)
+{
+	if (!_component) return;
+
+	// Update フェーズ
+	if (auto u = dynamic_cast<IUpdatable*>(_component))
+	{
+		EraseOne(this->updates, u);
+	}
+
+	// FixedUpdate フェーズ
+	if (auto f = dynamic_cast<IUpdatable*>(_component))
+	{
+		EraseOne(this->fixedUpdates, f);
+	}
+
+	// 3D 描画
+	if (auto d3 = dynamic_cast<IDrawable*>(_component))
+	{
+		EraseOne(this->render3D, d3);
+	}
+
+	// UI 描画
+	if (auto dUI = dynamic_cast<IDrawable*>(_component))
+	{
+		EraseOne(this->renderUI, dUI);
+	}
 }

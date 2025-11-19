@@ -251,6 +251,11 @@ public:
 	 */
 	[[nodiscard]] TimeScaleComponent* TimeScale() const { return this->timeScaleComponent; }
 
+	/**	@brief	コンポーネントリストの取得（読み取り専用）
+	 *	@return	const std::vector<std::unique_ptr<Component>>&
+	 */
+	[[nodiscard]] const std::vector<std::unique_ptr<Component>>& GetComponents() const { return this->components; }
+
 public:
 		Transform* transform;	///< 位置、回転、スケール情報
 private:
@@ -266,7 +271,7 @@ private:
 	GameTags::Tag tag;	///< タグ名
 
 	std::vector<GameObject*> children;						///< 子オブジェクトのリスト
-	std::list<std::unique_ptr<Component>>	components;		///< コンポーネントのリスト
+	std::vector<std::unique_ptr<Component>>	components;		///< コンポーネントのリスト
 	std::vector<IUpdatable*>	updatableComponents;		///< 更新関連のコンポーネントのリスト
 	std::vector<IDrawable*>		drawableComponents;			///< 描画関連のコンポーネントのリスト
 };

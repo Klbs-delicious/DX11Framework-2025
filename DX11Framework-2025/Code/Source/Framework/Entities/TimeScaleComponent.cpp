@@ -11,6 +11,7 @@
 #include "Include/Framework/Entities/GameObject.h"
 #include "Include/Framework/Core/SystemLocator.h"
 
+#include<iostream>
 //-----------------------------------------------------------------------------
 // TimeScaleComponent class
 //-----------------------------------------------------------------------------
@@ -105,6 +106,15 @@ float TimeScaleComponent::ApplyTimeScale(float baseDelta) const
             scale *= this->timeScaleSystem.GlobalScale();
         }
     }
+
+    //std::cout << "[TSC] Apply: obj="
+    //    << this->Owner()->GetName()
+    //    << " global*layer=" << this->timeScaleSystem.CombinedScale(this->timeScaleLayer)
+    //    << " groupScale=" << groupScale
+    //    << " local*parent=" << scale
+    //    << " → scaled=" << baseDelta * scale
+    //    << std::endl;
+
     return baseDelta * scale;
 }
 

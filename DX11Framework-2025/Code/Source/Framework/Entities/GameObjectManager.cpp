@@ -71,28 +71,28 @@ void GameObjectManager::Dispose()
 /// @brief 未初期化オブジェクトを初期化する
 void GameObjectManager::FlushInitialize()
 {
-	//while (!this->pendingInit.empty())
-	//{
-	//	GameObject* obj = this->pendingInit.front();
-	//	this->pendingInit.pop_front();
-
-	//	if (!obj) continue;
-
-	//	// 初期化処理
-	//	obj->Initialize();
-	//}
-
-	while (!this->pendingInits.empty())
+	while (!this->pendingInit.empty())
 	{
-		// コンポーネントを取り出す
-		Component* comp = this->pendingInits.front();
-		this->pendingInits.pop_front();
+		GameObject* obj = this->pendingInit.front();
+		this->pendingInit.pop_front();
 
-		if (!comp) continue;
+		if (!obj) continue;
 
 		// 初期化処理
-		comp->Initialize();
+		obj->Initialize();
 	}
+
+	//while (!this->pendingInits.empty())
+	//{
+	//	// コンポーネントを取り出す
+	//	Component* comp = this->pendingInits.front();
+	//	this->pendingInits.pop_front();
+
+	//	if (!comp) continue;
+
+	//	// 初期化処理
+	//	comp->Initialize();
+	//}
 	//std::cout << "pendingInits Size : " << pendingInits.size() << std::endl;
 }
 
@@ -101,22 +101,32 @@ void GameObjectManager::FlushInitialize()
  */
 void GameObjectManager::UpdateAll(float _deltaTime)
 {
-	//for (auto& updatableObj : this->updateList)
-	//{
-	//	if (updatableObj)
-	//	{
-	//		// [TODO] 一旦 Update を呼ぶようにしているが、将来的に IUpdatable の Update を呼ぶように修正する
-	//		updatableObj->Update(_deltaTime);
-	//	}
-	//}
-
-	for (auto& update : this->updates)
+	for (auto& updatableObj : this->updateList)
 	{
-		if (update)
+		if (updatableObj)
 		{
-			update->Update(_deltaTime);
+			float scaledDelta = updatableObj->TimeScale()->ApplyTimeScale(_deltaTime);
+			updatableObj->Update(scaledDelta);
 		}
 	}
+
+	//for (auto& update : this->updates)
+	//{
+	//	if (update)
+	//	{
+	//		// 時間スケールを考慮して更新する
+	//		auto comp = dynamic_cast<Component*>(update);
+	//		auto obj = comp->Owner();
+	//		float scaledDelta = obj->TimeScale()->ApplyTimeScale(_deltaTime);
+	//		update->Update(scaledDelta);
+
+	//		std::cout << "[GOM] Update: "
+	//			<< obj->GetName()
+	//			<< " raw=" << _deltaTime
+	//			<< " scaled=" << scaledDelta
+	//			<< std::endl;
+	//	}
+	//}
 
 	// 削除申請のあるオブジェクトを消す
 	this->FlushDestroyQueue();
@@ -132,8 +142,13 @@ void GameObjectManager::FixedUpdateAll(float _deltaTime)
 	//{
 	//	if (fixedUpdate)
 	//	{
+	// 			// 時間スケールを考慮して更新する
+	//		auto comp = dynamic_cast<Component*>(fixedUpdate);
+	//		auto obj = comp->Owner();
+	//		float scaledDelta = obj->TimeScale()->ApplyTimeScale(_deltaTime);
+	//// 
 	//		// [TODO] FixedUpdateが未実装のため暫定でUpdateを呼ぶ
-	//		fixedUpdate->Update(_deltaTime);
+	//		fixedUpdate->Update(scaledDelta);
 	//	}
 	//}
 }
@@ -141,34 +156,34 @@ void GameObjectManager::FixedUpdateAll(float _deltaTime)
 /// @brief 3Dコンポーネントの一括描画
 void GameObjectManager::Render3DAll()
 {
-	//for (auto& drawableObj : this->drawList)
-	//{
-	//	if (drawableObj)
-	//	{
-	//		// [TODO] 一旦 Draw を呼ぶようにしているが、将来的に IDrawable の Draw を呼ぶように修正する
-	//		drawableObj->Draw();
-	//	}
-	//}
-
-	for (auto& render : this->render3D)
+	for (auto& drawableObj : this->drawList)
 	{
-		if (render)
+		if (drawableObj)
 		{
-			render->Draw();
+			// [TODO] 一旦 Draw を呼ぶようにしているが、将来的に IDrawable の Draw を呼ぶように修正する
+			drawableObj->Draw();
 		}
 	}
+
+	//for (auto& render : this->render3D)
+	//{
+	//	if (render)
+	//	{
+	//		render->Draw();
+	//	}
+	//}
 }
 
 /// @brief UIコンポーネントの一括描画
 void GameObjectManager::RenderUIAll()
 {
-	for (auto& render : this->renderUI)
-	{
-		if (render)
-		{
-			render->Draw();
-		}
-	}
+	//for (auto& render : this->renderUI)
+	//{
+	//	if (render)
+	//	{
+	//		render->Draw();
+	//	}
+	//}
 }
 
 /** @brief ゲームオブジェクトの作成

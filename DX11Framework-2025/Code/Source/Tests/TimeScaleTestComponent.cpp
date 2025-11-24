@@ -35,9 +35,9 @@ void TimeScaleTestComponent::Initialize()
 	// キーバインドの登録
 	// ------------------------------------------------------
 	this->inputSystem.RegisterKeyBinding("Slow_Global", static_cast<int>(DirectInputDevice::KeyboardKey::Space));
-	this->inputSystem.RegisterKeyBinding("Slow_GameObject_1", static_cast<int>(DirectInputDevice::KeyboardKey::Num1));
-	this->inputSystem.RegisterKeyBinding("Slow_GameObject_2", static_cast<int>(DirectInputDevice::KeyboardKey::Num2));
-	this->inputSystem.RegisterKeyBinding("Slow_GameObject_3", static_cast<int>(DirectInputDevice::KeyboardKey::Num3));
+	this->inputSystem.RegisterKeyBinding("Slow_GameObject_1", static_cast<int>(DirectInputDevice::KeyboardKey::J));
+	this->inputSystem.RegisterKeyBinding("Slow_GameObject_2", static_cast<int>(DirectInputDevice::KeyboardKey::K));
+	this->inputSystem.RegisterKeyBinding("Slow_GameObject_3", static_cast<int>(DirectInputDevice::KeyboardKey::L));
 }
 
 /// @brief 終了処理
@@ -54,7 +54,7 @@ void TimeScaleTestComponent::Update(float _deltaTime)
 	// スペースキーでグローバルタイムスケールを0.1に変更する
 	if (this->inputSystem.IsActionPressed("Slow_Global"))
 	{
-		this->timeScaleSystem.SetGlobalScale(0.5f); 
+		this->timeScaleSystem.SetGlobalScale(0.5f);
 	}
 	else { this->timeScaleSystem.SetGlobalScale(1.0f); }
 

@@ -15,6 +15,8 @@
 #include "Include/Scenes/TestScene.h"
 #include "Include/Scenes/TitleScene.h"
 
+#include "Include/Framework/Entities/Rigidbody3D.h"
+
 //-----------------------------------------------------------------------------
 // GameLoop Class
 //-----------------------------------------------------------------------------
@@ -31,22 +33,23 @@ void GameLoop::Initialize()
     // ResourceHubに登録・管理する
     //--------------------------------------------------------------------------    
 
-    // 画像管理クラスをリソース管理クラスに登録
+    // 画像管理
     this->spriteManager = std::make_unique<SpriteManager>();
     ResourceHub::Register(this->spriteManager.get());
 
-    // シェーダー管理クラスをリソース管理クラスに登録
+    // シェーダー管理
     this->shaderManager = std::make_unique<ShaderManager>();
     ResourceHub::Register(this->shaderManager.get());
 
-    // マテリアル管理クラスをリソース管理クラスに登録
+    // マテリアル管理
     this->materialManager = std::make_unique<MaterialManager>();
     ResourceHub::Register(this->materialManager.get());
 
-    // メッシュ管理クラスをリソース管理クラスに登録
+    // メッシュ管理
     this->meshManager = std::make_unique<MeshManager>();
     ResourceHub::Register(this->meshManager.get());
 
+	// エンジンサービス構造体に参照を設定
     this->services = {
         &ResourceHub::Get<SpriteManager>(),
         &ResourceHub::Get<MaterialManager>(),
@@ -86,7 +89,7 @@ void GameLoop::Initialize()
 	}
     SystemLocator::Register<Framework::Physics::PhysicsSystem>(this->physicsSystem.get());
 
-    // ゲームオブジェクトの管理を行うクラスの生成と登録
+    // ゲームオブジェクトの管理
     this->gameObjectManager = std::make_unique<GameObjectManager>(&services);
     SystemLocator::Register<GameObjectManager>(this->gameObjectManager.get());
 
@@ -111,7 +114,7 @@ void GameLoop::Initialize()
     // キーバインドの登録
     this->inputSystem->RegisterKeyBinding("SceneChangeTest", static_cast<int>(DirectInputDevice::KeyboardKey::D));
     this->inputSystem->RegisterKeyBinding("SceneChangeTitle", static_cast<int>(DirectInputDevice::KeyboardKey::A));
-    this->inputSystem->RegisterKeyBinding("GameExit", static_cast<int>(DirectInputDevice::KeyboardKey::K));
+    this->inputSystem->RegisterKeyBinding("GameExit", static_cast<int>(DirectInputDevice::KeyboardKey::Escape));
 
     // シーンの変更
     this->sceneManager->RequestSceneChange(SceneType::Test);
@@ -139,15 +142,29 @@ void GameLoop::Update()
     this->inputSystem->Update();
     this->sceneManager->Update(delta);
 
-	//-------------------------------------------------------------
-	// 固定ステップ更新
-	//-------------------------------------------------------------
+    //-------------------------------------------------------------
+    // 固定ステップ更新
+    //-------------------------------------------------------------
     while (this->timeSystem.ShouldRunFixedStep())
     {
+        // 物理とTransformがそろった状態でゲームロジックのFixedUpdateを実行する
+        this->gameObjectManager->FixedUpdateAll(fixedDelta);
+
+        // 物理シミュレーションを実行する
         this->physicsSystem->Step(fixedDelta);
-		this->gameObjectManager->FixedUpdateAll(fixedDelta);
+
+		// 物理演算結果を全剛体コンポーネントに同期する
+		this->gameObjectManager->SyncPhysicsResults(fixedDelta);
+
+		// 固定ステップを1回分消費する
         this->timeSystem.ConsumeFixedStep();
     }
+
+	// 全Transformのワールド行列を更新する
+	this->gameObjectManager->UpdateAllTransforms();
+
+	// 保留中のオブジェクト破棄を行う
+	this->sceneManager->FlushPendingDestroys();
 }
 
 /// @brief		描画処理を行う

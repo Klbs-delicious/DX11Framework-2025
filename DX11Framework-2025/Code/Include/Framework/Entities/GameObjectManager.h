@@ -3,10 +3,13 @@
  */
 #pragma once
 #include"Include/Framework/Utils/NonCopyable.h"
+#include"Include/Framework/Event/GameObjectEvent.h"
+
 #include"Include/Framework/Entities/GameObject.h"
 #include"Include/Framework/Entities/Component.h"
 #include"Include/Framework/Entities/PhaseInterfaces.h"
-#include"Include/Framework/Event/GameObjectEvent.h"
+#include"Include/Framework/Entities/Rigidbody3D.h"
+#include"Include/Framework/Entities/Transform.h"
 
 #include<memory>
 #include<list>
@@ -47,11 +50,16 @@ public:
 	 */
 	void FixedUpdateAll(float _deltaTime);
 
-	/// @brief 3Dコンポーネントの一括描画
-	void Render3DAll();
+	/**	@brief 物理演算結果を各オブジェクトに同期する
+	 *	@param		float _delta	デルタタイム
+	 */
+	void SyncPhysicsResults(float _delta);
 
-	/// @brief UIコンポーネントの一括描画
-	void RenderUIAll();
+	/// @brief 全Transformのワールド行列を更新する
+	void UpdateAllTransforms();
+
+	/// @brief 一括描画
+	void RenderAll();
 
 	/**	@brief	ゲームオブジェクトの作成
 	 *	@param	const std::string& _name						オブジェクトの名前
@@ -79,15 +87,6 @@ public:
 	 *  -	マップ・リスト・所有権をすべて解除しDispose() を呼び出してリソースを解放する
 	 */
 	void FlushDestroyQueue();
-
-	/**@brief GameObjectからのイベント通知を受け取る
-	 * @param GameObject* _obj			通知元のGameObjectインスタンス
-	 * @param GameObjectEvent _event	発生したイベント種別
-	 * @detail
-	 *	-	GameObject が状態変化した際に呼び出される
-	 *	-	実装側では event の種類に応じて処理を分岐させる
-	 */
-	void OnGameObjectEvent(GameObject* _obj, GameObjectEvent _event)override;
 
 	/**@brief GameObjectからのイベント通知を受け取る（コンテキスト版）
 	 * @param GameObjectEventContext _eventContext	イベントコンテキスト情報
@@ -122,36 +121,29 @@ public:
 		_v.erase(std::remove(_v.begin(), _v.end(), _p), _v.end());
 	}
 
-	/**	@brief 現在の状態（IsUpdatable/IsDrawable）に合わせて登録を正規化
-	 *	@param _obj 
-	 *	@details	
-	 *		- 必要なら追加、不要なら除去
-	 *		- Initialized/Refreshed から共通で呼ぶ
-	 */
-	void RefreshRegistration(GameObject* _obj);
+private:
+	void RegisterComponentToPhases(Component* _component);
+	void UnregisterComponentFromPhases(Component* _component);
 
 private:
-	void RegisterComponentToPhases(Component* component);
-	void UnregisterComponentFromPhases(Component* component);
+	const EngineServices* services;		///< リソース関連の参照
 
-private:
+	// オブジェクト関連
 	std::list<std::unique_ptr<GameObject>> gameObjects;		///< 生成されたゲームオブジェクト
-	const EngineServices* services;							///< リソース関連の参照
-
-	std::deque<GameObject*> pendingInit;	///< 初期化を行うオブジェクトのキュー
-	std::vector<GameObject*> updateList;	///< 更新を行うオブジェクトの配列
-	std::vector<GameObject*> drawList;		///< 描画を行うオブジェクトの配列
-	std::deque<GameObject*> destroyQueue;	///< 遅延破棄対象キュー
+	std::deque<GameObject*> destroyQueue;					///< 遅延破棄対象キュー
 
 	// 外部コンポーネント管理用配列（オブジェクトIDと紐づけ）
-	std::deque<Component*> pendingInits;		///< 初期化を行うコンポーネントのキュー
-	std::vector<IUpdatable*> updates;			///< 更新を持つコンポーネントの配列
-	std::vector <IUpdatable*> fixedUpdates;		///< 固定更新を持つオブジェクトの配列
+	std::deque<Component*> pendingInits;			///< 初期化を行うコンポーネントのキュー
+	std::vector<IUpdatable*> updates;				///< 更新を持つコンポーネントの配列
+	std::vector <IFixedUpdatable*> fixedUpdates;	///< 固定更新を持つオブジェクトの配列
 
 	// 内部コンポーネント管理用配列
-	std::vector<IDrawable*> renderUI;		///< UI描画を持つコンポーネントの配列
-	std::vector<IDrawable*> render3D;		///< 3D描画を持つコンポーネントの配列
+	std::vector<IDrawable*> renderes;							///< 描画を持つコンポーネントの配列
+	std::vector<Framework::Physics::Rigidbody3D*> rigidbodies;	///< 物理コンポーネントの配列
+	std::vector<Transform*> transforms;							///< Transformコンポーネントの配列
 
+	// 検索用マップ
 	std::unordered_map<std::string, GameObject*> nameMap;				///< 名前検索用マップ
 	std::unordered_map<GameTags::Tag, std::vector<GameObject*>> tagMap;	///< タグ検索用マップ
+
 };

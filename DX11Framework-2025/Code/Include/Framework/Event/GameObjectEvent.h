@@ -12,9 +12,7 @@ class Component;
  *	@brief	GameObjectに関する軽量イベント種別
  */
 enum class GameObjectEvent {
-	Refreshed,
 	Destroyed,
-	Initialized,
 	GameObjectEnabled,
 	GameObjectDisabled,
 	ComponentEnabled,
@@ -38,14 +36,6 @@ struct GameObjectEventContext
   */
 class IGameObjectObserver {
 public:
-	/**@brief GameObjectからのイベント通知を受け取る
-	 * @param GameObject* _obj			通知元のGameObjectインスタンス
-	 * @param GameObjectEvent _event	発生したイベント種別
-	 * @detail	
-	 *	-	GameObject が状態変化した際に呼び出される
-	 *	-	実装側では event の種類に応じて処理を分岐させる
-	 */
-	virtual void OnGameObjectEvent(GameObject* _obj, GameObjectEvent _event) = 0;
 
 	/**@brief GameObjectからのイベント通知を受け取る（コンテキスト版）
 	 * @param GameObjectEventContext _eventContext	イベントコンテキスト情報

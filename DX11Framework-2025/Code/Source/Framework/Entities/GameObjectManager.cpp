@@ -21,8 +21,8 @@
  */
 GameObjectManager::GameObjectManager(const EngineServices* _services) :
 	gameObjects(), services(_services),
-	pendingInit(),updateList(),drawList(), destroyQueue(),
-	pendingInits(), updates(), fixedUpdates(), renderUI(), render3D(),
+	pendingInits(), updates(), fixedUpdates(), destroyQueue(),
+	renderes(), rigidbodies(), transforms(), 
 	nameMap(),tagMap()
 {}
 
@@ -36,8 +36,7 @@ GameObjectManager::~GameObjectManager()
 void GameObjectManager::Dispose()
 {
 	// すでに破棄済みなら何もしない
-	if (this->gameObjects.empty()) return;
-	std::cout << "[GameObjectManager] Size: " << this->gameObjects.size() << std::endl;
+	if (this->gameObjects.empty()) { return; }
 
 	// オブジェクトの解放
 	for (auto& object : this->gameObjects)
@@ -51,17 +50,15 @@ void GameObjectManager::Dispose()
 
 	// オブジェクト配列の解放
 	this->gameObjects.clear();
-	this->pendingInit.clear();
-	this->updateList.clear();
-	this->drawList.clear();
 	this->destroyQueue.clear();
 
 	// コンポーネント配列の解放
 	this->pendingInits.clear();
 	this->updates.clear();
 	this->fixedUpdates.clear();
-	this->renderUI.clear();
-	this->render3D.clear();
+	this->renderes.clear();
+	this->rigidbodies.clear();
+	this->transforms.clear();
 
 	// マップの解放
 	this->nameMap.clear();
@@ -71,29 +68,15 @@ void GameObjectManager::Dispose()
 /// @brief 未初期化オブジェクトを初期化する
 void GameObjectManager::FlushInitialize()
 {
-	while (!this->pendingInit.empty())
+	while (!this->pendingInits.empty())
 	{
-		GameObject* obj = this->pendingInit.front();
-		this->pendingInit.pop_front();
+		// コンポーネントを取り出す
+		Component* comp = this->pendingInits.front();
+		this->pendingInits.pop_front();
 
-		if (!obj) continue;
-
-		// 初期化処理
-		obj->Initialize();
+		if (!comp) { continue; }
+		comp->Initialize();
 	}
-
-	//while (!this->pendingInits.empty())
-	//{
-	//	// コンポーネントを取り出す
-	//	Component* comp = this->pendingInits.front();
-	//	this->pendingInits.pop_front();
-
-	//	if (!comp) continue;
-
-	//	// 初期化処理
-	//	comp->Initialize();
-	//}
-	//std::cout << "pendingInits Size : " << pendingInits.size() << std::endl;
 }
 
 /** @brief 一括更新
@@ -101,35 +84,18 @@ void GameObjectManager::FlushInitialize()
  */
 void GameObjectManager::UpdateAll(float _deltaTime)
 {
-	for (auto& updatableObj : this->updateList)
+	for (auto& update : this->updates)
 	{
-		if (updatableObj)
+		if (update)
 		{
-			float scaledDelta = updatableObj->TimeScale()->ApplyTimeScale(_deltaTime);
-			updatableObj->Update(scaledDelta);
+			// 時間スケールを考慮して更新する
+			auto comp = dynamic_cast<Component*>(update);
+			auto obj = comp->Owner();
+			float scaledDelta = obj->TimeScale()->ApplyTimeScale(_deltaTime);
+
+			update->Update(scaledDelta);
 		}
 	}
-
-	//for (auto& update : this->updates)
-	//{
-	//	if (update)
-	//	{
-	//		// 時間スケールを考慮して更新する
-	//		auto comp = dynamic_cast<Component*>(update);
-	//		auto obj = comp->Owner();
-	//		float scaledDelta = obj->TimeScale()->ApplyTimeScale(_deltaTime);
-	//		update->Update(scaledDelta);
-
-	//		std::cout << "[GOM] Update: "
-	//			<< obj->GetName()
-	//			<< " raw=" << _deltaTime
-	//			<< " scaled=" << scaledDelta
-	//			<< std::endl;
-	//	}
-	//}
-
-	// 削除申請のあるオブジェクトを消す
-	this->FlushDestroyQueue();
 }
 
 /**	@brief 一括固定更新
@@ -137,53 +103,53 @@ void GameObjectManager::UpdateAll(float _deltaTime)
  */
 void GameObjectManager::FixedUpdateAll(float _deltaTime)
 {
-	//// 固定更新を持つコンポーネントを更新
-	//for (auto& fixedUpdate : this->fixedUpdates)
-	//{
-	//	if (fixedUpdate)
-	//	{
-	// 			// 時間スケールを考慮して更新する
-	//		auto comp = dynamic_cast<Component*>(fixedUpdate);
-	//		auto obj = comp->Owner();
-	//		float scaledDelta = obj->TimeScale()->ApplyTimeScale(_deltaTime);
-	//// 
-	//		// [TODO] FixedUpdateが未実装のため暫定でUpdateを呼ぶ
-	//		fixedUpdate->Update(scaledDelta);
-	//	}
-	//}
-}
-
-/// @brief 3Dコンポーネントの一括描画
-void GameObjectManager::Render3DAll()
-{
-	for (auto& drawableObj : this->drawList)
+	// 固定更新を持つコンポーネントを更新
+	for (auto& fixedUpdate : this->fixedUpdates)
 	{
-		if (drawableObj)
+		if (fixedUpdate)
 		{
-			// [TODO] 一旦 Draw を呼ぶようにしているが、将来的に IDrawable の Draw を呼ぶように修正する
-			drawableObj->Draw();
+			// 時間スケールを考慮して更新する
+			auto comp = dynamic_cast<Component*>(fixedUpdate);
+			auto obj = comp->Owner();
+			float scaledDelta = obj->TimeScale()->ApplyTimeScale(_deltaTime);
+
+			fixedUpdate->FixedUpdate(scaledDelta);
 		}
 	}
-
-	//for (auto& render : this->render3D)
-	//{
-	//	if (render)
-	//	{
-	//		render->Draw();
-	//	}
-	//}
+	std::cout << "FixedUpdateAll called with deltaTime: " << _deltaTime << std::endl;
 }
 
-/// @brief UIコンポーネントの一括描画
-void GameObjectManager::RenderUIAll()
+/// @brief 物理演算結果を全剛体コンポーネントに同期する
+void GameObjectManager::SyncPhysicsResults(float _delta)
 {
-	//for (auto& render : this->renderUI)
-	//{
-	//	if (render)
-	//	{
-	//		render->Draw();
-	//	}
-	//}
+	for (auto& rigidbody : this->rigidbodies)
+	{
+		if (rigidbody)
+		{
+			rigidbody->ApplyPhysicsResults(_delta);
+		}
+	}
+}
+
+void GameObjectManager::UpdateAllTransforms()
+{
+	for (auto& transform : this->transforms)
+	{
+		if (transform)
+		{
+			transform->UpdateWorldMatrix();
+		}
+	}
+}
+
+
+/// @brief 一括描画
+void GameObjectManager::RenderAll()
+{
+	for (auto& render : this->renderes)
+	{
+		if (render){ render->Draw(); }
+	}
 }
 
 /** @brief ゲームオブジェクトの作成
@@ -200,9 +166,6 @@ GameObject* GameObjectManager::Instantiate(const std::string& _name, const GameT
 
 	// リソース関連の参照を設定
 	rawPtr->SetServices(this->services);
-
-	// 初期化待ちキューに登録（初期化は次のループで呼ぶ）
-	this->pendingInit.push_back(rawPtr);
 	
 	// 名前・タグマップに登録
 	this->nameMap[_name] = rawPtr;
@@ -212,7 +175,7 @@ GameObject* GameObjectManager::Instantiate(const std::string& _name, const GameT
 	this->gameObjects.push_back(std::move(newObject));
 
 	// 必須コンポーネントを追加
-	rawPtr->transform = rawPtr->AddComponent<Transform>();// 実行確認のためにpublicメンバに入れている、将来的にgetterのみに変更予定
+	rawPtr->transform = rawPtr->AddComponent<Transform>();
 	rawPtr->AddComponent<TimeScaleComponent>();
 
 	return rawPtr;
@@ -225,9 +188,8 @@ GameObject* GameObjectManager::Instantiate(const std::string& _name, const GameT
 GameObject* GameObjectManager::GetFindObjectByName(const std::string& _name) 
 {
 	auto it = this->nameMap.find(_name);
-	if (it != this->nameMap.end()) {
-		return it->second;
-	}
+	if (it != this->nameMap.end()) { return it->second; }
+
 	return nullptr;
 }
 
@@ -257,11 +219,6 @@ void GameObjectManager::FlushDestroyQueue()
 		this->nameMap.erase(target->GetName());
 		this->tagMap.erase(target->GetTag());
 
-		// リストから除去
-		this->updateList.erase(std::remove(this->updateList.begin(), this->updateList.end(), target), this->updateList.end());
-		this->drawList.erase(std::remove(this->drawList.begin(), this->drawList.end(), target), this->drawList.end());
-		this->pendingInit.erase(std::remove(this->pendingInit.begin(), this->pendingInit.end(), target), this->pendingInit.end());
-
 		// 所有リストから除去
 		this->gameObjects.remove_if([target](const std::unique_ptr<GameObject>& obj)
 		{
@@ -275,43 +232,6 @@ void GameObjectManager::FlushDestroyQueue()
 	}
 }
 
-/**@brief GameObjectからのイベント通知を受け取る
- * @param GameObject* _obj			通知元のGameObjectインスタンス
- * @param GameObjectEvent _event	発生したイベント種別
- * @detail
- *	-	GameObject が状態変化した際に呼び出される
- *	-	実装側では event の種類に応じて処理を分岐させる
- */
-void GameObjectManager::OnGameObjectEvent(GameObject* _obj, GameObjectEvent _event)
-{
-	switch (_event) {
-	case GameObjectEvent::Initialized:
-		// 初期化直後：現在の状態に合わせて登録を正規化
-		RefreshRegistration(_obj);
-		break;
-
-	case GameObjectEvent::Refreshed:
-		// コンポーネント構成や有効/無効が変わった：登録を正規化
-		RefreshRegistration(_obj);
-		// std::cout << "Refreshed: " << _obj->GetName() << std::endl;
-		break;
-
-	case GameObjectEvent::Destroyed:
-		if (!_obj) return;
-
-		// 破棄前に、更新/描画リストから確実に外す（外し漏れ防止）
-		EraseOne(this->updateList, _obj);
-		EraseOne(this->drawList, _obj);
-
-		// すでに破棄キューに入っていないか確認して追加する
-		if (std::find(this->destroyQueue.begin(), this->destroyQueue.end(), _obj) == this->destroyQueue.end())
-		{
-			this->destroyQueue.push_back(_obj);
-		}
-		break;
-	}
-}
-
 /**@brief GameObjectからのイベント通知を受け取る（コンテキスト版）
  * @param GameObjectEventContext _eventContext	イベントコンテキスト情報
  * @detail
@@ -321,7 +241,7 @@ void GameObjectManager::OnGameObjectEvent(GameObject* _obj, GameObjectEvent _eve
 void GameObjectManager::OnGameObjectEvent(const GameObjectEventContext _ctx)
 {
 	GameObject* obj = this->GetFindObjectByName(_ctx.objectName);
-	if (!obj) return;
+	if (!obj){ return; }
 
 	switch (_ctx.eventType)
 	{
@@ -366,10 +286,6 @@ void GameObjectManager::OnGameObjectEvent(const GameObjectEventContext _ctx)
 
 	case GameObjectEvent::Destroyed:
 
-		// 破棄前に、更新/描画リストから確実に外す（外し漏れ防止）
-		EraseOne(this->updateList, obj);
-		EraseOne(this->drawList, obj);
-
 		// すでに破棄キューに入っていないか確認して追加する
 		if (std::find(this->destroyQueue.begin(), this->destroyQueue.end(), obj) == this->destroyQueue.end())
 		{
@@ -381,37 +297,12 @@ void GameObjectManager::OnGameObjectEvent(const GameObjectEventContext _ctx)
 		{
 			UnregisterComponentFromPhases(compUPtr.get());
 		}
-
-		break;
-	case GameObjectEvent::Refreshed:
-	case GameObjectEvent::Initialized:
-		// 旧システム互換のため残している処理
-		RefreshRegistration(obj);
 		break;
 	}
 
 	// std::cout << "Event: " << static_cast<int>(_ctx.eventType) << " Object: " << _ctx.objectName << std::endl;
 	// 現在のリストの数を表示
-	std::cout << "[GameObjectManager] UpdateList Size: " << this->updates.size() << " DrawList Size: " << this->render3D.size()<< " pendingInits Size: " << this->pendingInits.size() << std::endl;
-}
-
-/**	@brief 現在の状態（IsUpdatable/IsDrawable）に合わせて登録を正規化
- *	@param _obj
- *	@details
- *		- 必要なら追加、不要なら除去
- *		- Initialized/Refreshed から共通で呼ぶ
- */
-void GameObjectManager::RefreshRegistration(GameObject* _obj)
-{
-	if (!_obj) return;
-
-	// Update 対象の正規化
-	if (_obj->IsUpdatable())  { PushUnique(this->updateList, _obj); }
-	else{ EraseOne(this->updateList, _obj); }
-
-	// Draw 対象の正規化
-	if (_obj->IsDrawable()){ PushUnique(this->drawList, _obj); }
-	else { EraseOne(this->drawList, _obj); }
+	//std::cout << "[GameObjectManager] UpdateList Size: " << this->updates.size() << " DrawList Size: " << this->render3D.size()<< " pendingInits Size: " << this->pendingInits.size() << std::endl;
 }
 
 //-----------------------------------------------------------------------------
@@ -420,7 +311,7 @@ void GameObjectManager::RefreshRegistration(GameObject* _obj)
 
 void GameObjectManager::RegisterComponentToPhases(Component* _component)
 {
-	if (!_component) return;
+	if (!_component){ return; }
 
 	// Update フェーズ
 	if (auto u = dynamic_cast<IUpdatable*>(_component))
@@ -429,27 +320,33 @@ void GameObjectManager::RegisterComponentToPhases(Component* _component)
 	}
 
 	// FixedUpdate フェーズ
-	if (auto f = dynamic_cast<IUpdatable*>(_component))
+	if (auto f = dynamic_cast<IFixedUpdatable*>(_component))
 	{
 		PushUnique(this->fixedUpdates, f);
 	}
 
-	// 3D 描画
-	if (auto d3 = dynamic_cast<IDrawable*>(_component))
-	{
-		PushUnique(this->render3D, d3);
-	}
-
-	// UI 描画
+	// 描画
 	if (auto dUI = dynamic_cast<IDrawable*>(_component))
 	{
-		PushUnique(this->renderUI, dUI);
+		PushUnique(this->renderes, dUI);
+	}
+
+	// Rigidbody3D
+	if (auto rb3D = dynamic_cast<Framework::Physics::Rigidbody3D*>(_component))
+	{
+		PushUnique(this->rigidbodies, rb3D);
+	}
+
+	// Transform
+	if (auto tf = dynamic_cast<Transform*>(_component))
+	{
+		PushUnique(this->transforms, tf);
 	}
 }
 
 void GameObjectManager::UnregisterComponentFromPhases(Component* _component)
 {
-	if (!_component) return;
+	if (!_component) { return; }
 
 	// Update フェーズ
 	if (auto u = dynamic_cast<IUpdatable*>(_component))
@@ -458,20 +355,26 @@ void GameObjectManager::UnregisterComponentFromPhases(Component* _component)
 	}
 
 	// FixedUpdate フェーズ
-	if (auto f = dynamic_cast<IUpdatable*>(_component))
+	if (auto f = dynamic_cast<IFixedUpdatable*>(_component))
 	{
 		EraseOne(this->fixedUpdates, f);
 	}
 
-	// 3D 描画
-	if (auto d3 = dynamic_cast<IDrawable*>(_component))
-	{
-		EraseOne(this->render3D, d3);
-	}
-
-	// UI 描画
+	// 描画
 	if (auto dUI = dynamic_cast<IDrawable*>(_component))
 	{
-		EraseOne(this->renderUI, dUI);
+		EraseOne(this->renderes, dUI);
+	}
+
+	// Rigidbody3D
+	if (auto rb3D = dynamic_cast<Framework::Physics::Rigidbody3D*>(_component))
+	{
+		EraseOne(this->rigidbodies, rb3D);
+	}
+
+	// Transform
+	if (auto tf = dynamic_cast<Transform*>(_component))
+	{
+		EraseOne(this->transforms, tf);
 	}
 }

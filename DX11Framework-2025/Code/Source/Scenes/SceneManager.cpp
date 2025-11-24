@@ -63,6 +63,15 @@ void SceneManager::Draw()
 	}
 }
 
+//// @brief	保留中のシーン破棄を行う
+void SceneManager::FlushPendingDestroys()
+{
+	if (this->currentScene)
+	{
+		this->currentScene->GetGameObjectManager().FlushDestroyQueue();
+	}
+}
+
 /**	@brief	シーン遷移をリクエストする
  *	@param	SceneType _nextScenetype	次のシーンタイプ
  */

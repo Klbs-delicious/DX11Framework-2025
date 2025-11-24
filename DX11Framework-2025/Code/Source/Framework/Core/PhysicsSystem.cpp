@@ -26,6 +26,10 @@ namespace Framework::Physics
 		: tempAllocator(nullptr)
 		, jobSystem(nullptr)
 		, physics(nullptr)
+		, broadphase()
+		, bpFilter()
+		, layerFilter()
+		, fixedDeltaTime(0.0f)
 	{
 	}
 
@@ -109,10 +113,9 @@ namespace Framework::Physics
 	 */
 	void PhysicsSystem::Step(float _deltaTime)
 	{
-		if (!this->physics)
-		{
-			return;
-		}
+		if (!this->physics){ return; }
+
+		this->fixedDeltaTime = _deltaTime;
 
 		this->physics->Update(
 			_deltaTime,
@@ -125,10 +128,8 @@ namespace Framework::Physics
 	/// @brief 内部リソースの解放処理
 	void PhysicsSystem::Dispose()
 	{
-		if (!this->physics && !this->jobSystem && !this->tempAllocator)
-		{
-			return; // まだ初期化されていない or すでに破棄済
-		}
+		// まだ初期化されていない or すでに破棄済
+		if (!this->physics && !this->jobSystem && !this->tempAllocator){ return; }
 
 		// PhysicsSystem の解放（内部で Body や Shape が破棄される）
 		this->physics.reset();

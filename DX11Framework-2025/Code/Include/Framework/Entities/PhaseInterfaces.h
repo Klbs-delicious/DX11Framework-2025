@@ -20,6 +20,18 @@ public:
 	virtual void Update(float _deltaTime) = 0;
 };
 
+class IFixedUpdatable
+{
+public:
+	/// @brief デストラクタ
+	virtual ~IFixedUpdatable() = default;
+
+	/** @brief 固定更新処理
+	 *  @param float _deltaTime	前フレームからの経過時間（秒）
+	 */
+	virtual void FixedUpdate(float _deltaTime) = 0;
+};
+
 /** @class	IDrawable
  *	@brief	描画フェーズ抽象化クラス
  *	@details	- 毎フレーム呼び出される描画処理を定義するためのインターフェース

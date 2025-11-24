@@ -119,7 +119,6 @@ void TestScene::SetupObjects()
 	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
 	coll3D->BuildShape();
 	auto rigidbody3D = player->AddComponent<Framework::Physics::Rigidbody3D>();
-	rigidbody3D->AddImpulse(DX::Vector3(5.0f, 0.0f, 0.0f)); // 上方向に初速を与える
 	auto testComp = player->AddComponent<TimeScaleTestComponent>();
 	testComp->SetTimeScaleGroup(timeGroup);
 	//charaController->SetTurnSpeed(10.0f);
@@ -170,8 +169,6 @@ void TestScene::SetupObjects()
 	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
 	coll3D->BuildShape();
 	rigidbody3D = obj_4->AddComponent<Framework::Physics::Rigidbody3D>();
-	rigidbody3D->SetMotionType(JPH::EMotionType::Static);
-	rigidbody3D->SetRestitution(0.5f);
 
 	// 大量オブジェクト生成テスト
 	SpawnManyBoxes(10, 10, 10);
@@ -289,11 +286,9 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 			coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
 			coll3D->BuildShape();
 
-			//auto rigidbody3D = obj->AddComponent<Framework::Physics::Rigidbody3D>();
+			auto rigidbody3D = obj->AddComponent<Framework::Physics::Rigidbody3D>();
 
-			//float randomScale = (static_cast<float>(rand()) / RAND_MAX) * 2.0f - 1.0f;
-			////rigidbody3D->SetGravityScale(randomScale);
-			//rigidbody3D->SetRestitution(randomScale);
+			float randomScale = (static_cast<float>(rand()) / RAND_MAX) * 2.0f - 1.0f;
 
 			obj->AddComponent<MeshRenderer>();
 			obj->AddComponent<FreeMoveTestComponent>();

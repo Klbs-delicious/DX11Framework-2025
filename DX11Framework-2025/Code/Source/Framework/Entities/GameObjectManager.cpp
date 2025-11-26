@@ -119,18 +119,6 @@ void GameObjectManager::FixedUpdateAll(float _deltaTime)
 	std::cout << "FixedUpdateAll called with deltaTime: " << _deltaTime << std::endl;
 }
 
-/// @brief 物理演算結果を全剛体コンポーネントに同期する
-void GameObjectManager::SyncPhysicsResults(float _delta)
-{
-	for (auto& rigidbody : this->rigidbodies)
-	{
-		if (rigidbody)
-		{
-			rigidbody->ApplyPhysicsResults(_delta);
-		}
-	}
-}
-
 void GameObjectManager::UpdateAllTransforms()
 {
 	for (auto& transform : this->transforms)

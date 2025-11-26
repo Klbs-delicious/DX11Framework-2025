@@ -153,9 +153,6 @@ void GameLoop::Update()
         // 物理シミュレーションを実行する
         this->physicsSystem->Step(fixedDelta);
 
-		// 物理演算結果を全剛体コンポーネントに同期する
-		this->gameObjectManager->SyncPhysicsResults(fixedDelta);
-
 		// 固定ステップを1回分消費する
         this->timeSystem.ConsumeFixedStep();
     }

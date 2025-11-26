@@ -306,8 +306,14 @@
     <ClInclude Include="Code\Include\Framework\Entities\Rigidbody3D.h">
       <Filter>ヘッダー ファイル\Framework\Entities</Filter>
     </ClInclude>
-    <ClInclude Include="Code\Include\Game\Entities\FreeCamera.h">
-      <Filter>ヘッダー ファイル\Game\Entities</Filter>
+    <ClInclude Include="Code\Include\Game\Entities\DebugFreeMoveComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Physics\StagedTransform.h">
+      <Filter>ソース ファイル\Framework\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Physics\StagedTransform.h">
+      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -476,8 +482,8 @@
     <ClCompile Include="Code\Source\Framework\Entities\Rigidbody3D.cpp">
       <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="Code\Source\Game\Entities\FreeCamera.cpp">
-      <Filter>ソース ファイル\Framework\Game\Entities</Filter>
+    <ClCompile Include="Code\Source\Game\Entities\DebugFreeMoveComponent.cpp">
+      <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

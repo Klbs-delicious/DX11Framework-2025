@@ -1,5 +1,5 @@
 ﻿/** @file   Rigidbody3D.cpp
- *  @brief  TimeScale 対応 3D リジッドボディ（物理は実時間）
+ *  @brief  Transform 主導の衝突判定専用ボディコンポーネント
  *  @date   2025/11/26
  */
 
@@ -14,9 +14,6 @@
 
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/Physics/Body/BodyInterface.h>
-#include <Jolt/Physics/Body/BodyLock.h>
-
-#include <algorithm>
 
 namespace Framework::Physics
 {
@@ -29,16 +26,10 @@ namespace Framework::Physics
 		: Component(_owner, _active)
 		, bodyID()
 		, hasBody(false)
-		, mass(1.0f)
-		, friction(0.5f)
-		, restitution(0.5f)
-		, gravityScale(1.0f)
-		, motionType(EMotionType::Dynamic)
-		, transform(nullptr)
-		, timeScaleComp(nullptr)
-		, collider(nullptr)
+		, stagedTransform(nullptr)
+		, visualTransform(nullptr)
 		, physicsSystem(SystemLocator::Get<PhysicsSystem>())
-		, scaledVelocity(DX::Vector3::Zero)
+		, collider(nullptr)
 	{
 	}
 
@@ -52,15 +43,33 @@ namespace Framework::Physics
 	//-----------------------------------------------------------------------------
 	void Rigidbody3D::Initialize()
 	{
-		this->transform = this->Owner()->GetComponent<Transform>();
-		this->timeScaleComp = this->Owner()->GetComponent<TimeScaleComponent>();
+		// Transform / Collider の取得
+		this->visualTransform = this->Owner()->GetComponent<Transform>();
 		this->collider = this->Owner()->GetComponent<Collider3DComponent>();
 
+		// ロジック側 Transform の生成と初期化
+		this->stagedTransform = std::make_unique<StagedTransform>();
+
+		if (this->visualTransform)
+		{
+			this->stagedTransform->position = this->visualTransform->GetWorldPosition();
+			this->stagedTransform->rotation = this->visualTransform->GetWorldRotation();
+			this->stagedTransform->scale = this->visualTransform->GetWorldScale();
+		}
+		else
+		{
+			this->stagedTransform->position = DX::Vector3::Zero;
+			this->stagedTransform->rotation = DX::Quaternion::Identity;
+			this->stagedTransform->scale = DX::Vector3::One;
+		}
+
+		// Collider が無ければ追加
 		if (!this->collider)
 		{
 			this->collider = this->Owner()->AddComponent<Collider3DComponent>();
 		}
 
+		// Body の初期化
 		this->InitializeBody();
 	}
 
@@ -70,23 +79,115 @@ namespace Framework::Physics
 	}
 
 	//-----------------------------------------------------------------------------
-	// Body Setup
+	// StagedTransform Update
 	//-----------------------------------------------------------------------------
-	void Rigidbody3D::GetInitialTransform(DX::Vector3& _outPos, DX::Quaternion& _outRot) const
+	/** @brief 論理変換を更新する */
+	void Rigidbody3D::UpdateLogical(float _deltaTime)
 	{
-		if (this->transform)
+		(void)_deltaTime;
+
+		if (!this->stagedTransform)
 		{
-			_outPos = this->transform->GetWorldPosition();
-			_outRot = this->transform->GetWorldRotation();
+			return;
 		}
-		else
-		{
-			_outPos = DX::Vector3::Zero;
-			_outRot = DX::Quaternion::Identity;
-		}
+
+		// TODO:
+		// - TimeScale の適用
+		// - 重力・移動・ジャンプなどの自前計算
+		// - キャラ操作ロジックの反映
+		// 現状は「値を維持するだけ」の空実装
 	}
 
-	void Rigidbody3D::SetupBodyCreationSettings(BodyCreationSettings& _settings) const
+	//-----------------------------------------------------------------------------
+	// Sync logical → visual
+	//-----------------------------------------------------------------------------
+	void Rigidbody3D::SyncToVisual() const
+	{
+		if (!this->visualTransform || !this->stagedTransform)
+		{
+			return;
+		}
+
+		this->visualTransform->SetWorldPosition(this->stagedTransform->position);
+		this->visualTransform->SetWorldRotation(this->stagedTransform->rotation);
+		this->visualTransform->SetWorldScale(this->stagedTransform->scale);
+	}
+
+	//-----------------------------------------------------------------------------
+	// Sync visual → Jolt
+	//-----------------------------------------------------------------------------
+	void Rigidbody3D::SyncVisualToJolt() const
+	{
+		if (!this->hasBody || !this->visualTransform)
+		{
+			return;
+		}
+
+		auto& iface = this->physicsSystem.GetBodyInterface();
+
+		DX::Vector3 pos = this->visualTransform->GetWorldPosition();
+		DX::Quaternion rot = this->visualTransform->GetWorldRotation();
+
+		iface.SetPositionAndRotation(
+			this->bodyID,
+			RVec3(pos.x, pos.y, pos.z),
+			Quat(rot.x, rot.y, rot.z, rot.w),
+			EActivation::Activate
+		);
+	}
+
+	//-----------------------------------------------------------------------------
+	// Sync Jolt → visual
+	//-----------------------------------------------------------------------------
+	void Rigidbody3D::SyncJoltToVisual() const
+	{
+		if (!this->hasBody || !this->visualTransform)
+		{
+			return;
+		}
+
+		BodyLockRead lock(this->physicsSystem.GetBodyLockInterface(), this->bodyID);
+		if (!lock.Succeeded())
+		{
+			return;
+		}
+
+		const Body& body = lock.GetBody();
+
+		DX::Vector3 pos(
+			(float)body.GetPosition().GetX(),
+			(float)body.GetPosition().GetY(),
+			(float)body.GetPosition().GetZ()
+		);
+
+		DX::Quaternion rot(
+			(float)body.GetRotation().GetX(),
+			(float)body.GetRotation().GetY(),
+			(float)body.GetRotation().GetZ(),
+			(float)body.GetRotation().GetW()
+		);
+
+		this->visualTransform->SetWorldPosition(pos);
+		this->visualTransform->SetWorldRotation(rot);
+	}
+
+	//-----------------------------------------------------------------------------
+	// Body Setup
+	//-----------------------------------------------------------------------------
+	void Rigidbody3D::GetInitialTransform(DX::Vector3& _pos, DX::Quaternion& _rot) const
+	{
+		if (!this->visualTransform)
+		{
+			_pos = DX::Vector3::Zero;
+			_rot = DX::Quaternion::Identity;
+			return;
+		}
+
+		_pos = this->visualTransform->GetWorldPosition();
+		_rot = this->visualTransform->GetWorldRotation();
+	}
+
+	void Rigidbody3D::SetupBodySettings(BodyCreationSettings& _settings) const
 	{
 		DX::Vector3 pos;
 		DX::Quaternion rot;
@@ -94,16 +195,15 @@ namespace Framework::Physics
 
 		_settings.mPosition = RVec3(pos.x, pos.y, pos.z);
 		_settings.mRotation = Quat(rot.x, rot.y, rot.z, rot.w);
-		_settings.mMotionType = this->motionType;
+
+		_settings.mMotionType = EMotionType::Kinematic;
+		_settings.mMotionQuality = EMotionQuality::Discrete;
 
 		if (this->collider)
 		{
 			JPH::ShapeRefC shape = this->collider->GetShape();
 			_settings.SetShape(shape);
 		}
-
-		_settings.mOverrideMassProperties = EOverrideMassProperties::CalculateInertia;
-		_settings.mMassPropertiesOverride.mMass = this->mass;
 	}
 
 	//-----------------------------------------------------------------------------
@@ -111,112 +211,40 @@ namespace Framework::Physics
 	//-----------------------------------------------------------------------------
 	void Rigidbody3D::InitializeBody()
 	{
-		if (this->hasBody) return;
+		if (this->hasBody)
+		{
+			return;
+		}
 
 		auto& iface = this->physicsSystem.GetBodyInterface();
 
 		BodyCreationSettings settings;
-		this->SetupBodyCreationSettings(settings);
+		this->SetupBodySettings(settings);
 
 		Body* body = iface.CreateBody(settings);
-		if (!body) return;
+		if (!body)
+		{
+			return;
+		}
 
 		iface.AddBody(body->GetID(), EActivation::Activate);
 
 		this->bodyID = body->GetID();
 		this->hasBody = true;
-
-		iface.SetFriction(this->bodyID, this->friction);
-		iface.SetRestitution(this->bodyID, this->restitution);
-		iface.SetGravityFactor(this->bodyID, this->gravityScale);
 	}
 
 	void Rigidbody3D::DestroyBody()
 	{
-		if (!this->hasBody) return;
+		if (!this->hasBody)
+		{
+			return;
+		}
 
 		auto& iface = this->physicsSystem.GetBodyInterface();
 		iface.RemoveBody(this->bodyID);
 		iface.DestroyBody(this->bodyID);
 
 		this->hasBody = false;
-	}
-
-	//-----------------------------------------------------------------------------
-	// ApplyPhysicsResults（TimeScaleVelocity の中核処理）
-	//-----------------------------------------------------------------------------
-	void Rigidbody3D::ApplyPhysicsResults(float _fixedDelta)
-	{
-		if (!this->hasBody || !this->transform) return;
-
-		//---------------------------------------------------------
-		// 1) Jolt の本物の速度（realVelocity）を取得
-		//---------------------------------------------------------
-		Vec3 jVel = this->physicsSystem.GetBodyInterface().GetLinearVelocity(this->bodyID);
-		DX::Vector3 realVel(jVel.GetX(), jVel.GetY(), jVel.GetZ());
-
-		//---------------------------------------------------------
-		// 2) TimeScale を取得
-		//---------------------------------------------------------
-		float scale = 1.0f;
-		if (this->timeScaleComp)
-		{
-			scale = this->timeScaleComp->GetFinalScale();
-		}
-
-		//---------------------------------------------------------
-		// 3) scaledVelocity = realVelocity * TimeScale
-		//---------------------------------------------------------
-		this->scaledVelocity = realVel * scale;
-
-		//---------------------------------------------------------
-		// 4) Transform に見た目の移動を適用
-		//---------------------------------------------------------
-		DX::Vector3 move = this->scaledVelocity * _fixedDelta;
-
-		DX::Vector3 newPos = this->transform->GetWorldPosition() + move;
-		this->transform->SetWorldPosition(newPos);
-
-		//---------------------------------------------------------
-		// 5) 動的剛体の場合、Jolt へ scaledVelocity を戻す（速度の連続性）
-		//---------------------------------------------------------
-		if (this->motionType == EMotionType::Dynamic)
-		{
-			JPH::Vec3 newJoltVel(move.x / _fixedDelta, move.y / _fixedDelta, move.z / _fixedDelta);
-			this->physicsSystem.GetBodyInterface().SetLinearVelocity(this->bodyID, newJoltVel);
-		}
-	}
-
-	//-----------------------------------------------------------------------------
-	// Velocity / Force
-	//-----------------------------------------------------------------------------
-	void Rigidbody3D::SetLinearVelocity(const DX::Vector3& _vel)
-	{
-		if (!this->hasBody) return;
-		JPH::Vec3 v(_vel.x, _vel.y, _vel.z);
-		this->physicsSystem.GetBodyInterface().SetLinearVelocity(this->bodyID, v);
-	}
-
-	DX::Vector3 Rigidbody3D::GetLinearVelocity() const
-	{
-		if (!this->hasBody) return DX::Vector3::Zero;
-
-		JPH::Vec3 v = this->physicsSystem.GetBodyInterface().GetLinearVelocity(this->bodyID);
-		return DX::Vector3(v.GetX(), v.GetY(), v.GetZ());
-	}
-
-	void Rigidbody3D::AddForce(const DX::Vector3& _force)
-	{
-		if (!this->hasBody) return;
-		JPH::Vec3 f(_force.x, _force.y, _force.z);
-		this->physicsSystem.GetBodyInterface().AddForce(this->bodyID, f);
-	}
-
-	void Rigidbody3D::AddImpulse(const DX::Vector3& _impulse)
-	{
-		if (!this->hasBody) return;
-		JPH::Vec3 i(_impulse.x, _impulse.y, _impulse.z);
-		this->physicsSystem.GetBodyInterface().AddImpulse(this->bodyID, i);
 	}
 
 } // namespace Framework::Physics

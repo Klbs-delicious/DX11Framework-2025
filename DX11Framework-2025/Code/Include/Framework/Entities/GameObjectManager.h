@@ -50,11 +50,6 @@ public:
 	 */
 	void FixedUpdateAll(float _deltaTime);
 
-	/**	@brief 物理演算結果を各オブジェクトに同期する
-	 *	@param		float _delta	デルタタイム
-	 */
-	void SyncPhysicsResults(float _delta);
-
 	/// @brief 全Transformのワールド行列を更新する
 	void UpdateAllTransforms();
 

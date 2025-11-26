@@ -1,5 +1,5 @@
 ﻿/** @file   Rigidbody3D.h
- *  @brief  TimeScale 対応 3D リジッドボディコンポーネント（物理は実時間）
+ *  @brief  Transform を基準とした衝突判定専用ボディコンポーネント
  *  @date   2025/11/26
  */
 #pragma once
@@ -9,9 +9,9 @@
  //-----------------------------------------------------------------------------
 #include "Include/Framework/Entities/Component.h"
 #include "Include/Framework/Entities/Transform.h"
-#include "Include/Framework/Entities/TimeScaleComponent.h"
 #include "Include/Framework/Entities/Collider3DComponent.h"
 
+#include "Include/Framework/Physics/StagedTransform.h"
 #include "Include/Framework/Utils/CommonTypes.h"
 
 #include <Jolt/Jolt.h>
@@ -24,18 +24,18 @@ namespace Framework::Physics
 	class PhysicsSystem;
 
 	/** @class Rigidbody3D
-	 *  @brief Jolt Physics を使用した 3D 剛体コンポーネント
+	 *  @brief Transform 主導の Kinematic 衝突専用ボディ
 	 *  @details
-	 *          - 物理計算は Jolt が実時間で実施する
-	 *          - Transform へは TimeScale を掛けた scaledVelocity を適用する
-	 *          - 個別 TimeScaleComponent に完全対応
+	 *          - 移動・回転などの運動はすべて Transform（StagedTransform）が決定
+	 *          - Jolt は MoveKinematic 相当の衝突判定と押し戻しのみ担当
+	 *          - 毎フレーム visual → Jolt、そして押し戻し結果を visual に戻す
 	 */
 	class Rigidbody3D final : public Component
 	{
 	public:
 		/** @brief コンストラクタ
-		 *  @param GameObject* _owner 所有オブジェクト
-		 *  @param bool _active 有効/無効
+		 *  @param _owner このコンポーネントが所属するオブジェクト
+		 *  @param _active 有効/無効状態
 		 */
 		Rigidbody3D(GameObject* _owner, bool _active = true);
 
@@ -45,124 +45,56 @@ namespace Framework::Physics
 		/// @brief 初期化
 		void Initialize() override;
 
-		/// @brief 破棄処理
+		/// @brief 終了処理
 		void Dispose() override;
 
-		/// @brief Body の生成
+		/// @brief Body を生成する（多重生成は行わない）
 		void InitializeBody();
 
-		/// @brief Body の破棄
+		/// @brief Body を破棄する
 		void DestroyBody();
 
-		/** @brief 物理結果を Transform に適用する（TimeScaleVelocity 使用）
-		 *  @param float _fixedDelta 固定デルタ
+		/** @brief 論理変換（StagedTransform）を更新する
+		 *  @param _deltaTime 経過時間（秒）
 		 */
-		void ApplyPhysicsResults(float _fixedDelta);
+		void UpdateLogical(float _deltaTime);
 
-		//-------------------------------------------------------------------------
-		// パラメータ設定
-		//-------------------------------------------------------------------------
-		/** @brief 質量設定
-		 *  @param float _mass 質量
-		 */
-		void SetMass(float _mass);
+		/// @brief StagedTransform → visualTransform へ反映する
+		void SyncToVisual() const;
 
-		/** @brief MotionType 設定
-		 *  @param JPH::EMotionType _type モーションタイプ
-		 */
-		void SetMotionType(JPH::EMotionType _type);
+		/// @brief visualTransform → Jolt Body へ反映する
+		void SyncVisualToJolt() const;
 
-		/** @brief 摩擦係数設定
-		 *  @param float _f 摩擦係数
-		 */
-		void SetFriction(float _f);
+		/// @brief Jolt の押し戻し結果 → visualTransform へ反映する
+		void SyncJoltToVisual() const;
 
-		/** @brief 反発係数設定
-		 *  @param float _r 反発係数
-		 */
-		void SetRestitution(float _r);
-
-		/** @brief 重力倍率設定
-		 *  @param float _scale 重力倍率
-		 */
-		void SetGravityScale(float _scale);
-
-		/// @brief 質量取得
-		float GetMass() const { return this->mass; }
-
-		/// @brief 摩擦係数取得
-		float GetFriction() const { return this->friction; }
-
-		/// @brief 反発係数取得
-		float GetRestitution() const { return this->restitution; }
-
-		/// @brief 重力倍率取得
-		float GetGravityScale() const { return this->gravityScale; }
-
-		/// @brief MotionType 取得
-		JPH::EMotionType GetMotionType() const { return this->motionType; }
-
-		//-------------------------------------------------------------------------
-		// 速度・力
-		//-------------------------------------------------------------------------
-		/** @brief 線形速度設定
-		 *  @param const DX::Vector3& _vel 設定速度
-		 */
-		void SetLinearVelocity(const DX::Vector3& _vel);
-
-		/// @brief 線形速度取得（realVelocity）
-		DX::Vector3 GetLinearVelocity() const;
-
-		/** @brief 力を加える
-		 *  @param const DX::Vector3& _force 加える力
-		 */
-		void AddForce(const DX::Vector3& _force);
-
-		/** @brief インパルスを加える
-		 *  @param const DX::Vector3& _impulse 加えるインパルス
-		 */
-		void AddImpulse(const DX::Vector3& _impulse);
-
-		//-------------------------------------------------------------------------
-		// 状態
-		//-------------------------------------------------------------------------
 		/// @brief Body を保持しているか
 		bool HasBody() const { return this->hasBody; }
 
-		/// @brief BodyID を取得
+		/// @brief BodyID を取得する
 		const JPH::BodyID& GetBodyID() const { return this->bodyID; }
 
 	private:
-		void GetInitialTransform(DX::Vector3& _outPos, DX::Quaternion& _outRot) const;
-		void SetupBodyCreationSettings(JPH::BodyCreationSettings& _settings) const;
+		/** @brief 初期 Transform を取得する
+		 *  @param _pos 初期座標の出力
+		 *  @param _rot 初期回転の出力
+		 */
+		void GetInitialTransform(DX::Vector3& _pos, DX::Quaternion& _rot) const;
+
+		/** @brief BodyCreationSettings を初期化する
+		 *  @param _settings 生成設定（motionType/shape など）
+		 */
+		void SetupBodySettings(JPH::BodyCreationSettings& _settings) const;
 
 	private:
-		//-------------------------------------------------------------
-		// Jolt Body
-		//-------------------------------------------------------------
-		JPH::BodyID      bodyID;      ///< BodyID
-		bool             hasBody;     ///< Body を持つか
+		JPH::BodyID bodyID;          ///< 剛体 ID
+		bool        hasBody;         ///< Body を保持しているか
 
-		//-------------------------------------------------------------
-		// パラメータ
-		//-------------------------------------------------------------
-		float            mass;         ///< 質量
-		float            friction;     ///< 摩擦
-		float            restitution;  ///< 反発
-		float            gravityScale; ///< 重力倍率
-		JPH::EMotionType motionType;   ///< MotionType
+		std::unique_ptr<StagedTransform> stagedTransform; ///< 論理姿勢
+		Transform* visualTransform;  ///< 見た目の Transform
 
-		//-------------------------------------------------------------
-		// 必須参照
-		//-------------------------------------------------------------
-		Transform* transform;      ///< Transform
-		TimeScaleComponent* timeScaleComp;  ///< TimeScale
-		Collider3DComponent* collider;      ///< コライダー
 		PhysicsSystem& physicsSystem; ///< 物理システム
-
-		//-------------------------------------------------------------
-		// TimeScale 用速度
-		//-------------------------------------------------------------
-		DX::Vector3 scaledVelocity; ///< realVelocity * TimeScale
+		Collider3DComponent* collider;      ///< 衝突形状
 	};
+
 } // namespace Framework::Physics

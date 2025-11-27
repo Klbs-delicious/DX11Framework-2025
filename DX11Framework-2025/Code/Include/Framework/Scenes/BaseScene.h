@@ -40,12 +40,6 @@ public:
 	 */
 	virtual void Update(float _deltaTime)final;
 
-	/**	@brief 		オブジェクトの固定更新を行う
-	 *	@param		float _deltaTime	デルタタイム
-	 *	@details	継承を禁止する
-	 */
-	virtual void FixedUpdate(float _deltaTime)final;
-
 	/**	@brief		ゲームオブジェクトの描画処理を行う
 	 *	@param		float _deltaTime	デルタタイム
 	 *	@details	継承を禁止する

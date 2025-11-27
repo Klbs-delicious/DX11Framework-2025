@@ -14,7 +14,6 @@ public:
     DX::Vector3    position;   ///< ワールド位置（ロジック専用）
     DX::Quaternion rotation;   ///< ワールド回転（ロジック専用）
     DX::Vector3    scale;      ///< ワールドスケール（必要なら）
-
 public:
 
 	/// @brief デフォルトコンストラクタ（位置原点、回転なし、スケール1）

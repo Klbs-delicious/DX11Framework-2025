@@ -17,19 +17,19 @@
 //-----------------------------------------------------------------------------
 
 FreeMoveTestComponent::FreeMoveTestComponent(GameObject* _owner, bool _active)
-	: Component(_owner, _active),
-	transform(nullptr),
-	rigidbody(nullptr),
-	speed(10.0f),
-	targetPos(0.0f, 0.0f, 0.0f),
-	hasTarget(false)
+    : Component(_owner, _active),
+    transform(nullptr),
+    rigidbody(nullptr),
+    speed(10.0f),
+    targetPos(0.0f, 0.0f, 0.0f),
+    hasTarget(false)
 {
 }
 
 void FreeMoveTestComponent::Initialize()
 {
-	this->transform = this->Owner()->transform;
-	this->rigidbody = this->Owner()->GetComponent<Framework::Physics::Rigidbody3D>();
+    this->transform = this->Owner()->transform;
+    this->rigidbody = this->Owner()->GetComponent<Framework::Physics::Rigidbody3D>();
 }
 
 void FreeMoveTestComponent::Dispose()
@@ -38,37 +38,68 @@ void FreeMoveTestComponent::Dispose()
 
 void FreeMoveTestComponent::Update(float _deltaTime)
 {
-	if (!this->rigidbody || !this->transform)
-	{
-		return;
-	}
+    //----------------------------------------------------------------------
+    // Rigidbody3D がアタッチされている場合：論理座標(StagedTransform)で動かす
+    //----------------------------------------------------------------------
+    if (rigidbody)
+    {
+        static std::mt19937 engine(std::random_device{}());
+        static std::uniform_real_distribution<float> dist(-20.0f, 20.0f);
 
-	static std::mt19937 engine(std::random_device{}());
-	static std::uniform_real_distribution<float> dist(-20.0f, 20.0f);
+        if (!hasTarget)
+        {
+            targetPos = DX::Vector3(dist(engine), dist(engine), dist(engine));
+            hasTarget = true;
+        }
 
-	if (!this->hasTarget)
-	{
-		this->targetPos = DX::Vector3(
-			dist(engine),
-			dist(engine),
-			dist(engine)
-		);
-		this->hasTarget = true;
-	}
+        DX::Vector3 current = rigidbody->GetLogicalPosition();
+        DX::Vector3 diff = targetPos - current;
+        float len = diff.Length();
 
-	DX::Vector3 current = this->transform->GetWorldPosition();
-	DX::Vector3 diff = this->targetPos - current;
-	float distLen = diff.Length();
+        if (len < 0.1f)
+        {
+            hasTarget = false;
+            return;
+        }
 
-	if (distLen < 0.1f)
-	{
-		this->hasTarget = false;
-		return;
-	}
+        DX::Vector3 dir = diff / len;
+        rigidbody->TranslateWorld(dir * (speed * _deltaTime));
+        return;
+    }
 
-	DX::Vector3 dir = diff / distLen;
+    //----------------------------------------------------------------------
+    // Rigidbody3D が無い場合：従来通り Transform を直接動かす
+    //----------------------------------------------------------------------
+    if (!this->transform)
+    {
+        return;
+    }
 
-    // 移動処理
+    static std::mt19937 engine(std::random_device{}());
+    static std::uniform_real_distribution<float> dist(-20.0f, 20.0f);
+
+    if (!this->hasTarget)
+    {
+        this->targetPos = DX::Vector3(
+            dist(engine),
+            dist(engine),
+            dist(engine)
+        );
+        this->hasTarget = true;
+    }
+
+    DX::Vector3 current = this->transform->GetWorldPosition();
+    DX::Vector3 diff = this->targetPos - current;
+    float len = diff.Length();
+
+    if (len < 0.1f)
+    {
+        this->hasTarget = false;
+        return;
+    }
+
+    DX::Vector3 dir = diff / len;
+
     DX::Vector3 newPos = current + dir * this->speed * _deltaTime;
     this->transform->SetLocalPosition(newPos);
 }

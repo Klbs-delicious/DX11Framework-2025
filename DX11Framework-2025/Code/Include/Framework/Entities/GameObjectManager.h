@@ -53,6 +53,14 @@ public:
 	/// @brief 全Transformのワールド行列を更新する
 	void UpdateAllTransforms();
 
+	/** @brief 物理シミュレーション開始前の処理
+	 *  @param _deltaTime 
+	 */
+	void BeginPhysics(float _deltaTime);
+
+	/// @brief 物理シミュレーション終了後の処理
+	void EndPhysics();
+
 	/// @brief 一括描画
 	void RenderAll();
 

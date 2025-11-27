@@ -47,17 +47,6 @@ void BaseScene::Update(float _deltaTime)
     this->gameObjectManager.UpdateAll(_deltaTime);
 }
 
-
-/**	@brief 		オブジェクトの固定更新を行う
- *	@param		float _deltaTime	デルタタイム
- *	@details	継承を禁止する
- */
-void BaseScene::FixedUpdate(float _deltaTime)
-{
-    // オブジェクトの一括固定更新
-	this->gameObjectManager.FixedUpdateAll(_deltaTime);
-}
-
 /**	@brief		ゲームオブジェクトの描画処理を行う
  *	@param		float _deltaTime	デルタタイム
  *	@details	継承を禁止する

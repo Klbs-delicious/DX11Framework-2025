@@ -150,8 +150,14 @@ void GameLoop::Update()
         // 物理とTransformがそろった状態でゲームロジックのFixedUpdateを実行する
         this->gameObjectManager->FixedUpdateAll(fixedDelta);
 
+		// 物理シミュレーション開始前の処理
+		this->gameObjectManager->BeginPhysics(fixedDelta);
+
         // 物理シミュレーションを実行する
         this->physicsSystem->Step(fixedDelta);
+
+		// 物理シミュレーション終了後の処理
+		this->gameObjectManager->EndPhysics();
 
 		// 固定ステップを1回分消費する
         this->timeSystem.ConsumeFixedStep();

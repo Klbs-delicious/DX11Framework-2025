@@ -116,7 +116,7 @@ void GameObjectManager::FixedUpdateAll(float _deltaTime)
 			fixedUpdate->FixedUpdate(scaledDelta);
 		}
 	}
-	std::cout << "FixedUpdateAll called with deltaTime: " << _deltaTime << std::endl;
+	//std::cout << "FixedUpdateAll called with deltaTime: " << _deltaTime << std::endl;
 }
 
 void GameObjectManager::UpdateAllTransforms()
@@ -130,6 +130,42 @@ void GameObjectManager::UpdateAllTransforms()
 	}
 }
 
+void GameObjectManager::BeginPhysics(float _deltaTime)
+{
+	for (auto& rigidbody : this->rigidbodies)
+	{
+		if (rigidbody)
+		{
+			// 自前の押し戻し結果を visualTransform に反映させる
+			rigidbody->UpdateLogical(_deltaTime);
+			rigidbody->SyncToVisual();
+		}
+	}
+
+	// 全 Transform のワールド行列を更新する
+	this->UpdateAllTransforms();
+
+	for (auto& rigidbody : this->rigidbodies)
+	{
+		if (rigidbody)
+		{
+			// Jolt 側に最新の Transform を反映させる
+			rigidbody->SyncVisualToJolt(_deltaTime);
+		}
+	}
+}
+
+void GameObjectManager::EndPhysics()
+{
+	for (auto& rigidbody : this->rigidbodies)
+	{
+		if (rigidbody)
+		{
+			// Jolt の押し戻し結果を visualTransform に反映させる
+			rigidbody->SyncJoltToVisual();
+		}
+	}
+}
 
 /// @brief 一括描画
 void GameObjectManager::RenderAll()

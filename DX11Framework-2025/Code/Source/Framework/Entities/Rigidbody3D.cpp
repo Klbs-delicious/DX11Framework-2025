@@ -151,10 +151,17 @@ namespace Framework::Physics
 		DX::Vector3 targetPos = this->staged->position;
 		DX::Quaternion targetRot = this->staged->rotation;
 
+		// centerOffset をワールドへ回して加算（Kinematic の Move 先はボディ中心）
+		DX::Vector3 worldOffset = DX::Vector3::Zero;
+		if (this->collider)
+		{
+			worldOffset = DX::Vector3::Transform(this->collider->GetCenterOffset(), targetRot);
+		}
+
 		auto& bodyInterface = this->physicsSystem.GetBodyInterface();
 		bodyInterface.MoveKinematic(
 			this->bodyID,
-			RVec3(targetPos.x, targetPos.y, targetPos.z),
+			RVec3(targetPos.x + worldOffset.x, targetPos.y + worldOffset.y, targetPos.z + worldOffset.z),
 			Quat(targetRot.x, targetRot.y, targetRot.z, targetRot.w),
 			_deltaTime
 		);
@@ -178,26 +185,35 @@ namespace Framework::Physics
 
 		const Body& body = lock.GetBody();
 
-		DX::Vector3 worldPos(
+		DX::Vector3 bodyPos(
 			static_cast<float>(body.GetPosition().GetX()),
 			static_cast<float>(body.GetPosition().GetY()),
 			static_cast<float>(body.GetPosition().GetZ())
 		);
 
-		DX::Quaternion worldRot(
+		DX::Quaternion bodyRot(
 			static_cast<float>(body.GetRotation().GetX()),
 			static_cast<float>(body.GetRotation().GetY()),
 			static_cast<float>(body.GetRotation().GetZ()),
 			static_cast<float>(body.GetRotation().GetW())
 		);
 
+		// ボディ中心（Jolt）から可視用のピボット位置へ：centerOffset のワールド分を減算
+		DX::Vector3 worldOffset = DX::Vector3::Zero;
+		if (this->collider)
+		{
+			worldOffset = DX::Vector3::Transform(this->collider->GetCenterOffset(), bodyRot);
+		}
+
+		DX::Vector3 pivotPos = bodyPos - worldOffset;
+
 		// 見た目用 Transform に反映
-		this->visualTransform->SetWorldPosition(worldPos);
-		this->visualTransform->SetWorldRotation(worldRot);
+		this->visualTransform->SetWorldPosition(pivotPos);
+		this->visualTransform->SetWorldRotation(bodyRot);
 
 		// ロジック側にも押し戻し結果を反映
-		this->staged->position = worldPos;
-		this->staged->rotation = worldRot;
+		this->staged->position = pivotPos;
+		this->staged->rotation = bodyRot;
 	}
 
 	//-----------------------------------------------------------------------------
@@ -309,6 +325,32 @@ namespace Framework::Physics
 		this->ApplyObjectLayerToBody();
 	}
 
+	bool Rigidbody3D::GetBodyTransform(DX::Vector3& outPos, DX::Quaternion& outRot) const
+	{
+		if (!this->hasBody)
+		{
+			return false;
+		}
+		BodyLockRead lock(this->physicsSystem.GetBodyLockInterface(), this->bodyID);
+		if (!lock.Succeeded())
+		{
+			return false;
+		}
+		const Body& body = lock.GetBody();
+		outPos = DX::Vector3(
+			static_cast<float>(body.GetPosition().GetX()),
+			static_cast<float>(body.GetPosition().GetY()),
+			static_cast<float>(body.GetPosition().GetZ())
+		);
+		outRot = DX::Quaternion(
+			static_cast<float>(body.GetRotation().GetX()),
+			static_cast<float>(body.GetRotation().GetY()),
+			static_cast<float>(body.GetRotation().GetZ()),
+			static_cast<float>(body.GetRotation().GetW())
+		);
+		return true;		
+	}
+
 	//-----------------------------------------------------------------------------
 	// Body セットアップ
 	//-----------------------------------------------------------------------------
@@ -321,8 +363,17 @@ namespace Framework::Physics
 			return;
 		}
 
-		_pos = this->visualTransform->GetWorldPosition();
+		// 先に回転を取得し、centerOffset をワールドへ回す
 		_rot = this->visualTransform->GetWorldRotation();
+		const DX::Vector3 pivotPos = this->visualTransform->GetWorldPosition();
+
+		DX::Vector3 worldOffset = DX::Vector3::Zero;
+		if (this->collider)
+		{
+			worldOffset = DX::Vector3::Transform(this->collider->GetCenterOffset(), _rot);
+		}
+
+		_pos = pivotPos + worldOffset;
 	}
 
 	void Rigidbody3D::SetupBodySettings(BodyCreationSettings& _settings) const

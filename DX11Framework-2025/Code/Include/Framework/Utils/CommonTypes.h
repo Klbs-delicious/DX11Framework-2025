@@ -24,6 +24,7 @@ namespace DX
 	using Microsoft::WRL::ComPtr;
 
 	constexpr float PI = std::numbers::pi_v<float>;
+	constexpr float TWO_PI = std::numbers::pi_v<float> *2.0f;
 
 	/// @brief 度数をラジアンに変換
 	constexpr float ToRadians(float degrees)

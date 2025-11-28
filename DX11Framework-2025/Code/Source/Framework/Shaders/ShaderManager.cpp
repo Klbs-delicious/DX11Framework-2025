@@ -24,7 +24,8 @@ ShaderManager::ShaderManager() :
 	shaderInfoMap(),
 	defaultShadersMap(), 
 	shaderProgramMap(),
-	deafultShader()
+	defaultShader(),
+	defaultProgram()
 {
 	// シェーダー情報の事前登録
 	this->PreRegisterShaderInfo("TestVS", ShaderInfo(ShaderType::VertexShader, L"VertexShader/VS_Test"));
@@ -36,23 +37,27 @@ ShaderManager::ShaderManager() :
 	this->PreRegisterShaderInfo("VS_Model", ShaderInfo(ShaderType::VertexShader, L"VertexShader/VS_Model", LayoutType::ModelBasic));
 	this->PreRegisterShaderInfo("PS_Model", ShaderInfo(ShaderType::PixelShader, L"PixelShader/PS_Model", LayoutType::ModelBasic));
 
+	this->PreRegisterShaderInfo("VS_DebugLine", ShaderInfo(ShaderType::VertexShader, L"VertexShader/VS_DebugLine", LayoutType::DebugWireframe));
+	this->PreRegisterShaderInfo("PS_DebugLine", ShaderInfo(ShaderType::PixelShader, L"PixelShader/PS_DebugLine", LayoutType::DebugWireframe));
+
 	// シェーダープログラムの登録
 	this->CreateShaderProgram("Default", { "TestVS","TestPS","","","" });
 	this->CreateShaderProgram("ModelTest", { "VS_TestModel","PS_TestModel","","","" });
 
 	this->CreateShaderProgram("ModelBasic", { "VS_Model","PS_Model","","","" });
+	this->CreateShaderProgram("DebugWireframe", { "VS_DebugLine","PS_DebugLine","","","" });
 
 	// デフォルト設定のシェーダーリソースを登録
 	this->defaultShadersMap[ShaderType::VertexShader] = this->Get("TestVS");
 	this->defaultShadersMap[ShaderType::PixelShader] = this->Get("TestPS");
 
 	// デフォルト設定のシェーダープログラムを登録
-	this->deafultProgram = this->GetShaderProgram("Default");
+	this->defaultProgram = this->GetShaderProgram("Default");
 }
 
 ShaderManager::~ShaderManager()
 {
-	this->deafultShader = nullptr;
+	this->defaultProgram = nullptr;
 	this->defaultShadersMap.clear();
 	this->shaderInfoMap.clear();
 	this->shaderMap.clear();

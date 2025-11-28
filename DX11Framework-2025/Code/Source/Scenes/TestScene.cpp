@@ -18,6 +18,7 @@
 #include"Include/Framework/Entities/TimeScaleGroup.h"
 #include"Include/Framework/Entities/Rigidbody3D.h"
 #include"Include/Framework/Entities/Collider3DComponent.h"
+#include"Include/Framework/Entities/ColliderDebugRenderer.h"
 
 #include"Include/Game/Entities/FollowCamera.h"
 #include"Include/Game/Entities/DebugFreeMoveComponent.h"
@@ -274,7 +275,7 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 				z * _spacing
 			);
 
-			pos -= center; // ← これが中心基準化の本体
+			pos -= center; 
 
 			obj->transform->SetLocalPosition(pos);
 			obj->transform->SetLocalScale(DX::Vector3(2, 2, 2));
@@ -284,7 +285,8 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 			meshComp->SetMesh(meshManager.Get("Sphere"));
 
 			auto coll3D = obj->AddComponent<Framework::Physics::Collider3DComponent>();
-			coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
+			coll3D->SetShape(Framework::Physics::ColliderShapeType::Sphere);
+			//coll3D->SetCenterOffset(DX::Vector3(2.0f, 0.0f, 0.0f));
 			coll3D->BuildShape();
 
 			auto rigidbody3D = obj->AddComponent<Framework::Physics::Rigidbody3D>();
@@ -292,6 +294,7 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 			float randomScale = (static_cast<float>(rand()) / RAND_MAX) * 2.0f - 1.0f;
 
 			obj->AddComponent<MeshRenderer>();
+			obj->AddComponent<ColliderDebugRenderer>();
 			obj->AddComponent<FreeMoveTestComponent>();
 
 			int groupId = index % 3 + 1;

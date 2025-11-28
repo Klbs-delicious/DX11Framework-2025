@@ -177,6 +177,13 @@ namespace Framework::Physics
 		/// @brief BodyID を取得する
 		const JPH::BodyID& GetBodyID() const { return this->bodyID; }
 
+		/** @brief Body のワールド Transform を取得する
+		 *  @param outPos 位置の出力
+		 *  @param outRot 回転の出力
+		 *  @return 取得に成功したかどうか（Body 未生成時は false）
+		 */
+		bool GetBodyTransform(DX::Vector3& outPos, DX::Quaternion& outRot) const;
+
 	private:
 		/** @brief 初期 Transform を取得する
 		 *  @param _pos 初期座標の出力

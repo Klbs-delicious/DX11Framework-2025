@@ -92,14 +92,7 @@ bool RenderSystem::Initialize()
     context->RSSetViewports(1, &viewport);
 
     // ラスタライザステート設定
-    D3D11_RASTERIZER_DESC rasterizerDesc{};
-    rasterizerDesc.FillMode = D3D11_FILL_SOLID;
-    rasterizerDesc.CullMode = D3D11_CULL_BACK;
-    rasterizerDesc.DepthClipEnable = TRUE;
-
-    ComPtr<ID3D11RasterizerState> rs;
-    device->CreateRasterizerState(&rasterizerDesc, rs.GetAddressOf());
-    context->RSSetState(rs.Get());
+	this->SetRasterizerState(RasterizerType::SolidCullBack);
 
     // ブレンドステートの生成
     D3D11_BLEND_DESC BlendDesc{};
@@ -332,6 +325,39 @@ void RenderSystem::SetSampler(SamplerType _samplerType)
 {
     ID3D11DeviceContext* context = this->d3d11->GetContext();
     context->PSSetSamplers(0, 1, this->samplerStates[static_cast<size_t>(_samplerType)].GetAddressOf());
+}
+
+/** @brief ラスタライザステートを設定する
+ *  @param RasterizerType _rasterizerType ラスタライザステートの種類
+ */
+void RenderSystem::SetRasterizerState(RasterizerType _rasterizerType)
+{
+    D3D11_RASTERIZER_DESC rasterizerDesc{};
+    switch (_rasterizerType)
+    {
+    case RasterizerType::SolidCullBack:
+        rasterizerDesc.FillMode = D3D11_FILL_SOLID;
+        rasterizerDesc.CullMode = D3D11_CULL_BACK;
+        break;
+    case RasterizerType::WireframeCullBack:
+        rasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
+        rasterizerDesc.CullMode = D3D11_CULL_BACK;
+        break;
+    case RasterizerType::SolidCullNone:
+        rasterizerDesc.FillMode = D3D11_FILL_SOLID;
+        rasterizerDesc.CullMode = D3D11_CULL_NONE;
+        break;
+    case RasterizerType::WireframeCullNone:
+        rasterizerDesc.FillMode = D3D11_FILL_WIREFRAME;
+        rasterizerDesc.CullMode = D3D11_CULL_NONE;
+        break;
+    default:
+        return;
+    }
+    rasterizerDesc.DepthClipEnable = TRUE;
+    ComPtr<ID3D11RasterizerState> rs;
+    this->d3d11->GetDevice()->CreateRasterizerState(&rasterizerDesc, rs.GetAddressOf());
+	this->d3d11->GetContext()->RSSetState(rs.Get());
 }
 
 /** @brief Alpha To Coverage（マルチサンプリング対応の透明処理）用のON/OFFを切り替える

@@ -35,6 +35,15 @@ enum class SamplerType {
     Max
 };
 
+enum class RasterizerType
+{
+    SolidCullBack,      ///< 塗りつぶし、裏面カリング
+    WireframeCullBack,  ///< ワイヤーフレーム、裏面カリング
+    SolidCullNone,      ///< 塗りつぶし、カリング無し
+    WireframeCullNone,  ///< ワイヤーフレーム、カリング無し
+    Max
+};
+
 /** @class      RenderSystem
  *  @brief      D3D11の描画周りを取りまとめたクラス
  *  @details    このクラスはコピー、代入を禁止している
@@ -109,6 +118,11 @@ public:
      *  @param SamplerType _samplerType 
      */
     void SetSampler(SamplerType _samplerType);
+
+    /** @brief ラスタライザステートを設定する
+     *  @param RasterizerType _rasterizerType ラスタライザステートの種類
+	 */
+	void SetRasterizerState(RasterizerType _rasterizerType);
 
     /** @brief Alpha To Coverage（マルチサンプリング対応の透明処理）用のON/OFFを切り替える
      *  @param bool _enable true：ATC有効  false：無効

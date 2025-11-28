@@ -82,7 +82,7 @@ public:
 	/**	@brief	デフォルトのリソースを取得する（共通デフォルトとして頂点シェーダーを返す）
 	 *	@return	ShaderBase*	共通デフォルトとして頂点シェーダーのポインタ、ない場合は nullptrが返される
 	 */
-	ShaderBase* Default()const override { return this->deafultShader; }
+	ShaderBase* Default()const override { return this->defaultShader; }
 
 	/**	@brief	指定したタイプのデフォルト設定のシェーダーを取得する
 	 *	@param	ShaderType _type	シェーダーの種類	
@@ -93,7 +93,7 @@ public:
 	/**	@brief	デフォルト設定のシェーダープログラムを取得する
 	 *	@return ShaderProgram* 
 	 */
-	ShaderProgram* DefaultProgram()const { return this->deafultProgram; }
+	ShaderProgram* DefaultProgram()const { return this->defaultProgram; }
 
 	D3D11System& d3d11;	///< D3D11システムの参照
 
@@ -102,6 +102,6 @@ public:
 	std::unordered_map<std::string, ShaderProgram>	shaderProgramMap;		///< シェーダーの組み合わせマップ
 
 	std::unordered_map<ShaderType, ShaderBase*> defaultShadersMap;	///< 未設定の場合に使用するデフォルトシェーダー
-	ShaderBase* deafultShader;										///<　共通デフォルト（頂点シェーダー）
-	ShaderProgram* deafultProgram;									///<　デフォルトのシェーダープログラム
+	ShaderBase* defaultShader;										///<　共通デフォルト（頂点シェーダー）
+	ShaderProgram* defaultProgram;									///<　デフォルトのシェーダープログラム
 };

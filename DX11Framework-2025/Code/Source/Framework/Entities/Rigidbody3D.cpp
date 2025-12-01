@@ -12,12 +12,21 @@
 #include "Include/Framework/Core/SystemLocator.h"
 #include "Include/Framework/Core/PhysicsSystem.h"
 
-#include <Jolt/Physics/PhysicsSystem.h>
-#include <Jolt/Physics/Body/BodyInterface.h>
+#include <Jolt/Physics/Collision/NarrowPhaseQuery.h>
+#include <Jolt/Physics/Collision/ShapeCast.h>  
+#include <Jolt/Physics/Collision/CastResult.h> 
+#include <Jolt/Physics/Collision/Shape/Shape.h>
+#include <Jolt/Physics/Collision/RayCast.h>
+#include <cfloat>                             
 
 namespace Framework::Physics
 {
 	using namespace JPH;
+
+	//-----------------------------------------------------------------------------
+	// 定数
+	//-----------------------------------------------------------------------------
+	static constexpr float parallelEps = 1.0e-4f;
 
 	//-----------------------------------------------------------------------------
 	// Constructor / Destructor
@@ -36,6 +45,7 @@ namespace Framework::Physics
 		, linearVelocity(DX::Vector3::Zero)
 		, gravity(0.0f, -9.8f, 0.0f)
 		, useGravity(false)
+		, isGrounded(false)
 	{
 	}
 
@@ -92,28 +102,28 @@ namespace Framework::Physics
 	//-----------------------------------------------------------------------------
 	void Rigidbody3D::UpdateLogical(float _deltaTime)
 	{
-		if (!this->staged)
-		{
-			return;
-		}
-		if (_deltaTime <= 0.0f)
-		{
-			return;
-		}
+		if (!this->staged) { return; }
+		if (_deltaTime <= 0.0f) { return; }
 
-		// 前フレーム姿勢を保存
+		// 前フレーム姿勢を保存する
 		*(this->stagedPrev) = *(this->staged);
 
-		// 重力の適用
+		// 重力を適用
 		if (this->useGravity)
 		{
-			this->linearVelocity += this->gravity * _deltaTime;
+			if (this->isGrounded)
+			{
+				// 接地中は垂直成分のみリセット
+				this->linearVelocity.y = 0.0f;
+			}
+			else
+			{
+				this->linearVelocity += this->gravity * _deltaTime;
+			}
 		}
 
-		// 速度を積分して位置を更新
+		// 速度を積分して位置を更新する
 		this->staged->position += this->linearVelocity * _deltaTime;
-
-		// 回転については、現時点では外部から SetLogicalRotation で直接操作する想定
 	}
 
 	//-----------------------------------------------------------------------------
@@ -121,10 +131,7 @@ namespace Framework::Physics
 	//-----------------------------------------------------------------------------
 	void Rigidbody3D::SyncToVisual() const
 	{
-		if (!this->visualTransform || !this->staged)
-		{
-			return;
-		}
+		if (!this->visualTransform || !this->staged) { return; }
 
 		this->visualTransform->SetWorldPosition(this->staged->position);
 		this->visualTransform->SetWorldRotation(this->staged->rotation);
@@ -136,22 +143,13 @@ namespace Framework::Physics
 	//-----------------------------------------------------------------------------
 	void Rigidbody3D::SyncVisualToJolt(float _deltaTime)
 	{
-		if (!this->hasBody || !this->visualTransform)
-		{
-			return;
-		}
+		if (!this->hasBody || !this->visualTransform) { return; }
 
-		// Static の場合は Jolt 側を動かさない
-		if (this->motionType != EMotionType::Kinematic)
-		{
-			return;
-		}
+		if (this->motionType != EMotionType::Kinematic) { return; }
 
-		// staged / visual はすでに同期済みの前提
 		DX::Vector3 targetPos = this->staged->position;
 		DX::Quaternion targetRot = this->staged->rotation;
 
-		// centerOffset をワールドへ回して加算（Kinematic の Move 先はボディ中心）
 		DX::Vector3 worldOffset = DX::Vector3::Zero;
 		if (this->collider)
 		{
@@ -172,17 +170,10 @@ namespace Framework::Physics
 	//-----------------------------------------------------------------------------
 	void Rigidbody3D::SyncJoltToVisual()
 	{
-		if (!this->hasBody || !this->visualTransform)
-		{
-			return;
-		}
+		if (!this->hasBody || !this->visualTransform) { return; }
 
 		BodyLockRead lock(this->physicsSystem.GetBodyLockInterface(), this->bodyID);
-		if (!lock.Succeeded())
-		{
-			return;
-		}
-
+		if (!lock.Succeeded()) { return; }
 		const Body& body = lock.GetBody();
 
 		DX::Vector3 bodyPos(
@@ -198,7 +189,6 @@ namespace Framework::Physics
 			static_cast<float>(body.GetRotation().GetW())
 		);
 
-		// ボディ中心（Jolt）から可視用のピボット位置へ：centerOffset のワールド分を減算
 		DX::Vector3 worldOffset = DX::Vector3::Zero;
 		if (this->collider)
 		{
@@ -207,13 +197,114 @@ namespace Framework::Physics
 
 		DX::Vector3 pivotPos = bodyPos - worldOffset;
 
-		// 見た目用 Transform に反映
 		this->visualTransform->SetWorldPosition(pivotPos);
 		this->visualTransform->SetWorldRotation(bodyRot);
 
-		// ロジック側にも押し戻し結果を反映
 		this->staged->position = pivotPos;
 		this->staged->rotation = bodyRot;
+	}
+
+	//-----------------------------------------------------------------------------
+	// CastShape 押し戻し解決
+	//-----------------------------------------------------------------------------
+	void Rigidbody3D::ResolveCastShape()
+	{
+		if (!this->hasBody) { return; }
+		if (!this->staged || !this->stagedPrev) { return; }
+		if (!this->collider) { return; }
+
+		this->isGrounded = false;
+
+		DX::Vector3 move = this->staged->position - this->stagedPrev->position;
+		float moveLenSq = move.LengthSquared();
+		if (moveLenSq <= 0.0f) { return; }
+		float moveLen = std::sqrt(moveLenSq);
+		DX::Vector3 moveDir = move / moveLen;
+
+		const DX::Quaternion prevRot = this->stagedPrev->rotation;
+
+		DX::Vector3 offset = DX::Vector3::Transform(this->collider->GetCenterOffset(), prevRot);
+		DX::Vector3 comStart = this->stagedPrev->position + offset;
+
+		JPH::RVec3 jStart(comStart.x, comStart.y, comStart.z);
+		JPH::Vec3  jMove(move.x, move.y, move.z);
+		JPH::Quat  jRot(prevRot.x, prevRot.y, prevRot.z, prevRot.w);
+		JPH::RMat44 jWorld = JPH::RMat44::sRotationTranslation(jRot, jStart);
+		JPH::Vec3  jScale(1.0f, 1.0f, 1.0f);
+
+		const JPH::Shape* shape = this->collider->GetShape().GetPtr();
+		if (!shape) { return; }
+
+		JPH::RShapeCast shapeCast(shape, jScale, jWorld, jMove);
+
+		JPH::ShapeCastSettings settings;
+		settings.mReturnDeepestPoint = false;
+		settings.mBackFaceModeTriangles = JPH::EBackFaceMode::IgnoreBackFaces;
+		settings.mBackFaceModeConvex = JPH::EBackFaceMode::IgnoreBackFaces;
+
+		Framework::Physics::ClosestShapeCastCollector collector;
+
+		const JPH::NarrowPhaseQuery& npq = this->physicsSystem.GetNarrowPhaseQuery();
+		IgnoreSelfBodyFilter bodyFilter(this->bodyID);
+
+		npq.CastShape(
+			shapeCast, settings,
+			JPH::RVec3::sZero(),
+			collector,
+			JPH::BroadPhaseLayerFilter(),
+			JPH::ObjectLayerFilter(),
+			bodyFilter
+		);
+
+		if (!collector.hasHit) { return; }
+
+		float f = std::clamp(collector.hit.mFraction, 0.0f, 1.0f);
+
+		JPH::Vec3 jMoveDir = jMove / moveLen;
+		float ndot = collector.hit.mPenetrationAxis.Dot(jMoveDir);
+
+		if (f == 0.0f && std::abs(ndot) < parallelEps)
+		{
+			f = 1.0f;
+		}
+
+		const float skin = 1.0e-3f;
+		float advance = std::max(0.0f, moveLen * f - skin);
+
+		DX::Vector3 corrected = this->stagedPrev->position + moveDir * advance;
+
+		this->staged->position = corrected;
+
+		// 接地判定も行う
+		this->CheckGrounded();
+	}
+
+	//-----------------------------------------------------------------------------
+	// 接地判定
+	//-----------------------------------------------------------------------------
+	void Rigidbody3D::CheckGrounded()
+	{
+		this->isGrounded = false;
+
+		if (!this->collider || !this->hasBody) { return; }
+
+		float radius = this->collider->GetCapsuleRadius();
+		float halfH = this->collider->GetCapsuleHalfHeight();
+		float epsilon = 0.05f;
+
+		DX::Vector3 worldPos = this->staged->position;
+		float rayStartY = worldPos.y - (halfH + radius * 0.5f);
+
+		JPH::RVec3 from(worldPos.x, rayStartY, worldPos.z);
+		JPH::RVec3 to(worldPos.x, rayStartY - (radius + epsilon), worldPos.z);
+
+		JPH::RRayCast ray(from, to - from);
+
+		JPH::RayCastResult hit;
+		if (physicsSystem.GetNarrowPhaseQuery().CastRay(ray, hit))
+		{
+			this->isGrounded = true;
+		}
 	}
 
 	//-----------------------------------------------------------------------------
@@ -239,37 +330,25 @@ namespace Framework::Physics
 
 	void Rigidbody3D::SetLogicalPosition(const DX::Vector3& _worldPos)
 	{
-		if (!this->staged)
-		{
-			return;
-		}
+		if (!this->staged) { return; }
 		this->staged->position = _worldPos;
 	}
 
 	void Rigidbody3D::SetLogicalRotation(const DX::Quaternion& _worldRot)
 	{
-		if (!this->staged)
-		{
-			return;
-		}
+		if (!this->staged) { return; }
 		this->staged->rotation = _worldRot;
 	}
 
 	void Rigidbody3D::TranslateWorld(const DX::Vector3& _delta)
 	{
-		if (!this->staged)
-		{
-			return;
-		}
+		if (!this->staged) { return; }
 		this->staged->position += _delta;
 	}
 
 	void Rigidbody3D::TranslateLocal(const DX::Vector3& _delta)
 	{
-		if (!this->staged)
-		{
-			return;
-		}
+		if (!this->staged) { return; }
 
 		const DX::Quaternion& worldRot = this->staged->rotation;
 
@@ -327,15 +406,11 @@ namespace Framework::Physics
 
 	bool Rigidbody3D::GetBodyTransform(DX::Vector3& outPos, DX::Quaternion& outRot) const
 	{
-		if (!this->hasBody)
-		{
-			return false;
-		}
+		if (!this->hasBody) { return false; }
+
 		BodyLockRead lock(this->physicsSystem.GetBodyLockInterface(), this->bodyID);
-		if (!lock.Succeeded())
-		{
-			return false;
-		}
+		if (!lock.Succeeded()) { return false; }
+
 		const Body& body = lock.GetBody();
 		outPos = DX::Vector3(
 			static_cast<float>(body.GetPosition().GetX()),
@@ -348,7 +423,7 @@ namespace Framework::Physics
 			static_cast<float>(body.GetRotation().GetZ()),
 			static_cast<float>(body.GetRotation().GetW())
 		);
-		return true;		
+		return true;
 	}
 
 	//-----------------------------------------------------------------------------
@@ -363,7 +438,6 @@ namespace Framework::Physics
 			return;
 		}
 
-		// 先に回転を取得し、centerOffset をワールドへ回す
 		_rot = this->visualTransform->GetWorldRotation();
 		const DX::Vector3 pivotPos = this->visualTransform->GetWorldPosition();
 
@@ -402,10 +476,7 @@ namespace Framework::Physics
 
 	void Rigidbody3D::ApplyMotionTypeToBody()
 	{
-		if (!this->hasBody)
-		{
-			return;
-		}
+		if (!this->hasBody) { return; }
 
 		auto& bodyInterface = this->physicsSystem.GetBodyInterface();
 		bodyInterface.SetMotionType(
@@ -414,7 +485,6 @@ namespace Framework::Physics
 			EActivation::Activate
 		);
 
-		// MotionQuality も合わせておく
 		bodyInterface.SetMotionQuality(
 			this->bodyID,
 			(this->motionType == EMotionType::Kinematic)
@@ -425,10 +495,7 @@ namespace Framework::Physics
 
 	void Rigidbody3D::ApplyObjectLayerToBody()
 	{
-		if (!this->hasBody)
-		{
-			return;
-		}
+		if (!this->hasBody) { return; }
 
 		auto& bodyInterface = this->physicsSystem.GetBodyInterface();
 		bodyInterface.SetObjectLayer(this->bodyID, this->objectLayer);
@@ -439,10 +506,7 @@ namespace Framework::Physics
 	//-----------------------------------------------------------------------------
 	void Rigidbody3D::InitializeBody()
 	{
-		if (this->hasBody)
-		{
-			return;
-		}
+		if (this->hasBody) { return; }
 
 		auto& bodyInterface = this->physicsSystem.GetBodyInterface();
 
@@ -450,10 +514,7 @@ namespace Framework::Physics
 		this->SetupBodySettings(settings);
 
 		Body* body = bodyInterface.CreateBody(settings);
-		if (!body)
-		{
-			return;
-		}
+		if (!body) { return; }
 
 		bodyInterface.AddBody(body->GetID(), EActivation::Activate);
 
@@ -463,10 +524,7 @@ namespace Framework::Physics
 
 	void Rigidbody3D::DestroyBody()
 	{
-		if (!this->hasBody)
-		{
-			return;
-		}
+		if (!this->hasBody) { return; }
 
 		auto& bodyInterface = this->physicsSystem.GetBodyInterface();
 		bodyInterface.RemoveBody(this->bodyID);

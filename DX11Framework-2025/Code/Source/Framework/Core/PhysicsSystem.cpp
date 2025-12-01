@@ -26,10 +26,9 @@ namespace Framework::Physics
 		: tempAllocator(nullptr)
 		, jobSystem(nullptr)
 		, physics(nullptr)
-		, broadphase()
 		, bpFilter()
 		, layerFilter()
-		, fixedDeltaTime(0.0f)
+		, broadphase()
 	{
 	}
 
@@ -87,7 +86,7 @@ namespace Framework::Physics
 		this->jobSystem = std::make_unique<JPH::JobSystemThreadPool>();
 		this->jobSystem->Init(maxJobs, maxBarriers, numThreads);
 
-		// PhysicsSystem
+		// PhysicsSystemの生成
 		this->physics = std::make_unique<JPH::PhysicsSystem>();
 
 		const JPH::uint maxBodies = 1024;
@@ -113,9 +112,10 @@ namespace Framework::Physics
 	 */
 	void PhysicsSystem::Step(float _deltaTime)
 	{
-		if (!this->physics){ return; }
-
-		this->fixedDeltaTime = _deltaTime;
+		if (!this->physics)
+		{
+			return;
+		}
 
 		this->physics->Update(
 			_deltaTime,
@@ -170,6 +170,19 @@ namespace Framework::Physics
 		// 基底クラス BodyLockInterface にアップキャストしてから const_cast する
 		const JPH::BodyLockInterface& iface = this->physics->GetBodyLockInterface();
 		return const_cast<JPH::BodyLockInterface&>(iface);
+	}
+
+	/** @brief NarrowPhaseQuery を取得する
+	 *  @return NarrowPhaseQuery への参照
+	 */
+	const JPH::NarrowPhaseQuery& PhysicsSystem::GetNarrowPhaseQuery() const
+	{
+		if (!this->physics)
+		{
+			static JPH::NarrowPhaseQuery dummy; 
+			return dummy;
+		}
+		return this->physics->GetNarrowPhaseQuery();
 	}
 
 	/// @brief Jolt ログ出力

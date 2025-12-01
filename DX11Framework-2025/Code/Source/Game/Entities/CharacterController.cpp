@@ -27,6 +27,7 @@ CharacterController::CharacterController(GameObject* _owner, bool _active)
 	: Component(_owner, _active), 
 	inputSystem(SystemLocator::Get<InputSystem>()), 
 	cameraTransform(nullptr),
+	rigidbody(nullptr),
 	moveSpeed(10.0f),
 	turnSpeed(15.0f)
 {}
@@ -37,7 +38,6 @@ void CharacterController::Initialize()
 	// カメラオブジェクトのTransformを取得する
     auto& mgr = SystemLocator::Get<GameObjectManager>();
     GameObject* camObj = mgr.GetFindObjectByName("Camera3D");
-
     if (!camObj)
     {
         std::cout << "[CharacterController] Camera3D not found.\n";
@@ -45,12 +45,18 @@ void CharacterController::Initialize()
     }
 
     this->cameraTransform = camObj->GetComponent<Transform>();
-
     if (!this->cameraTransform)
     {
         std::cout << "[CharacterController] Camera3D has no Transform.\n";
         return;
     }
+
+	this->rigidbody = this->Owner()->GetComponent<Framework::Physics::Rigidbody3D>();
+	if (!this->rigidbody)
+	{
+		std::cout << "[CharacterController] Rigidbody3D component not found on owner.\n";
+		return;
+	}
 
 	// ------------------------------------------------------
 	// キーバインドの登録
@@ -61,69 +67,63 @@ void CharacterController::Initialize()
 	this->inputSystem.RegisterKeyBinding("MoveRight", static_cast<int>(DirectInputDevice::KeyboardKey::D));
 }
 
-/** @brief 更新処理
- *  @param float _deltaTime 前フレームからの経過時間（秒）
- */
+ /** @brief 更新処理
+  *  @param float _deltaTime 前フレームからの経過時間（秒）
+  */
 void CharacterController::Update(float _deltaTime)
 {
-	// 
-	auto transform = this->Owner()->transform;
-	if (!transform) { return; }
-	if (!this->cameraTransform) { return; }
+    if (!this->rigidbody || !this->cameraTransform) { return; }
 
-	// ------------------------------------------------------
-	// 入力処理
-	// ------------------------------------------------------
-	float inputX = 0.0f;	// 左(-1) ～ 右(+1)
-	float inputZ = 0.0f;	// 後ろ(-1) ～ 前(+1)
+    // ------------------------------------------------------
+    // 入力処理
+    // ------------------------------------------------------
+    float inputX = 0.0f;
+    float inputZ = 0.0f;
 
-	if (this->inputSystem.IsActionPressed("MoveForward")) { inputZ += 1.0f; }
-	if (this->inputSystem.IsActionPressed("MoveBackward")) { inputZ -= 1.0f; }
-	if (this->inputSystem.IsActionPressed("MoveLeft")) { inputX -= 1.0f; }
-	if (this->inputSystem.IsActionPressed("MoveRight")) { inputX += 1.0f; }
+    if (this->inputSystem.IsActionPressed("MoveForward")) { inputZ += 1.0f; }
+    if (this->inputSystem.IsActionPressed("MoveBackward")) { inputZ -= 1.0f; }
+    if (this->inputSystem.IsActionPressed("MoveLeft")) { inputX -= 1.0f; }
+    if (this->inputSystem.IsActionPressed("MoveRight")) { inputX += 1.0f; }
 
-	// 入力なし
-	if (inputX == 0.0f && inputZ == 0.0f) { return; }
+    if (inputX == 0.0f && inputZ == 0.0f) { return; }
 
-	// ------------------------------------------------------
-	// カメラの前方向・右方向（水平成分のみ）
-	// ------------------------------------------------------
-	DX::Vector3 camForward = this->cameraTransform->Forward();
-	camForward.y = 0.0f;
-	camForward.Normalize();
+    // ------------------------------------------------------
+    // カメラの前方向・右方向（水平成分のみ）
+    // ------------------------------------------------------
+    DX::Vector3 camForward = this->cameraTransform->Forward();
+    camForward.y = 0.0f;
+    camForward.Normalize();
 
-	DX::Vector3 camRight = this->cameraTransform->Right();
-	camRight.y = 0.0f;
-	camRight.Normalize();
+    DX::Vector3 camRight = this->cameraTransform->Right();
+    camRight.y = 0.0f;
+    camRight.Normalize();
 
-	// ------------------------------------------------------
-	// カメラ基準入力 → ワールド方向ベクトルへ変換
-	// ------------------------------------------------------
-	DX::Vector3 moveDir = camForward * inputZ + camRight * inputX;
+    // ------------------------------------------------------
+    // 入力方向をワールドベクトルへ変換
+    // ------------------------------------------------------
+    DX::Vector3 moveDir = camForward * inputZ + camRight * inputX;
 
-	// 斜め移動のときも速度一定にするため正規化
-	if (moveDir.LengthSquared() > 0.0f)
-	{
-		moveDir.Normalize();
-	}
-	else { return; }
+    if (moveDir.LengthSquared() > 0.0f)
+    {
+        moveDir.Normalize();
+    }
+    else { return; }
 
-	// ------------------------------------------------------
-	// 向きの更新（キャラの正面を moveDir に向ける）
-	// ------------------------------------------------------
-	DX::Quaternion currentRot = transform->GetLocalRotation();
-	DX::Quaternion targetRot = DX::Quaternion::CreateFromRotationMatrix(
-		DX::CreateWorldLH(DX::Vector3::Zero, moveDir, DX::Vector3::UnitY)
-	);
+    // ------------------------------------------------------
+    // 回転の更新（キャラクターを進行方向へ向ける）
+    // → Rigidbody の論理回転に反映
+    // ------------------------------------------------------
+    DX::Quaternion currentRot = this->rigidbody->GetLogicalRotation();
+    DX::Quaternion targetRot = DX::Quaternion::CreateFromRotationMatrix(
+        DX::CreateWorldLH(DX::Vector3::Zero, moveDir, DX::Vector3::UnitY)
+    );
 
-	// 球形補間で回転を滑らかに行う
-	DX::Quaternion newRot = DX::Quaternion::Slerp(currentRot, targetRot, turnSpeed * _deltaTime);
-	transform->SetLocalRotation(newRot);
+    DX::Quaternion newRot = DX::Quaternion::Slerp(currentRot, targetRot, this->turnSpeed * _deltaTime);
+    this->rigidbody->SetLogicalRotation(newRot);
 
-	// ------------------------------------------------------
-	// 実際の移動処理
-	// ------------------------------------------------------
-	DX::Vector3 pos = transform->GetLocalPosition();
-	pos += moveDir * this->moveSpeed * _deltaTime;
-	transform->SetLocalPosition(pos);
+    // ------------------------------------------------------
+    // 移動処理（論理座標にのみ加算）
+    // ------------------------------------------------------
+    DX::Vector3 deltaMove = moveDir * this->moveSpeed * _deltaTime;
+    this->rigidbody->TranslateWorld(deltaMove);
 }

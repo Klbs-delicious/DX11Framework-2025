@@ -138,6 +138,7 @@ void GameObjectManager::BeginPhysics(float _deltaTime)
 		{
 			// 自前の押し戻し結果を visualTransform に反映させる
 			rigidbody->UpdateLogical(_deltaTime);
+			rigidbody->ResolveCastShape();
 			rigidbody->SyncToVisual();
 		}
 	}

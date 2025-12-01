@@ -41,6 +41,8 @@ public:
 	/// @brief 蓄積された時間スケールを取得する
 	[[nodiscard]] float GetAccumulatedScale() const;
 
+	[[nodiscard]] float GetFinalScale() const;
+
 	/**@brief デルタタイムに時間スケールを適用する
 	 * @param _baseDelta
 	 * @return

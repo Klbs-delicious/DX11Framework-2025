@@ -3,8 +3,13 @@
  */
 #pragma once
 #include"Include/Framework/Utils/NonCopyable.h"
-#include"Include/Framework/Entities/GameObject.h"
 #include"Include/Framework/Event/GameObjectEvent.h"
+
+#include"Include/Framework/Entities/GameObject.h"
+#include"Include/Framework/Entities/Component.h"
+#include"Include/Framework/Entities/PhaseInterfaces.h"
+#include"Include/Framework/Entities/Rigidbody3D.h"
+#include"Include/Framework/Entities/Transform.h"
 
 #include<memory>
 #include<list>
@@ -40,8 +45,24 @@ public:
 	 */
 	void UpdateAll(float _deltaTime);
 
-	/// @brief オブジェクトの一括描画
-	void DrawAll();
+	/**	@brief オブジェクトの一括固定更新
+	 *	@param		float _deltaTime	デルタタイム
+	 */
+	void FixedUpdateAll(float _deltaTime);
+
+	/// @brief 全Transformのワールド行列を更新する
+	void UpdateAllTransforms();
+
+	/** @brief 物理シミュレーション開始前の処理
+	 *  @param _deltaTime 
+	 */
+	void BeginPhysics(float _deltaTime);
+
+	/// @brief 物理シミュレーション終了後の処理
+	void EndPhysics();
+
+	/// @brief 一括描画
+	void RenderAll();
 
 	/**	@brief	ゲームオブジェクトの作成
 	 *	@param	const std::string& _name						オブジェクトの名前
@@ -55,19 +76,13 @@ public:
 	 *	@param	const std::string& _name	オブジェクトの名前
 	 *	@return GameObject*					ゲームオブジェクト
 	 */
-	GameObject* GetFindObjectByName(const std::string& _name);
-
-	/**	@brief	ゲームオブジェクトをタグ検索で取得する
-	 *	@param	const GameTags::Tag& _tag = GameTags::Tag::None	オブジェクトのタグ名
-	 *	@return GameObject*										ゲームオブジェクト
-	 */
-	GameObject* GetFindObjectWithTag(const GameTags::Tag& _tag);
+	[[nodiscard]] GameObject* GetFindObjectByName(const std::string& _name);
 
 	/**	@brief	ゲームオブジェクトをタグ検索で取得する
 	 *	@param	const GameTags::Tag& _tag = GameTags::Tag::None	オブジェクトのタグ名
 	 *	@return std::vector<GameObject*>						当てはまるゲームオブジェクトのリスト
 	 */
-	std::vector<GameObject*> GetFindObjectsWithTag(const GameTags::Tag& _tag);
+	[[nodiscard]] std::vector<GameObject*> GetFindObjectsWithTag(const GameTags::Tag& _tag);
 
 	/**	@brief 登録されたゲームオブジェクトを一括削除する
 	 *	@details
@@ -76,48 +91,62 @@ public:
 	 */
 	void FlushDestroyQueue();
 
-	/**@brief GameObjectからのイベント通知を受け取る
-	 * @param GameObject* _obj			通知元のGameObjectインスタンス
-	 * @param GameObjectEvent _event	発生したイベント種別
+	/**@brief GameObjectからのイベント通知を受け取る（コンテキスト版）
+	 * @param GameObjectEventContext _eventContext	イベントコンテキスト情報
 	 * @detail
 	 *	-	GameObject が状態変化した際に呼び出される
-	 *	-	実装側では event の種類に応じて処理を分岐させる
+	 *	-	実装側では eventContext.eventType の種類に応じて処理を分岐させる
 	 */
-	void OnGameObjectEvent(GameObject* _obj, GameObjectEvent _event)override;
+	void OnGameObjectEvent(const GameObjectEventContext _eventContext) override;
 
-	/**	@brief  オブジェクトの重複を入れないユーティリティ
-	 *	@param std::vector<GameObject*>& _v
-	 *	@param GameObject* _p
+	/** @brief 要素を重複なく追加する
+	 *  @tparam T 追加する要素のポインタ型
+	 *  @param _v 追加先のベクター
+	 *  @param _p 追加するポインタ
 	 */
-	static inline void push_unique(std::vector<GameObject*>& _v, GameObject* _p) {
-		if (std::find(_v.begin(), _v.end(), _p) == _v.end()) _v.push_back(_p);
+	template<typename T>
+	inline void PushUnique(std::vector<T*>& _v, T* _p)
+	{
+		if (std::find(_v.begin(), _v.end(), _p) == _v.end())
+		{
+			_v.push_back(_p);
+		}
 	}
 
-	/**	@brief  オブジェクトを確実に外すユーティリティ
-	 *	@param std::vector<GameObject*>& _v
-	 *	@param GameObject* _p
+	/** @brief 要素を 1 つ確実に削除する
+	 *  @tparam T 削除する要素のポインタ型
+	 *  @param _v 削除対象のベクター
+	 *  @param _p 削除したいポインタ
 	 */
-	static inline void erase_one(std::vector<GameObject*>& _v, GameObject* _p) {
+	template<typename T>
+	inline void EraseOne(std::vector<T*>& _v, T* _p)
+	{
 		_v.erase(std::remove(_v.begin(), _v.end(), _p), _v.end());
 	}
 
-	/**	@brief 現在の状態（IsUpdatable/IsDrawable）に合わせて登録を正規化
-	 *	@param _obj 
-	 *	@details	
-	 *		- 必要なら追加、不要なら除去
-	 *		- Initialized/Refreshed から共通で呼ぶ
-	 */
-	void RefreshRegistration(GameObject* _obj);
+private:
+	void RegisterComponentToPhases(Component* _component);
+	void UnregisterComponentFromPhases(Component* _component);
 
 private:
+	const EngineServices* services;		///< リソース関連の参照
+
+	// オブジェクト関連
 	std::list<std::unique_ptr<GameObject>> gameObjects;		///< 生成されたゲームオブジェクト
-	const EngineServices* services;							///< リソース関連の参照
+	std::deque<GameObject*> destroyQueue;					///< 遅延破棄対象キュー
 
-	std::deque<GameObject*> pendingInit;	///< 初期化を行うオブジェクトのキュー
-	std::vector<GameObject*> updateList;	///< 更新を行うオブジェクトの配列
-	std::vector<GameObject*> drawList;		///< 描画を行うオブジェクトの配列
-	std::deque<GameObject*> destroyQueue;	///< 遅延破棄対象キュー
+	// 外部コンポーネント管理用配列（オブジェクトIDと紐づけ）
+	std::deque<Component*> pendingInits;			///< 初期化を行うコンポーネントのキュー
+	std::vector<IUpdatable*> updates;				///< 更新を持つコンポーネントの配列
+	std::vector <IFixedUpdatable*> fixedUpdates;	///< 固定更新を持つオブジェクトの配列
 
-	std::unordered_map<std::string, GameObject*> nameMap;	///< 名前検索用マップ
-	std::unordered_map<GameTags::Tag, GameObject*> tagMap;	///< タグ検索用マップ
+	// 内部コンポーネント管理用配列
+	std::vector<IDrawable*> renderes;							///< 描画を持つコンポーネントの配列
+	std::vector<Framework::Physics::Rigidbody3D*> rigidbodies;	///< 物理コンポーネントの配列
+	std::vector<Transform*> transforms;							///< Transformコンポーネントの配列
+
+	// 検索用マップ
+	std::unordered_map<std::string, GameObject*> nameMap;				///< 名前検索用マップ
+	std::unordered_map<GameTags::Tag, std::vector<GameObject*>> tagMap;	///< タグ検索用マップ
+
 };

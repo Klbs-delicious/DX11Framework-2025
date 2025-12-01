@@ -18,6 +18,7 @@
 #include"Include/Framework/Entities/TimeScaleGroup.h"
 #include"Include/Framework/Entities/Rigidbody3D.h"
 #include"Include/Framework/Entities/Collider3DComponent.h"
+#include"Include/Framework/Entities/ColliderDebugRenderer.h"
 
 #include"Include/Game/Entities/FollowCamera.h"
 #include"Include/Game/Entities/DebugFreeMoveComponent.h"
@@ -54,7 +55,7 @@ TestScene::~TestScene() {}
 /// @brief	オブジェクトの生成、登録等を行う
 void TestScene::SetupObjects()
 {
-	std::cout << "シーン名" << "TestScene" << std::endl;
+	std::cout << "[TestScene] シーン名" << "TestScene" << std::endl;
 
 	//--------------------------------------------------------------
 	// リソースマネージャの取得
@@ -76,9 +77,9 @@ void TestScene::SetupObjects()
 
 	//camera3D->AddComponent<TestMoveComponent>();
 
-	// 2Dカメラオブジェクト
-	auto camera2D = this->gameObjectManager.Instantiate("Camera2D", GameTags::Tag::Camera);
-	camera2D->AddComponent<Camera2D>();
+	//// 2Dカメラオブジェクト
+	//auto camera2D = this->gameObjectManager.Instantiate("Camera2D", GameTags::Tag::Camera);
+	//camera2D->AddComponent<Camera2D>();
 
 	//--------------------------------------------------------------
 	// オブジェクトの生成
@@ -104,6 +105,7 @@ void TestScene::SetupObjects()
 	//auto meshComp = obj_2->AddComponent<MeshComponent>();
 	//meshComp->SetMesh(meshManager.Get("Sphere"));
 	//obj_2->AddComponent<MeshRenderer>();
+	//obj_2->OnDestroy();
 
 	// 立方体オブジェクト（プレイヤー）
 	auto player = this->gameObjectManager.Instantiate("Player", GameTags::Tag::Player);
@@ -118,7 +120,6 @@ void TestScene::SetupObjects()
 	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
 	coll3D->BuildShape();
 	auto rigidbody3D = player->AddComponent<Framework::Physics::Rigidbody3D>();
-	rigidbody3D->AddImpulse(DX::Vector3(5.0f, 0.0f, 0.0f)); // 上方向に初速を与える
 	auto testComp = player->AddComponent<TimeScaleTestComponent>();
 	testComp->SetTimeScaleGroup(timeGroup);
 	//charaController->SetTurnSpeed(10.0f);
@@ -169,9 +170,8 @@ void TestScene::SetupObjects()
 	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
 	coll3D->BuildShape();
 	rigidbody3D = obj_4->AddComponent<Framework::Physics::Rigidbody3D>();
-	rigidbody3D->SetMotionType(JPH::EMotionType::Static);
-	rigidbody3D->SetRestitution(0.5f);
-
+	rigidbody3D->SetMotionTypeStatic();
+	rigidbody3D->SetObjectLayerStatic();
 	// 大量オブジェクト生成テスト
 	SpawnManyBoxes(10, 10, 10);
 
@@ -275,7 +275,7 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 				z * _spacing
 			);
 
-			pos -= center; // ← これが中心基準化の本体
+			pos -= center; 
 
 			obj->transform->SetLocalPosition(pos);
 			obj->transform->SetLocalScale(DX::Vector3(2, 2, 2));
@@ -285,16 +285,17 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 			meshComp->SetMesh(meshManager.Get("Sphere"));
 
 			auto coll3D = obj->AddComponent<Framework::Physics::Collider3DComponent>();
-			coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
+			coll3D->SetShape(Framework::Physics::ColliderShapeType::Sphere);
+			//coll3D->SetCenterOffset(DX::Vector3(2.0f, 0.0f, 0.0f));
 			coll3D->BuildShape();
 
 			auto rigidbody3D = obj->AddComponent<Framework::Physics::Rigidbody3D>();
 
 			float randomScale = (static_cast<float>(rand()) / RAND_MAX) * 2.0f - 1.0f;
-			//rigidbody3D->SetGravityScale(randomScale);
-			rigidbody3D->SetRestitution(randomScale);
 
 			obj->AddComponent<MeshRenderer>();
+			obj->AddComponent<ColliderDebugRenderer>();
+			obj->AddComponent<FreeMoveTestComponent>();
 
 			int groupId = index % 3 + 1;
 			std::string groupName = "EnemyGroup_" + std::to_string(groupId);

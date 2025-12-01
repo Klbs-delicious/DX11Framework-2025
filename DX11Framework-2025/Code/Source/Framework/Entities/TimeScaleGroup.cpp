@@ -8,6 +8,7 @@
  //-----------------------------------------------------------------------------
 #include "Include/Framework/Entities/TimeScaleGroup.h"
 
+#include<iostream>
 //-----------------------------------------------------------------------------
 // TimeScaleGroup class
 //-----------------------------------------------------------------------------
@@ -83,6 +84,10 @@ void TimeScaleGroup::SetGroupScale(const std::string& _name, float _scale)
 	if (it == scaleGroups.end()) { return; }
 
     it->second.timeScale = _scale;
+
+	//std::cout << "[TSG] SetGroupScale: "
+	//	<< _name << " = " << _scale
+	//	<< std::endl;
 }
 
 /**@brief 時間スケールを取得する

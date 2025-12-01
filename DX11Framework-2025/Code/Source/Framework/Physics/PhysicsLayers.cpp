@@ -79,8 +79,8 @@ namespace Framework::Physics
         if (_layer1 == PhysicsLayer::Static && _layer2 == PhysicsLayer::Static)
             return false;
 
-        if (_layer1 == PhysicsLayer::Kinematic && _layer2 == PhysicsLayer::Kinematic)
-            return false;
+        //if (_layer1 == PhysicsLayer::Kinematic && _layer2 == PhysicsLayer::Kinematic)
+        //    return false;
 
         return true; // その他は全て衝突する
     }

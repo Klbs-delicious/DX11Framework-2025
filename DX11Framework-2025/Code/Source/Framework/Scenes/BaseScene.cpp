@@ -45,18 +45,6 @@ void BaseScene::Update(float _deltaTime)
 
     // オブジェクトの一括更新
     this->gameObjectManager.UpdateAll(_deltaTime);
-
-
-
-	// テスト的にメンバに持たずに直接取得する
-	auto& input = SystemLocator::Get<InputSystem>();
-	auto& scenemanager = SystemLocator::Get<SceneManager>();
-
-	if (input.IsActionPressed("Space")) { std::cout << "Space：Press" << std::endl; }
-	if (input.IsActionTriggered("Space")) { std::cout << "Space：Trigger" << std::endl; }
-
-    //if (input.IsActionTriggered("SceneChangeTest")) { scenemanager.RequestSceneChange(SceneType::Test); }
-    //if (input.IsActionTriggered("SceneChangeTitle")) { scenemanager.RequestSceneChange(SceneType::Title); }
 }
 
 /**	@brief		ゲームオブジェクトの描画処理を行う
@@ -65,8 +53,7 @@ void BaseScene::Update(float _deltaTime)
  */
 void BaseScene::Draw()
 {
-    // オブジェクトの一括描画
-    this->gameObjectManager.DrawAll();
+    this->gameObjectManager.RenderAll();  // 一括描画
 }
 
 /**	@brief		終了処理を行う

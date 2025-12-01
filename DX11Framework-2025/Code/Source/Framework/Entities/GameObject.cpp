@@ -21,31 +21,14 @@
 */
 GameObject::GameObject(IGameObjectObserver& _gameobjctObs, const std::string& _name, const GameTags::Tag _tag, const bool _isActive)
     : gameObjectObs(_gameobjctObs), transform(nullptr), timeScaleComponent(nullptr) , isPendingDestroy(false), isActive(_isActive), parent(nullptr), name(_name), tag(_tag)
-{
-	// Transformコンポーネントを追加
-    // 生成、破棄などは一緒に行えるようにしたが処理はコンポーネントのリストとは別で回す
-    this->transform = this->AddComponent<Transform>();
-
-	// TimeScaleコンポーネントを追加する
-    this->timeScaleComponent = this->AddComponent<TimeScaleComponent>();
-};
+{};
 
 /// @brief	デストラクタ
 GameObject::~GameObject() {}
 
 /// @brief	初期化処理を行う
 void GameObject::Initialize()
-{
-    for (auto& component : this->components)
-    {
-        component->Initialize();
-    }
-
-    // 初期化完了通知
-    this->gameObjectObs.OnGameObjectEvent(this, GameObjectEvent::Initialized);
-
-    //std::cout << this->name << " （" << std::to_string(static_cast<int>(this->tag)) << "番）を初期化した！" << std::endl;
-}
+{}
 
 /**	@brief		オブジェクトの更新を行う
  *	@param		float _deltaTime	デルタタイム
@@ -55,34 +38,8 @@ void GameObject::Update(float _deltaTime)
 {
     if (!this->isActive || this->isPendingDestroy) return;
 
-    float scaledDeltaTime = _deltaTime;
-    if (this->timeScaleComponent)
-    {
-        // 時間スケールを考慮したデルタタイムを計算する
-        scaledDeltaTime = this->timeScaleComponent->ApplyTimeScale(_deltaTime);
-    }
-
-    for (auto* updatable : this->updatableComponents)
-    {
-        updatable->Update(scaledDeltaTime);
-    }
-
     // ここでTransformを更新する
     if (this->transform) { this->transform->UpdateWorldMatrix(); }
-}
-
-/**	@brief		ゲームオブジェクトの描画処理を行う
- *	@param		float _deltaTime	デルタタイム
- *	@details	継承を禁止する
- */
-void GameObject::Draw()
-{
-    if (!this->isActive || this->isPendingDestroy) return;
-
-    for (auto* drawable : this->drawableComponents)
-    {
-        drawable->Draw();
-    }
 }
 
 /**	@brief		終了処理を行う
@@ -98,8 +55,6 @@ void GameObject::Dispose()
     }
 	this->transform = nullptr;
     this->components.clear();
-    this->updatableComponents.clear();
-    this->drawableComponents.clear();
     this->children.clear();
     this->name.clear();
 }
@@ -112,10 +67,16 @@ void GameObject::OnDestroy()
 
     this->isPendingDestroy = true;
 
-    // Observer に通知
-    this->gameObjectObs.OnGameObjectEvent(this, GameObjectEvent::Destroyed);
+    // オブジェクトの削除通知
+    GameObjectEventContext eventContext =
+    {
+        this->name,
+        nullptr,
+        GameObjectEvent::Destroyed
+    };
+    this->NotifyEvent(eventContext);
 
-    // 子オブジェクトにも通知
+    // 子オブジェクトにも通知する
     for (auto* child : this->children) {
         child->OnDestroy();
     }

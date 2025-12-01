@@ -54,6 +54,11 @@ namespace Framework::Physics
 		 */
 		[[nodiscard]] JPH::BodyLockInterface& GetBodyLockInterface();
 
+		/** @brief 物理シミュレーションの固定更新時間を取得
+		 *  @return 固定更新時間（秒）
+		 */
+		[[nodiscard]] float GetFixedDeltaTime() const { return this->fixedDeltaTime; }
+
 	private:
 		/// @brief ログ出力（Jolt から呼ばれる）
 		static void TraceImpl(const char* _fmt, ...);
@@ -69,5 +74,7 @@ namespace Framework::Physics
 		Framework::Physics::BPLayerInterfaceImpl broadphase;			///< レイヤー管理
 		Framework::Physics::ObjectVsBroadPhaseLayerFilterImpl bpFilter;	///< レイヤー間フィルタ
 		Framework::Physics::ObjectLayerPairFilterImpl layerFilter;		///< レイヤーペアフィルタ
+
+		float fixedDeltaTime;											///< 物理シミュレーションの固定更新時間
 	};
 }

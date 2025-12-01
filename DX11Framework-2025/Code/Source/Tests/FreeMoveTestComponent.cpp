@@ -3,46 +3,81 @@
  *  @date   2025/11/12
  */
 
-//-----------------------------------------------------------------------------
-// Includes
-//-----------------------------------------------------------------------------
+ //-----------------------------------------------------------------------------
+ // Includes
+ //-----------------------------------------------------------------------------
 #include "Include/Tests/FreeMoveTestComponent.h"
 #include "Include/Framework/Entities/GameObject.h"
+#include "Include/Framework/Entities/Rigidbody3D.h"
 
-#include<random>
+#include <random>
+
 //-----------------------------------------------------------------------------
 // FreeMoveTestComponent class
 //-----------------------------------------------------------------------------
 
-/** @brief コンストラクタ
- *  @param _owner このコンポーネントがアタッチされるオブジェクト
- *  @param _active コンポーネントの有効/無効
- */
 FreeMoveTestComponent::FreeMoveTestComponent(GameObject* _owner, bool _active)
-	: Component(_owner, _active), transform(nullptr), speed(10.0f), targetPos(0.0f, 0.0f, 0.0f), hasTarget(false)
-{}
-
-/// @brief 初期化処理
-void FreeMoveTestComponent::Initialize()
+    : Component(_owner, _active),
+    transform(nullptr),
+    rigidbody(nullptr),
+    speed(10.0f),
+    targetPos(0.0f, 0.0f, 0.0f),
+    hasTarget(false)
 {
-	// Transformコンポーネントを取得
-	this->transform = this->Owner()->transform;
 }
 
-/// @brief 終了処理
-void FreeMoveTestComponent::Dispose()
-{}
+void FreeMoveTestComponent::Initialize()
+{
+    this->transform = this->Owner()->transform;
+    this->rigidbody = this->Owner()->GetComponent<Framework::Physics::Rigidbody3D>();
+}
 
-/** @brief 更新処理
- *  @param _deltaTime 前フレームからの経過時間（秒）
- */
+void FreeMoveTestComponent::Dispose()
+{
+}
+
 void FreeMoveTestComponent::Update(float _deltaTime)
 {
-    // 乱数生成器
+    //----------------------------------------------------------------------
+    // Rigidbody3D がアタッチされている場合：論理座標(StagedTransform)で動かす
+    //----------------------------------------------------------------------
+    if (rigidbody)
+    {
+        static std::mt19937 engine(std::random_device{}());
+        static std::uniform_real_distribution<float> dist(-20.0f, 20.0f);
+
+        if (!hasTarget)
+        {
+            targetPos = DX::Vector3(dist(engine), dist(engine), dist(engine));
+            hasTarget = true;
+        }
+
+        DX::Vector3 current = rigidbody->GetLogicalPosition();
+        DX::Vector3 diff = targetPos - current;
+        float len = diff.Length();
+
+        if (len < 0.1f)
+        {
+            hasTarget = false;
+            return;
+        }
+
+        DX::Vector3 dir = diff / len;
+        rigidbody->TranslateWorld(dir * (speed * _deltaTime));
+        return;
+    }
+
+    //----------------------------------------------------------------------
+    // Rigidbody3D が無い場合：従来通り Transform を直接動かす
+    //----------------------------------------------------------------------
+    if (!this->transform)
+    {
+        return;
+    }
+
     static std::mt19937 engine(std::random_device{}());
     static std::uniform_real_distribution<float> dist(-20.0f, 20.0f);
 
-    // 目標地点がない場合はランダムに決める
     if (!this->hasTarget)
     {
         this->targetPos = DX::Vector3(
@@ -53,21 +88,18 @@ void FreeMoveTestComponent::Update(float _deltaTime)
         this->hasTarget = true;
     }
 
-    DX::Vector3 current = this->transform->GetLocalPosition();
+    DX::Vector3 current = this->transform->GetWorldPosition();
     DX::Vector3 diff = this->targetPos - current;
-    float distLen = diff.Length();
+    float len = diff.Length();
 
-    // 近づいたら新しい地点を選ぶ
-    if (distLen < 0.1f)
+    if (len < 0.1f)
     {
         this->hasTarget = false;
         return;
     }
 
-	// 方向ベクトルを正規化する
-    DX::Vector3 dir = diff / distLen;
+    DX::Vector3 dir = diff / len;
 
-    // 移動処理
     DX::Vector3 newPos = current + dir * this->speed * _deltaTime;
     this->transform->SetLocalPosition(newPos);
 }

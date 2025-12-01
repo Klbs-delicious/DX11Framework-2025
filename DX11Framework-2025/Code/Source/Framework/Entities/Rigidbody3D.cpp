@@ -1,6 +1,6 @@
 ﻿/** @file   Rigidbody3D.cpp
- *  @brief  Jolt Physics 用 3D リジッドボディコンポーネント実装
- *  @date   2025/11/18
+ *  @brief  TimeScale 対応：自前移動＋Jolt 押し戻し用 Rigidbody3D 実装
+ *  @date   2025/11/28
  */
 
  //-----------------------------------------------------------------------------
@@ -8,38 +8,34 @@
  //-----------------------------------------------------------------------------
 #include "Include/Framework/Entities/Rigidbody3D.h"
 #include "Include/Framework/Entities/GameObject.h"
-#include "Include/Framework/Entities/Transform.h"
-#include "Include/Framework/Entities/Collider3DComponent.h"
 
 #include "Include/Framework/Core/SystemLocator.h"
 #include "Include/Framework/Core/PhysicsSystem.h"
 
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/Physics/Body/BodyInterface.h>
-#include <Jolt/Physics/Body/BodyCreationSettings.h>
-#include <Jolt/Physics/Body/BodyLock.h>
 
 namespace Framework::Physics
 {
 	using namespace JPH;
 
 	//-----------------------------------------------------------------------------
-	// Rigidbody3D Class
+	// Constructor / Destructor
 	//-----------------------------------------------------------------------------
-
-	Rigidbody3D::Rigidbody3D(GameObject* _owner, bool _isActive)
-		: Component(_owner, _isActive)
+	Rigidbody3D::Rigidbody3D(GameObject* _owner, bool _active)
+		: Component(_owner, _active)
 		, bodyID()
 		, hasBody(false)
-		, mass(1.0f)
-		, gravityScale(1.0f)
-		, friction(0.5f)
-		, restitution(0.5f)
-		, isTrigger(false)
-		, motionType(EMotionType::Dynamic)
-		, transform(nullptr)
-		, collider(nullptr)
+		, motionType(EMotionType::Kinematic)
+		, objectLayer(PhysicsLayer::Kinematic)
+		, staged(nullptr)
+		, stagedPrev(nullptr)
+		, visualTransform(nullptr)
 		, physicsSystem(SystemLocator::Get<PhysicsSystem>())
+		, collider(nullptr)
+		, linearVelocity(DX::Vector3::Zero)
+		, gravity(0.0f, -9.8f, 0.0f)
+		, useGravity(false)
 	{
 	}
 
@@ -49,257 +45,434 @@ namespace Framework::Physics
 	}
 
 	//-----------------------------------------------------------------------------
-	// Initialize
+	// Initialize / Dispose
 	//-----------------------------------------------------------------------------
-
 	void Rigidbody3D::Initialize()
 	{
-		this->transform = this->Owner()->GetComponent<Transform>();
-		if (!this->collider)
+		// Transform / Collider の取得
+		this->visualTransform = this->Owner()->GetComponent<Transform>();
+		this->collider = this->Owner()->GetComponent<Collider3DComponent>();
+
+		// ロジック側 Transform の生成
+		this->staged = std::make_unique<StagedTransform>();
+		this->stagedPrev = std::make_unique<StagedTransform>();
+
+		if (this->visualTransform)
 		{
-			this->collider = this->Owner()->GetComponent<Collider3DComponent>();
+			this->staged->position = this->visualTransform->GetWorldPosition();
+			this->staged->rotation = this->visualTransform->GetWorldRotation();
+			this->staged->scale = this->visualTransform->GetWorldScale();
 		}
+		else
+		{
+			this->staged->position = DX::Vector3::Zero;
+			this->staged->rotation = DX::Quaternion::Identity;
+			this->staged->scale = DX::Vector3::One;
+		}
+
+		*(this->stagedPrev) = *(this->staged);
+
+		// Collider が無ければ追加
 		if (!this->collider)
 		{
 			this->collider = this->Owner()->AddComponent<Collider3DComponent>();
 		}
 
+		// Body を生成
 		this->InitializeBody();
 	}
 
-	//-----------------------------------------------------------------------------
-	// Body Setup
-	//-----------------------------------------------------------------------------
-
-	void Rigidbody3D::GetInitialTransform(DX::Vector3& _outPosition, DX::Quaternion& _outRotation) const
+	void Rigidbody3D::Dispose()
 	{
-		if (this->transform)
-		{
-			_outPosition = this->transform->GetWorldPosition();
-			_outRotation = this->transform->GetWorldRotation();
-		}
-		else
-		{
-			_outPosition = DX::Vector3::Zero;
-			_outRotation = DX::Quaternion::Identity;
-		}
+		this->DestroyBody();
 	}
 
-	void Rigidbody3D::SetupBodyCreationSettings(BodyCreationSettings& _settings) const
+	//-----------------------------------------------------------------------------
+	// 自前移動（TimeScale 適用済み）
+	//-----------------------------------------------------------------------------
+	void Rigidbody3D::UpdateLogical(float _deltaTime)
 	{
-		DX::Vector3 pos;
-		DX::Quaternion rot;
-		this->GetInitialTransform(pos, rot);
-
-		_settings.mPosition = RVec3(pos.x, pos.y, pos.z);
-		_settings.mRotation = Quat(rot.x, rot.y, rot.z, rot.w);
-		_settings.mMotionType = this->motionType;
-
-		// ObjectLayer
-		switch (this->motionType)
+		if (!this->staged)
 		{
-		case EMotionType::Static:    _settings.mObjectLayer = PhysicsLayer::Static; break;
-		case EMotionType::Dynamic:   _settings.mObjectLayer = PhysicsLayer::Dynamic; break;
-		case EMotionType::Kinematic: _settings.mObjectLayer = PhysicsLayer::Kinematic; break;
+			return;
+		}
+		if (_deltaTime <= 0.0f)
+		{
+			return;
 		}
 
-		// Shape
+		// 前フレーム姿勢を保存
+		*(this->stagedPrev) = *(this->staged);
+
+		// 重力の適用
+		if (this->useGravity)
+		{
+			this->linearVelocity += this->gravity * _deltaTime;
+		}
+
+		// 速度を積分して位置を更新
+		this->staged->position += this->linearVelocity * _deltaTime;
+
+		// 回転については、現時点では外部から SetLogicalRotation で直接操作する想定
+	}
+
+	//-----------------------------------------------------------------------------
+	// staged → visual
+	//-----------------------------------------------------------------------------
+	void Rigidbody3D::SyncToVisual() const
+	{
+		if (!this->visualTransform || !this->staged)
+		{
+			return;
+		}
+
+		this->visualTransform->SetWorldPosition(this->staged->position);
+		this->visualTransform->SetWorldRotation(this->staged->rotation);
+		this->visualTransform->SetWorldScale(this->staged->scale);
+	}
+
+	//-----------------------------------------------------------------------------
+	// visual → Jolt（Kinematic のみ）
+	//-----------------------------------------------------------------------------
+	void Rigidbody3D::SyncVisualToJolt(float _deltaTime)
+	{
+		if (!this->hasBody || !this->visualTransform)
+		{
+			return;
+		}
+
+		// Static の場合は Jolt 側を動かさない
+		if (this->motionType != EMotionType::Kinematic)
+		{
+			return;
+		}
+
+		// staged / visual はすでに同期済みの前提
+		DX::Vector3 targetPos = this->staged->position;
+		DX::Quaternion targetRot = this->staged->rotation;
+
+		// centerOffset をワールドへ回して加算（Kinematic の Move 先はボディ中心）
+		DX::Vector3 worldOffset = DX::Vector3::Zero;
+		if (this->collider)
+		{
+			worldOffset = DX::Vector3::Transform(this->collider->GetCenterOffset(), targetRot);
+		}
+
+		auto& bodyInterface = this->physicsSystem.GetBodyInterface();
+		bodyInterface.MoveKinematic(
+			this->bodyID,
+			RVec3(targetPos.x + worldOffset.x, targetPos.y + worldOffset.y, targetPos.z + worldOffset.z),
+			Quat(targetRot.x, targetRot.y, targetRot.z, targetRot.w),
+			_deltaTime
+		);
+	}
+
+	//-----------------------------------------------------------------------------
+	// Jolt → visual → staged（押し戻し結果を確定）
+	//-----------------------------------------------------------------------------
+	void Rigidbody3D::SyncJoltToVisual()
+	{
+		if (!this->hasBody || !this->visualTransform)
+		{
+			return;
+		}
+
+		BodyLockRead lock(this->physicsSystem.GetBodyLockInterface(), this->bodyID);
+		if (!lock.Succeeded())
+		{
+			return;
+		}
+
+		const Body& body = lock.GetBody();
+
+		DX::Vector3 bodyPos(
+			static_cast<float>(body.GetPosition().GetX()),
+			static_cast<float>(body.GetPosition().GetY()),
+			static_cast<float>(body.GetPosition().GetZ())
+		);
+
+		DX::Quaternion bodyRot(
+			static_cast<float>(body.GetRotation().GetX()),
+			static_cast<float>(body.GetRotation().GetY()),
+			static_cast<float>(body.GetRotation().GetZ()),
+			static_cast<float>(body.GetRotation().GetW())
+		);
+
+		// ボディ中心（Jolt）から可視用のピボット位置へ：centerOffset のワールド分を減算
+		DX::Vector3 worldOffset = DX::Vector3::Zero;
+		if (this->collider)
+		{
+			worldOffset = DX::Vector3::Transform(this->collider->GetCenterOffset(), bodyRot);
+		}
+
+		DX::Vector3 pivotPos = bodyPos - worldOffset;
+
+		// 見た目用 Transform に反映
+		this->visualTransform->SetWorldPosition(pivotPos);
+		this->visualTransform->SetWorldRotation(bodyRot);
+
+		// ロジック側にも押し戻し結果を反映
+		this->staged->position = pivotPos;
+		this->staged->rotation = bodyRot;
+	}
+
+	//-----------------------------------------------------------------------------
+	// ロジック座標アクセス
+	//-----------------------------------------------------------------------------
+	DX::Vector3 Rigidbody3D::GetLogicalPosition() const
+	{
+		if (!this->staged)
+		{
+			return DX::Vector3::Zero;
+		}
+		return this->staged->position;
+	}
+
+	DX::Quaternion Rigidbody3D::GetLogicalRotation() const
+	{
+		if (!this->staged)
+		{
+			return DX::Quaternion::Identity;
+		}
+		return this->staged->rotation;
+	}
+
+	void Rigidbody3D::SetLogicalPosition(const DX::Vector3& _worldPos)
+	{
+		if (!this->staged)
+		{
+			return;
+		}
+		this->staged->position = _worldPos;
+	}
+
+	void Rigidbody3D::SetLogicalRotation(const DX::Quaternion& _worldRot)
+	{
+		if (!this->staged)
+		{
+			return;
+		}
+		this->staged->rotation = _worldRot;
+	}
+
+	void Rigidbody3D::TranslateWorld(const DX::Vector3& _delta)
+	{
+		if (!this->staged)
+		{
+			return;
+		}
+		this->staged->position += _delta;
+	}
+
+	void Rigidbody3D::TranslateLocal(const DX::Vector3& _delta)
+	{
+		if (!this->staged)
+		{
+			return;
+		}
+
+		const DX::Quaternion& worldRot = this->staged->rotation;
+
+		DX::Vector3 forward = DX::Vector3::Transform(DX::Vector3::Forward, worldRot);
+		DX::Vector3 right = DX::Vector3::Transform(DX::Vector3::Right, worldRot);
+		DX::Vector3 up = DX::Vector3::Transform(DX::Vector3::Up, worldRot);
+
+		DX::Vector3 worldDelta =
+			right * _delta.x +
+			up * _delta.y +
+			forward * _delta.z;
+
+		this->staged->position += worldDelta;
+	}
+
+	//-----------------------------------------------------------------------------
+	// 線形速度
+	//-----------------------------------------------------------------------------
+	void Rigidbody3D::SetLinearVelocity(const DX::Vector3& _velocity)
+	{
+		this->linearVelocity = _velocity;
+	}
+
+	void Rigidbody3D::AddLinearVelocity(const DX::Vector3& _deltaVelocity)
+	{
+		this->linearVelocity += _deltaVelocity;
+	}
+
+	//-----------------------------------------------------------------------------
+	// MotionType / ObjectLayer 設定
+	//-----------------------------------------------------------------------------
+	void Rigidbody3D::SetMotionTypeStatic()
+	{
+		this->motionType = EMotionType::Static;
+		this->ApplyMotionTypeToBody();
+	}
+
+	void Rigidbody3D::SetMotionTypeKinematic()
+	{
+		this->motionType = EMotionType::Kinematic;
+		this->ApplyMotionTypeToBody();
+	}
+
+	void Rigidbody3D::SetObjectLayerStatic()
+	{
+		this->objectLayer = PhysicsLayer::Static;
+		this->ApplyObjectLayerToBody();
+	}
+
+	void Rigidbody3D::SetObjectLayerKinematic()
+	{
+		this->objectLayer = PhysicsLayer::Kinematic;
+		this->ApplyObjectLayerToBody();
+	}
+
+	bool Rigidbody3D::GetBodyTransform(DX::Vector3& outPos, DX::Quaternion& outRot) const
+	{
+		if (!this->hasBody)
+		{
+			return false;
+		}
+		BodyLockRead lock(this->physicsSystem.GetBodyLockInterface(), this->bodyID);
+		if (!lock.Succeeded())
+		{
+			return false;
+		}
+		const Body& body = lock.GetBody();
+		outPos = DX::Vector3(
+			static_cast<float>(body.GetPosition().GetX()),
+			static_cast<float>(body.GetPosition().GetY()),
+			static_cast<float>(body.GetPosition().GetZ())
+		);
+		outRot = DX::Quaternion(
+			static_cast<float>(body.GetRotation().GetX()),
+			static_cast<float>(body.GetRotation().GetY()),
+			static_cast<float>(body.GetRotation().GetZ()),
+			static_cast<float>(body.GetRotation().GetW())
+		);
+		return true;		
+	}
+
+	//-----------------------------------------------------------------------------
+	// Body セットアップ
+	//-----------------------------------------------------------------------------
+	void Rigidbody3D::GetInitialTransform(DX::Vector3& _pos, DX::Quaternion& _rot) const
+	{
+		if (!this->visualTransform)
+		{
+			_pos = DX::Vector3::Zero;
+			_rot = DX::Quaternion::Identity;
+			return;
+		}
+
+		// 先に回転を取得し、centerOffset をワールドへ回す
+		_rot = this->visualTransform->GetWorldRotation();
+		const DX::Vector3 pivotPos = this->visualTransform->GetWorldPosition();
+
+		DX::Vector3 worldOffset = DX::Vector3::Zero;
+		if (this->collider)
+		{
+			worldOffset = DX::Vector3::Transform(this->collider->GetCenterOffset(), _rot);
+		}
+
+		_pos = pivotPos + worldOffset;
+	}
+
+	void Rigidbody3D::SetupBodySettings(BodyCreationSettings& _settings) const
+	{
+		DX::Vector3 initialPos;
+		DX::Quaternion initialRot;
+		this->GetInitialTransform(initialPos, initialRot);
+
+		_settings.mPosition = RVec3(initialPos.x, initialPos.y, initialPos.z);
+		_settings.mRotation = Quat(initialRot.x, initialRot.y, initialRot.z, initialRot.w);
+
+		_settings.mMotionType = this->motionType;
+		_settings.mMotionQuality =
+			(this->motionType == EMotionType::Kinematic)
+			? EMotionQuality::LinearCast
+			: EMotionQuality::Discrete;
+
+		_settings.mObjectLayer = this->objectLayer;
+
 		if (this->collider)
 		{
 			JPH::ShapeRefC shape = this->collider->GetShape();
 			_settings.SetShape(shape);
 		}
+	}
 
-		// Mass 設定（手動）
-		_settings.mOverrideMassProperties = EOverrideMassProperties::MassAndInertiaProvided;
-		_settings.mMassPropertiesOverride.mMass = this->mass;
+	void Rigidbody3D::ApplyMotionTypeToBody()
+	{
+		if (!this->hasBody)
+		{
+			return;
+		}
 
-		// Trigger 初期化
-		_settings.mIsSensor = this->isTrigger;
+		auto& bodyInterface = this->physicsSystem.GetBodyInterface();
+		bodyInterface.SetMotionType(
+			this->bodyID,
+			this->motionType,
+			EActivation::Activate
+		);
+
+		// MotionQuality も合わせておく
+		bodyInterface.SetMotionQuality(
+			this->bodyID,
+			(this->motionType == EMotionType::Kinematic)
+			? EMotionQuality::LinearCast
+			: EMotionQuality::Discrete
+		);
+	}
+
+	void Rigidbody3D::ApplyObjectLayerToBody()
+	{
+		if (!this->hasBody)
+		{
+			return;
+		}
+
+		auto& bodyInterface = this->physicsSystem.GetBodyInterface();
+		bodyInterface.SetObjectLayer(this->bodyID, this->objectLayer);
 	}
 
 	//-----------------------------------------------------------------------------
-	// Body Create / Destroy
+	// Body create / destroy
 	//-----------------------------------------------------------------------------
-
 	void Rigidbody3D::InitializeBody()
 	{
-		if (this->hasBody) { return; }
+		if (this->hasBody)
+		{
+			return;
+		}
 
-		BodyInterface& iface = this->physicsSystem.GetBodyInterface();
+		auto& bodyInterface = this->physicsSystem.GetBodyInterface();
 
 		BodyCreationSettings settings;
-		this->SetupBodyCreationSettings(settings);
+		this->SetupBodySettings(settings);
 
-		Body* body = iface.CreateBody(settings);
-		if (!body) { return; }
+		Body* body = bodyInterface.CreateBody(settings);
+		if (!body)
+		{
+			return;
+		}
 
-		iface.AddBody(body->GetID(), EActivation::Activate);
+		bodyInterface.AddBody(body->GetID(), EActivation::Activate);
 
 		this->bodyID = body->GetID();
 		this->hasBody = true;
-
-		// friction / restitution / gravity の最終反映
-		iface.SetFriction(this->bodyID, this->friction);
-		iface.SetRestitution(this->bodyID, this->restitution);
-		iface.SetGravityFactor(this->bodyID, this->gravityScale);
 	}
 
 	void Rigidbody3D::DestroyBody()
 	{
-		if (!this->hasBody) { return; }
+		if (!this->hasBody)
+		{
+			return;
+		}
 
-		BodyInterface& iface = this->physicsSystem.GetBodyInterface();
-		iface.RemoveBody(this->bodyID);
-		iface.DestroyBody(this->bodyID);
+		auto& bodyInterface = this->physicsSystem.GetBodyInterface();
+		bodyInterface.RemoveBody(this->bodyID);
+		bodyInterface.DestroyBody(this->bodyID);
 
-		this->bodyID = BodyID();
 		this->hasBody = false;
-	}
-
-	//-----------------------------------------------------------------------------
-	// Sync Transform
-	//-----------------------------------------------------------------------------
-
-	void Rigidbody3D::SyncTransform()
-	{
-		if (!this->hasBody) { return; }
-
-		BodyLockRead lock(this->physicsSystem.GetBodyLockInterface(), this->bodyID);
-		if (!lock.Succeeded()) { return; }
-
-		const Body& body = lock.GetBody();
-		RVec3 jPos = body.GetPosition();
-		Quat  jRot = body.GetRotation();
-
-		if (this->transform)
-		{
-			this->transform->SetWorldPosition(DX::Vector3(
-				(float)jPos.GetX(), (float)jPos.GetY(), (float)jPos.GetZ()));
-			this->transform->SetWorldRotation(DX::Quaternion(
-				(float)jRot.GetX(), (float)jRot.GetY(), (float)jRot.GetZ(), (float)jRot.GetW()));
-		}
-	}
-
-	//-----------------------------------------------------------------------------
-	// Update
-	//-----------------------------------------------------------------------------
-
-	void Rigidbody3D::Update(float _deltaTime)
-	{
-		if (!this->hasBody) { return; }
-		this->SyncTransform();
-	}
-
-	//-----------------------------------------------------------------------------
-	// Force / Velocity
-	//-----------------------------------------------------------------------------
-
-	void Rigidbody3D::SetLinearVelocity(const DX::Vector3& _velocity)
-	{
-		if (!this->hasBody) { return; }
-
-		Vec3 v(_velocity.x, _velocity.y, _velocity.z);
-		this->physicsSystem.GetBodyInterface().SetLinearVelocity(this->bodyID, v);
-	}
-
-	DX::Vector3 Rigidbody3D::GetLinearVelocity() const
-	{
-		if (!this->hasBody) { return DX::Vector3::Zero; }
-
-		Vec3 v = this->physicsSystem.GetBodyInterface().GetLinearVelocity(this->bodyID);
-		return DX::Vector3(v.GetX(), v.GetY(), v.GetZ());
-	}
-
-	void Rigidbody3D::AddForce(const DX::Vector3& _force)
-	{
-		if (!this->hasBody) { return; }
-
-		Vec3 f(_force.x, _force.y, _force.z);
-		this->physicsSystem.GetBodyInterface().AddForce(this->bodyID, f, EActivation::Activate);
-	}
-
-	void Rigidbody3D::AddImpulse(const DX::Vector3& impulse)
-	{
-		if (!this->hasBody) { return; }
-
-		Vec3 v(impulse.x, impulse.y, impulse.z);
-		this->physicsSystem.GetBodyInterface().AddImpulse(this->bodyID, v);
-	}
-
-	//-----------------------------------------------------------------------------
-	// Friction
-	//-----------------------------------------------------------------------------
-
-	void Rigidbody3D::SetFriction(float _friction)
-	{
-		this->friction = _friction;
-
-		if (!this->bodyID.IsInvalid())
-		{
-			this->physicsSystem.GetBodyInterface().SetFriction(this->bodyID, _friction);
-		}
-	}
-
-	//-----------------------------------------------------------------------------
-	// Restitution
-	//-----------------------------------------------------------------------------
-
-	void Rigidbody3D::SetRestitution(float _restitution)
-	{
-		this->restitution = _restitution;
-
-		if (!this->bodyID.IsInvalid())
-		{
-			this->physicsSystem.GetBodyInterface().SetRestitution(this->bodyID, _restitution);
-		}
-	}
-
-	//-----------------------------------------------------------------------------
-	// Trigger / Sensor
-	//-----------------------------------------------------------------------------
-
-	void Rigidbody3D::SetIsTrigger(bool _isTrigger)
-	{
-		this->isTrigger = _isTrigger;
-
-		if (!this->hasBody) { return; }
-
-		auto& bodyLockInterface = this->physicsSystem.GetBodyLockInterface();
-		BodyLockWrite lock(bodyLockInterface, this->bodyID);
-		if (lock.Succeeded())
-		{
-			lock.GetBody().SetIsSensor(_isTrigger);
-		}
-	}
-
-	//-----------------------------------------------------------------------------
-	// Mass（再生成）
-	//-----------------------------------------------------------------------------
-
-	void Rigidbody3D::SetMass(float _mass)
-	{
-		this->mass = _mass;
-
-		if (this->hasBody)
-		{
-			this->DestroyBody();
-			this->InitializeBody();
-		}
-	}
-
-	//-----------------------------------------------------------------------------
-	// MotionType
-	//-----------------------------------------------------------------------------
-
-	void Rigidbody3D::SetMotionType(EMotionType _motionType)
-	{
-		this->motionType = _motionType;
-
-		if (!this->hasBody) { return; }
-
-		this->physicsSystem.GetBodyInterface()
-			.SetMotionType(this->bodyID, this->motionType, EActivation::Activate);
 	}
 
 } // namespace Framework::Physics

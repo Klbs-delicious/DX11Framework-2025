@@ -51,6 +51,11 @@ public:
 	 */
 	virtual void Finalize()final;
 
+	/**	@brief		ゲームオブジェクトマネージャの参照を取得する
+	 *	@return		GameObjectManager&	ゲームオブジェクトマネージャの参照
+	 */
+	[[nodiscard]] GameObjectManager& GetGameObjectManager() { return this->gameObjectManager;; }
+
 protected:
 	GameObjectManager& gameObjectManager;	///< ゲームオブジェクトの管理
 };

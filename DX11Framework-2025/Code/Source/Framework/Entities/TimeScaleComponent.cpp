@@ -11,6 +11,7 @@
 #include "Include/Framework/Entities/GameObject.h"
 #include "Include/Framework/Core/SystemLocator.h"
 
+#include<iostream>
 //-----------------------------------------------------------------------------
 // TimeScaleComponent class
 //-----------------------------------------------------------------------------
@@ -70,14 +71,10 @@ float TimeScaleComponent::GetAccumulatedScale() const
     return scale;
 }
 
-/**@brief デルタタイムに時間スケールを適用する
- * @param _baseDelta
- * @return
- */
-float TimeScaleComponent::ApplyTimeScale(float baseDelta) const
+float TimeScaleComponent::GetFinalScale() const
 {
-	// parent x self
-    float scale = GetAccumulatedScale(); 
+    // parent x self
+    float scale = GetAccumulatedScale();
 
     // group
     float groupScale = 1.0f;
@@ -90,7 +87,7 @@ float TimeScaleComponent::ApplyTimeScale(float baseDelta) const
     // layer & global
     if (!this->ignoreLayer && !this->ignoreGlobal)
     {
-		// 両方考慮する場合は合成済みスケールを使う
+        // 両方考慮する場合は合成済みスケールを使う
         scale *= this->timeScaleSystem.CombinedScale(this->timeScaleLayer);
     }
     else
@@ -105,7 +102,19 @@ float TimeScaleComponent::ApplyTimeScale(float baseDelta) const
             scale *= this->timeScaleSystem.GlobalScale();
         }
     }
-    return baseDelta * scale;
+
+	return scale;
+}
+
+/**@brief デルタタイムに時間スケールを適用する
+ * @param _baseDelta
+ * @return
+ */
+float TimeScaleComponent::ApplyTimeScale(float _baseDelta) const
+{
+	float finalScale = this->GetFinalScale();
+
+    return _baseDelta * finalScale;
 }
 
 const ScaleGroupInfo* TimeScaleComponent::GetGroupInfo() const

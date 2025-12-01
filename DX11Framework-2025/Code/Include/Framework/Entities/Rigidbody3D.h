@@ -1,6 +1,6 @@
 ﻿/** @file   Rigidbody3D.h
- *  @brief  Jolt Physics 用 3D リジッドボディコンポーネント
- *  @date   2025/11/17
+ *  @brief  TimeScale 対応・自前移動＋Jolt 押し戻し用 Rigidbody3D コンポーネント
+ *  @date   2025/11/28
  */
 #pragma once
 
@@ -8,8 +8,11 @@
  // Includes
  //-----------------------------------------------------------------------------
 #include "Include/Framework/Entities/Component.h"
-#include "Include/Framework/Entities/PhaseInterfaces.h"
 #include "Include/Framework/Entities/Transform.h"
+#include "Include/Framework/Entities/Collider3DComponent.h"
+
+#include "Include/Framework/Physics/StagedTransform.h"
+#include "Include/Framework/Physics/PhysicsLayers.h"
 #include "Include/Framework/Utils/CommonTypes.h"
 
 #include <Jolt/Jolt.h>
@@ -17,144 +20,205 @@
 #include <Jolt/Physics/Body/MotionType.h>
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 
+#include <memory>
+
 namespace Framework::Physics
 {
 	class PhysicsSystem;
-	class Collider3DComponent;
 
-	/** @class  Rigidbody3D
-	 *  @brief  Jolt の Body をラップする 3D 物理コンポーネント
+	/** @class Rigidbody3D
+	 *  @brief TimeScale 対応・自前移動＋Jolt 押し戻しのための 3D ボディコンポーネント
+	 *  @details
+	 *          - Transform 主導で移動量を決定し、Jolt には「押し戻し判定のみ」を担当させる
+	 *          - TimeScale は GameObject 側で適用済みの deltaTime を受け取り、自前で積分する
+	 *          - 押し戻し結果は visualTransform と stagedTransform の両方に反映し、見た目とロジックをそろえる
+	 *          - MotionType は Static / Kinematic のみを扱う
 	 */
-	class Rigidbody3D final : public Component, public IUpdatable
+	class Rigidbody3D final : public Component
 	{
 	public:
 		/** @brief コンストラクタ
-		 *  @param GameObject* _owner このコンポーネントがアタッチされるオブジェクト
-		 *  @param bool _isActive コンポーネントの有効 / 無効
+		 *  @param _owner このコンポーネントが所属する GameObject
+		 *  @param _active コンポーネントの有効 / 無効
 		 */
-		Rigidbody3D(GameObject* _owner, bool _isActive = true);
+		Rigidbody3D(GameObject* _owner, bool _active = true);
 
-		/// @brief デストラクタ（Jolt の Body を破棄する）
+		/// @brief デストラクタ
 		~Rigidbody3D() noexcept override;
 
 		/// @brief 初期化処理
 		void Initialize() override;
 
-		/// @brief 物理ボディを生成する（まだ生成されていない場合のみ）
+		/// @brief 終了処理
+		void Dispose() override;
+
+		/// @brief Body を生成する（多重生成は行わない）
 		void InitializeBody();
 
-		/** @brief 更新処理
-		 *  @param float _deltaTime 経過時間
-		 */
-		void Update(float _deltaTime) override;
-
-		/// @brief 物理ボディを明示的に破棄する
+		/// @brief Body を破棄する
 		void DestroyBody();
 
-		/** @brief 質量を設定する
-		 *  @param float _mass 質量
-		 *
-		 *  すでに Body が存在する場合は、一度破棄して再生成する。
+		/** @brief ロジック側の姿勢を更新する（TimeScale 適用済み）
+		 *  @param _deltaTime 経過時間（秒）
+		 *  @details
+		 *          - 線形速度と重力を積分して stagedTransform.position を更新する
+		 *          - GameObjectManager::BeginPhysics から毎固定フレーム呼び出される想定
 		 */
-		void SetMass(float _mass);
+		void UpdateLogical(float _deltaTime);
 
-		/// @brief 設定されている質量を取得する
-		float GetMass() const { return this->mass; }
+		/// @brief stagedTransform から visualTransform に姿勢を反映する
+		void SyncToVisual() const;
 
-		/** @brief 運動タイプを設定する
-		 *  @param JPH::EMotionType _motionType Static / Kinematic / Dynamic
+		/** @brief visualTransform から Jolt の Body へ姿勢を反映する
+		 *  @param _deltaTime 物理ステップ時間（固定フレーム時間）
+		 *  @details
+		 *          - MotionType が Kinematic の場合のみ MoveKinematic() を呼ぶ
+		 *          - Static の場合は何も行わない（静的ボディは動かさない）
 		 */
-		void SetMotionType(JPH::EMotionType _motionType);
+		void SyncVisualToJolt(float _deltaTime);
 
-		/// @brief 運動タイプを取得する
-		JPH::EMotionType GetMotionType() const { return this->motionType; }
+		/** @brief Jolt の押し戻し結果を visual / staged 双方へ反映する
+		 *  @details
+		 *          - Body の位置・回転を Transform に書き込み
+		 *          - 同じ値を stagedTransform にも書き戻してロジック座標をそろえる
+		 */
+		void SyncJoltToVisual();
 
-		/** @brief 速度を設定する（Dynamic / Kinematic のみ有効）
-		 *  @param const DX::Vector3& _velocity 中心の線形速度（メートル / 秒）
+		//-------------------------------------------------------------------------
+		// ロジック座標（stagedTransform）アクセス
+		//-------------------------------------------------------------------------
+
+		/// @brief ロジック側ワールド位置を取得する
+		DX::Vector3 GetLogicalPosition() const;
+
+		/// @brief ロジック側ワールド回転を取得する
+		DX::Quaternion GetLogicalRotation() const;
+
+		/** @brief ロジック側ワールド位置を設定する
+		 *  @param _worldPos 新しいワールド位置
+		 */
+		void SetLogicalPosition(const DX::Vector3& _worldPos);
+
+		/** @brief ロジック側ワールド回転を設定する
+		 *  @param _worldRot 新しいワールド回転
+		 */
+		void SetLogicalRotation(const DX::Quaternion& _worldRot);
+
+		/** @brief ワールド座標系で平行移動する
+		 *  @param _delta 移動量（ワールド座標）
+		 */
+		void TranslateWorld(const DX::Vector3& _delta);
+
+		/** @brief ローカル座標系で平行移動する
+		 *  @param _delta 移動量（ローカル座標）
+		 *  @details
+		 *          - 現在のロジック回転を基準に、前方・右・上方向へ変換して移動する
+		 */
+		void TranslateLocal(const DX::Vector3& _delta);
+
+		//-------------------------------------------------------------------------
+		// 線形速度・重力
+		//-------------------------------------------------------------------------
+
+		/// @brief 線形速度を取得する
+		DX::Vector3 GetLinearVelocity() const { return this->linearVelocity; }
+
+		/** @brief 線形速度を設定する
+		 *  @param _velocity 新しい線形速度
 		 */
 		void SetLinearVelocity(const DX::Vector3& _velocity);
 
-		/// @brief 現在の線形速度を取得する
-		DX::Vector3 GetLinearVelocity() const;
-
-		/** @brief 力を加える（Dynamic のみ有効）
-		 *  @param const DX::Vector3& _force 加える力（ニュートン）
+		/** @brief 線形速度を加算する
+		 *  @param _deltaVelocity 追加する速度
 		 */
-		void AddForce(const DX::Vector3& _force);
+		void AddLinearVelocity(const DX::Vector3& _deltaVelocity);
 
-		/** @brief インパルスを加える（Dynamic のみ有効）
-		 *  @param const DX::Vector3& impulse 加えるインパルス（kg・m/s）
-		 */
-		void AddImpulse(const DX::Vector3& impulse);
+		/// @brief 重力を適用するかどうかを設定する
+		void SetUseGravity(bool _enable) { this->useGravity = _enable; }
 
-		/// @brief Jolt の BodyID を取得する（有効でない場合は無効 ID）
-		const JPH::BodyID& GetBodyID() const { return this->bodyID; }
+		/// @brief 重力が有効かどうかを取得する
+		bool IsUsingGravity() const { return this->useGravity; }
 
-		/// @brief Body が生成済みかどうか
+		/// @brief 重力加速度ベクトルを設定する
+		void SetGravity(const DX::Vector3& _gravity) { this->gravity = _gravity; }
+
+		/// @brief 重力加速度ベクトルを取得する
+		DX::Vector3 GetGravity() const { return this->gravity; }
+
+		//-------------------------------------------------------------------------
+		// MotionType / ObjectLayer 設定
+		//-------------------------------------------------------------------------
+
+		/// @brief MotionType を Static に設定する（Body 生成済みなら即反映）
+		void SetMotionTypeStatic();
+
+		/// @brief MotionType を Kinematic に設定する（Body 生成済みなら即反映）
+		void SetMotionTypeKinematic();
+
+		/// @brief 現在の MotionType を取得する
+		JPH::EMotionType GetMotionType() const { return this->motionType; }
+
+		/// @brief ObjectLayer を Static に設定する（Body 生成済みなら即反映）
+		void SetObjectLayerStatic();
+
+		/// @brief ObjectLayer を Kinematic に設定する（Body 生成済みなら即反映）
+		void SetObjectLayerKinematic();
+
+		/// @brief 現在の ObjectLayer を取得する
+		JPH::ObjectLayer GetObjectLayer() const { return this->objectLayer; }
+
+		//-------------------------------------------------------------------------
+		// Body 情報
+		//-------------------------------------------------------------------------
+
+		/// @brief Body を保持しているかどうか
 		bool HasBody() const { return this->hasBody; }
 
-		/** @brief 重力の影響倍率を設定する
-		 *  @param _scale 重力倍率（0 で無重力、1 で通常）
-		 *  @details
-		 *          動的剛体にのみ有効。静的・キネマティックでは効果なし
-		 */
-		void SetGravityScale(float _scale);
+		/// @brief BodyID を取得する
+		const JPH::BodyID& GetBodyID() const { return this->bodyID; }
 
-		/** @brief 摩擦係数を設定する
-		 *  @param _friction 摩擦（一般に 0～1）
-		 *  @details
-		 *          衝突時のすべりやすさに影響する。動作中に変更可能
+		/** @brief Body のワールド Transform を取得する
+		 *  @param outPos 位置の出力
+		 *  @param outRot 回転の出力
+		 *  @return 取得に成功したかどうか（Body 未生成時は false）
 		 */
-		void SetFriction(float _friction);
-
-		/** @brief 反発係数を設定する
-		 *  @param _restitution 跳ね返り係数（0～1）
-		 *  @details
-		 *          0 は跳ねない、1 は完全に弾む。動作中に変更可能
-		 */
-		void SetRestitution(float _restitution);
-
-		/** @brief センサーかどうかを設定する
-		 *  @param _isTrigger true なら接触検知のみ行い、物理反応は発生しない
-		 *  @details
-		 *          Static センサーは軽量。Kinematic センサーは静的物体とも接触を検知できる
-		 */
-		void SetIsTrigger(bool _isTrigger);
-
-		[[nodiscard]] float GetGravityScale() const { return this->gravityScale; }
-		[[nodiscard]] float GetFriction() const { return this->friction; }
-		[[nodiscard]] float GetRestitution() const { return this->restitution; }
-		[[nodiscard]] bool GetIsTrigger() const { return this->isTrigger; }
+		bool GetBodyTransform(DX::Vector3& outPos, DX::Quaternion& outRot) const;
 
 	private:
-		/**@brief Transform から Jolt 用の位置・回転を取得するヘルパ
-		 * @param outPosition
-		 * @param outRotation
+		/** @brief 初期 Transform を取得する
+		 *  @param _pos 初期座標の出力
+		 *  @param _rot 初期回転の出力
 		 */
-		void GetInitialTransform(DX::Vector3& outPosition, DX::Quaternion& outRotation) const;
+		void GetInitialTransform(DX::Vector3& _pos, DX::Quaternion& _rot) const;
 
-		/** @brief BodyCreationSettings をセットアップするヘルパ
-		 *  @param BodyCreationSettings& _settings 設定オブジェクト
+		/** @brief BodyCreationSettings を初期化する
+		 *  @param _settings 生成設定（motionType / layer / shape 等）
 		 */
-		void SetupBodyCreationSettings(JPH::BodyCreationSettings& _settings) const;
+		void SetupBodySettings(JPH::BodyCreationSettings& _settings) const;
 
-		/// @brief Transform の位置・回転を物理ボディに同期する
-		void SyncTransform();
+		/// @brief 既存 Body に対して MotionType の変更を反映する
+		void ApplyMotionTypeToBody();
+
+		/// @brief 既存 Body に対して ObjectLayer の変更を反映する
+		void ApplyObjectLayerToBody();
 
 	private:
-		JPH::BodyID		bodyID;			///< Jolt のボディ ID（無効の場合もある）
-		bool			hasBody;		///< 現在 Body が生成されているか
+		JPH::BodyID           bodyID;       ///< 剛体 ID
+		bool                  hasBody;      ///< Body を保持しているかどうか
 
-		float			mass;			///< 質量（kg）
-		float			gravityScale;	///< 重力スケール
-		float			friction;		///< 摩擦係数
-		float			restitution;	///< 反発係数
-		bool			isTrigger;		///< トリガーかどうか
+		JPH::EMotionType      motionType;   ///< MotionType（Static / Kinematic のみ）
+		JPH::ObjectLayer      objectLayer;  ///< ObjectLayer（PhysicsLayer::Static / Kinematic）
 
-		JPH::EMotionType		motionType;		///< 運動タイプ
+		std::unique_ptr<StagedTransform> staged;     ///< ロジック用ワールド姿勢
+		std::unique_ptr<StagedTransform> stagedPrev; ///< 前フレームのロジック姿勢
 
-		Collider3DComponent*	collider;		///< 形状を提供するコライダー
-		Transform*				transform;		///< 所属するオブジェクトの Transform
-		PhysicsSystem&			physicsSystem;;	///< 物理システムの参照
+		Transform* visualTransform;       ///< 見た目用 Transform
+		PhysicsSystem& physicsSystem;         ///< 物理システム参照
+		Collider3DComponent* collider;              ///< コライダーコンポーネント
+
+		DX::Vector3           linearVelocity;        ///< 線形速度
+		DX::Vector3           gravity;               ///< 重力加速度
+		bool                  useGravity;            ///< 重力を適用するかどうか
 	};
-}
+
+} // namespace Framework::Physics

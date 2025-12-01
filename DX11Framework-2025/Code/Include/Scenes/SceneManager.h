@@ -32,6 +32,9 @@ public:
 	/// @brief	シーンの描画を行う
 	void Draw();
 
+	/// @brief	保留中のシーン破棄を行う
+	void FlushPendingDestroys();
+
 	/**	@brief	シーン遷移をリクエストする
 	 *	@param	SceneType _nextScenetype	次のシーンタイプ
 	 */

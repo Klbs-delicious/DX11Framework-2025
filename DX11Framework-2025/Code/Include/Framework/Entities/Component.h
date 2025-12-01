@@ -3,6 +3,8 @@
  */
 #pragma once
 #include"Include/Framework/Core/EngineServices.h"
+#include"Include/Framework/Event/GameObjectEvent.h"
+
 class GameObject; 
 
  /** @class Component
@@ -30,22 +32,24 @@ public:
 	/** @brief  コンポーネントの有効状態を設定する
 	 *  @param bool _active	コンポーネントの有効/無効
 	 */
-	void SetActive(bool _active) { this->isActive = _active; }
+	void SetActive(bool _active);
 
 	/** @brief  コンポーネントが有効かどうかを取得する
 	 *  @return bool コンポーネントが有効なら true
 	 */
 	bool IsActive() const { return this->isActive; }
+
+	/**	@brief	親オブジェクトの取得
+	 *	@return	GameObject*
+	 */
+	GameObject* Owner() const { return this->owner; }
+
 protected:
 	/**	@brief リソース関連の参照を取得する
 	 *	@return EngineServices*
 	 */
 	const EngineServices* Services() const;
 
-	/**	@brief	親オブジェクトの取得
-	 *	@return	GameObject*
-	 */
-	GameObject* Owner() const { return this->owner; }
 private :
 	GameObject* owner;	///< このコンポーネントがアタッチされているオブジェクト
 	bool isActive;

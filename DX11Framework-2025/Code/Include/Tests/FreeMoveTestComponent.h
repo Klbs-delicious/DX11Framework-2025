@@ -6,6 +6,7 @@
 #include "Include/Framework/Entities/Component.h"
 #include "Include/Framework/Entities/PhaseInterfaces.h"
 #include "Include/Framework/Entities/Transform.h"
+#include "Include/Framework/Entities/Rigidbody3D.h"
 
  /** @class FreeMoveTestComponent
   *  @brief 自由移動の挙動を検証するテスト用コンポーネント
@@ -36,6 +37,8 @@ public:
 
 private:
 	Transform* transform;
+	Framework::Physics::Rigidbody3D* rigidbody;
+
 	float speed;			///< 移動速度
 	DX::Vector3 targetPos;	///< 目標地点
 	bool hasTarget;			///< 目標地点が設定されているか

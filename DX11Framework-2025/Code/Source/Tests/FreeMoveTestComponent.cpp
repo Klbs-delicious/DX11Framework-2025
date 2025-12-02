@@ -63,7 +63,9 @@ void FreeMoveTestComponent::Update(float _deltaTime)
         }
 
         DX::Vector3 dir = diff / len;
-        rigidbody->TranslateWorld(dir * (speed * _deltaTime));
+
+        // 正しい方法：速度として指定する
+        rigidbody->SetLinearVelocity(dir * speed);
         return;
     }
 

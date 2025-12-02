@@ -18,6 +18,7 @@
 #include"Include/Framework/Entities/TimeScaleGroup.h"
 #include"Include/Framework/Entities/Rigidbody3D.h"
 #include"Include/Framework/Entities/Collider3DComponent.h"
+#include"Include/Framework/Entities/ColliderDebugRenderer.h"
 
 #include"Include/Game/Entities/FollowCamera.h"
 #include"Include/Game/Entities/DebugFreeMoveComponent.h"
@@ -288,11 +289,13 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 			coll3D->BuildShape();
 
 			auto rigidbody3D = obj->AddComponent<Framework::Physics::Rigidbody3D>();
-
-			float randomScale = (static_cast<float>(rand()) / RAND_MAX) * 2.0f - 1.0f;
+			rigidbody3D->SetUseGravity(true);
+			rigidbody3D->SetGravity(DX::Vector3(0.0f, -9.8f, 0.0f));
 			//rigidbody3D->SetGravityScale(randomScale);
 
 			obj->AddComponent<MeshRenderer>();
+			obj->AddComponent<FreeMoveTestComponent>();
+			//obj->AddComponent<ColliderDebugRenderer>();
 
 			int groupId = index % 3 + 1;
 			std::string groupName = "EnemyGroup_" + std::to_string(groupId);

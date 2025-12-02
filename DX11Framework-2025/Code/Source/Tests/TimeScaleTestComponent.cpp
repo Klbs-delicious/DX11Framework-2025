@@ -49,14 +49,14 @@ void TimeScaleTestComponent::Dispose()
  */
 void TimeScaleTestComponent::Update(float _deltaTime)
 {
-	if (!this->timeScaleGroup) { return; }
-
 	// スペースキーでグローバルタイムスケールを0.1に変更する
 	if (this->inputSystem.IsActionPressed("Slow_Global"))
 	{
 		this->timeScaleSystem.SetGlobalScale(0.5f);
 	}
 	else { this->timeScaleSystem.SetGlobalScale(1.0f); }
+
+	if (!this->timeScaleGroup) { return; }
 
 	// 1～3キーで各ゲームオブジェクトのタイムスケールを0.1に変更する
 	for (int i = 1; i <= 3; i++)

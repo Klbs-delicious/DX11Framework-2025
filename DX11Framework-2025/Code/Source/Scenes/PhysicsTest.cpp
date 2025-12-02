@@ -72,6 +72,7 @@ void PhysicsTest::SetupObjects()
 	camera3D->transform->SetLocalPosition({ 0.0f, -10.0f, -10.0f });
 	camera3D->transform->SetLocalRotation(DX::Quaternion::CreateFromYawPitchRoll(/*DX::ToRadians(30.0f)*/0.0f, DX::ToRadians(0.0f), 0.0f));
 	camera3D->AddComponent<Camera3D>();
+	camera3D->AddComponent<TimeScaleTestComponent>();
 	//auto debugMove = camera3D->AddComponent<DebugFreeMoveComponent>();
 	//debugMove->SetSpeed(10.0f);
 

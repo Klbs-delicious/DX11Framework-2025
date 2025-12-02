@@ -136,8 +136,13 @@ void GameObjectManager::BeginPhysics(float _deltaTime)
 	{
 		if (rigidbody)
 		{
+			// 時間スケールを考慮して更新する
+			auto comp = dynamic_cast<Component*>(rigidbody);
+			auto obj = comp->Owner();
+			float scaledDelta = obj->TimeScale()->ApplyTimeScale(_deltaTime);
+
 			// 自前の押し戻し結果を visualTransform に反映させる
-			rigidbody->UpdateLogical(_deltaTime);
+			rigidbody->UpdateLogical(scaledDelta);
 			rigidbody->ResolveCastShape();
 			rigidbody->SyncToVisual();
 		}

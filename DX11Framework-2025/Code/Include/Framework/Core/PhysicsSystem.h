@@ -4,7 +4,8 @@
  */
 #pragma once
 
-#include <memory>
+#include <memory>	
+#include <array> 
 
 #include "Include/Framework/Physics/PhysicsLayers.h"
 
@@ -62,6 +63,18 @@ namespace Framework::Physics
 		 */
 		[[nodiscard]] const JPH::NarrowPhaseQuery& GetNarrowPhaseQuery() const;
 
+		/** @brief ShapeCast 用 BroadPhaseLayerFilter を取得
+		 *  @param _layer 自身の ObjectLayer
+		 *  @return BroadPhaseLayerFilter への参照
+		 */
+		[[nodiscard]] const JPH::BroadPhaseLayerFilter& GetBroadPhaseLayerFilter(JPH::ObjectLayer _layer) const;
+
+		/** @brief ShapeCast 用 ObjectLayerFilter を取得
+		 *  @param _layer 自身の ObjectLayer
+		 *  @return ObjectLayerFilter への参照
+		 */
+		[[nodiscard]] const JPH::ObjectLayerFilter& GetObjectLayerFilter(JPH::ObjectLayer _layer) const;
+
 	private:
 		/// @brief ログ出力（Jolt から呼ばれる）
 		static void TraceImpl(const char* _fmt, ...);
@@ -69,13 +82,22 @@ namespace Framework::Physics
 		/// @brief アサート失敗時の処理（Jolt から呼ばれる）
 		static bool AssertImpl(const char* _expr, const char* _msg, const char* _file, JPH::uint _line);
 
-	private:
-		std::unique_ptr<JPH::TempAllocatorImpl> tempAllocator;	///< 一時領域管理
-		std::unique_ptr<JPH::JobSystemThreadPool> jobSystem;	///< ジョブシステム
-		std::unique_ptr<JPH::PhysicsSystem> physics;			///< 物理システム
+		/// @brief ShapeCast 用のフィルタ群を初期化する
+		void InitializeShapeCastFilters();
 
-		Framework::Physics::BPLayerInterfaceImpl broadphase;			///< レイヤー管理
-		Framework::Physics::ObjectVsBroadPhaseLayerFilterImpl bpFilter;	///< レイヤー間フィルタ
-		Framework::Physics::ObjectLayerPairFilterImpl layerFilter;		///< レイヤーペアフィルタ
+	private:
+		// 基本リソース
+		std::unique_ptr<JPH::TempAllocatorImpl>   tempAllocator;
+		std::unique_ptr<JPH::JobSystemThreadPool> jobSystem;
+		std::unique_ptr<JPH::PhysicsSystem>       physics;
+
+		// レイヤー / 衝突フィルタ共通
+		BPLayerInterfaceImpl              bpLayerInterface;
+		ObjectVsBroadPhaseLayerFilterImpl objectVsBroadPhaseFilter;
+		ObjectLayerPairFilterImpl         objectPairFilter;
+
+		// ShapeCast 用プリキャッシュフィルタ
+		std::array<std::unique_ptr<JPH::BroadPhaseLayerFilter>, PhysicsLayer::NUM_LAYERS> shapeCastBroadFilters;
+		std::array<std::unique_ptr<JPH::ObjectLayerFilter>, PhysicsLayer::NUM_LAYERS> shapeCastObjectFilters;
 	};
 }

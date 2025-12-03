@@ -13,7 +13,6 @@
 #include "Include/Framework/Physics/PhysicsLayers.h"
 
 #include <Jolt/RegisterTypes.h>
-#include <Jolt/Core/TempAllocator.h>
 
 namespace Framework::Physics
 {
@@ -26,11 +25,12 @@ namespace Framework::Physics
 		: tempAllocator(nullptr)
 		, jobSystem(nullptr)
 		, physics(nullptr)
-		, bpFilter()
-		, layerFilter()
-		, broadphase()
-	{
-	}
+		, bpLayerInterface()
+		, objectVsBroadPhaseFilter()
+		, objectPairFilter()
+		, shapeCastBroadFilters()
+		, shapeCastObjectFilters()
+	{}
 
 	/// @brief デストラクタ
 	PhysicsSystem::~PhysicsSystem()
@@ -44,7 +44,10 @@ namespace Framework::Physics
 	bool PhysicsSystem::Initialize()
 	{
 		// すでに初期化されていたら何もしない
-		if (this->physics){ return true; }
+		if (this->physics)
+		{
+			return true;
+		}
 
 		// メモリ管理
 		JPH::RegisterDefaultAllocator();
@@ -53,18 +56,14 @@ namespace Framework::Physics
 		JPH::Trace = TraceImpl;
 		JPH_IF_ENABLE_ASSERTS(JPH::AssertFailed = AssertImpl;)
 
-		// ★ Factory の作成
-		JPH::Factory::sInstance = new JPH::Factory();
-
-		// 型登録
+			// Factory の作成と型登録
+			JPH::Factory::sInstance = new JPH::Factory();
 		JPH::RegisterTypes();
 
 		// 一時アロケータ
 		this->tempAllocator = std::make_unique<JPH::TempAllocatorImpl>(10 * 1024 * 1024);
 
-		//-------------
-		// スレッド数を決定
-		//-------------
+		// スレッド数を決定（スレッド数は CPU コア数 − 1）
 		unsigned int hwThreads = std::thread::hardware_concurrency();
 		if (hwThreads == 0)
 		{
@@ -77,32 +76,33 @@ namespace Framework::Physics
 			numThreads = 0;
 		}
 
-		//-------------
-		// ジョブシステム初期化
-		//-------------
 		const JPH::uint maxJobs = JPH::cMaxPhysicsJobs;
 		const JPH::uint maxBarriers = JPH::cMaxPhysicsBarriers;
 
 		this->jobSystem = std::make_unique<JPH::JobSystemThreadPool>();
 		this->jobSystem->Init(maxJobs, maxBarriers, numThreads);
 
-		// PhysicsSystemの生成
+		// PhysicsSystem の生成
 		this->physics = std::make_unique<JPH::PhysicsSystem>();
 
-		const JPH::uint maxBodies = 1024;
+		const JPH::uint maxBodies = 2048;
 		const JPH::uint numBodyMutexes = 0;
 		const JPH::uint maxBodyPairs = 1024;
 		const JPH::uint maxContactConstraints = 1024;
 
+		// BroadPhaseLayerInterface / 衝突フィルタの登録
 		this->physics->Init(
 			maxBodies,
 			numBodyMutexes,
 			maxBodyPairs,
 			maxContactConstraints,
-			this->broadphase,
-			this->bpFilter,
-			this->layerFilter
+			this->bpLayerInterface,
+			this->objectVsBroadPhaseFilter,
+			this->objectPairFilter
 		);
+
+		// ShapeCast 用フィルタ群の初期化
+		this->InitializeShapeCastFilters();
 
 		return true;
 	}
@@ -128,8 +128,11 @@ namespace Framework::Physics
 	/// @brief 内部リソースの解放処理
 	void PhysicsSystem::Dispose()
 	{
-		// まだ初期化されていない or すでに破棄済
-		if (!this->physics && !this->jobSystem && !this->tempAllocator){ return; }
+		// まだ初期化されていない場合
+		if (!this->physics && !this->jobSystem && !this->tempAllocator)
+		{
+			return;
+		}
 
 		// PhysicsSystem の解放（内部で Body や Shape が破棄される）
 		this->physics.reset();
@@ -138,6 +141,16 @@ namespace Framework::Physics
 		this->jobSystem.reset();
 		this->tempAllocator.reset();
 
+		// ShapeCast フィルタも明示的に破棄
+		for (auto& f : this->shapeCastBroadFilters)
+		{
+			f.reset();
+		}
+		for (auto& f : this->shapeCastObjectFilters)
+		{
+			f.reset();
+		}
+
 		// Jolt のグローバル終了処理
 		this->ShutdownJolt();
 	}
@@ -145,10 +158,8 @@ namespace Framework::Physics
 	/// @brief Jolt の型登録解除（アプリ終了時に1回だけ呼ぶ）
 	void PhysicsSystem::ShutdownJolt()
 	{
-		// Jolt 型登録を解除
 		JPH::UnregisterTypes();
 
-		// Factory を解放
 		delete JPH::Factory::sInstance;
 		JPH::Factory::sInstance = nullptr;
 	}
@@ -166,8 +177,6 @@ namespace Framework::Physics
 	 */
 	JPH::BodyLockInterface& PhysicsSystem::GetBodyLockInterface()
 	{
-		// Jolt 側は const BodyLockInterfaceLocking& を返すので、
-		// 基底クラス BodyLockInterface にアップキャストしてから const_cast する
 		const JPH::BodyLockInterface& iface = this->physics->GetBodyLockInterface();
 		return const_cast<JPH::BodyLockInterface&>(iface);
 	}
@@ -179,7 +188,7 @@ namespace Framework::Physics
 	{
 		if (!this->physics)
 		{
-			static JPH::NarrowPhaseQuery dummy; 
+			static JPH::NarrowPhaseQuery dummy;
 			return dummy;
 		}
 		return this->physics->GetNarrowPhaseQuery();
@@ -209,4 +218,41 @@ namespace Framework::Physics
 		// true を返すと __debugbreak() を実行する挙動となる
 		return true;
 	}
-}
+
+	/// @brief ShapeCast 用のフィルタ群を初期化する
+	void PhysicsSystem::InitializeShapeCastFilters()
+	{
+		for (JPH::ObjectLayer layer = 0; layer < PhysicsLayer::NUM_LAYERS; ++layer)
+		{
+			this->shapeCastBroadFilters[layer] =
+				std::make_unique<ShapeCastBroadPhaseLayerFilter>(
+					&this->bpLayerInterface,
+					&this->objectVsBroadPhaseFilter,
+					layer
+				);
+
+			this->shapeCastObjectFilters[layer] =
+				std::make_unique<ShapeCastObjectLayerFilter>(
+					&this->objectPairFilter,
+					layer
+				);
+		}
+	}
+
+	/** @brief ShapeCast 用 BroadPhaseLayerFilter を取得
+	 *  @param _layer 自身の ObjectLayer
+	 */
+	const JPH::BroadPhaseLayerFilter& PhysicsSystem::GetBroadPhaseLayerFilter(JPH::ObjectLayer _layer) const
+	{
+		return *(this->shapeCastBroadFilters[_layer]);
+	}
+
+	/** @brief ShapeCast 用 ObjectLayerFilter を取得
+	 *  @param _layer 自身の ObjectLayer
+	 */
+	const JPH::ObjectLayerFilter& PhysicsSystem::GetObjectLayerFilter(JPH::ObjectLayer _layer) const
+	{
+		return *(this->shapeCastObjectFilters[_layer]);
+	}
+
+} // namespace Framework::Physics

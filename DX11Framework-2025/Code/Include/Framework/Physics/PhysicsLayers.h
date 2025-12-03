@@ -54,7 +54,7 @@ namespace Framework::Physics
         /// @brief ObjectLayer が属する BroadPhaseLayer を返す
         JPH::BroadPhaseLayer GetBroadPhaseLayer(JPH::ObjectLayer _layer) const override;
 
-        /// @brief BroadPhaseLayer の名称を返す（←★ これが必須）
+        /// @brief BroadPhaseLayer の名称を返す
         const char* GetBroadPhaseLayerName(JPH::BroadPhaseLayer _bpLayer) const override;
 
     private:
@@ -79,5 +79,62 @@ namespace Framework::Physics
     public:
         /// @brief 衝突すべきなら true
         bool ShouldCollide(JPH::ObjectLayer _layer1, JPH::ObjectLayer _layer2) const override;
+    };
+    
+	//-----------------------------------------------------------------------------
+	// ShapeCast 用フィルタ
+	//-----------------------------------------------------------------------------
+
+    /** @class  ShapeCastBroadPhaseLayerFilter
+     *  @brief  ShapeCast 時の BroadPhaseLayer フィルタ
+     *  @details
+     *      - 指定された ObjectLayer がどの BroadPhaseLayer と衝突するかを決定する
+	 */
+    class ShapeCastBroadPhaseLayerFilter final : public JPH::BroadPhaseLayerFilter
+    {
+    public:
+        ShapeCastBroadPhaseLayerFilter(
+            const BPLayerInterfaceImpl* _bp,
+            const ObjectVsBroadPhaseLayerFilterImpl* _filter,
+            JPH::ObjectLayer _layer)
+            : bpInterface(_bp)
+            , bpFilter(_filter)
+            , layer(_layer)
+        {}
+
+        bool ShouldCollide(JPH::BroadPhaseLayer bpLayer) const override
+        {
+            return bpFilter->ShouldCollide(layer, bpLayer);
+        }
+
+    private:
+        const BPLayerInterfaceImpl* bpInterface;
+        const ObjectVsBroadPhaseLayerFilterImpl* bpFilter;
+        JPH::ObjectLayer layer;
+    };
+
+    /** @class  ShapeCastObjectLayerFilter
+     *  @brief  ShapeCast 時の ObjectLayer フィルタ
+     *  @details
+     *      - 指定された ObjectLayer がどの ObjectLayer と衝突するかを決定する
+	 */
+    class ShapeCastObjectLayerFilter final : public JPH::ObjectLayerFilter
+    {
+    public:
+        ShapeCastObjectLayerFilter(
+            const ObjectLayerPairFilterImpl* _pairFilter,
+            JPH::ObjectLayer _layer)
+            : pairFilter(_pairFilter)
+            , layer(_layer)
+        {}
+
+        bool ShouldCollide(JPH::ObjectLayer other) const override
+        {
+            return pairFilter->ShouldCollide(layer, other);
+        }
+
+    private:
+        const ObjectLayerPairFilterImpl* pairFilter;
+        JPH::ObjectLayer layer;
     };
 }

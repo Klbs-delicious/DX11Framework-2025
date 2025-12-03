@@ -143,7 +143,10 @@ void GameObjectManager::BeginPhysics(float _deltaTime)
 
 			// 自前の押し戻し結果を visualTransform に反映させる
 			rigidbody->UpdateLogical(scaledDelta);
-			rigidbody->ResolveCastShape();
+
+			// CastShape 押し戻し解決（元の移動量を基に計算する）
+			rigidbody->ResolveCastShape(_deltaTime);
+
 			rigidbody->SyncToVisual();
 		}
 	}

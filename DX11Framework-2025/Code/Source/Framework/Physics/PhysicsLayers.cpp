@@ -62,7 +62,7 @@ namespace Framework::Physics
             return true; // すべてと衝突する
 
         case PhysicsLayer::Kinematic:
-            return _bpLayer == BroadPhaseLayerDef::Static || _bpLayer == BroadPhaseLayerDef::Dynamic;
+            return true; // すべてと衝突する
 
         default:
             return false;

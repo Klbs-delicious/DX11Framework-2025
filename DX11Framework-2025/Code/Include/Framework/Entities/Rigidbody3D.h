@@ -63,8 +63,10 @@ namespace Framework::Physics
         /// @brief Jolt → visual/staged へ姿勢を反映
         void SyncJoltToVisual();
 
-        /// @brief CastShape による押し戻し処理
-        void ResolveCastShape();
+        /** @brief CastShape による押し戻し解決
+         *  @param _deltaTime 経過時間
+		 */
+        void ResolveCastShape(float _deltaTime);
 
         /// @brief 論理位置取得
         DX::Vector3 GetLogicalPosition() const;

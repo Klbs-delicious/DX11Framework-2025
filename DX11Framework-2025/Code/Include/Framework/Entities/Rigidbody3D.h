@@ -47,6 +47,11 @@ namespace Framework::Physics
         /// @brief 破棄
         void Dispose() override;
 
+        /** @brief 物理シミュレーションステップ
+         *  @param _deltaTime 経過時間
+		 */
+        void StepPhysics(float _deltaTime);
+
         /** @brief 自前移動（TimeScale 適用済み）
          *  @param _deltaTime 経過時間
          */
@@ -62,6 +67,9 @@ namespace Framework::Physics
 
         /// @brief Jolt → visual/staged へ姿勢を反映
         void SyncJoltToVisual();
+
+		/// @brief 貫通解決
+        void ResolvePenetration();
 
         /** @brief CastShape による押し戻し解決
          *  @param _deltaTime 経過時間
@@ -186,5 +194,7 @@ namespace Framework::Physics
         bool useGravity;                              ///< 重力使用フラグ
 
         bool isGrounded;                              ///< 接地フラグ
+
+        static constexpr int SolveIterations = 3;     ///< 貫通解決の反復回数
     };
 } // namespace Framework::Physics

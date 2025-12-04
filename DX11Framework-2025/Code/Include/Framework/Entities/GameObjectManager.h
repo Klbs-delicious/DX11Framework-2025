@@ -1,5 +1,5 @@
-﻿/**@file   GameObjectManager.h
- * @date   2025/09/17
+﻿/** @file   GameObjectManager.h
+ *  @date   2025/09/17
  */
 #pragma once
 #include"Include/Framework/Utils/NonCopyable.h"

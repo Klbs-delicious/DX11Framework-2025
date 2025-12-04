@@ -99,23 +99,9 @@ void PhysicsTest::SetupObjects()
 	//obj_1->AddComponent<TestMoveComponent>();
 	//obj_1->GetComponent<SpriteComponent>()->SetSprite(spriteManager.Get("Eidan"));
 
-	// 球体オブジェクト
-	auto sphere = this->gameObjectManager.Instantiate("Sphere");
-	sphere->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 10.0f));
-	sphere->transform->SetLocalScale(DX::Vector3(2.0f, 2.0f, 2.0f));
-	auto meshComp = sphere->AddComponent<MeshComponent>();
-	meshComp->SetMesh(meshManager.Get("Sphere"));
-	sphere->AddComponent<MeshRenderer>();
-
-	auto coll3D = sphere->AddComponent<Framework::Physics::Collider3DComponent>();
-	coll3D->SetShape(Framework::Physics::ColliderShapeType::Sphere);
-	coll3D->BuildShape();
-	auto rigidbody3D = sphere->AddComponent<Framework::Physics::Rigidbody3D>();
-	rigidbody3D->SetMotionTypeKinematic();
-	rigidbody3D->SetObjectLayerKinematic();
-	rigidbody3D->SetUseGravity(true);
-	rigidbody3D->SetGravity(DX::Vector3(0.0f, -9.8f, 0.0f));
-	sphere->AddComponent<ColliderDebugRenderer>();
+	MeshComponent* meshComp;
+	Framework::Physics::Collider3DComponent* coll3D;
+	Framework::Physics::Rigidbody3D* rigidbody3D;
 
 	// Boxオブジェクト
 	auto box = this->gameObjectManager.Instantiate("Box");
@@ -129,10 +115,29 @@ void PhysicsTest::SetupObjects()
 	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
 	coll3D->BuildShape();
 	rigidbody3D = box->AddComponent<Framework::Physics::Rigidbody3D>();
+	rigidbody3D->SetUseGravity(true);
+	//rigidbody3D->SetGravity(DX::Vector3(0.0f, 9.8f, 0.0f));
 	rigidbody3D->SetMotionTypeKinematic();
 	rigidbody3D->SetObjectLayerKinematic();
 	box->AddComponent<ColliderDebugRenderer>();
 	box->AddComponent<CharacterController>();
+
+	// 球体オブジェクト
+	auto sphere = this->gameObjectManager.Instantiate("Sphere");
+	sphere->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 10.0f));
+	sphere->transform->SetLocalScale(DX::Vector3(2.0f, 2.0f, 2.0f));
+	meshComp = sphere->AddComponent<MeshComponent>();
+	meshComp->SetMesh(meshManager.Get("Sphere"));
+	sphere->AddComponent<MeshRenderer>();
+
+	coll3D = sphere->AddComponent<Framework::Physics::Collider3DComponent>();
+	coll3D->SetShape(Framework::Physics::ColliderShapeType::Sphere);
+	coll3D->BuildShape();
+	rigidbody3D = sphere->AddComponent<Framework::Physics::Rigidbody3D>();
+	rigidbody3D->SetMotionTypeKinematic();
+	rigidbody3D->SetObjectLayerKinematic();
+	rigidbody3D->SetUseGravity(true);
+	sphere->AddComponent<ColliderDebugRenderer>();
 
 	// 平面オブジェクト
 	auto groundObj = this->gameObjectManager.Instantiate("Ground");

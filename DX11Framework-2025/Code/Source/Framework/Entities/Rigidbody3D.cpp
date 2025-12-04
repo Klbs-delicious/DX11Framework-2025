@@ -20,6 +20,10 @@
 #include <Jolt/Physics/Collision/Shape/Shape.h>
 #include <Jolt/Physics/Collision/RayCast.h>
 
+#include <Jolt/Physics/Collision/CollideShape.h>       
+#include <Jolt/Physics/Collision/CollisionCollectorImpl.h> 
+
+
 #include <algorithm>
 #include <cmath>
 #include <cfloat>
@@ -31,8 +35,8 @@ namespace Framework::Physics
 	//-----------------------------------------------------------------------------
 	// 定数
 	//-----------------------------------------------------------------------------
-	static constexpr float parallelEps = 1.0e-4f;    // 法線と移動方向がほぼ平行かどうかの判定用
-	static constexpr float skinWidth = 1.0e-3f;    // 壁から少しだけ離すためのスキン幅
+	static constexpr float parallelEps = 1.0e-4f;		///< 法線と移動方向がほぼ平行かどうかの判定用
+	static constexpr float skinWidth = 1.0e-3f;			///< 壁から少しだけ離すためのスキン幅
 
 	//-----------------------------------------------------------------------------
 	// Constructor / Destructor
@@ -100,6 +104,29 @@ namespace Framework::Physics
 	void Rigidbody3D::Dispose()
 	{
 		this->DestroyBody();
+	}
+
+	//-----------------------------------------------------------------------------
+	// 物理シミュレーションステップ
+	//-----------------------------------------------------------------------------
+	void Rigidbody3D::StepPhysics(float _deltaTime)
+	{
+		// 物理更新は時間スケールを適用させ、自前の押し戻し結果を visualTransform に反映させる
+		float scaledDelta = this->Owner()->TimeScale()->ApplyTimeScale(_deltaTime);
+		this->UpdateLogical(scaledDelta);
+
+		for (size_t i = 0; i < Rigidbody3D::SolveIterations; i++)
+		{
+			// 貫通解決を行う（既に接地している場合完全に押し戻す）
+			// 現状は順番依存で解決される
+			this->ResolvePenetration();
+		}
+
+		// 衝突解決（CastShape 押し戻し）
+		this->ResolveCastShape(_deltaTime);
+
+		// visual に反映させる
+		this->SyncToVisual();
 	}
 
 	//-----------------------------------------------------------------------------
@@ -218,6 +245,101 @@ namespace Framework::Physics
 	}
 
 	//-----------------------------------------------------------------------------
+	// 貫通解決（最も深くめり込んでいるbody1つを押し出す）
+	//-----------------------------------------------------------------------------
+	void Rigidbody3D::ResolvePenetration()
+	{
+		if (!this->hasBody || !this->staged || !this->collider) { return; }
+
+		const Shape* shape = this->collider->GetShape().GetPtr();
+		if (!shape){ return; }
+
+		// 現在の姿勢から COM 位置を計算する
+		const DX::Quaternion rot = this->staged->rotation;
+
+		// centerOffset をワールドへ回して COM の位置に変換する
+		DX::Vector3 worldOffset = DX::Vector3::Zero;
+		if (this->collider)
+		{
+			worldOffset = DX::Vector3::Transform(this->collider->GetCenterOffset(), rot);
+		}
+		const DX::Vector3 comPos = this->staged->position + worldOffset;
+
+		// Jolt 型へ変換
+		const RMat44 transform = RMat44::sRotationTranslation(
+			Quat(rot.x, rot.y, rot.z, rot.w),
+			RVec3(comPos.x, comPos.y, comPos.z)
+		);
+
+		// CollideShape 設定
+		CollideShapeSettings settings;
+		settings.mBackFaceMode = EBackFaceMode::IgnoreBackFaces;
+		settings.mMaxSeparationDistance = 0.0f; // 純粋なめり込みだけを見る
+
+		// 最も深くめり込んでいる面を取得できるようにする
+		ClosestHitCollisionCollector<CollideShapeCollector> collector;
+
+		// NarrowPhaseQuery から衝突判定を実行する
+		const auto& npq = this->physicsSystem.GetNarrowPhaseQuery();
+		const auto& broad = this->physicsSystem.GetBroadPhaseLayerFilter(this->objectLayer);
+		const auto& obj = this->physicsSystem.GetObjectLayerFilter(this->objectLayer);
+		IgnoreSelfBodyFilter bodyFilter(this->bodyID);
+
+		// 衝突判定を実行する
+		npq.CollideShape(
+			shape,
+			Vec3::sOne(),
+			transform,
+			settings,
+			RVec3::sZero(),
+			collector,
+			broad,
+			obj,
+			bodyFilter
+		);
+		if (!collector.HadHit()){ return; }
+
+		// 最も深い衝突情報を取得
+		const CollideShapeResult& hit = collector.mHit;
+		if (hit.mPenetrationDepth <= 0.0f){ return; }
+
+		// 押し出し方向を正規化する
+		Vec3 axis = hit.mPenetrationAxis;
+		axis = axis.Normalized();
+
+		// グローバルの上方向
+		const Vec3 up = Vec3(0.0f, 1.0f, 0.0f);
+
+		// 法線がどの軸に一番近いかを調べる
+		float absX = abs(axis.GetX());
+		float absY = abs(axis.GetY());
+		float absZ = abs(axis.GetZ());
+
+		if (absY >= absX && absY >= absZ)
+		{
+			// 床・天井は純粋に縦押し
+			axis = Vec3(0, axis.GetY() >= 0 ? 1 : -1, 0);
+
+			// 接地スナップ（微小水平ズレ抑制）
+			this->linearVelocity.x = 0;
+			this->linearVelocity.z = 0;
+		}
+
+		// 自分（クエリ形状）を外に押し出すので -axis
+		const Vec3 depen = -axis * hit.mPenetrationDepth;
+
+		const DX::Vector3 depenWorld(
+			depen.GetX(),
+			depen.GetY(),
+			depen.GetZ()
+		);
+
+		// 押し出し後の COM 位置を計算してピボット位置に戻す
+		const DX::Vector3 newComPos = comPos + depenWorld;
+		this->staged->position = newComPos - worldOffset;
+	}
+
+	//-----------------------------------------------------------------------------
 	// CastShape 押し戻し解決
 	//-----------------------------------------------------------------------------
 	void Rigidbody3D::ResolveCastShape(float _deltaTime)
@@ -226,10 +348,8 @@ namespace Framework::Physics
 
 		this->isGrounded = false;
 
-		// 移動量（実移動量 → “移動したい量” に変更）
-		// const DX::Vector3 move = this->staged->position - this->stagedPrev->position;
-		// ↑ 実際に動いた差分では押し戻し後に move=0 になり破綻するため使用不可
-		const DX::Vector3 move = this->linearVelocity * _deltaTime;  // ★修正ポイント：常に意図移動量を使う
+		// 移動量
+		const DX::Vector3 move = this->linearVelocity * _deltaTime; 
 
 		const float moveLenSq = move.LengthSquared();
 		if (moveLenSq <= 0.0f) { return; }

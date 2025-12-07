@@ -35,7 +35,7 @@ namespace Framework::Physics
     class Rigidbody3D : public Component
     {
     public:
-        /** @brief コンストラクタ */
+        /// @brief コンストラクタ
         Rigidbody3D(GameObject* _owner, bool _active = true);
 
         /// @brief デストラクタ
@@ -176,25 +176,25 @@ namespace Framework::Physics
         void CheckGrounded();
 
     private:
-        JPH::BodyID bodyID;                           ///< Jolt の BodyID
-        bool hasBody;                                 ///< Body を保持しているか
+        JPH::BodyID bodyID;                         ///< Jolt の BodyID
+        bool hasBody;                               ///< Body を保持しているか
 
-        JPH::EMotionType motionType;                  ///< 動作モード（Static / Kinematic）
-        JPH::ObjectLayer objectLayer;                 ///< コリジョンレイヤ
+        JPH::EMotionType motionType;                ///< 動作モード（Static / Kinematic）
+        JPH::ObjectLayer objectLayer;               ///< コリジョンレイヤ
 
-        std::unique_ptr<StagedTransform> staged;      ///< 論理姿勢（更新中の位置）
-        std::unique_ptr<StagedTransform> stagedPrev;  ///< 前フレームの論理姿勢
+        std::unique_ptr<StagedTransform> staged;        ///< 論理姿勢（更新中の位置）
+        std::unique_ptr<StagedTransform> stagedPrev;    ///< 前フレームの論理姿勢
 
-        Transform* visualTransform;                   ///< Transform（見た目用）
-        PhysicsSystem& physicsSystem;                 ///< Jolt 物理システム
-        Collider3DComponent* collider;                ///< コライダー形状
+        Transform* visualTransform;                 ///< Transform（見た目用）
+        PhysicsSystem& physicsSystem;               ///< Jolt 物理システム
+        Collider3DComponent* collider;              ///< コライダー形状
 
-        DX::Vector3 linearVelocity;                   ///< 線形速度
-        DX::Vector3 gravity;                          ///< 重力ベクトル
-        bool useGravity;                              ///< 重力使用フラグ
+        DX::Vector3 linearVelocity;                 ///< 線形速度
+        DX::Vector3 gravity;                        ///< 重力ベクトル
+        bool useGravity;                            ///< 重力使用フラグ
 
-        bool isGrounded;                              ///< 接地フラグ
+        bool isGrounded;                            ///< 接地フラグ
 
-        static constexpr int SolveIterations = 3;     ///< 貫通解決の反復回数
+        static constexpr int SolveIterations = 3;   ///< 貫通解決の反復回数
     };
 } // namespace Framework::Physics

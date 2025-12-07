@@ -3,11 +3,12 @@
  *  @date   2025/11/17
  */
 
- //-----------------------------------------------------------------------------
- // Includes
- //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// Includes
+//-----------------------------------------------------------------------------
 #include <cstdarg>
 #include <cstdio>
+#include <iostream>
 
 #include "Include/Framework/Core/PhysicsSystem.h"
 #include "Include/Framework/Physics/PhysicsLayers.h"
@@ -30,6 +31,9 @@ namespace Framework::Physics
 		, objectPairFilter()
 		, shapeCastBroadFilters()
 		, shapeCastObjectFilters()
+		, currContact()
+		, prevContact()
+		, contactListener(*this)
 	{}
 
 	/// @brief デストラクタ
@@ -56,8 +60,8 @@ namespace Framework::Physics
 		JPH::Trace = TraceImpl;
 		JPH_IF_ENABLE_ASSERTS(JPH::AssertFailed = AssertImpl;)
 
-			// Factory の作成と型登録
-			JPH::Factory::sInstance = new JPH::Factory();
+		// Factory の作成と型登録
+		JPH::Factory::sInstance = new JPH::Factory();
 		JPH::RegisterTypes();
 
 		// 一時アロケータ
@@ -103,6 +107,9 @@ namespace Framework::Physics
 
 		// ShapeCast 用フィルタ群の初期化
 		this->InitializeShapeCastFilters();
+
+		// コンタクトリスナーの登録
+		this->physics->SetContactListener(&this->contactListener);
 
 		return true;
 	}
@@ -194,6 +201,102 @@ namespace Framework::Physics
 		return this->physics->GetNarrowPhaseQuery();
 	}
 
+	/** @brief 接触した剛体ペアを追加する
+	 *  @param _bodyA       ぶつかった剛体1
+	 *  @param _bodyB       ぶつかった剛体2
+	 *	@detail 
+	 *		- BodyIDを昇順に揃える
+	 *		- Jolt側で当たった時、当たっている時に呼び出される
+	 */
+	void PhysicsSystem::AddContactPair(JPH::BodyID _bodyA, JPH::BodyID _bodyB)
+	{
+		if (_bodyA > _bodyB)
+		{
+			// BodyIDを昇順に揃える
+			std::swap(_bodyA, _bodyB);
+		}
+		this->currContact[_bodyA].insert(_bodyB);
+	}
+
+	void PhysicsSystem::ProcessContactEvents()
+	{
+		auto& bodyInterface = this->physics->GetBodyInterface();
+
+		//=======================================
+		// 無効になったBodyを履歴から取り除く
+		//=======================================
+		auto cleanContactTable = [&](auto& table)
+		{
+			for (auto itA = table.begin(); itA != table.end(); )
+			{
+				if (!IsBodyValid(itA->first))
+				{
+					itA = table.erase(itA);
+					continue;
+				}
+
+				for (auto itB = itA->second.begin(); itB != itA->second.end(); )
+				{
+					if (!IsBodyValid(*itB))
+						itB = itA->second.erase(itB);
+					else
+						++itB;
+				}
+				++itA;
+			}
+		};
+
+		cleanContactTable(this->currContact);
+		cleanContactTable(this->prevContact);
+
+		//=======================================
+		// Enter & Stay 判定
+		//=======================================
+		for (auto& [bodyA, currentSet] : this->currContact)
+		{
+			auto& prevSet = this->prevContact[bodyA];
+
+			for (const auto& bodyB : currentSet)
+			{
+				bool isPrev = (prevSet.count(bodyB) > 0);
+
+				if (!isPrev)
+				{
+					std::cout << "Contact Enter: " << bodyA.GetIndex() << " - " << bodyB.GetIndex() << "\n";
+				}
+				else
+				{
+					std::cout << "Contact Stay : " << bodyA.GetIndex() << " - " << bodyB.GetIndex() << "\n";
+				}
+			}
+		}
+
+		//===========================
+		// Exit（安定化処理）
+		//===========================
+		for (auto& [bodyA, prevSet] : this->prevContact)
+		{
+			auto itCurr = this->currContact.find(bodyA);
+			const auto* currSet = (itCurr != this->currContact.end()) ? &itCurr->second : nullptr;
+
+			for (auto& bodyB : prevSet)
+			{
+				bool stillContact = currSet && currSet->count(bodyB) > 0;
+
+				if (!stillContact)
+				{
+					std::cout << "Contact Exit  : " << bodyA.GetIndex() << " - " << bodyB.GetIndex() << "\n";
+				}
+			}
+		}
+
+		//=======================================
+		// 履歴の更新
+		//=======================================
+		this->prevContact = this->currContact;	// ここで前回の状態になる
+		this->currContact.clear();				// 現在フレームの情報をリセット
+	}
+
 	/// @brief Jolt ログ出力
 	void PhysicsSystem::TraceImpl(const char* _fmt, ...)
 	{
@@ -253,6 +356,14 @@ namespace Framework::Physics
 	const JPH::ObjectLayerFilter& PhysicsSystem::GetObjectLayerFilter(JPH::ObjectLayer _layer) const
 	{
 		return *(this->shapeCastObjectFilters[_layer]);
+	}
+
+	bool PhysicsSystem::IsBodyValid(JPH::BodyID _body)
+	{
+		auto& iface = this->physics->GetBodyInterface();
+
+		// 破棄されていない限り有効扱いする
+		return iface.IsAdded(_body);
 	}
 
 } // namespace Framework::Physics

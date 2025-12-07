@@ -160,6 +160,9 @@ void GameLoop::Update()
         // 物理シミュレーションを実行する
         this->physicsSystem->Step(fixedDelta);
 
+		// 接触イベントの処理を行う
+		this->physicsSystem->ProcessContactEvents();
+
 		// 物理シミュレーション終了後の処理
 		this->gameObjectManager->EndPhysics();
 

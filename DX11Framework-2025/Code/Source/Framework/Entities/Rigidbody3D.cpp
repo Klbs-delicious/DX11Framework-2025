@@ -27,6 +27,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cfloat>
+#include <iostream>
 
 namespace Framework::Physics
 {
@@ -624,11 +625,27 @@ namespace Framework::Physics
 			: EMotionQuality::Discrete;
 
 		_settings.mObjectLayer = this->objectLayer;
+		_settings.mAllowSleeping = false;			
 
 		if (this->collider)
 		{
 			const ShapeRefC shape = this->collider->GetShape();
+			if (!shape)
+			{
+				std::cout << "[Rigidbody3D] Shape is NULL at InitializeBody\n";
+			}
+			else
+			{
+				std::cout << "[Rigidbody3D] Shape is VALID at InitializeBody\n";
+			}
+
 			_settings.SetShape(shape);
+		}
+
+		if (this->motionType == EMotionType::Kinematic)
+		{
+			// Kinematic vs NonDynamic の衝突を有効化
+			_settings.mCollideKinematicVsNonDynamic = true;
 		}
 	}
 
@@ -665,6 +682,18 @@ namespace Framework::Physics
 	void Rigidbody3D::InitializeBody()
 	{
 		if (this->hasBody) { return; }
+
+		if (!this->collider)
+		{
+			return;
+		}
+
+		if (!this->collider->GetShape())
+		{
+			// まだ Collider が初期化されていない。あとで明示的に再初期化する必要あり
+			std::cout << "[Rigidbody3D] Skip InitializeBody because shape is NULL\n";
+			return;
+		}
 
 		auto& bodyInterface = this->physicsSystem.GetBodyInterface();
 

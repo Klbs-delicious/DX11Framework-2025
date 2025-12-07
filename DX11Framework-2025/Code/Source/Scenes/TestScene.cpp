@@ -285,7 +285,7 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 			meshComp->SetMesh(meshManager.Get("Sphere"));
 
 			auto coll3D = obj->AddComponent<Framework::Physics::Collider3DComponent>();
-			coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
+			coll3D->SetShape(Framework::Physics::ColliderShapeType::Sphere);
 			coll3D->BuildShape();
 
 			auto rigidbody3D = obj->AddComponent<Framework::Physics::Rigidbody3D>();
@@ -295,7 +295,7 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 
 			obj->AddComponent<MeshRenderer>();
 			obj->AddComponent<FreeMoveTestComponent>();
-			//obj->AddComponent<ColliderDebugRenderer>();
+			obj->AddComponent<ColliderDebugRenderer>();
 
 			int groupId = index % 3 + 1;
 			std::string groupName = "EnemyGroup_" + std::to_string(groupId);

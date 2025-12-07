@@ -5,9 +5,12 @@
 #pragma once
 
 #include <memory>	
-#include <array> 
+#include <array>
+#include <unordered_set>
+#include <unordered_map>
 
 #include "Include/Framework/Physics/PhysicsLayers.h"
+#include "Include/Framework/Physics/PhysicsContactListener.h"
 
 #include <Jolt/Jolt.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
@@ -75,6 +78,21 @@ namespace Framework::Physics
 		 */
 		[[nodiscard]] const JPH::ObjectLayerFilter& GetObjectLayerFilter(JPH::ObjectLayer _layer) const;
 
+		/** @brief 接触した剛体ペアを追加
+		 *  @param _bodyA       ぶつかった剛体A
+		 *  @param _bodyB       ぶつかった剛体B
+		 */
+		void AddContactPair(JPH::BodyID _bodyA, JPH::BodyID _bodyB);
+
+		/// @brief 接触イベントを処理する
+		void ProcessContactEvents();
+
+		/** @brief BodyID が有効かどうか調べる
+		 *  @param _body 調べる BodyID
+		 *  @return 有効なら true
+		 */
+		[[nodiscard]] bool IsBodyValid(JPH::BodyID _body);
+
 	private:
 		/// @brief ログ出力（Jolt から呼ばれる）
 		static void TraceImpl(const char* _fmt, ...);
@@ -87,17 +105,24 @@ namespace Framework::Physics
 
 	private:
 		// 基本リソース
-		std::unique_ptr<JPH::TempAllocatorImpl>   tempAllocator;
-		std::unique_ptr<JPH::JobSystemThreadPool> jobSystem;
-		std::unique_ptr<JPH::PhysicsSystem>       physics;
+		std::unique_ptr<JPH::TempAllocatorImpl>		tempAllocator;	///< 一時アロケータ
+		std::unique_ptr<JPH::JobSystemThreadPool>	jobSystem;		///< ジョブシステム
+		std::unique_ptr<JPH::PhysicsSystem>			physics;		///< 物理システム
 
 		// レイヤー / 衝突フィルタ共通
-		BPLayerInterfaceImpl              bpLayerInterface;
-		ObjectVsBroadPhaseLayerFilterImpl objectVsBroadPhaseFilter;
-		ObjectLayerPairFilterImpl         objectPairFilter;
+		BPLayerInterfaceImpl					bpLayerInterface;			///< BroadPhaseLayer インターフェース
+		ObjectVsBroadPhaseLayerFilterImpl		objectVsBroadPhaseFilter;	///< Object vs BroadPhase レイヤーフィルタ
+		ObjectLayerPairFilterImpl				objectPairFilter;			///< ObjectLayer ペアフィルタ
 
 		// ShapeCast 用プリキャッシュフィルタ
-		std::array<std::unique_ptr<JPH::BroadPhaseLayerFilter>, PhysicsLayer::NUM_LAYERS> shapeCastBroadFilters;
-		std::array<std::unique_ptr<JPH::ObjectLayerFilter>, PhysicsLayer::NUM_LAYERS> shapeCastObjectFilters;
+		std::array<std::unique_ptr<JPH::BroadPhaseLayerFilter>, PhysicsLayer::NUM_LAYERS>	shapeCastBroadFilters;	///< ShapeCast 用 BroadPhaseLayerFilter
+		std::array<std::unique_ptr<JPH::ObjectLayerFilter>, PhysicsLayer::NUM_LAYERS>		shapeCastObjectFilters;	///< ShapeCast 用 ObjectLayerFilter
+
+		// 衝突差分
+		std::unordered_map<JPH::BodyID, std::unordered_set<JPH::BodyID>>	currContact;	///< 今フレームの接触情報
+		std::unordered_map<JPH::BodyID, std::unordered_set<JPH::BodyID>>	prevContact;	///< 前フレームの接触情報
+
+		// コンタクトリスナー
+		PhysicsContactListener	contactListener;	///< コンタクトリスナー
 	};
 }

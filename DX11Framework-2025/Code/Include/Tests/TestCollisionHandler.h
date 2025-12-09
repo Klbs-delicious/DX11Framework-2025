@@ -29,5 +29,9 @@ public:
 	void OnCollisionEnter(Framework::Physics::Collider3DComponent* _self, Framework::Physics::Collider3DComponent* _other) override;
 	void OnCollisionStay(Framework::Physics::Collider3DComponent* _self, Framework::Physics::Collider3DComponent* _other) override;
 	void OnCollisionExit(Framework::Physics::Collider3DComponent* _self, Framework::Physics::Collider3DComponent* _other) override;
+
+	void OnTriggerEnter(Framework::Physics::Collider3DComponent* _self, Framework::Physics::Collider3DComponent* _other) override;
+	void OnTriggerStay(Framework::Physics::Collider3DComponent* _self, Framework::Physics::Collider3DComponent* _other) override;
+	void OnTriggerExit(Framework::Physics::Collider3DComponent* _self, Framework::Physics::Collider3DComponent* _other) override;
 private:
 };

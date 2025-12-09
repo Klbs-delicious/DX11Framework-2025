@@ -11,8 +11,6 @@
 
 #include "Include/Framework/Physics/PhysicsLayers.h"
 #include "Include/Framework/Physics/PhysicsContactListener.h"
-#include "Include/Framework/Entities/Collider3DComponent.h" // Collider3DComponent の宣言を取得
-#include "Include/Framework/Entities/Rigidbody3D.h"        // Rigidbody3D の宣言を取得
 
 #include <Jolt/Jolt.h>
 #include <Jolt/Core/JobSystemThreadPool.h>
@@ -119,6 +117,17 @@ namespace Framework::Physics
 		 */
 		void HandleContact(ContactType _type, JPH::BodyID _bodyA, JPH::BodyID _bodyB);
 
+		/** @brief BodyID がセンサーボディかどうか調べる
+		 *  @param _id 調べる BodyID
+		 *  @return センサーボディなら true
+		 */
+		[[nodiscard]] bool IsSensorBody(JPH::BodyID _id);
+
+		/** @brief 接触タイプをトリガー用に変換する
+		 *  @param _type 変換する接触タイプ
+		 */
+		void ConvertToTrigger(ContactType& _type);
+
 		/** @brief BodyID が有効かどうか調べる
 		 *  @param _body 調べる BodyID
 		 *  @return 有効なら true
@@ -142,7 +151,7 @@ namespace Framework::Physics
 		 */
 		Rigidbody3D* GetRigidbody3D(JPH::BodyID _bodyID);
 
-		/** @brief BodyID と Collider3DComponent の関連付けを登録する
+		/** @brief BodyID と Rigidbody3D の関連付けを登録する
 		 *  @param _bodyID  登録する BodyID
 		 *  @param _collider 関連付ける Collider3DComponent
 		 */
@@ -176,7 +185,7 @@ namespace Framework::Physics
 		std::unique_ptr<JPH::PhysicsSystem>			physics;		///< 物理システム
 
 		// レイヤー / 衝突フィルタ共通
-		BPLayerInterfaceImpl						bpLayerInterface;			///< BroadPhaseLayer インターフェース
+		BPLayerInterfaceImpl					bpLayerInterface;			///< BroadPhaseLayer インターフェース
 		ObjectVsBroadPhaseLayerFilterImpl		objectVsBroadPhaseFilter;	///< Object vs BroadPhase レイヤーフィルタ
 		ObjectLayerPairFilterImpl				objectPairFilter;			///< ObjectLayer ペアフィルタ
 
@@ -187,9 +196,9 @@ namespace Framework::Physics
 		// 衝突検知
 		std::unordered_map<JPH::BodyID, std::unordered_set<JPH::BodyID>>	currContact;		///< 今フレームの接触情報
 		std::unordered_map<JPH::BodyID, std::unordered_set<JPH::BodyID>>	prevContact;		///< 前フレームの接触情報
-		PhysicsContactListener						contactListener;		///< コンタクトリスナー
+		PhysicsContactListener												contactListener;	///< コンタクトリスナー
 
-		std::unordered_map<JPH::BodyID, Framework::Physics::Rigidbody3D*>	bodyMap;			///< BodyIDに対するRigidbody3Dマップ
-		std::unordered_map<JPH::BodyID, Framework::Physics::Collider3DComponent*>	colliderMap;	///< BodyIDに対するCollider3DCompontntマップ
+		std::unordered_map < JPH::BodyID, Framework::Physics::Rigidbody3D* > bodyMap;				///< BodyIDに対するRigidbody3Dマップ
+		std::unordered_map < JPH::BodyID, Framework::Physics::Collider3DComponent* > colliderMap;	///< BodyIDに対するCollider3DCompontntマップ
 	};
 } // namespace Framework::Physics

@@ -35,6 +35,7 @@ ColliderDebugRenderer::ColliderDebugRenderer(GameObject* _owner, bool _active)
     , linePoints()
     , shaders(nullptr)
     , rigidbody(nullptr)
+	, lineColorBuffer(nullptr)
 {
 }
 
@@ -133,6 +134,10 @@ void ColliderDebugRenderer::Initialize()
         true   // 動的かどうか（ここではとりあえず true にしている）
     );
 
+    // デバッグカラー用定数バッファの生成
+	this->lineColorBuffer = std::make_unique<DynamicConstantBuffer<DebugColor>>();
+	this->lineColorBuffer->Create(device);
+    
     //======================================================================
     // デバッグ用シェーダ取得
     //======================================================================
@@ -171,6 +176,27 @@ void ColliderDebugRenderer::Draw()
     auto& d3d = SystemLocator::Get<D3D11System>();
     auto context = d3d.GetContext();
     auto& render = SystemLocator::Get<RenderSystem>();
+
+	// ======================================================================
+	// デバッグカラーのセット
+	// ======================================================================
+	DebugColor debugColor;
+    if(this->collider->IsTrigger())
+    {
+        // トリガーは青色
+        debugColor.color = DX::Vector4(0.0f, 0.0f, 1.0f, 1.0f);
+    }
+    else
+    {
+        // 通常のコライダーは赤色
+        debugColor.color = DX::Vector4(1.0f, 0.0f, 0.0f, 1.0f);
+	}
+	this->lineColorBuffer->Update(context, debugColor);
+	this->lineColorBuffer->BindPS(context,0);
+
+	//======================================================================
+	// 描画
+	//======================================================================
 
     // ラスタライザステートをワイヤーフレームに切り替え
     render.SetRasterizerState(RasterizerType::WireframeCullBack);
@@ -327,6 +353,7 @@ void ColliderDebugRenderer::BuildCapsuleWire(float _radius, float _halfHeight)
         this->linePoints.emplace_back(x, yTop, z);
     }
 }
+
 void ColliderDebugRenderer::DrawInternal(ID3D11DeviceContext* _context)
 {
     // シェーダが未取得の場合でもクラッシュは避ける

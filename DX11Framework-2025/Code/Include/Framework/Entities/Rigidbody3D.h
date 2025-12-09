@@ -182,6 +182,8 @@ namespace Framework::Physics
         /// @brief 接地判定（RayCast）
         void CheckGrounded();
 
+
+
     private:
         JPH::BodyID bodyID;                         ///< Jolt の BodyID
         bool hasBody;                               ///< Body を保持しているか

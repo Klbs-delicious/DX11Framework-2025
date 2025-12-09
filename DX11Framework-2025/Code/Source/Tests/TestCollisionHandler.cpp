@@ -43,3 +43,19 @@ void TestCollisionHandler::OnCollisionExit(Framework::Physics::Collider3DCompone
 {
 	std::cout << "[TestCollisionHandler] OnCollisionExit: " << this->Owner()->GetName() << " ended collision with " << _other->Owner()->GetName() << std::endl;
 }
+
+void TestCollisionHandler::OnTriggerEnter(Framework::Physics::Collider3DComponent* _self, Framework::Physics::Collider3DComponent* _other)
+{
+	std::cout << "[TestCollisionHandler] OnTriggerEnter: " << this->Owner()->GetName() << " triggered with " << _other->Owner()->GetName() << std::endl;
+}
+
+void TestCollisionHandler::OnTriggerStay(Framework::Physics::Collider3DComponent* _self, Framework::Physics::Collider3DComponent* _other)
+{
+	std::cout << "[TestCollisionHandler] OnTriggerStay: " << this->Owner()->GetName() << " is triggering with " << _other->Owner()->GetName() << std::endl;
+}
+
+void TestCollisionHandler::OnTriggerExit(Framework::Physics::Collider3DComponent* _self, Framework::Physics::Collider3DComponent* _other)
+{
+	std::cout << "[TestCollisionHandler] OnTriggerExit: " << this->Owner()->GetName() << " ended trigger with " << _other->Owner()->GetName() << std::endl;
+}
+

@@ -13,6 +13,7 @@
 #include "Include/Framework/Core/PhysicsSystem.h"
 #include "Include/Framework/Physics/PhysicsLayers.h"
 #include "Include/Framework/Entities/Rigidbody3D.h"
+#include "Include/Framework/Entities/Collider3DComponent.h"
 
 #include <Jolt/RegisterTypes.h>
 
@@ -308,15 +309,45 @@ namespace Framework::Physics
 	 */
 	void PhysicsSystem::HandleContact(ContactType _type, JPH::BodyID _bodyA, JPH::BodyID _bodyB)
 	{
-		auto rbA = GetRigidbody3D(_bodyA);
-		auto rbB = GetRigidbody3D(_bodyB);
-		auto colA = GetCollider3D(_bodyA);
-		auto colB = GetCollider3D(_bodyB);
+		{
+			// Rigidbody3D を取得する
+			auto rbA = GetRigidbody3D(_bodyA);
+			auto rbB = GetRigidbody3D(_bodyB);
+			if (!rbA || !rbB) return;
 
-		if (!rbA || !rbB) return;
+			// センサーボディかどうか調べる
+			bool aIsSensor = IsSensorBody(_bodyA);
+			bool bIsSensor = IsSensorBody(_bodyB);
 
-		rbA->DispatchContactEvent(_type, colA, colB);
-		rbB->DispatchContactEvent(_type, colB, colA); // 片方向だけなら消す
+			ContactType typeA = _type;
+			ContactType typeB = _type;
+
+			// センサーならトリガーイベントに変換する
+			if (aIsSensor) ConvertToTrigger(typeA);
+			if (bIsSensor) ConvertToTrigger(typeB);
+
+			// イベント発行
+			rbA->DispatchContactEvent(typeA, GetCollider3D(_bodyA), GetCollider3D(_bodyB));
+			rbB->DispatchContactEvent(typeB, GetCollider3D(_bodyB), GetCollider3D(_bodyA));
+		}
+	}
+
+	/** @brief BodyID が有効かどうか調べる
+	 *  @param _body 調べる BodyID
+	 *  @return 有効なら true
+	 */
+	bool PhysicsSystem::IsSensorBody(JPH::BodyID _id)
+	{
+		JPH::BodyLockRead lock(this->physics->GetBodyLockInterface(), _id);
+		if (!lock.Succeeded()) { return false; }
+		return lock.GetBody().IsSensor();
+	}
+
+	void PhysicsSystem::ConvertToTrigger(ContactType& _type)
+	{
+		if (_type == ContactType::Coll_Entered) _type = ContactType::Trigger_Entered;
+		else if (_type == ContactType::Coll_Stayed) _type = ContactType::Trigger_Stayed;
+		else if (_type == ContactType::Coll_Exited) _type = ContactType::Trigger_Exited;
 	}
 
 	/** @brief BodyID と Rigidbody3D の関連付けを登録する

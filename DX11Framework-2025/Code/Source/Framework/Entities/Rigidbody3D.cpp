@@ -252,6 +252,7 @@ namespace Framework::Physics
 	void Rigidbody3D::ResolvePenetration()
 	{
 		if (!this->hasBody || !this->staged || !this->collider) { return; }
+		if (this->collider->IsTrigger()) { return; }
 
 		const Shape* shape = this->collider->GetShape().GetPtr();
 		if (!shape){ return; }
@@ -305,6 +306,11 @@ namespace Framework::Physics
 		const CollideShapeResult& hit = collector.mHit;
 		if (hit.mPenetrationDepth <= 0.0f){ return; }
 
+		// 接地した相手がTriggerなら無視する
+		auto other = this->physicsSystem.GetCollider3D(hit.mBodyID2);
+		if (!other) { return; }
+		if (other->IsTrigger()) { return; }
+
 		// 押し出し方向を正規化する
 		Vec3 axis = hit.mPenetrationAxis;
 		axis = axis.Normalized();
@@ -320,7 +326,7 @@ namespace Framework::Physics
 		if (absY >= absX && absY >= absZ)
 		{
 			// 床・天井は純粋に縦押し
-			axis = Vec3(0, axis.GetY() >= 0 ? 1 : -1, 0);
+			axis = Vec3(0, axis.GetY() >= 0.0f ? 1.0f : -1.0f, 0.0f);
 
 			// 接地スナップ（微小水平ズレ抑制）
 			this->linearVelocity.x = 0;
@@ -347,6 +353,7 @@ namespace Framework::Physics
 	void Rigidbody3D::ResolveCastShape(float _deltaTime)
 	{
 		if (!this->hasBody || !this->staged || !this->stagedPrev || !this->collider) { return; }
+		if (this->collider->IsTrigger()) { return; }
 
 		this->isGrounded = false;
 
@@ -410,6 +417,11 @@ namespace Framework::Physics
 			bodyFilter
 		);
 		if (!collector.hasHit) { return; }
+
+		// 接地した相手がTriggerなら無視する
+		auto other = this->physicsSystem.GetCollider3D(collector.hit.mBodyID2);
+		if (!other) { return; }
+		if (other->IsTrigger()) { return; }
 
 		// ヒット位置までの割合
 		float f = std::clamp(collector.hit.mFraction, 0.0f, 1.0f);
@@ -676,6 +688,8 @@ namespace Framework::Physics
 
 		if (this->collider)
 		{
+			_settings.mIsSensor = this->collider->IsTrigger();
+
 			const ShapeRefC shape = this->collider->GetShape();
 			if (!shape)
 			{

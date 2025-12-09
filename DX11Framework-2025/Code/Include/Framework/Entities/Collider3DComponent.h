@@ -149,6 +149,11 @@ namespace Framework::Physics
 		 */
 		void SetCenterOffset(const DX::Vector3& _offset);
 
+		/** @brief トリガー設定を行う
+		 *  @param _isTrigger トリガーにする場合は true
+		 */
+		void SetisTrigger(bool _isTrigger);
+
 		/// @brief 設定値に基づいて形状を生成する
 		void BuildShape();
 
@@ -168,6 +173,7 @@ namespace Framework::Physics
 		[[nodiscard]] float& GetCapsuleRadius();
 		[[nodiscard]] float& GetCapsuleHalfHeight();
 		[[nodiscard]] DX::Vector3& GetCenterOffset();
+		[[nodiscard]] bool IsTrigger() const;
 
 	private:
 		ColliderShapeType shapeType;      ///< コライダーの種類
@@ -180,5 +186,7 @@ namespace Framework::Physics
 		float capsuleRadius;		///< カプセル形状の半径
 		float capsuleHalfHeight;	///< カプセル形状の半分の高さ
 		DX::Vector3 centerOffset;	///< 形状の中心オフセット
+
+		bool isTrigger;				///< true: 衝突判定のみ（押し出しは行わない）
 	};
 }

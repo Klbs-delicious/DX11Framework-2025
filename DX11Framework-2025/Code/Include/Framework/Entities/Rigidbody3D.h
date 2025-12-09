@@ -25,6 +25,7 @@
 namespace Framework::Physics
 {
 	class PhysicsSystem;
+    enum class ContactType;
 
     /** @class Rigidbody3D
      *  @brief Jolt Physics ベースの 3D リジッドボディコンポーネント
@@ -137,7 +138,6 @@ namespace Framework::Physics
 
         /// @brief ObjectLayer を Static に設定
         void SetObjectLayerStatic();
-
         /// @brief ObjectLayer を Kinematic に設定
         void SetObjectLayerKinematic();
 
@@ -147,6 +147,13 @@ namespace Framework::Physics
          *  @return 成功なら true
          */
         bool GetBodyTransform(DX::Vector3& _outPos, DX::Quaternion& _outRot) const;
+
+        /** @brief 接触イベントのディスパッチ
+         *  @param _type イベント種別
+		 *  @param _selfCollider 自分側のコライダー
+		 *  @param _otherColl 相手側のコライダー
+		 */
+        void DispatchContactEvent(const ContactType& _type, Collider3DComponent* _selfCollider, Collider3DComponent* _otherColl);
 
     private:
         /** @brief 初期姿勢の取得

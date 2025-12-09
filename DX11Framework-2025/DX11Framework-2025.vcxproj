@@ -93,6 +93,7 @@
     <ClInclude Include="Code\Include\Scenes\TestScene.h" />
     <ClInclude Include="Code\Include\Scenes\TitleScene.h" />
     <ClInclude Include="Code\Include\Tests\FreeMoveTestComponent.h" />
+    <ClInclude Include="Code\Include\Tests\TestCollisionHandler.h" />
     <ClInclude Include="Code\Include\Tests\TestMoveComponent.h" />
     <ClInclude Include="Code\Include\Tests\TimeScaleTestComponent.h" />
   </ItemGroup>
@@ -154,6 +155,7 @@
     <ClCompile Include="Code\Source\Scenes\TestScene.cpp" />
     <ClCompile Include="Code\Source\Scenes\TitleScene.cpp" />
     <ClCompile Include="Code\Source\Tests\FreeMoveTestComponent.cpp" />
+    <ClCompile Include="Code\Source\Tests\TestCollisionHandler.cpp" />
     <ClCompile Include="Code\Source\Tests\TestMoveComponent.cpp" />
     <ClCompile Include="Code\Source\Tests\TimeScaleTestComponent.cpp" />
   </ItemGroup>

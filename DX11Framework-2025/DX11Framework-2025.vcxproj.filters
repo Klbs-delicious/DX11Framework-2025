@@ -336,6 +336,12 @@
     <ClInclude Include="Code\Include\Framework\Physics\StagedTransform.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Physics\StagedTransform.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Tests\TestCollisionHandler.h">
+      <Filter>ソース ファイル\Test</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Code\Source\Framework\main.cpp">
@@ -514,6 +520,9 @@
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Physics\PhysicsContactListener.cpp">
       <Filter>ソース ファイル\Framework\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Tests\TestCollisionHandler.cpp">
+      <Filter>ソース ファイル\Test</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

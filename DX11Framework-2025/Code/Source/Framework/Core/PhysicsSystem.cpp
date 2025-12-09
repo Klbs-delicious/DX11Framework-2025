@@ -12,6 +12,7 @@
 
 #include "Include/Framework/Core/PhysicsSystem.h"
 #include "Include/Framework/Physics/PhysicsLayers.h"
+#include "Include/Framework/Entities/Rigidbody3D.h"
 
 #include <Jolt/RegisterTypes.h>
 
@@ -34,6 +35,7 @@ namespace Framework::Physics
 		, currContact()
 		, prevContact()
 		, contactListener(*this)
+		, bodyMap()
 	{}
 
 	/// @brief デストラクタ
@@ -262,11 +264,13 @@ namespace Framework::Physics
 
 				if (!isPrev)
 				{
-					std::cout << "Contact Enter: " << bodyA.GetIndex() << " - " << bodyB.GetIndex() << "\n";
+					//std::cout << "Contact Enter: " << bodyA.GetIndex() << " - " << bodyB.GetIndex() << "\n";
+					this->HandleContact(ContactType::Coll_Entered, bodyA, bodyB);
 				}
 				else
 				{
-					std::cout << "Contact Stay : " << bodyA.GetIndex() << " - " << bodyB.GetIndex() << "\n";
+					//std::cout << "Contact Stay : " << bodyA.GetIndex() << " - " << bodyB.GetIndex() << "\n";
+					this->HandleContact(ContactType::Coll_Stayed, bodyA, bodyB);
 				}
 			}
 		}
@@ -285,7 +289,8 @@ namespace Framework::Physics
 
 				if (!stillContact)
 				{
-					std::cout << "Contact Exit  : " << bodyA.GetIndex() << " - " << bodyB.GetIndex() << "\n";
+					//std::cout << "Contact Exit  : " << bodyA.GetIndex() << " - " << bodyB.GetIndex() << "\n";
+					this->HandleContact(ContactType::Coll_Exited, bodyA, bodyB);
 				}
 			}
 		}
@@ -295,6 +300,90 @@ namespace Framework::Physics
 		//=======================================
 		this->prevContact = this->currContact;	// ここで前回の状態になる
 		this->currContact.clear();				// 現在フレームの情報をリセット
+	}
+
+	/** @brief BodyID が有効かどうか調べる
+	 *  @param _body 調べる BodyID
+	 *  @return 有効なら true
+	 */
+	void PhysicsSystem::HandleContact(ContactType _type, JPH::BodyID _bodyA, JPH::BodyID _bodyB)
+	{
+		auto rbA = GetRigidbody3D(_bodyA);
+		auto rbB = GetRigidbody3D(_bodyB);
+		auto colA = GetCollider3D(_bodyA);
+		auto colB = GetCollider3D(_bodyB);
+
+		if (!rbA || !rbB) return;
+
+		rbA->DispatchContactEvent(_type, colA, colB);
+		rbB->DispatchContactEvent(_type, colB, colA); // 片方向だけなら消す
+	}
+
+	/** @brief BodyID と Rigidbody3D の関連付けを登録する
+	 *  @param _bodyID  登録する BodyID
+	 *  @param _rigidbody 関連付ける Rigidbody3D
+	 */
+	void PhysicsSystem::RegisterRigidbody3D(JPH::BodyID _bodyID, Rigidbody3D* _rigidbody)
+	{
+		// 登録
+		this->bodyMap[_bodyID] =/* { _rigidbody, _bodyID.GetSequenceNumber() };*/_rigidbody;
+	}
+
+	/** @brief BodyID と Rigidbody3D の関連付けを解除する
+	 *  @param _bodyID 解除する BodyID
+	 */
+	void PhysicsSystem::UnregisterRigidbody3D(JPH::BodyID _bodyID)
+	{
+		this->bodyMap.erase(_bodyID);
+	}
+
+	/** @brief BodyID から Rigidbody3D を取得する
+	 *  @param _bodyID 取得する BodyID
+	 *  @return 対応する Rigidbody3D（存在しない場合は nullptr）
+	 */
+	Rigidbody3D* PhysicsSystem::GetRigidbody3D(JPH::BodyID _bodyID)
+	{
+		auto it = this->bodyMap.find(_bodyID);
+		if (it != this->bodyMap.end())
+		{
+			return it->second;
+		}
+
+		// 存在しない
+		return nullptr;
+	}
+
+	/** @brief BodyID と Collider3DComponent の関連付けを登録する
+	 *  @param _bodyID  登録する BodyID
+	 *  @param _collider 関連付ける Collider3DComponent
+	 */
+	void PhysicsSystem::RegisterCollider3D(JPH::BodyID _bodyID, Collider3DComponent* _collider)
+	{
+		// 登録
+		this->colliderMap[_bodyID] = _collider;
+	}
+
+	/** @brief BodyID と Collider3DComponent の関連付けを解除する
+	 *  @param _bodyID 解除する BodyID
+	 */
+	void PhysicsSystem::UnregisterCollider3D(JPH::BodyID _bodyID)
+	{
+		this->colliderMap.erase(_bodyID);
+	}
+
+	/** @brief BodyID から Collider3DComponent を取得する
+	 *  @param _bodyID 取得する BodyID
+	 *  @return 対応する Collider3DComponent（存在しない場合は nullptr）
+	 */
+	Collider3DComponent* PhysicsSystem::GetCollider3D(JPH::BodyID _bodyID)
+	{
+		auto it = this->colliderMap.find(_bodyID);
+		if (it != this->colliderMap.end())
+		{
+			return it->second;
+		}
+		// 存在しない
+		return nullptr;
 	}
 
 	/// @brief Jolt ログ出力
@@ -358,6 +447,10 @@ namespace Framework::Physics
 		return *(this->shapeCastObjectFilters[_layer]);
 	}
 
+	/** @brief BodyID が有効かどうか調べる
+	 *  @param _body 調べる BodyID
+	 *  @return 有効なら true
+	 */
 	bool PhysicsSystem::IsBodyValid(JPH::BodyID _body)
 	{
 		auto& iface = this->physics->GetBodyInterface();
@@ -365,5 +458,4 @@ namespace Framework::Physics
 		// 破棄されていない限り有効扱いする
 		return iface.IsAdded(_body);
 	}
-
 } // namespace Framework::Physics

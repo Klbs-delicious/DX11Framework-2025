@@ -10,6 +10,7 @@
 #include "Include/Framework/Entities/GameObject.h"
 #include "Include/Framework/Entities/Transform.h"
 #include "Include/Framework/Entities/Collider3DComponent.h"
+#include "Include/Framework/Entities/PhaseInterfaces.h"
 
 #include "Include/Framework/Core/SystemLocator.h"
 #include "Include/Framework/Core/PhysicsSystem.h"
@@ -586,6 +587,52 @@ namespace Framework::Physics
 	}
 
 	//-----------------------------------------------------------------------------
+	// 衝突イベント
+	//-----------------------------------------------------------------------------
+	void Rigidbody3D::DispatchContactEvent(const ContactType& _type, Collider3DComponent* _selfCollider, Collider3DComponent* _otherColl)
+	{
+		auto owner = this->Owner();
+		if (!owner) { return; }
+
+		for (auto& component : owner->GetComponents())
+		{
+			//	BaseColliderDispatcher3Dを持っているコンポーネントのみ辿って通知する
+			auto listener = dynamic_cast<BaseColliderDispatcher3D*>(component.get());
+			if (!listener) { continue; }
+
+			switch (_type)
+			{
+			case Framework::Physics::ContactType::Trigger_Entered:
+				listener->OnTriggerEnter(_selfCollider,_otherColl);
+				break;
+
+			case Framework::Physics::ContactType::Trigger_Stayed:
+				listener->OnTriggerStay(_selfCollider,_otherColl);
+				break;
+
+			case Framework::Physics::ContactType::Trigger_Exited:
+				listener->OnTriggerExit(_selfCollider, _otherColl);
+				break;
+
+			case Framework::Physics::ContactType::Coll_Entered:
+				listener->OnCollisionEnter(_selfCollider, _otherColl);
+				break;
+
+			case Framework::Physics::ContactType::Coll_Stayed:
+				listener->OnCollisionStay(_selfCollider, _otherColl);
+				break;
+
+			case Framework::Physics::ContactType::Coll_Exited:
+				listener->OnCollisionExit(_selfCollider, _otherColl);
+				break;
+
+			default:
+				break;
+			}
+		}
+	}
+
+	//-----------------------------------------------------------------------------
 	// Body セットアップ
 	//-----------------------------------------------------------------------------
 	void Rigidbody3D::GetInitialTransform(DX::Vector3& _pos, DX::Quaternion& _rot) const
@@ -707,12 +754,25 @@ namespace Framework::Physics
 
 		this->bodyID = body->GetID();
 		this->hasBody = true;
+
+		// BodyIDをSystemに登録する
+		this->physicsSystem.RegisterRigidbody3D(this->bodyID, this);
+
+		// Collider3DをSystemに登録する
+		this->physicsSystem.RegisterCollider3D(this->bodyID, this->collider);	
 	}
 
 	void Rigidbody3D::DestroyBody()
 	{
 		if (!this->hasBody) { return; }
 
+		// Collider3DをSystemから解除する
+		this->physicsSystem.UnregisterCollider3D(this->bodyID);
+
+		// BodyIDをSystemから解除する
+		this->physicsSystem.UnregisterRigidbody3D(this->bodyID);
+
+		// Bodyを削除する
 		auto& bodyInterface = this->physicsSystem.GetBodyInterface();
 		bodyInterface.RemoveBody(this->bodyID);
 		bodyInterface.DestroyBody(this->bodyID);

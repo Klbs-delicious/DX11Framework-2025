@@ -35,6 +35,7 @@
 #include"Include/Tests/TestMoveComponent.h"
 #include"Include/Tests/TimeScaleTestComponent.h"
 #include"Include/Tests/FreeMoveTestComponent.h"
+#include"Include/Tests/TestCollisionHandler.h"
 //#include"Include/Framework/Entities/TestRenderer.h"
 
 #include<iostream>
@@ -120,7 +121,9 @@ void PhysicsTest::SetupObjects()
 	rigidbody3D->SetMotionTypeKinematic();
 	rigidbody3D->SetObjectLayerKinematic();
 	capsule->AddComponent<ColliderDebugRenderer>();
+	//capsule->AddComponent<TestMoveComponent>();
 	capsule->AddComponent<CharacterController>();
+	capsule->AddComponent<TestCollisionHandler>();
 
 	// 球体オブジェクト
 	auto sphere = this->gameObjectManager.Instantiate("Sphere");

@@ -121,7 +121,7 @@ void GameLoop::Initialize()
     this->inputSystem->RegisterKeyBinding("GameExit", static_cast<int>(DirectInputDevice::KeyboardKey::Escape));
 
     // シーンの変更
-    this->sceneManager->RequestSceneChange(SceneType::PhysicsTest);
+    this->sceneManager->RequestSceneChange(SceneType::Test);
 }
 
 /// @brief		更新処理を行う
@@ -154,17 +154,17 @@ void GameLoop::Update()
         // 物理とTransformがそろった状態でゲームロジックのFixedUpdateを実行する
         this->gameObjectManager->FixedUpdateAll(fixedDelta);
 
-		// 物理シミュレーション開始前の処理
+		// 自前移動処理のため、物理システムの前にTransformを更新する
 		this->gameObjectManager->BeginPhysics(fixedDelta);
 
         // 物理シミュレーションを実行する
         this->physicsSystem->Step(fixedDelta);
 
-		// 接触イベントの処理を行う
-		this->physicsSystem->ProcessContactEvents();
+		// 自前の押し戻し、同期処理を行う
+		this->gameObjectManager->EndPhysics(fixedDelta);
 
-		// 物理シミュレーション終了後の処理
-		this->gameObjectManager->EndPhysics();
+        // 接触イベントの処理を行う
+        this->physicsSystem->ProcessContactEvents();
 
 		// 固定ステップを1回分消費する
         this->timeSystem.ConsumeFixedStep();

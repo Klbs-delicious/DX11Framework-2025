@@ -26,13 +26,6 @@ namespace Framework::Physics
 	class Rigidbody3D;
 	class Collider3DComponent;
 
-	///// @brief BodyID と Rigidbody3D の関連付け情報
-	//struct BodyBinding 
-	//{
-	//	Rigidbody3D* rigidbody;
-	//	uint32_t generation;	///< BodyID内部持つ世代番号
-	//};
-
 	/// @brief 接触タイプ
 	enum class ContactType
 	{
@@ -44,6 +37,32 @@ namespace Framework::Physics
 		Coll_Stayed,
 		Coll_Exited,
 		Max
+	};
+
+	/// @brief コライダー識別キー
+	struct ColliderKey
+	{
+		JPH::BodyID bodyID;
+		JPH::SubShapeID::Type subID;
+
+		bool operator==(const ColliderKey& other) const noexcept
+		{
+			return bodyID == other.bodyID && subID == other.subID;
+		}
+	};
+
+	/// @brief コライダー識別キーのハッシュ関数
+	struct ColliderKeyHash
+	{
+		std::size_t operator()(const ColliderKey& _key) const noexcept
+		{
+			// BodyID と SubShapeID の値を混ぜる
+			// BodyID は GetIndex と GetSequenceNumber の組み合わせで安定させる
+			std::size_t h1 = std::hash<JPH::uint32>()(_key.bodyID.GetIndex()) ^ (std::hash<JPH::uint32>()(_key.bodyID.GetSequenceNumber()) << 1);
+			std::size_t h2 = std::hash<JPH::uint32>()(_key.subID);
+
+			return h1 ^ (h2 + 0x9e3779b97f4a7c15ULL + (h1 << 6) + (h1 >> 2));
+		}
 	};
 
 	/** @class  PhysicsSystem
@@ -105,7 +124,7 @@ namespace Framework::Physics
 		 *  @param _bodyA       ぶつかった剛体A
 		 *  @param _bodyB       ぶつかった剛体B
 		 */
-		void AddContactPair(JPH::BodyID _bodyA, JPH::BodyID _bodyB);
+		void AddContactPair(ColliderKey _bodyA, ColliderKey _bodyB);
 
 		/// @brief 接触イベントを処理する
 		void ProcessContactEvents();
@@ -115,7 +134,7 @@ namespace Framework::Physics
 		 *  @param _bodyA  剛体Aの BodyID
 		 *  @param _bodyB  剛体Bの BodyID
 		 */
-		void HandleContact(ContactType _type, JPH::BodyID _bodyA, JPH::BodyID _bodyB);
+		void HandleContact(ContactType _type, ColliderKey _bodyA, ColliderKey _bodyB);
 
 		/** @brief BodyID がセンサーボディかどうか調べる
 		 *  @param _id 調べる BodyID
@@ -153,22 +172,25 @@ namespace Framework::Physics
 
 		/** @brief BodyID と Rigidbody3D の関連付けを登録する
 		 *  @param _bodyID  登録する BodyID
-		 *  @param _collider 関連付ける Collider3DComponent
+		 *	@param _subShapeID		関連付ける	SubShapeID
 		 */
-		void RegisterCollider3D(JPH::BodyID _bodyID, Collider3DComponent* _collider);
+		void RegisterCollider3D(JPH::BodyID _bodyID, JPH::SubShapeID::Type _subShapeID, Collider3DComponent* _collider);
 
 		/** @brief BodyID と Collider3DComponent の関連付けを解除する
 		 *  @param _bodyID 解除する BodyID
+		 *	@param _subShapeID		解除する	SubShapeID
 		 */
-		void UnregisterCollider3D(JPH::BodyID _bodyID);
+		void UnregisterCollider3D(JPH::BodyID _bodyID, JPH::SubShapeID::Type _subShapeID);
 
 		/** @brief BodyID から Collider3DComponent を取得する
 		 *  @param _bodyID 取得する BodyID
+		 *	@param _subShapeID 取得する SubShapeID
 		 *  @return 対応する Collider3DComponent（存在しない場合は nullptr）
 		 */
-		Collider3DComponent* GetCollider3D(JPH::BodyID _bodyID);
+		Collider3DComponent* GetCollider3D(JPH::BodyID _bodyID, JPH::SubShapeID::Type _subShapeID);
 
 	private:
+
 		/// @brief ログ出力（Jolt から呼ばれる）
 		static void TraceImpl(const char* _fmt, ...);
 
@@ -190,15 +212,17 @@ namespace Framework::Physics
 		ObjectLayerPairFilterImpl				objectPairFilter;			///< ObjectLayer ペアフィルタ
 
 		// ShapeCast 用プリキャッシュフィルタ
-		std::array<std::unique_ptr<JPH::BroadPhaseLayerFilter>, PhysicsLayer::NUM_LAYERS>	shapeCastBroadFilters;	///< ShapeCast 用 BroadPhaseLayerFilter
-		std::array<std::unique_ptr<JPH::ObjectLayerFilter>, PhysicsLayer::NUM_LAYERS>		shapeCastObjectFilters;	///< ShapeCast 用 ObjectLayerFilter
+		std::array<std::unique_ptr<JPH::BroadPhaseLayerFilter>, Framework::Physics::PhysicsLayer::NUM_LAYERS>	shapeCastBroadFilters;	///< ShapeCast 用 BroadPhaseLayerFilter
+		std::array<std::unique_ptr<JPH::ObjectLayerFilter>, Framework::Physics::PhysicsLayer::NUM_LAYERS>		shapeCastObjectFilters;	///< ShapeCast 用 ObjectLayerFilter
 
 		// 衝突検知
-		std::unordered_map<JPH::BodyID, std::unordered_set<JPH::BodyID>>	currContact;		///< 今フレームの接触情報
-		std::unordered_map<JPH::BodyID, std::unordered_set<JPH::BodyID>>	prevContact;		///< 前フレームの接触情報
+		std::unordered_map<ColliderKey, std::unordered_set<ColliderKey, ColliderKeyHash>, ColliderKeyHash>	currContact;		///< 今フレームの接触情報
+		std::unordered_map<ColliderKey, std::unordered_set<ColliderKey, ColliderKeyHash>, ColliderKeyHash>	prevContact;		///< 前フレームの接触情報
 		PhysicsContactListener												contactListener;	///< コンタクトリスナー
 
 		std::unordered_map < JPH::BodyID, Framework::Physics::Rigidbody3D* > bodyMap;				///< BodyIDに対するRigidbody3Dマップ
-		std::unordered_map < JPH::BodyID, Framework::Physics::Collider3DComponent* > colliderMap;	///< BodyIDに対するCollider3DCompontntマップ
+		//std::unordered_map < JPH::BodyID, Framework::Physics::Collider3DComponent* > colliderMap;	///< BodyIDに対するCollider3DCompontntマップ
+
+		std::unordered_map < JPH::BodyID, std::unordered_map<JPH::SubShapeID::Type, Framework::Physics::Collider3DComponent*> > colliderMap;	///< BodyIDに対する複数のCollider3DCompontntマップ
 	};
 } // namespace Framework::Physics

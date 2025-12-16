@@ -181,6 +181,33 @@ public:
 		return nullptr;
 	}
 
+	/** @brief  コンポーネントの全取得（子オブジェクトも含む）
+	 *  @return	std::vector<T*>	見つかったコンポーネントのリスト
+	 */
+	template<typename T>
+	std::vector<T*> GetComponentsInChildren()
+	{
+		static_assert(std::is_base_of<Component, T>::value, "クラス T はComponentから派生する必要があります。");
+			
+		// 自身のコンポーネントをチェックする
+		std::vector<T*> foundComponents{};
+		for (auto& comp : this->components)
+		{
+			if (auto casted = dynamic_cast<T*>(comp.get()))
+			{
+				foundComponents.push_back(casted);
+			}
+		}
+
+		// 子オブジェクトを再帰的にチェックする
+		for (auto& child : this->children)
+		{
+			auto childComponents = child->GetComponentsInChildren<T>();
+			foundComponents.insert(foundComponents.end(), childComponents.begin(), childComponents.end());
+		}
+		return foundComponents;
+	}
+
 	/** @brief  コンポーネントの削除
 	 */
 	template<typename T>

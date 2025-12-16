@@ -114,8 +114,9 @@ void PhysicsTest::SetupObjects()
 
 	coll3D = capsule->AddComponent<Framework::Physics::Collider3DComponent>();
 	coll3D->SetShape(Framework::Physics::ColliderShapeType::Capsule);
-	coll3D->BuildShape();
 	//coll3D->SetisTrigger(true);
+	// Shape will be created on Initialize
+
 	rigidbody3D = capsule->AddComponent<Framework::Physics::Rigidbody3D>();
 	rigidbody3D->SetUseGravity(true);
 	//rigidbody3D->SetGravity(DX::Vector3(0.0f, 9.8f, 0.0f));
@@ -136,7 +137,6 @@ void PhysicsTest::SetupObjects()
 
 	coll3D = sphere->AddComponent<Framework::Physics::Collider3DComponent>();
 	coll3D->SetShape(Framework::Physics::ColliderShapeType::Sphere);
-	coll3D->BuildShape();
 	coll3D->SetisTrigger(true);
 
 	rigidbody3D = sphere->AddComponent<Framework::Physics::Rigidbody3D>();
@@ -161,10 +161,8 @@ void PhysicsTest::SetupObjects()
 	groundObj->AddComponent<MeshRenderer>();
 	coll3D = groundObj->AddComponent<Framework::Physics::Collider3DComponent>();
 	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
-	coll3D->BuildShape();
 	rigidbody3D = groundObj->AddComponent<Framework::Physics::Rigidbody3D>();
 	rigidbody3D->SetMotionTypeStatic();
 	rigidbody3D->SetObjectLayerStatic();
 	groundObj->AddComponent<ColliderDebugRenderer>();
-
 }

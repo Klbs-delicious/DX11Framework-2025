@@ -34,14 +34,17 @@ namespace Framework::Physics
 		, capsuleHalfHeight(0.5f)
 		, centerOffset(DX::Vector3::Zero)
 		, isTrigger(false)
+		, shapeSettings(nullptr)
 	{}
 
 	void Collider3DComponent::Initialize()
 	{
 		this->transform = this->Owner()->transform;
 
-		// 形状を生成する
-		this->BuildShape();
+		// 現状では Shape 設定の構築と Shape の生成は Rigidbody3D 側で行う（生成順序が不定のため）
+		//// 形状設定を構築してから Shape を生成する
+		//this->BuildShapeSettings();
+		//this->shape = this->CreateShape();
 	}
 
 	void Collider3DComponent::Dispose()
@@ -81,11 +84,10 @@ namespace Framework::Physics
 		this->isTrigger = _isTrigger;
 	}
 
-	void Collider3DComponent::BuildShape()
+	void Collider3DComponent::BuildShapeSettings()
 	{
 		DX::Vector3 scale = this->Owner()->transform->GetWorldScale();
 
-		// 球に使う統一スケール（非一様スケールの取り扱い方）
 		const float uniformScale = std::max({ std::fabs(scale.x), std::fabs(scale.y), std::fabs(scale.z) });
 
 		switch (this->shapeType)
@@ -94,39 +96,43 @@ namespace Framework::Physics
 		{
 			DX::Vector3 size = this->boxHalfExtent * scale;
 
-			JPH::BoxShapeSettings settings(JPH::Vec3(size.x, size.y, size.z));
-			this->shape = settings.Create().Get();
+			this->shapeSettings = new JPH::BoxShapeSettings(JPH::Vec3(size.x, size.y, size.z));
 			break;
 		}
 
 		case ColliderShapeType::Sphere:
 		{
-			// 球は等方スケール扱い：ワールドの最大成分を採用して半径を決定
 			float radius = this->sphereRadius * uniformScale;
-			JPH::SphereShapeSettings settings(radius);
-			this->shape = settings.Create().Get();
+
+			this->shapeSettings = new JPH::SphereShapeSettings(radius);
 			break;
 		}
 
 		case ColliderShapeType::Capsule:
 		{
-			// 半径は X 成分基準、円柱半高さは Y 成分基準（既存方針を維持）
-			float r = this->capsuleRadius * std::fabs(scale.x);
-			float h = this->capsuleHalfHeight * std::fabs(scale.y);
+			float radius = this->capsuleRadius * std::fabs(scale.x);
+			float height = this->capsuleHalfHeight * std::fabs(scale.y);
 
-			JPH::CapsuleShapeSettings settings(h, r);
-			this->shape = settings.Create().Get();
+			this->shapeSettings = new JPH::CapsuleShapeSettings(height, radius);
 			break;
 		}
+
 		case ColliderShapeType::Mesh:
-			// 未実装
-			this->shape = nullptr;
+			this->shapeSettings = nullptr;
 			break;
 
 		default:
-			this->shape = nullptr;
+			this->shapeSettings = nullptr;
 			break;
 		}
+	}
+
+	void Collider3DComponent::CreateShape()
+	{
+		if (!this->shapeSettings){ return; }
+
+		// Shapeを生成する
+		this->shape = this->shapeSettings->Create().Get();
 	}
 
 	JPH::ShapeRefC Collider3DComponent::GetShape() const
@@ -166,5 +172,10 @@ namespace Framework::Physics
 	bool Collider3DComponent::IsTrigger() const
 	{
 		return this->isTrigger;
+	}
+
+	JPH::Ref<JPH::ShapeSettings> Collider3DComponent::GetShapeSettings() const
+	{
+		return this->shapeSettings;
 	}
 }

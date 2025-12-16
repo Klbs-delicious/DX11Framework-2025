@@ -37,6 +37,7 @@ namespace Framework::Physics
 		, prevContact()
 		, contactListener(*this)
 		, bodyMap()
+		, colliderMap()
 	{}
 
 	/// @brief デストラクタ
@@ -71,17 +72,18 @@ namespace Framework::Physics
 		this->tempAllocator = std::make_unique<JPH::TempAllocatorImpl>(10 * 1024 * 1024);
 
 		// スレッド数を決定（スレッド数は CPU コア数 − 1）
-		unsigned int hwThreads = std::thread::hardware_concurrency();
-		if (hwThreads == 0)
-		{
-			hwThreads = 1;
-		}
+		//unsigned int hwThreads = std::thread::hardware_concurrency();
+		//if (hwThreads == 0)
+		//{
+		//	hwThreads = 1;
+		//}
 
-		int numThreads = static_cast<int>(hwThreads) - 1;
-		if (numThreads < 0)
-		{
-			numThreads = 0;
-		}
+		//int numThreads = static_cast<int>(hwThreads) - 1;
+		//if (numThreads < 0)
+		//{
+		//	numThreads = 0;
+		//}
+		unsigned int numThreads = 1;
 
 		const JPH::uint maxJobs = JPH::cMaxPhysicsJobs;
 		const JPH::uint maxBarriers = JPH::cMaxPhysicsBarriers;
@@ -211,9 +213,9 @@ namespace Framework::Physics
 	 *		- BodyIDを昇順に揃える
 	 *		- Jolt側で当たった時、当たっている時に呼び出される
 	 */
-	void PhysicsSystem::AddContactPair(JPH::BodyID _bodyA, JPH::BodyID _bodyB)
+	void PhysicsSystem::AddContactPair(ColliderKey _bodyA, ColliderKey _bodyB)
 	{
-		if (_bodyA > _bodyB)
+		if (_bodyA.bodyID > _bodyB.bodyID)
 		{
 			// BodyIDを昇順に揃える
 			std::swap(_bodyA, _bodyB);
@@ -232,7 +234,7 @@ namespace Framework::Physics
 		{
 			for (auto itA = table.begin(); itA != table.end(); )
 			{
-				if (!IsBodyValid(itA->first))
+				if (!IsBodyValid(itA->first.bodyID))
 				{
 					itA = table.erase(itA);
 					continue;
@@ -240,7 +242,7 @@ namespace Framework::Physics
 
 				for (auto itB = itA->second.begin(); itB != itA->second.end(); )
 				{
-					if (!IsBodyValid(*itB))
+					if (!IsBodyValid(itB->bodyID))
 						itB = itA->second.erase(itB);
 					else
 						++itB;
@@ -307,29 +309,27 @@ namespace Framework::Physics
 	 *  @param _body 調べる BodyID
 	 *  @return 有効なら true
 	 */
-	void PhysicsSystem::HandleContact(ContactType _type, JPH::BodyID _bodyA, JPH::BodyID _bodyB)
+	void PhysicsSystem::HandleContact(ContactType _type, ColliderKey _bodyA, ColliderKey _bodyB)
 	{
-		{
-			// Rigidbody3D を取得する
-			auto rbA = GetRigidbody3D(_bodyA);
-			auto rbB = GetRigidbody3D(_bodyB);
-			if (!rbA || !rbB) return;
+		// Rigidbody3D を取得する
+		auto rbA = GetRigidbody3D(_bodyA.bodyID);
+		auto rbB = GetRigidbody3D(_bodyB.bodyID);
+		if (!rbA || !rbB) { return; }
 
-			// センサーボディかどうか調べる
-			bool aIsSensor = IsSensorBody(_bodyA);
-			bool bIsSensor = IsSensorBody(_bodyB);
+		// センサーボディかどうか調べる
+		bool aIsSensor = IsSensorBody(_bodyA.bodyID);
+		bool bIsSensor = IsSensorBody(_bodyB.bodyID);
 
-			ContactType typeA = _type;
-			ContactType typeB = _type;
+		ContactType typeA = _type;
+		ContactType typeB = _type;
 
-			// センサーならトリガーイベントに変換する
-			if (aIsSensor) ConvertToTrigger(typeA);
-			if (bIsSensor) ConvertToTrigger(typeB);
+		// センサーならトリガーイベントに変換する
+		if (aIsSensor) ConvertToTrigger(typeA);
+		if (bIsSensor) ConvertToTrigger(typeB);
 
-			// イベント発行
-			rbA->DispatchContactEvent(typeA, GetCollider3D(_bodyA), GetCollider3D(_bodyB));
-			rbB->DispatchContactEvent(typeB, GetCollider3D(_bodyB), GetCollider3D(_bodyA));
-		}
+		// イベント発行（SubShapeID は値型で扱う）
+		rbA->DispatchContactEvent(typeA, GetCollider3D(_bodyA.bodyID, _bodyA.subID), GetCollider3D(_bodyB.bodyID, _bodyB.subID));
+		rbB->DispatchContactEvent(typeB, GetCollider3D(_bodyB.bodyID, _bodyB.subID), GetCollider3D(_bodyA.bodyID, _bodyA.subID));
 	}
 
 	/** @brief BodyID が有効かどうか調べる
@@ -385,33 +385,53 @@ namespace Framework::Physics
 	}
 
 	/** @brief BodyID と Collider3DComponent の関連付けを登録する
-	 *  @param _bodyID  登録する BodyID
-	 *  @param _collider 関連付ける Collider3DComponent
+	 *  @param _bodyID			登録する BodyID
+	 *  @param _collider		関連付ける	Collider3DComponent
+	 *	@param _subShapeID		関連付ける	SubShapeID
 	 */
-	void PhysicsSystem::RegisterCollider3D(JPH::BodyID _bodyID, Collider3DComponent* _collider)
+	void PhysicsSystem::RegisterCollider3D(JPH::BodyID _bodyID, JPH::SubShapeID::Type _subShapeID, Collider3DComponent* _collider)
 	{
-		// 登録
-		this->colliderMap[_bodyID] = _collider;
+		this->colliderMap[_bodyID][_subShapeID] = _collider;
 	}
 
 	/** @brief BodyID と Collider3DComponent の関連付けを解除する
 	 *  @param _bodyID 解除する BodyID
+	 *  @param _subShapeID 解除する SubShapeID
 	 */
-	void PhysicsSystem::UnregisterCollider3D(JPH::BodyID _bodyID)
+	void PhysicsSystem::UnregisterCollider3D(JPH::BodyID _bodyID, JPH::SubShapeID::Type _subShapeID)
 	{
-		this->colliderMap.erase(_bodyID);
+		auto it = this->colliderMap.find(_bodyID);
+		if (it != this->colliderMap.end())
+		{
+			it->second.erase(_subShapeID);
+		}
 	}
 
 	/** @brief BodyID から Collider3DComponent を取得する
 	 *  @param _bodyID 取得する BodyID
 	 *  @return 対応する Collider3DComponent（存在しない場合は nullptr）
 	 */
-	Collider3DComponent* PhysicsSystem::GetCollider3D(JPH::BodyID _bodyID)
+	Collider3DComponent* PhysicsSystem::GetCollider3D(JPH::BodyID _bodyID, JPH::SubShapeID::Type _subShapeID)
 	{
-		auto it = this->colliderMap.find(_bodyID);
-		if (it != this->colliderMap.end())
+
+		auto bodyIt = this->colliderMap.find(_bodyID);
+		if (bodyIt != this->colliderMap.end())
 		{
-			return it->second;
+			auto subIt = bodyIt->second.find(_subShapeID);
+			if (subIt != bodyIt->second.end())
+			{
+				return subIt->second;
+			}
+			// フォールバック: SubShapeID が一致しない場合、0番や最初の登録を返す
+			auto zeroIt = bodyIt->second.find(0);
+			if (zeroIt != bodyIt->second.end())
+			{
+				return zeroIt->second;
+			}
+			if (!bodyIt->second.empty())
+			{
+				return bodyIt->second.begin()->second;
+			}
 		}
 		// 存在しない
 		return nullptr;

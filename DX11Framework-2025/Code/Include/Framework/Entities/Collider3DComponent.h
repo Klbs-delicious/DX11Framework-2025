@@ -7,6 +7,7 @@
  //-----------------------------------------------------------------------------
  // Includes
  //-----------------------------------------------------------------------------
+#include <Include/Framework/Utils/CommonTypes.h>
 #include "Include/Framework/Entities/Component.h"
 #include "Include/Framework/Entities/Transform.h"
 
@@ -154,8 +155,15 @@ namespace Framework::Physics
 		 */
 		void SetisTrigger(bool _isTrigger);
 
-		/// @brief 設定値に基づいて形状を生成する
-		void BuildShape();
+		/// @brief 設定値からShapeSettingsを作成する
+		void BuildShapeSettings();
+
+		/** @brief	Shapeの生成
+		 *	@details
+		 *		-	BuildShapeSettingsで作成した設定からShapeを生成する
+		 *		-	Rigidbody側で実際のShapeを作る時に使う
+		 */
+		void CreateShape();
 
 		/** @brief 形状参照を取得する
 		 *  @return 形状参照
@@ -174,19 +182,22 @@ namespace Framework::Physics
 		[[nodiscard]] float& GetCapsuleHalfHeight();
 		[[nodiscard]] DX::Vector3& GetCenterOffset();
 		[[nodiscard]] bool IsTrigger() const;
+		[[nodiscard]] JPH::Ref<JPH::ShapeSettings> GetShapeSettings() const;
 
 	private:
-		ColliderShapeType shapeType;      ///< コライダーの種類
-		JPH::ShapeRefC shape;             ///< Jolt 形状の参照
-		Transform* transform;             ///< 対象オブジェクトの変換
+		ColliderShapeType	shapeType;	///< コライダーの種類
+		JPH::ShapeRefC		shape;		///< Jolt 形状の参照
+		Transform*			transform;	///< 対象オブジェクトの変換
+
+		JPH::Ref<JPH::ShapeSettings>	shapeSettings;	///< BuildShapeで作る設定キャッシュ
 
 		// 設定値（BuildShape 用）
-		DX::Vector3 boxHalfExtent;	///< ボックス形状の半分の大きさ
-		float sphereRadius;			///< 球形状の半径
-		float capsuleRadius;		///< カプセル形状の半径
-		float capsuleHalfHeight;	///< カプセル形状の半分の高さ
-		DX::Vector3 centerOffset;	///< 形状の中心オフセット
+		DX::Vector3 boxHalfExtent;		///< ボックス形状の半分の大きさ
+		float		sphereRadius;		///< 球形状の半径
+		float		capsuleRadius;		///< カプセル形状の半径
+		float		capsuleHalfHeight;	///< カプセル形状の半分の高さ
+		DX::Vector3 centerOffset;		///< 形状の中心オフセット
 
-		bool isTrigger;				///< true: 衝突判定のみ（押し出しは行わない）
+		bool		isTrigger;			///< true: 衝突判定のみ（押し出しは行わない）
 	};
 }

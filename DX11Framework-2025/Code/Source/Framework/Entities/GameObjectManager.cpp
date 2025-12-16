@@ -136,7 +136,7 @@ void GameObjectManager::BeginPhysics(float _deltaTime)
 	{
 		if (rigidbody)
 		{
-			// 物理シミュレーションステップを進める
+			// 自前移動の更新を行う
 			rigidbody->StepPhysics(_deltaTime);
 		}
 	}
@@ -154,7 +154,7 @@ void GameObjectManager::BeginPhysics(float _deltaTime)
 	}
 }
 
-void GameObjectManager::EndPhysics()
+void GameObjectManager::EndPhysics(float _deltaTime)
 {
 	for (auto& rigidbody : this->rigidbodies)
 	{

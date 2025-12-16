@@ -117,7 +117,7 @@ void TestScene::SetupObjects()
 	auto charaController = player->AddComponent<CharacterController>();
 	auto coll3D = player->AddComponent<Framework::Physics::Collider3DComponent>();
 	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
-	coll3D->BuildShape();
+	//coll3D->BuildShapeSettings(); // collider shape will be created during initialization or used lazily
 	auto rigidbody3D = player->AddComponent<Framework::Physics::Rigidbody3D>();
 	auto testComp = player->AddComponent<TimeScaleTestComponent>();
 	testComp->SetTimeScaleGroup(timeGroup);
@@ -167,7 +167,7 @@ void TestScene::SetupObjects()
 	obj_4->AddComponent<MeshRenderer>();
 	coll3D = obj_4->AddComponent<Framework::Physics::Collider3DComponent>();
 	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
-	coll3D->BuildShape();
+	//coll3D->BuildShapeSettings();
 	rigidbody3D = obj_4->AddComponent<Framework::Physics::Rigidbody3D>();
 	rigidbody3D->SetMotionTypeStatic();
 	rigidbody3D->SetObjectLayerStatic();
@@ -286,7 +286,7 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 
 			auto coll3D = obj->AddComponent<Framework::Physics::Collider3DComponent>();
 			coll3D->SetShape(Framework::Physics::ColliderShapeType::Sphere);
-			coll3D->BuildShape();
+			//coll3D->BuildShapeSettings();
 
 			auto rigidbody3D = obj->AddComponent<Framework::Physics::Rigidbody3D>();
 			rigidbody3D->SetUseGravity(true);

@@ -52,7 +52,7 @@ void TimeScaleTestComponent::Update(float _deltaTime)
 	// スペースキーでグローバルタイムスケールを0.1に変更する
 	if (this->inputSystem.IsActionPressed("Slow_Global"))
 	{
-		this->timeScaleSystem.SetGlobalScale(0.5f);
+		this->timeScaleSystem.SetGlobalScale(0.3f);
 	}
 	else { this->timeScaleSystem.SetGlobalScale(1.0f); }
 
@@ -66,7 +66,7 @@ void TimeScaleTestComponent::Update(float _deltaTime)
 
 		if (this->inputSystem.IsActionTriggered(actionName))
 		{
-			this->timeScaleGroup->SetGroupScale(groupName, 0.5f);
+			this->timeScaleGroup->SetGroupScale(groupName, 0.3f);
 		}
 		if (this->inputSystem.isActionReleased(actionName))
 		{

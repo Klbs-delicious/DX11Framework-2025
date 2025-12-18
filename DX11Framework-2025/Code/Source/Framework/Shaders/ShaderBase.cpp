@@ -36,7 +36,7 @@ void ShaderBase::LoadShader(ID3D11Device& _device, const ShaderInfo _shaderInfo)
 
 #else
     // 指定のシェーダーファイルを読み込み
-    std::wstring fullPath = L"Assets/Shaders/" + _fileName + L".cso";
+    std::wstring fullPath = L"Assets/Shaders/" + _shaderInfo.filePath + L".cso";
 
     HRESULT hr = D3DReadFileToBlob(fullPath.c_str(), this->blob.GetAddressOf());
 
@@ -44,7 +44,7 @@ void ShaderBase::LoadShader(ID3D11Device& _device, const ShaderInfo _shaderInfo)
         OutputDebugString(L"[CSO Load Error] シェーダーバイナリの読み込みに失敗しました。\n");
 
         // 読み込みに失敗した場合はコンパイルする
-        this->CompileShader(_device, _fileName);
+        this->CompileShader(_device, _shaderInfo);
         return;
     }
 #endif

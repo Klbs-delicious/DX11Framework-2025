@@ -215,21 +215,25 @@ namespace Framework::Physics
 	 */
 	void PhysicsSystem::AddContactPair(ColliderKey _bodyA, ColliderKey _bodyB)
 	{
+		// BodyID を昇順に揃える
 		if (_bodyA.bodyID > _bodyB.bodyID)
 		{
-			// BodyIDを昇順に揃える
 			std::swap(_bodyA, _bodyB);
 		}
+
+		// 追加: 同期
+		std::lock_guard<std::mutex> lock(this->contactMutex);
 		this->currContact[_bodyA].insert(_bodyB);
 	}
 
 	void PhysicsSystem::ProcessContactEvents()
 	{
+		// 追加: 同期（全体処理中はテーブルをロック）
+		std::lock_guard<std::mutex> lock(this->contactMutex);
+
 		auto& bodyInterface = this->physics->GetBodyInterface();
 
-		//=======================================
-		// 無効になったBodyを履歴から取り除く
-		//=======================================
+		// 無効ボディの掃除
 		auto cleanContactTable = [&](auto& table)
 		{
 			for (auto itA = table.begin(); itA != table.end(); )
@@ -254,9 +258,7 @@ namespace Framework::Physics
 		cleanContactTable(this->currContact);
 		cleanContactTable(this->prevContact);
 
-		//=======================================
-		// Enter & Stay 判定
-		//=======================================
+		// Enter & Stay
 		for (auto& [bodyA, currentSet] : this->currContact)
 		{
 			auto& prevSet = this->prevContact[bodyA];
@@ -266,21 +268,13 @@ namespace Framework::Physics
 				bool isPrev = (prevSet.count(bodyB) > 0);
 
 				if (!isPrev)
-				{
-					//std::cout << "Contact Enter: " << bodyA.GetIndex() << " - " << bodyB.GetIndex() << "\n";
 					this->HandleContact(ContactType::Coll_Entered, bodyA, bodyB);
-				}
 				else
-				{
-					//std::cout << "Contact Stay : " << bodyA.GetIndex() << " - " << bodyB.GetIndex() << "\n";
 					this->HandleContact(ContactType::Coll_Stayed, bodyA, bodyB);
-				}
 			}
 		}
 
-		//===========================
-		// Exit（安定化処理）
-		//===========================
+		// Exit
 		for (auto& [bodyA, prevSet] : this->prevContact)
 		{
 			auto itCurr = this->currContact.find(bodyA);
@@ -291,18 +285,13 @@ namespace Framework::Physics
 				bool stillContact = currSet && currSet->count(bodyB) > 0;
 
 				if (!stillContact)
-				{
-					//std::cout << "Contact Exit  : " << bodyA.GetIndex() << " - " << bodyB.GetIndex() << "\n";
 					this->HandleContact(ContactType::Coll_Exited, bodyA, bodyB);
-				}
 			}
 		}
 
-		//=======================================
-		// 履歴の更新
-		//=======================================
-		this->prevContact = this->currContact;	// ここで前回の状態になる
-		this->currContact.clear();				// 現在フレームの情報をリセット
+		// 履歴更新
+		this->prevContact = this->currContact;
+		this->currContact.clear();
 	}
 
 	/** @brief BodyID が有効かどうか調べる

@@ -137,7 +137,10 @@ void PhysicsTest::SetupObjects()
 
 	coll3D = sphere->AddComponent<Framework::Physics::Collider3DComponent>();
 	coll3D->SetShape(Framework::Physics::ColliderShapeType::Sphere);
-	coll3D->SetisTrigger(true);
+	//coll3D->SetisTrigger(true);
+	coll3D = sphere->AddComponent<Framework::Physics::Collider3DComponent>();
+	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
+	coll3D->SetBoxHalfExtent(DX::Vector3(1.0f, 1.0f, 1.0f));
 
 	rigidbody3D = sphere->AddComponent<Framework::Physics::Rigidbody3D>();
 	rigidbody3D->SetMotionTypeKinematic();

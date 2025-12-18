@@ -8,6 +8,7 @@
 #include <array>
 #include <unordered_set>
 #include <unordered_map>
+#include <mutex>
 
 #include "Include/Framework/Physics/PhysicsLayers.h"
 #include "Include/Framework/Physics/PhysicsContactListener.h"
@@ -219,6 +220,9 @@ namespace Framework::Physics
 		std::unordered_map<ColliderKey, std::unordered_set<ColliderKey, ColliderKeyHash>, ColliderKeyHash>	currContact;		///< 今フレームの接触情報
 		std::unordered_map<ColliderKey, std::unordered_set<ColliderKey, ColliderKeyHash>, ColliderKeyHash>	prevContact;		///< 前フレームの接触情報
 		PhysicsContactListener												contactListener;	///< コンタクトリスナー
+
+		// 追加: 衝突テーブル用ミューテックス
+		std::mutex contactMutex;
 
 		std::unordered_map < JPH::BodyID, Framework::Physics::Rigidbody3D* > bodyMap;				///< BodyIDに対するRigidbody3Dマップ
 		//std::unordered_map < JPH::BodyID, Framework::Physics::Collider3DComponent* > colliderMap;	///< BodyIDに対するCollider3DCompontntマップ

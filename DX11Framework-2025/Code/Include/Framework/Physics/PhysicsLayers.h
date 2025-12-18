@@ -12,8 +12,6 @@
 #include <Jolt/Physics/Collision/Shape/Shape.h>
 #include <Jolt/Physics/Collision/ShapeFilter.h> 
 #include <Jolt/Physics/Collision/ObjectLayer.h>
-//#include <Jolt/Physics/Collision/PhysicsMaterial.h>
-//#include <Jolt/Physics/Body/BodyID.h>
 
 namespace Framework::Physics
 {
@@ -86,10 +84,6 @@ namespace Framework::Physics
         bool ShouldCollide(JPH::ObjectLayer _layer1, JPH::ObjectLayer _layer2) const override;
     };
     
-    //-----------------------------------------------------------------------------
-    // ShapeCast 用フィルタ
-    //-----------------------------------------------------------------------------
-
     /** @class  ShapeCastBroadPhaseLayerFilter
      *  @brief  ShapeCast 時の BroadPhaseLayer フィルタ
      *  @details
@@ -142,21 +136,5 @@ namespace Framework::Physics
         const ObjectLayerPairFilterImpl* pairFilter;
         JPH::ObjectLayer layer;
     };
-
-    //// 自身の Trigger サブシェイプのみを無視するフィルタ
-    //class SelfTriggerShapeFilter final : public JPH::ShapeFilter
-    //{
-    //public:
-    //    // PhysicsSystem 参照を保持
-    //    explicit SelfTriggerShapeFilter(PhysicsSystem& _phys, JPH::BodyID _bodyId)
-    //        : physicsSystem(_phys), bodyId(_bodyId) {}
-    //
-    //    // サブシェイプ単位でのコリジョン可否
-    //    bool ShouldCollide(const JPH::SubShapeID& inSubShapeID) const override;
-    //
-    //private:
-    //    PhysicsSystem& physicsSystem;
-    //    JPH::BodyID bodyId;
-    //};
 
 } // namespace Framework::Physics

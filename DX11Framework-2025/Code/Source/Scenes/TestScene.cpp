@@ -72,8 +72,8 @@ void TestScene::SetupObjects()
 	camera3D->transform->SetLocalPosition({ 0.0f, 20.0f, -10.0f });
 	camera3D->transform->SetLocalRotation(DX::Quaternion::CreateFromYawPitchRoll(DX::ToRadians(30.0f), DX::ToRadians(30.0f), 0.0f));
 	camera3D->AddComponent<Camera3D>();
-	auto debugMove = camera3D->AddComponent<DebugFreeMoveComponent>();
-	debugMove->SetSpeed(50.0f);
+	//auto debugMove = camera3D->AddComponent<DebugFreeMoveComponent>();
+	//debugMove->SetSpeed(50.0f);
 
 	//camera3D->AddComponent<TestMoveComponent>();
 
@@ -117,26 +117,26 @@ void TestScene::SetupObjects()
 	auto charaController = player->AddComponent<CharacterController>();
 	auto coll3D = player->AddComponent<Framework::Physics::Collider3DComponent>();
 	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
-	//coll3D->BuildShapeSettings(); // collider shape will be created during initialization or used lazily
 	auto rigidbody3D = player->AddComponent<Framework::Physics::Rigidbody3D>();
+	//rigidbody3D->SetUseGravity(true);
 	auto testComp = player->AddComponent<TimeScaleTestComponent>();
 	testComp->SetTimeScaleGroup(timeGroup);
 	//charaController->SetTurnSpeed(10.0f);
 	timeGroup->AddGroup("PlayerGroup", player->GetComponent<TimeScaleComponent>());
 
-	// 立方体オブジェクト（親子テスト）
-	auto child = this->gameObjectManager.Instantiate("Child");
-	child->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 0.0f));
-	child->SetParent(player);
-	meshComp = child->AddComponent<MeshComponent>();
-	meshComp->SetMesh(meshManager.Get("Box"));
-	child->AddComponent<MeshRenderer>();
-	child->AddComponent<FreeMoveTestComponent>();
+	//// 立方体オブジェクト（親子テスト）
+	//auto child = this->gameObjectManager.Instantiate("Child");
+	//child->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 0.0f));
+	//child->SetParent(player);
+	//meshComp = child->AddComponent<MeshComponent>();
+	//meshComp->SetMesh(meshManager.Get("Box"));
+	//child->AddComponent<MeshRenderer>();
+	//child->AddComponent<FreeMoveTestComponent>();
 
 	// カメラピボットオブジェクトを生成する
 	auto pivotObj = gameObjectManager.Instantiate("CameraPivot");
-	//meshComp = pivotObj->AddComponent<MeshComponent>();
-	//meshComp->SetMesh(meshManager.Get("Box"));
+	meshComp = pivotObj->AddComponent<MeshComponent>();
+	meshComp->SetMesh(meshManager.Get("Box"));
 	//pivotObj->AddComponent<MeshRenderer>();
 	
 	// カメラ注視コンポーネントを追加する
@@ -144,23 +144,23 @@ void TestScene::SetupObjects()
 	cameraLook->SetTarget(player->transform);
 	cameraLook->SetOffset(DX::Vector3(6.0f, 3.0f, -5.0f)); // 少し右上にオフセット
 
-	//// カメラ追従コンポーネントを追加する
-	//auto followCamera = camera3D->AddComponent<FollowCamera>();
-	//followCamera->SetTarget(player->transform);
-	//followCamera->SetPivot(pivotObj->transform);
-	//followCamera->SetSmoothSpeed(5.0f);
+	// カメラ追従コンポーネントを追加する
+	auto followCamera = camera3D->AddComponent<FollowCamera>();
+	followCamera->SetTarget(player->transform);
+	followCamera->SetPivot(pivotObj->transform);
+	followCamera->SetSmoothSpeed(5.0f);
 
 	// 平面オブジェクト
 	auto obj_4 = this->gameObjectManager.Instantiate("obj_4");
 	obj_4->transform->SetLocalPosition(DX::Vector3(0.0f, -20.0f, 0.0f));
 	obj_4->transform->SetLocalScale(DX::Vector3(100.0f, 1.0f,100.0f));
-	DX::Quaternion q =
-		DX::Quaternion::CreateFromAxisAngle(
-			DX::Vector3(1.0f, 0.0f, 0.0f),   // X軸
-			DX::ToRadians(30.0f)             // 角度
-		);
+	//DX::Quaternion q =
+	//	DX::Quaternion::CreateFromAxisAngle(
+	//		DX::Vector3(1.0f, 0.0f, 0.0f),   // X軸
+	//		DX::ToRadians(30.0f)             // 角度
+	//	);
 
-	obj_4->transform->SetLocalRotation(q);
+	//obj_4->transform->SetLocalRotation(q);
 
 	meshComp = obj_4->AddComponent<MeshComponent>();
 	meshComp->SetMesh(meshManager.Get("Plane"));
@@ -173,7 +173,7 @@ void TestScene::SetupObjects()
 	rigidbody3D->SetObjectLayerStatic();
 
 	// 大量オブジェクト生成テスト
-	SpawnManyBoxes(10, 10, 10);
+	SpawnManyBoxes(5, 5, 10);
 
 	//// カプセルオブジェクト
 	//auto obj_5 = this->gameObjectManager.Instantiate("obj_5");

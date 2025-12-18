@@ -35,6 +35,26 @@ namespace Framework::Physics
 	using namespace JPH;
 
 	//-----------------------------------------------------------------------------
+	// 自身のトリガーを無視する ShapeFilter
+	//-----------------------------------------------------------------------------
+	class SelfTriggerShapeFilter final : public JPH::ShapeFilter
+	{
+	public:
+		SelfTriggerShapeFilter(PhysicsSystem& _phys, JPH::BodyID _id)
+			: mPhys(&_phys), mBody(_id) {}
+
+		bool ShouldCollide(const JPH::Shape* /*_shape*/, const JPH::SubShapeID& _subShapeID) const override
+		{
+			auto* collider = mPhys->GetCollider3D(mBody, _subShapeID.GetValue());
+			return !(collider && collider->IsTrigger());
+		}
+
+	private:
+		PhysicsSystem* mPhys;
+		JPH::BodyID mBody;
+	};
+
+	//-----------------------------------------------------------------------------
 	// 定数
 	//-----------------------------------------------------------------------------
 	static constexpr float parallelEps = 1.0e-4f;	///< 法線と移動方向がほぼ平行かどうかの判定用（今は未使用）
@@ -281,7 +301,7 @@ namespace Framework::Physics
 
 		//// 衝突判定を行うかどうかのフィルタ設定
 		//// Triggerになっている場合には衝突判定を行わない
-		//SelfTriggerShapeFilter selfFilter(this->physicsSystem, this->bodyID);
+		SelfTriggerShapeFilter selfFilter(this->physicsSystem, this->bodyID);
 
 		npq.CollideShape(
 			shape,
@@ -292,13 +312,19 @@ namespace Framework::Physics
 			collector,
 			broad,
 			obj,
-			bodyFilter//,
-			//selfFilter
+			bodyFilter,
+			selfFilter
 		);
 		if (!collector.HadHit()) { return; }
 
 		const auto& hit = collector.mHit;
 		if (hit.mPenetrationDepth <= 0.0f) { return; }
+
+		// まず自分側サブシェイプがトリガーなら押し戻しをしない
+		{
+			auto* selfCol = this->physicsSystem.GetCollider3D(this->bodyID, hit.mSubShapeID1.GetValue());
+			if (selfCol && selfCol->IsTrigger()) { return; }
+		}
 
 		// ヒットした相手がトリガーなら無視する
 		auto other = this->physicsSystem.GetCollider3D(hit.mBodyID2, hit.mSubShapeID2.GetValue());
@@ -377,7 +403,7 @@ namespace Framework::Physics
 
 		//// 衝突判定を行うかどうかのフィルタ設定
 		//// Triggerになっている場合には衝突判定を行わない
-		//SelfTriggerShapeFilter selfFilter(this->physicsSystem, this->bodyID);
+		SelfTriggerShapeFilter selfFilter(this->physicsSystem, this->bodyID);
 
 		npq.CastShape(
 			cast,
@@ -386,10 +412,16 @@ namespace Framework::Physics
 			col,
 			broad,
 			obj,
-			IgnoreSelfBodyFilter(this->bodyID)//,
-			//selfFilter
+			IgnoreSelfBodyFilter(this->bodyID),
+			selfFilter
 		);
 		if (!col.hasHit) { return; }
+
+		// まず自分側サブシェイプがトリガーなら押し戻しをしない
+		{
+			auto* selfCol = this->physicsSystem.GetCollider3D(this->bodyID, col.hit.mSubShapeID1.GetValue());
+			if (selfCol && selfCol->IsTrigger()) { return; }
+		}
 
 		// ヒットした相手がトリガーなら無視する
 		auto other = this->physicsSystem.GetCollider3D(col.hit.mBodyID2, col.hit.mSubShapeID2.GetValue());

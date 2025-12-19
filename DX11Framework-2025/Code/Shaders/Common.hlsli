@@ -40,6 +40,25 @@ cbuffer LightBuffer : register(b4)
     float4 baseColor;   // ライトの基本色
 }
 
+// 疑似フォグ用定数バッファ
+cbuffer FogBuffer : register(b5)
+{
+    float3 cameraPos;   // カメラのワールド座標
+    float fogStart;     // フォグ開始距離
+    float fogEnd;       // フォグ終了距離
+    float3 fogColor;    // 暗色（ほぼ黒＋少し青）
+    float padding;
+}
+
+// 法線行列（逆転置 3x3）: 行ベクトル3本
+cbuffer NormalMatrixBuffer : register(b6)
+{
+    float3 row0;
+    float3 row1;
+    float3 row2;
+    float  pad; // 16バイトアラインメント用
+}
+
 //-----------------------------------------------------------------------------
 // モデル描画用構造体
 //-----------------------------------------------------------------------------
@@ -102,18 +121,6 @@ struct VS_OUT_DEBUGLINE
 //-----------------------------------------------------------------------------
 Texture2D tex : register(t0);       // テクスチャ（モデル・スプライト共通）
 SamplerState samp : register(s0);   // サンプラー（共通）
-
-//-----------------------------------------------------------------------------
-// 疑似フォグ用定数バッファ
-//-----------------------------------------------------------------------------
-cbuffer FogBuffer : register(b5)
-{
-    float3 cameraPos;   // カメラのワールド座標
-    float fogStart;     // フォグ開始距離
-    float fogEnd;       // フォグ終了距離
-    float3 fogColor;    // 暗色（ほぼ黒＋少し青）
-    float padding;
-};
 
 //struct MATERIAL
 //{

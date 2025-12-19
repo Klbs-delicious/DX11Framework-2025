@@ -19,9 +19,13 @@ VS_OUT_MODEL main(VS_IN_MODEL input)
     // 疑似フォグ用：ワールド座標を渡す
     output.worldPos = worldPos.xyz;
 
-    // この法線変換は「等倍スケール前提」
-    // 非一様スケールを使う場合は逆転置行列に切り替えること
-    output.normal = mul(input.normal, (float3x3) world);
+    // 法線変換：CPU送信の逆転置3x3（行ベクトル3本）を使用
+    float3x3 normalMatrix = float3x3(
+        row0.x, row0.y, row0.z,
+        row1.x, row1.y, row1.z,
+        row2.x, row2.y, row2.z
+    );
+    output.normal = mul(input.normal, normalMatrix);
 
     // テクスチャ座標
     output.tex = input.tex;

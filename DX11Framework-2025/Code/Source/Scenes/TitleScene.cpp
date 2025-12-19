@@ -24,6 +24,9 @@
 #include"Include/Framework/Entities/Camera2D.h"
 #include"Include/Framework/Entities/Camera3D.h"	
 
+// ゲームコンポーネント
+#include"Include/Game/Entities/FogComponent.h"
+
 #include<iostream>
 
 //-----------------------------------------------------------------------------
@@ -64,13 +67,29 @@ void TitleScene::SetupObjects()
 	// オブジェクトの生成
 	//--------------------------------------------------------------
 
+	// 疑似フォグ用の板ポリ
+	auto fogPlane = this->gameObjectManager.Instantiate("FogPlane");
+	fogPlane->transform->SetLocalPosition(DX::Vector3(0.0f, -20.0f, 200.0f));
+	fogPlane->transform->SetLocalScale(DX::Vector3(500.0f, 1.0f, 500.0f));
+	DX::Quaternion q =
+		DX::Quaternion::CreateFromAxisAngle(
+			DX::Vector3(1.0f, 0.0f, 0.0f),   // X軸
+			DX::ToRadians(-90.0f)            // 角度
+		);
+	fogPlane->transform->SetLocalRotation(q);
+	auto meshComp = fogPlane->AddComponent<MeshComponent>();
+	meshComp->SetMesh(meshManager.Get("Plane"));
+	fogPlane->AddComponent<MeshRenderer>();
+	fogPlane->AddComponent<FogComponent>();
+
 	// 床
 	auto plane = this->gameObjectManager.Instantiate("Plane");
 	plane->transform->SetLocalPosition(DX::Vector3(0.0f, -20.0f, 0.0f));
 	plane->transform->SetLocalScale(DX::Vector3(300.0f, 1.0f, 300.0f));
-	auto meshComp = plane->AddComponent<MeshComponent>();
+	meshComp = plane->AddComponent<MeshComponent>();
 	meshComp->SetMesh(meshManager.Get("Plane"));
 	plane->AddComponent<MeshRenderer>();
+	plane->AddComponent<FogComponent>();
 		
 	// タイトルロゴ
 	auto titleLogo = this->gameObjectManager.Instantiate("TitleLogo");

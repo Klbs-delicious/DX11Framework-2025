@@ -83,9 +83,6 @@ void SpriteRenderer::Draw()
     render.SetViewMatrix(&view);
     render.SetProjectionMatrix(&proj);
 
-    // ブレンドステートを設定
-    render.SetBlendState(BlendStateType::BS_ALPHABLEND);
-
     // バッファを送る
     auto ctx = d3d11.GetContext();
     this->vertexBuffer->Bind(ctx);

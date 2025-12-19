@@ -42,12 +42,14 @@ struct Material
     TextureResource* albedoMap;                                             ///< テクスチャ（ベースカラー）
     SamplerType samplerType;                                                ///< サンプラーの種類
     std::unique_ptr<DynamicConstantBuffer<MaterialParams>> materialBuffer;  ///< 定数バッファ
+    BlendStateType blendStateType;                                          ///< ブレンドステートの種類
 
     Material() :
         shaders(nullptr), 
         albedoMap(nullptr), 
         samplerType(SamplerType::LinearWrap), 
-        materialBuffer(std::make_unique<DynamicConstantBuffer<MaterialParams>>()) 
+        materialBuffer(std::make_unique<DynamicConstantBuffer<MaterialParams>>()),
+		blendStateType(BlendStateType::BS_NONE)
     {}
 
     ~Material() 

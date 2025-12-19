@@ -36,6 +36,11 @@ public:
 	 */
 	void SetParams(const MaterialParams& _params);
 
+	/** @brief 指定したブレンドステートを設定
+	 *  @param BlendStateType _blendState 使用するブレンドステートの種類
+	 */
+	void SetBlendState(BlendStateType _blendState);
+
 	/**	@brief	マテリアル情報の取得
 	 *	@return	Material*	画像情報
 	 */

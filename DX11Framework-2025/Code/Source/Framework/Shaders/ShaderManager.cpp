@@ -40,12 +40,17 @@ ShaderManager::ShaderManager() :
 	this->PreRegisterShaderInfo("VS_DebugLine", ShaderInfo(ShaderType::VertexShader, L"VertexShader/VS_DebugLine", LayoutType::DebugWireframe));
 	this->PreRegisterShaderInfo("PS_DebugLine", ShaderInfo(ShaderType::PixelShader, L"PixelShader/PS_DebugLine", LayoutType::DebugWireframe));
 
+	// 疑似フォグ用
+	this->PreRegisterShaderInfo("VS_Fog", ShaderInfo(ShaderType::VertexShader, L"VertexShader/VS_BackgroundFog3D", LayoutType::ModelBasic));
+	this->PreRegisterShaderInfo("PS_Fog", ShaderInfo(ShaderType::PixelShader, L"PixelShader/PS_BackgroundFog", LayoutType::ModelBasic));
+
 	// シェーダープログラムの登録
 	this->CreateShaderProgram("Default", { "TestVS","TestPS","","","" });
 	this->CreateShaderProgram("ModelTest", { "VS_TestModel","PS_TestModel","","","" });
 
 	this->CreateShaderProgram("ModelBasic", { "VS_Model","PS_Model","","","" });
 	this->CreateShaderProgram("DebugWireframe", { "VS_DebugLine","PS_DebugLine","","","" });
+	this->CreateShaderProgram("Fog", { "VS_Fog","PS_Fog","","","" });
 
 	// デフォルト設定のシェーダーリソースを登録
 	this->defaultShadersMap[ShaderType::VertexShader] = this->Get("TestVS");

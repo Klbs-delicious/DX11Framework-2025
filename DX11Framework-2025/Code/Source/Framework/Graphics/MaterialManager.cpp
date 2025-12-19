@@ -26,6 +26,11 @@ MaterialManager::MaterialManager()
 
     auto model = this->Register("ModelBasic");
     model->shaders = ResourceHub::Get<ShaderManager>().GetShaderProgram("ModelBasic");
+
+    // 疑似フォグ用
+	auto fog = this->Register("Fog");
+	fog->shaders = ResourceHub::Get<ShaderManager>().GetShaderProgram("Fog");
+	fog->blendStateType = BlendStateType::BS_ALPHABLEND;
 }
 
 MaterialManager::~MaterialManager()
@@ -92,6 +97,9 @@ Material* MaterialManager::Default() const
     return this->defaultMaterial.get();
 }
 
+/** @brief デフォルトマテリアルの初期化
+ *  @param _material 初期化するマテリアル参照
+ */
 void MaterialManager::InitializeDefaultMaterial(Material& _material)
 {
     auto& shaderManager = ResourceHub::Get<ShaderManager>();
@@ -105,4 +113,7 @@ void MaterialManager::InitializeDefaultMaterial(Material& _material)
         _material.materialBuffer = std::make_unique<DynamicConstantBuffer<MaterialParams>>();
     }
     _material.materialBuffer->Create(SystemLocator::Get<D3D11System>().GetDevice());
+
+	// デフォルトはアルファブレンドに設定
+	_material.blendStateType = BlendStateType::BS_ALPHABLEND;
 }

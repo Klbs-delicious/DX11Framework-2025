@@ -92,6 +92,9 @@ void SpriteRenderer::Draw()
     // SpriteComponentの画像をMaterialComponentにセットする
     this->materialComponent->SetTexture(const_cast<TextureResource*>(this->spriteComponent->GetSprite()));
 
+    // UI 乗算カラーを Diffuse に反映
+    this->materialComponent->SetDiffuse(this->tintColor);
+
     // マテリアルの適用
     this->materialComponent->Apply(ctx, &render);
 

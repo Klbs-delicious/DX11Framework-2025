@@ -40,14 +40,19 @@ cbuffer LightBuffer : register(b4)
     float4 baseColor;   // ライトの基本色
 }
 
-// 疑似フォグ用定数バッファ
+// 疑似フォグ用定数バッファ（時間でレンジ揺らぎ対応）
 cbuffer FogBuffer : register(b5)
 {
     float3 cameraPos;   // カメラのワールド座標
     float fogStart;     // フォグ開始距離
     float fogEnd;       // フォグ終了距離
-    float3 fogColor;    // 暗色（ほぼ黒＋少し青）
-    float padding;
+    float3 fogColor;    // フォグ色（RGB）
+
+    // レンジ揺らぎ用
+    float timeSec;      // 経過時間（秒）
+    float waveSpeed;    // 揺らぎ速度
+    float waveAmp;      // 揺らぎ強度
+    float fogPad;       // アラインメント
 }
 
 // 法線行列（逆転置 3x3）: 行ベクトル3本
@@ -56,7 +61,7 @@ cbuffer NormalMatrixBuffer : register(b6)
     float3 row0;
     float3 row1;
     float3 row2;
-    float  pad; // 16バイトアラインメント用
+    float  normalPad; // 16バイトアラインメント用
 }
 
 //-----------------------------------------------------------------------------
@@ -121,64 +126,3 @@ struct VS_OUT_DEBUGLINE
 //-----------------------------------------------------------------------------
 Texture2D tex : register(t0);       // テクスチャ（モデル・スプライト共通）
 SamplerState samp : register(s0);   // サンプラー（共通）
-
-//struct MATERIAL
-//{
-//    float4 ambient;
-//    float4 diffuse;
-//    float4 specular;
-//    float4 emission;
-//    float shininess;
-//    bool textureEnable;
-//    float2 dummy;
-//};
-
-//cbuffer MaterialBuffer : register(b3)
-//{
-//    MATERIAL material;
-//}
-
-//struct LIGHT
-//{
-//    bool enable; // 使用するか否か
-//    bool3 dummy; // PADDING
-//    float4 direction; // 方向
-//    float4 diffuse; // 拡散反射用の光の強さ
-//    float4 ambient; // 環境光用の光の強さ
-//};
-
-//cbuffer LightBuffer : register(b4)
-//{
-//    LIGHT light;
-//};
-
-//#define MAX_BONE 400
-//cbuffer BoneMatrixBuffer : register(b5)
-//{
-//    matrix boneMatrix[MAX_BONE];
-//}
-
-//struct VS_IN
-//{
-//    float4 Position : POSITION0;
-//    float4 Normal : NORMAL0;
-//    float4 Diffuse : COLOR0;
-//    float2 TexCoord : TEXCOORD0;
-//};
-
-//struct VSONESKIN_IN
-//{
-//    float4 Position : POSITION0;
-//    float4 Normal : NORMAL0;
-//    float4 Diffuse : COLOR0;
-//    float2 TexCoord : TEXCOORD0;
-//    int4 BoneIndex : BONEINDEX;
-//    float4 BoneWeight : BONEWEIGHT;
-//};
-
-//struct PS_IN
-//{
-//    float4 Position : SV_POSITION;
-//    float4 Diffuse : COLOR0;
-//    float2 TexCoord : TEXCOORD0;
-//};

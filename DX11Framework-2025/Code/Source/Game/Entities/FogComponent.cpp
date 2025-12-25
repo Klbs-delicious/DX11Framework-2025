@@ -27,7 +27,10 @@ FogComponent::FogComponent(GameObject* _owner, bool _active)
 	: Component(_owner, _active),
 	fogBuffer(nullptr),
 	normalBuffer(nullptr),
-	camera(nullptr)
+	camera(nullptr),
+	elapsedSec(0.0f),
+	waveSpeed(0.8f),
+	waveAmp(0.15f)
 {}
 
 /// @brief 初期化処理
@@ -70,13 +73,18 @@ void FogComponent::Update(float _deltaTime)
 	if (!this->fogBuffer || !this->normalBuffer) { return; }
 	if (!camera) { return; }
 
-	// フォグ用定数バッファのデータを設定する
+	this->elapsedSec += _deltaTime;
+
+	// フォグ用定数バッファのデータを設定する（色は固定、レンジのみ揺らす）
 	FogBuffer f{};
 	f.cameraPos = camera->Owner()->transform->GetWorldPosition();
 	f.fogStart  = 10.0f;   
 	f.fogEnd    = 80.0f; 
-	f.fogColor  = DX::Vector3(0.01f, 0.02f, 0.04f); // 暗青系
-	f.padding   = 0.0f;
+	f.fogColor  = DX::Vector3(0.01f, 0.02f, 0.04f);
+	f.timeSec   = this->elapsedSec;
+	f.waveSpeed = this->waveSpeed;
+	f.waveAmp   = this->waveAmp;
+	f.pad       = 0.0f;
 
 	// 法線行列（逆転置 3x3）を計算（行ベクトル3本）
 	DX::Matrix4x4 world = this->Owner()->transform->GetWorldMatrix();
@@ -113,7 +121,7 @@ void FogComponent::Update(float _deltaTime)
 	n.row0 = nrow0;
 	n.row1 = nrow1;
 	n.row2 = nrow2;
-	n.pad  = 0.0f;
+	n.pad2 = 0.0f;
 
 	// 定数バッファを更新してバインド
 	auto& d3d = SystemLocator::Get<D3D11System>();

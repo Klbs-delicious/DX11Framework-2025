@@ -101,18 +101,23 @@ void TitleScene::SetupObjects()
 	auto startUI = this->gameObjectManager.Instantiate("UI_Start");
 	startUI->transform->SetLocalPosition(DX::Vector3(375.0f, 200.0f, 0.0f));
 	startUI->transform->SetLocalScale(DX::Vector3(150.0f, 100.0f, 0.0f));
-	startUI->AddComponent<SpriteRenderer>();
+	auto renderComp = startUI->AddComponent<SpriteRenderer>();
+	renderComp->SetColor(DX::Color(0.0f, 0.78f, 0.90f, 1.0f));
 	startUI->GetComponent<SpriteComponent>()->SetSprite(spriteManager.Get("UI_Start"));
 
 	auto howToPlayUI = this->gameObjectManager.Instantiate("UI_HowToPlay");
 	howToPlayUI->transform->SetLocalPosition(DX::Vector3(300.0f, 250.0f, 0.0f));
 	howToPlayUI->transform->SetLocalScale(DX::Vector3(300.0f, 100.0f, 0.0f));
-	howToPlayUI->AddComponent<SpriteRenderer>();
+	renderComp=howToPlayUI->AddComponent<SpriteRenderer>();
+	renderComp->SetColor(DX::Color(0.0f, 0.78f, 0.90f, 1.0f));
+
 	howToPlayUI->GetComponent<SpriteComponent>()->SetSprite(spriteManager.Get("UI_HowToPlay"));
 
 	auto exitUI = this->gameObjectManager.Instantiate("UI_Exit");
 	exitUI->transform->SetLocalPosition(DX::Vector3(375.0f, 300.0f, 0.0f));
 	exitUI->transform->SetLocalScale(DX::Vector3(150.0f, 100.0f, 0.0f));
-	exitUI->AddComponent<SpriteRenderer>();
+	renderComp = exitUI->AddComponent<SpriteRenderer>();
+	renderComp->SetColor(DX::Color(0.0f, 0.78f, 0.90f, 1.0f));
+
 	exitUI->GetComponent<SpriteComponent>()->SetSprite(spriteManager.Get("UI_Exit"));
 }

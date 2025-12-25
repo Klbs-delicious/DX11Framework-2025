@@ -36,6 +36,9 @@ public:
 	 */
 	void SetParams(const MaterialParams& _params);
 
+	/** @brief Diffuse 色だけを設定する（他パラメータは保持） */
+	void SetDiffuse(const DX::Color& _diffuse);
+
 	/** @brief 指定したブレンドステートを設定
 	 *  @param BlendStateType _blendState 使用するブレンドステートの種類
 	 */

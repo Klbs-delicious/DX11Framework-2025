@@ -81,6 +81,11 @@ void MaterialComponent::SetParams(const MaterialParams& _params)
     this->param = _params;
 }
 
+void MaterialComponent::SetDiffuse(const DX::Color& _diffuse)
+{
+    this->param.Diffuse = _diffuse;
+}
+
 /** @brief 指定したブレンドステートを設定
  *  @param BlendStateType _blendState 使用するブレンドステートの種類
  */

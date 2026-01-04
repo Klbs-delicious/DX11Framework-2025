@@ -9,7 +9,7 @@
 #include"Include/Framework/Core/ResourceHub.h"
 #include"Include/Framework/Core/SystemLocator.h"
 
-//#include"Include/Framework/Entities/SpriteRenderer.h"
+#include"Include/Framework/Entities/SpriteRenderer.h"
 #include"Include/Framework/Entities/MeshRenderer.h"
 #include"Include/Framework/Entities/Camera2D.h"
 #include"Include/Framework/Entities/Camera3D.h"
@@ -89,15 +89,6 @@ void TestScene::SetupObjects()
 	auto timeScaleGroup = this->gameObjectManager.Instantiate("TimeScaleGroup");
 	auto timeGroup = timeScaleGroup->AddComponent<TimeScaleGroup>();
 
-	//// スプライトオブジェクト
-	//auto obj_1 = this->gameObjectManager.Instantiate("obj_1");
-	//std::cout << obj_1->GetName() << " : " << std::to_string(obj_1->transform->GetWorldPosition().x) << std::endl;
-	//obj_1->transform->SetLocalPosition(DX::Vector3(320.0f, 240.0f, 0.0f));
-	//obj_1->transform->SetLocalScale(DX::Vector3(150.0f, 150.0f, 0.0f));
-	//obj_1->AddComponent<SpriteRenderer>();
-	//obj_1->AddComponent<TestMoveComponent>();
-	//obj_1->GetComponent<SpriteComponent>()->SetSprite(spriteManager.Get("Eidan"));
-
 	//// 球体オブジェクト
 	//auto obj_2 = this->gameObjectManager.Instantiate("obj_2");
 	//obj_2->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 10.0f));
@@ -108,7 +99,7 @@ void TestScene::SetupObjects()
 
 	// 立方体オブジェクト（プレイヤー）
 	auto player = this->gameObjectManager.Instantiate("Player", GameTags::Tag::Player);
-	player->transform->SetLocalPosition(DX::Vector3(5.0f, 0.0f, 5.0f));
+	player->transform->SetLocalPosition(DX::Vector3(5.0f, -0.0f, 5.0f));
 	auto meshComp = player->AddComponent<MeshComponent>();
 	meshComp->SetMesh(meshManager.Get("Box"));
 	auto matComp = player->AddComponent<MaterialComponent>();
@@ -142,7 +133,7 @@ void TestScene::SetupObjects()
 	// カメラ注視コンポーネントを追加する
 	auto cameraLook = pivotObj->AddComponent<CameraLookComponent>();
 	cameraLook->SetTarget(player->transform);
-	cameraLook->SetOffset(DX::Vector3(6.0f, 3.0f, -5.0f)); // 少し右上にオフセット
+	cameraLook->SetOffset(DX::Vector3(12.0f, 6.0f, -10.0f)); // 少し右上にオフセット
 
 	// カメラ追従コンポーネントを追加する
 	auto followCamera = camera3D->AddComponent<FollowCamera>();
@@ -174,6 +165,15 @@ void TestScene::SetupObjects()
 
 	// 大量オブジェクト生成テスト
 	SpawnManyBoxes(5, 5, 10);
+
+	//// スプライトオブジェクト
+	//auto obj_1 = this->gameObjectManager.Instantiate("obj_1");
+	//std::cout << obj_1->GetName() << " : " << std::to_string(obj_1->transform->GetWorldPosition().x) << std::endl;
+	//obj_1->transform->SetLocalPosition(DX::Vector3(300.0f, 240.0f, 0.0f));
+	//obj_1->transform->SetLocalScale(DX::Vector3(1690.0f * 0.3f, 1433.0f * 0.3f, 0.0f));
+	//obj_1->AddComponent<SpriteRenderer>();
+	//obj_1->AddComponent<TestMoveComponent>();
+	//obj_1->GetComponent<SpriteComponent>()->SetSprite(spriteManager.Get("UI_idou"));
 
 	//// カプセルオブジェクト
 	//auto obj_5 = this->gameObjectManager.Instantiate("obj_5");

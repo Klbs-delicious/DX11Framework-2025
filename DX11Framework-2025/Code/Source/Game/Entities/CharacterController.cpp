@@ -85,7 +85,14 @@ void CharacterController::Update(float _deltaTime)
     if (this->inputSystem.IsActionPressed("MoveLeft")) { inputX -= 1.0f; }
     if (this->inputSystem.IsActionPressed("MoveRight")) { inputX += 1.0f; }
 
-    if (inputX == 0.0f && inputZ == 0.0f) { return; }
+    // 現在の物理速度を取得（Y成分は重力などの物理によるものを保持する）
+    DX::Vector3 currentVel = this->rigidbody->GetLinearVelocity();
+
+    // 入力がない場合は水平方向の速度のみゼロにして終了（重力は維持）
+    if (inputX == 0.0f && inputZ == 0.0f) {
+        this->rigidbody->SetLinearVelocity(DX::Vector3(0.0f, currentVel.y, 0.0f));
+        return;
+    }
 
     // ------------------------------------------------------
     // カメラの前方向・右方向（水平成分のみ）
@@ -107,7 +114,11 @@ void CharacterController::Update(float _deltaTime)
     {
         moveDir.Normalize();
     }
-    else { return; }
+    else {
+        // 安全のため水平速度のみゼロに（重力は維持）
+        this->rigidbody->SetLinearVelocity(DX::Vector3(0.0f, currentVel.y, 0.0f));
+        return;
+    }
 
     // ------------------------------------------------------
     // 回転の更新（キャラクターを進行方向へ向ける）
@@ -122,8 +133,10 @@ void CharacterController::Update(float _deltaTime)
     this->rigidbody->SetLogicalRotation(newRot);
 
     // ------------------------------------------------------
-    // 移動処理（論理座標にのみ加算）
+    // 移動処理（物理へ委譲：線形速度を設定）
     // ------------------------------------------------------
-    DX::Vector3 deltaMove = moveDir * this->moveSpeed * _deltaTime;
-    this->rigidbody->TranslateWorld(deltaMove);
+    DX::Vector3 desiredVel = moveDir * this->moveSpeed;
+    // Y成分は重力による既存の速度を維持して、水平成分のみ上書き
+    desiredVel.y = currentVel.y;
+    this->rigidbody->SetLinearVelocity(desiredVel);
 }

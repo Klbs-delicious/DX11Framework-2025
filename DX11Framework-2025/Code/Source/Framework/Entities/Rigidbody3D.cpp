@@ -589,6 +589,11 @@ namespace Framework::Physics
 		this->linearVelocity += _deltaVelocity;
 	}
 
+	DX::Vector3 Rigidbody3D::GetLinearVelocity() const
+	{
+		return this->linearVelocity;
+	}
+
 	//-----------------------------------------------------------------------------
 	// MotionType / ObjectLayer 設定
 	//-----------------------------------------------------------------------------

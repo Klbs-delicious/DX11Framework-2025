@@ -39,10 +39,7 @@ void FollowCamera::Initialize()
 void FollowCamera::Dispose()
 {}
 
-/** @brief 更新処理
- *  @param _deltaTime 前フレームからの経過時間（秒）
- */
-void FollowCamera::Update(float _deltaTime)
+void FollowCamera::FixedUpdate(float _deltaTime)
 {
     if (!this->pivot) { return; }
 

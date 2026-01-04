@@ -434,6 +434,21 @@ void RenderSystem::SetDepthAllwaysWrite()
     }
 }
 
+void RenderSystem::SetDepthEnable(bool enable)
+{
+    D3D11_DEPTH_STENCIL_DESC desc{};
+    desc.DepthEnable = enable ? TRUE : FALSE;
+    desc.DepthFunc = enable ? D3D11_COMPARISON_LESS_EQUAL : D3D11_COMPARISON_ALWAYS;
+    desc.DepthWriteMask = enable ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
+    desc.StencilEnable = FALSE;
+
+    ComPtr<ID3D11DepthStencilState> state;
+    HRESULT hr = this->d3d11->GetDevice()->CreateDepthStencilState(&desc, state.GetAddressOf());
+    if (SUCCEEDED(hr)) {
+        this->d3d11->GetContext()->OMSetDepthStencilState(state.Get(), 0);
+    }
+}
+
 /////**   @brief  ビューポートを追加
 //// *    @param  const D3D11_VIEWPORT& _viewport 追加するビューポート
 //// */

@@ -113,6 +113,8 @@ namespace Framework::Physics
 		 */
 		void AddLinearVelocity(const DX::Vector3& _deltaVelocity);
 
+		DX::Vector3 GetLinearVelocity() const;
+
 		/// @brief 重力の有効/無効設定
 		void SetUseGravity(bool _use) { this->useGravity = _use; }
 

@@ -161,7 +161,6 @@ void TestScene::SetupObjects()
 	//coll3D->BuildShapeSettings();
 	rigidbody3D = obj_4->AddComponent<Framework::Physics::Rigidbody3D>();
 	rigidbody3D->SetMotionTypeStatic();
-	rigidbody3D->SetObjectLayerStatic();
 
 	// 大量オブジェクト生成テスト
 	SpawnManyBoxes(5, 5, 10);

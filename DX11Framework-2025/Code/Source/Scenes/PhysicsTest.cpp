@@ -121,7 +121,7 @@ void PhysicsTest::SetupObjects()
 	rigidbody3D->SetUseGravity(true);
 	//rigidbody3D->SetGravity(DX::Vector3(0.0f, 9.8f, 0.0f));
 	rigidbody3D->SetMotionTypeKinematic();
-	rigidbody3D->SetObjectLayerKinematic();
+	rigidbody3D->SetObjectLayer(Framework::Physics::PhysicsLayer::Player);
 	capsule->AddComponent<ColliderDebugRenderer>();
 	//capsule->AddComponent<TestMoveComponent>();
 	capsule->AddComponent<CharacterController>();
@@ -144,7 +144,7 @@ void PhysicsTest::SetupObjects()
 
 	rigidbody3D = sphere->AddComponent<Framework::Physics::Rigidbody3D>();
 	rigidbody3D->SetMotionTypeKinematic();
-	rigidbody3D->SetObjectLayerKinematic();
+	rigidbody3D->SetObjectLayer(Framework::Physics::PhysicsLayer::Enemy);
 	rigidbody3D->SetUseGravity(true);
 	sphere->AddComponent<ColliderDebugRenderer>();
 
@@ -166,6 +166,6 @@ void PhysicsTest::SetupObjects()
 	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
 	rigidbody3D = groundObj->AddComponent<Framework::Physics::Rigidbody3D>();
 	rigidbody3D->SetMotionTypeStatic();
-	rigidbody3D->SetObjectLayerStatic();
+	rigidbody3D->SetObjectLayer(Framework::Physics::PhysicsLayer::Ground);
 	groundObj->AddComponent<ColliderDebugRenderer>();
 }

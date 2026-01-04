@@ -138,11 +138,10 @@ namespace Framework::Physics
 		/// @brief MotionType を Kinematic に設定
 		void SetMotionTypeKinematic();
 
-		/// @brief ObjectLayer を Static に設定
-		void SetObjectLayerStatic();
-
-		/// @brief ObjectLayer を Kinematic に設定
-		void SetObjectLayerKinematic();
+		/** @brief ObjectLayer を設定
+		 *  @param _layer 設定するレイヤー
+		 */
+		void SetObjectLayer(JPH::ObjectLayer _layer);
 
 		/** @brief Jolt Body の姿勢を取得
 		 *  @param _outPos ワールド位置

@@ -22,9 +22,12 @@ namespace Framework::Physics
     {
         enum : JPH::ObjectLayer
         {
-            Static = 0,   ///< 動かない物（床・壁など）
-            Dynamic = 1,  ///< 動く物（プレイヤー・敵など）
-            Kinematic = 2,///< 動くが物理影響を受けない物（移動プラットフォームなど）
+            Static    = 0,  ///< 動かない物（床・壁など）
+            Dynamic   = 1,  ///< 動く物（プレイヤー・敵など）
+            Kinematic = 2,  ///< 動くが物理影響を受けない物（移動プラットフォームなど）
+            Ground    = 3,  ///< 地面
+            Player    = 4,  ///< プレイヤー
+            Enemy     = 5,  ///< 敵
 
             NUM_LAYERS
         };
@@ -35,11 +38,14 @@ namespace Framework::Physics
     //-----------------------------------------------------------------------------
     namespace BroadPhaseLayerDef
     {
-        static constexpr JPH::BroadPhaseLayer Static{ 0 };
-        static constexpr JPH::BroadPhaseLayer Dynamic{ 1 };
-        static constexpr JPH::BroadPhaseLayer Kinematic{ 2 };
+        static constexpr JPH::BroadPhaseLayer Static    { 0 };
+        static constexpr JPH::BroadPhaseLayer Dynamic   { 1 };
+        static constexpr JPH::BroadPhaseLayer Kinematic { 2 };
+        static constexpr JPH::BroadPhaseLayer Ground    { 3 }; // 追加
+        static constexpr JPH::BroadPhaseLayer Player    { 4 }; // 追加
+        static constexpr JPH::BroadPhaseLayer Enemy     { 5 }; // 追加
 
-        static constexpr JPH::uint NUM_LAYERS = 3;
+        static constexpr JPH::uint NUM_LAYERS = 6; // 更新: 3→6
     }
 
     /** @class  BPLayerInterfaceImpl
@@ -101,10 +107,8 @@ namespace Framework::Physics
             , layer(_layer)
         {}
 
-        bool ShouldCollide(JPH::BroadPhaseLayer bpLayer) const override
-        {
-            return bpFilter->ShouldCollide(layer, bpLayer);
-        }
+        /// @brief 衝突すべきなら true
+        bool ShouldCollide(JPH::BroadPhaseLayer _bpLayer) const override;
 
     private:
         const BPLayerInterfaceImpl* bpInterface;
@@ -127,10 +131,8 @@ namespace Framework::Physics
             , layer(_layer)
         {}
 
-        bool ShouldCollide(JPH::ObjectLayer other) const override
-        {
-            return pairFilter->ShouldCollide(layer, other);
-        }
+        /// @brief 衝突すべきなら true
+        bool ShouldCollide(JPH::ObjectLayer _other) const override;
 
     private:
         const ObjectLayerPairFilterImpl* pairFilter;

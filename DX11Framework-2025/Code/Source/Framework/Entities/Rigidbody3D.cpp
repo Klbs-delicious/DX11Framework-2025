@@ -609,15 +609,9 @@ namespace Framework::Physics
 		this->ApplyMotionTypeToBody();
 	}
 
-	void Rigidbody3D::SetObjectLayerStatic()
+	void Rigidbody3D::SetObjectLayer(JPH::ObjectLayer _layer)
 	{
-		this->objectLayer = PhysicsLayer::Static;
-		this->ApplyObjectLayerToBody();
-	}
-
-	void Rigidbody3D::SetObjectLayerKinematic()
-	{
-		this->objectLayer = PhysicsLayer::Kinematic;
+		this->objectLayer = _layer;
 		this->ApplyObjectLayerToBody();
 	}
 

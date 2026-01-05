@@ -300,23 +300,24 @@ namespace Framework::Physics
 	 */
 	void PhysicsSystem::HandleContact(ContactType _type, ColliderKey _bodyA, ColliderKey _bodyB)
 	{
-		// Rigidbody3D を取得する
 		auto rbA = GetRigidbody3D(_bodyA.bodyID);
 		auto rbB = GetRigidbody3D(_bodyB.bodyID);
 		if (!rbA || !rbB) { return; }
 
-		// センサーボディかどうか調べる
-		bool aIsSensor = IsSensorBody(_bodyA.bodyID);
-		bool bIsSensor = IsSensorBody(_bodyB.bodyID);
+		const bool aIsSensor = IsSensorBody(_bodyA.bodyID);
+		const bool bIsSensor = IsSensorBody(_bodyB.bodyID);
 
 		ContactType typeA = _type;
 		ContactType typeB = _type;
 
-		// センサーならトリガーイベントに変換する
-		if (aIsSensor) ConvertToTrigger(typeA);
-		if (bIsSensor) ConvertToTrigger(typeB);
+		// いずれかがセンサーなら両側ともトリガーイベントに変換する
+		if (aIsSensor || bIsSensor)
+		{
+			ConvertToTrigger(typeA);
+			ConvertToTrigger(typeB);
+		}
 
-		// イベント発行（SubShapeID は値型で扱う）
+		// 接触イベントを出す
 		rbA->DispatchContactEvent(typeA, GetCollider3D(_bodyA.bodyID, _bodyA.subID), GetCollider3D(_bodyB.bodyID, _bodyB.subID));
 		rbB->DispatchContactEvent(typeB, GetCollider3D(_bodyB.bodyID, _bodyB.subID), GetCollider3D(_bodyA.bodyID, _bodyA.subID));
 	}

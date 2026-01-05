@@ -135,18 +135,25 @@ void PhysicsTest::SetupObjects()
 	meshComp->SetMesh(meshManager.Get("Sphere"));
 	sphere->AddComponent<MeshRenderer>();
 
+	rigidbody3D = sphere->AddComponent<Framework::Physics::Rigidbody3D>();
+	rigidbody3D->SetObjectLayer(Framework::Physics::PhysicsLayer::Enemy);
+	rigidbody3D->SetMotionTypeKinematic();
+	rigidbody3D->SetUseGravity(true);
 	coll3D = sphere->AddComponent<Framework::Physics::Collider3DComponent>();
 	coll3D->SetShape(Framework::Physics::ColliderShapeType::Sphere);
-	//coll3D->SetisTrigger(true);
-	coll3D = sphere->AddComponent<Framework::Physics::Collider3DComponent>();
-	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
-	coll3D->SetBoxHalfExtent(DX::Vector3(1.0f, 1.0f, 1.0f));
-
-	rigidbody3D = sphere->AddComponent<Framework::Physics::Rigidbody3D>();
-	rigidbody3D->SetMotionTypeKinematic();
-	rigidbody3D->SetObjectLayer(Framework::Physics::PhysicsLayer::Enemy);
-	rigidbody3D->SetUseGravity(true);
 	sphere->AddComponent<ColliderDebugRenderer>();
+
+	// トリガー用球体オブジェクト
+	auto sphereTrigger = this->gameObjectManager.Instantiate("SphereTrigger");
+	coll3D = sphereTrigger->AddComponent<Framework::Physics::Collider3DComponent>();
+	coll3D->SetShape(Framework::Physics::ColliderShapeType::Sphere);
+	coll3D->SetCenterOffset(DX::Vector3(0.0f, 0.0f, 5.0f));
+	coll3D->SetisTrigger(true);
+
+	rigidbody3D = sphereTrigger->AddComponent<Framework::Physics::Rigidbody3D>();
+	rigidbody3D->SetObjectLayer(Framework::Physics::PhysicsLayer::Enemy);
+	sphereTrigger->AddComponent<ColliderDebugRenderer>();
+	sphereTrigger->SetParent(sphere);
 
 	// 平面オブジェクト
 	auto groundObj = this->gameObjectManager.Instantiate("Ground");

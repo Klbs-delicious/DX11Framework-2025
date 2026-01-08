@@ -93,7 +93,8 @@ namespace Framework::Physics
 	{
 		this->visualTransform = this->Owner()->GetComponent<Transform>();
 
-		this->colliders = this->Owner()->GetComponentsInChildren<Collider3DComponent>();
+		// アタッチされているコライダーを収集
+		this->CollectColliders();
 
 		this->staged = std::make_unique<StagedTransform>();
 		this->stagedPrev = std::make_unique<StagedTransform>();
@@ -906,4 +907,29 @@ namespace Framework::Physics
 
 		this->hasBody = false;
 	}
+
+	void Rigidbody3D::CollectColliders()
+	{
+		this->colliders.clear();
+
+		std::vector<Collider3DComponent*> allColliders = this->Owner()->GetComponentsInChildren<Collider3DComponent>();
+
+		for (Collider3DComponent* collider : allColliders)
+		{
+			if (!collider) { continue; }
+
+			GameObject* colliderOwner = collider->Owner();
+			if (!colliderOwner) { continue; }
+
+			// 子オブジェクトにRigidbody3Dが設定されている場合、そのコライダーは無視する
+			Rigidbody3D* ownerRigidbody = colliderOwner->GetComponent<Rigidbody3D>();
+			if (ownerRigidbody && ownerRigidbody != this)
+			{
+				continue;
+			}
+
+			this->colliders.push_back(collider);
+		}
+	}
+
 } // namespace Framework::Physics

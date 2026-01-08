@@ -189,6 +189,11 @@ namespace Framework::Physics
 		/// @brief 複数ColliderのcenterOffsetを回転適用して平均COMオフセットを計算
 		DX::Vector3 ComputeCombinedOffset(const DX::Quaternion& _rot) const;
 
+		/** @brief 自身の階層下から Body に属する Collider を収集する
+		 *  @details 子階層も含めて取得し、別 Rigidbody を持つ子の Collider は除外する
+		 */
+		void CollectColliders();
+
 	private:
 		JPH::BodyID bodyID;                         ///< Jolt の BodyID
 		bool hasBody;                               ///< Body を保持しているか

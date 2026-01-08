@@ -145,15 +145,16 @@ void PhysicsTest::SetupObjects()
 
 	// トリガー用球体オブジェクト
 	auto sphereTrigger = this->gameObjectManager.Instantiate("SphereTrigger");
+	sphereTrigger->SetParent(capsule);
 	coll3D = sphereTrigger->AddComponent<Framework::Physics::Collider3DComponent>();
 	coll3D->SetShape(Framework::Physics::ColliderShapeType::Sphere);
-	coll3D->SetCenterOffset(DX::Vector3(0.0f, 0.0f, 5.0f));
-	coll3D->SetisTrigger(true);
+	//coll3D->SetCenterOffset(DX::Vector3(0.0f, 0.0f, 5.0f));
+	//coll3D->SetisTrigger(true);
 
 	rigidbody3D = sphereTrigger->AddComponent<Framework::Physics::Rigidbody3D>();
 	rigidbody3D->SetObjectLayer(Framework::Physics::PhysicsLayer::Enemy);
+	rigidbody3D->SetMotionTypeKinematic();
 	sphereTrigger->AddComponent<ColliderDebugRenderer>();
-	sphereTrigger->SetParent(sphere);
 
 	// 平面オブジェクト
 	auto groundObj = this->gameObjectManager.Instantiate("Ground");

@@ -20,9 +20,9 @@ namespace Framework::Physics
         objectToBroadPhase[PhysicsLayer::Static]    = BroadPhaseLayerDef::Static;
         objectToBroadPhase[PhysicsLayer::Dynamic]   = BroadPhaseLayerDef::Dynamic;
         objectToBroadPhase[PhysicsLayer::Kinematic] = BroadPhaseLayerDef::Kinematic;
-        objectToBroadPhase[PhysicsLayer::Ground]    = BroadPhaseLayerDef::Ground;   // 追加
-        objectToBroadPhase[PhysicsLayer::Player]    = BroadPhaseLayerDef::Player;   // 追加
-        objectToBroadPhase[PhysicsLayer::Enemy]     = BroadPhaseLayerDef::Enemy;    // 追加
+        objectToBroadPhase[PhysicsLayer::Ground]    = BroadPhaseLayerDef::Ground;
+        objectToBroadPhase[PhysicsLayer::Player]    = BroadPhaseLayerDef::Player;
+        objectToBroadPhase[PhysicsLayer::Enemy]     = BroadPhaseLayerDef::Enemy;
     }
 
     JPH::uint BPLayerInterfaceImpl::GetNumBroadPhaseLayers() const
@@ -33,22 +33,23 @@ namespace Framework::Physics
     /// @brief ObjectLayer → BroadPhaseLayer 対応
     JPH::BroadPhaseLayer BPLayerInterfaceImpl::GetBroadPhaseLayer(JPH::ObjectLayer _layer) const
     {
-        return this->objectToBroadPhase[_layer];
+        return objectToBroadPhase[_layer];
     }
 
     /// @brief BroadPhaseLayer の名前を返す
     const char* BPLayerInterfaceImpl::GetBroadPhaseLayerName(JPH::BroadPhaseLayer _bpLayer) const
     {
-        switch (static_cast<JPH::uint>(_bpLayer.GetValue()))
-        {
-        case 0: return "Static";
-        case 1: return "Dynamic";
-        case 2: return "Kinematic";
-        case 3: return "Ground";   // 追加
-        case 4: return "Player";   // 追加
-        case 5: return "Enemy";    // 追加
-        default: return "Unknown";
-        }
+        static constexpr std::array<const char*, BroadPhaseLayerDef::NUM_LAYERS> kNames = {
+            "Static",
+            "Dynamic",
+            "Kinematic",
+            "Ground",
+            "Player",
+            "Enemy",
+        };
+
+        const auto idx = static_cast<JPH::uint>(_bpLayer.GetValue());
+        return idx < kNames.size() ? kNames[idx] : "Unknown";
     }
 
     //-----------------------------------------------------------------------------
@@ -86,8 +87,11 @@ namespace Framework::Physics
     /// @brief ObjectLayer 同士の最終衝突可否
     bool ObjectLayerPairFilterImpl::ShouldCollide(JPH::ObjectLayer _layer1, JPH::ObjectLayer _layer2) const
     {
+        // Static 同士は衝突不要
         if (_layer1 == PhysicsLayer::Static && _layer2 == PhysicsLayer::Static)
+        {
             return false;
+        }
 
         return true; // その他は全て衝突する
     }

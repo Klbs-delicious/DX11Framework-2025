@@ -44,11 +44,11 @@ namespace Framework::Physics
 	struct ColliderKey
 	{
 		JPH::BodyID bodyID;
-		JPH::SubShapeID::Type subID;
+		int colliderID;
 
 		bool operator==(const ColliderKey& other) const noexcept
 		{
-			return bodyID == other.bodyID && subID == other.subID;
+			return bodyID == other.bodyID && colliderID == other.colliderID;
 		}
 	};
 
@@ -60,7 +60,7 @@ namespace Framework::Physics
 			// BodyID と SubShapeID の値を混ぜる
 			// BodyID は GetIndex と GetSequenceNumber の組み合わせで安定させる
 			std::size_t h1 = std::hash<JPH::uint32>()(_key.bodyID.GetIndex()) ^ (std::hash<JPH::uint32>()(_key.bodyID.GetSequenceNumber()) << 1);
-			std::size_t h2 = std::hash<JPH::uint32>()(_key.subID);
+			std::size_t h2 = std::hash<int>()(_key.colliderID);
 
 			return h1 ^ (h2 + 0x9e3779b97f4a7c15ULL + (h1 << 6) + (h1 >> 2));
 		}
@@ -171,24 +171,34 @@ namespace Framework::Physics
 		 */
 		Rigidbody3D* GetRigidbody3D(JPH::BodyID _bodyID);
 
-		/** @brief BodyID と Rigidbody3D の関連付けを登録する
-		 *  @param _bodyID  登録する BodyID
-		 *	@param _subShapeID		関連付ける	SubShapeID
+		/** @brief Collider3DComponent にIDを割り当てる
+		 *  @param _collider 対象コライダー
+		 *  @return 割り当てたID
 		 */
-		void RegisterCollider3D(JPH::BodyID _bodyID, JPH::SubShapeID::Type _subShapeID, Collider3DComponent* _collider);
+		int AssignColliderID(Collider3DComponent* _collider);
+
+		/** @brief BodyID と Collider3DComponent の関連付けを登録する
+		 *  @param _bodyID  登録する BodyID
+		 *  @param _collider 関連付けるコライダー
+		 */
+		void RegisterCollider3D(JPH::BodyID _bodyID, Collider3DComponent* _collider);
 
 		/** @brief BodyID と Collider3DComponent の関連付けを解除する
 		 *  @param _bodyID 解除する BodyID
-		 *	@param _subShapeID		解除する	SubShapeID
 		 */
-		void UnregisterCollider3D(JPH::BodyID _bodyID, JPH::SubShapeID::Type _subShapeID);
+		void UnregisterCollider3D(JPH::BodyID _bodyID);
+
+		/** @brief ColliderID から Collider3DComponent を取得する
+		 *  @param _colliderID 取得する ColliderID
+		 *  @return 対応する Collider3DComponent（存在しない場合は nullptr）
+		 */
+		Collider3DComponent* GetCollider3D(int _colliderID);
 
 		/** @brief BodyID から Collider3DComponent を取得する
 		 *  @param _bodyID 取得する BodyID
-		 *	@param _subShapeID 取得する SubShapeID
 		 *  @return 対応する Collider3DComponent（存在しない場合は nullptr）
 		 */
-		Collider3DComponent* GetCollider3D(JPH::BodyID _bodyID, JPH::SubShapeID::Type _subShapeID);
+		Collider3DComponent* GetCollider3D(JPH::BodyID _bodyID);
 
 	private:
 
@@ -225,8 +235,8 @@ namespace Framework::Physics
 		std::mutex contactMutex;
 
 		std::unordered_map < JPH::BodyID, Framework::Physics::Rigidbody3D* > bodyMap;				///< BodyIDに対するRigidbody3Dマップ
-		//std::unordered_map < JPH::BodyID, Framework::Physics::Collider3DComponent* > colliderMap;	///< BodyIDに対するCollider3DCompontntマップ
-
-		std::unordered_map < JPH::BodyID, std::unordered_map<JPH::SubShapeID::Type, Framework::Physics::Collider3DComponent*> > colliderMap;	///< BodyIDに対する複数のCollider3DCompontntマップ
+		std::unordered_map < int, Framework::Physics::Collider3DComponent* > colliderIDMap;		///< ColliderIDに対するCollider3DComponentマップ
+		std::unordered_map < JPH::BodyID, Framework::Physics::Collider3DComponent* > bodyColliderMap;	///< BodyIDに対するCollider3DComponentマップ
+		int nextColliderID = 1;																		///< 次に割り当てるColliderID
 	};
 } // namespace Framework::Physics

@@ -160,16 +160,17 @@ namespace Framework::Physics
 		static constexpr int SolveIterations = 3;   ///< 貫通解決の反復回数
 
 	private:
+		struct BodyEntry
+		{
+			JPH::BodyID id;
+			Collider3DComponent* collider = nullptr;
+		};
+
 		/** @brief 初期姿勢の取得
 		 *  @param _pos 初期位置（COM）
 		 *  @param _rot 初期回転
 		 */
-		void GetInitialTransform(DX::Vector3& _pos, DX::Quaternion& _rot) const;
-
-		/** @brief BodyCreationSettings へ値をセット
-		 *  @param _settings 設定
-		 */
-		void SetupBodySettings(JPH::BodyCreationSettings& _settings) const;
+		void SetupBodySettings(JPH::BodyCreationSettings& _settings, bool _isSensor) const;
 
 		/// @brief MotionType を Body に適用
 		void ApplyMotionTypeToBody();
@@ -187,10 +188,10 @@ namespace Framework::Physics
 		void CheckGrounded();
 
 		/// @brief 複数ColliderのcenterOffsetを回転適用して平均COMオフセットを計算
-		DX::Vector3 ComputeCombinedOffset(const DX::Quaternion& _rot) const;
+		DX::Vector3 ComputeColliderOffset(const Collider3DComponent* _collider, const DX::Quaternion& _rot) const;
 
 	private:
-		JPH::BodyID bodyID;                         ///< Jolt の BodyID
+		std::vector<BodyEntry> bodies;              ///< Jolt の BodyID と Collider の対応
 		bool hasBody;                               ///< Body を保持しているか
 
 		JPH::EMotionType motionType;                ///< 動作モード（Static / Kinematic）

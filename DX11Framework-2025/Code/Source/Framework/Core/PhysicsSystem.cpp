@@ -37,7 +37,9 @@ namespace Framework::Physics
 		, prevContact()
 		, contactListener(*this)
 		, bodyMap()
-		, colliderMap()
+		, colliderIDMap()
+		, bodyColliderMap()
+		, nextColliderID(1)
 	{}
 
 	/// @brief デストラクタ
@@ -318,8 +320,8 @@ namespace Framework::Physics
 		}
 
 		// 接触イベントを出す
-		rbA->DispatchContactEvent(typeA, GetCollider3D(_bodyA.bodyID, _bodyA.subID), GetCollider3D(_bodyB.bodyID, _bodyB.subID));
-		rbB->DispatchContactEvent(typeB, GetCollider3D(_bodyB.bodyID, _bodyB.subID), GetCollider3D(_bodyA.bodyID, _bodyA.subID));
+		rbA->DispatchContactEvent(typeA, GetCollider3D(_bodyA.colliderID), GetCollider3D(_bodyB.colliderID));
+		rbB->DispatchContactEvent(typeB, GetCollider3D(_bodyB.colliderID), GetCollider3D(_bodyA.colliderID));
 	}
 
 	/** @brief BodyID が有効かどうか調べる
@@ -374,56 +376,80 @@ namespace Framework::Physics
 		return nullptr;
 	}
 
+	int PhysicsSystem::AssignColliderID(Collider3DComponent* _collider)
+	{
+		if (!_collider) { return -1; }
+
+		int id = _collider->GetColliderID();
+		if (id < 0)
+		{
+			id = this->nextColliderID++;
+			_collider->SetColliderID(id);
+		}
+
+		return id;
+	}
+
 	/** @brief BodyID と Collider3DComponent の関連付けを登録する
 	 *  @param _bodyID			登録する BodyID
-	 *  @param _collider		関連付ける	Collider3DComponent
-	 *	@param _subShapeID		関連付ける	SubShapeID
+	 *  @param _collider		関連付ける Collider3DComponent
 	 */
-	void PhysicsSystem::RegisterCollider3D(JPH::BodyID _bodyID, JPH::SubShapeID::Type _subShapeID, Collider3DComponent* _collider)
+	void PhysicsSystem::RegisterCollider3D(JPH::BodyID _bodyID, Collider3DComponent* _collider)
 	{
-		this->colliderMap[_bodyID][_subShapeID] = _collider;
+		if (!_collider) { return; }
+
+		const int id = AssignColliderID(_collider);
+		if (id < 0) { return; }
+
+		this->colliderIDMap[id] = _collider;
+		this->bodyColliderMap[_bodyID] = _collider;
 	}
 
 	/** @brief BodyID と Collider3DComponent の関連付けを解除する
 	 *  @param _bodyID 解除する BodyID
-	 *  @param _subShapeID 解除する SubShapeID
 	 */
-	void PhysicsSystem::UnregisterCollider3D(JPH::BodyID _bodyID, JPH::SubShapeID::Type _subShapeID)
+	void PhysicsSystem::UnregisterCollider3D(JPH::BodyID _bodyID)
 	{
-		auto it = this->colliderMap.find(_bodyID);
-		if (it != this->colliderMap.end())
+		auto it = this->bodyColliderMap.find(_bodyID);
+		if (it == this->bodyColliderMap.end())
 		{
-			it->second.erase(_subShapeID);
+			return;
 		}
+
+		auto* collider = it->second;
+		if (collider)
+		{
+			this->colliderIDMap.erase(collider->GetColliderID());
+		}
+
+		this->bodyColliderMap.erase(it);
+	}
+
+	/** @brief ColliderID から Collider3DComponent を取得する
+	 *  @param _colliderID 取得する ColliderID
+	 *  @return 対応する Collider3DComponent（存在しない場合は nullptr）
+	 */
+	Collider3DComponent* PhysicsSystem::GetCollider3D(int _colliderID)
+	{
+		auto it = this->colliderIDMap.find(_colliderID);
+		if (it != this->colliderIDMap.end())
+		{
+			return it->second;
+		}
+		return nullptr;
 	}
 
 	/** @brief BodyID から Collider3DComponent を取得する
 	 *  @param _bodyID 取得する BodyID
 	 *  @return 対応する Collider3DComponent（存在しない場合は nullptr）
 	 */
-	Collider3DComponent* PhysicsSystem::GetCollider3D(JPH::BodyID _bodyID, JPH::SubShapeID::Type _subShapeID)
+	Collider3DComponent* PhysicsSystem::GetCollider3D(JPH::BodyID _bodyID)
 	{
-
-		auto bodyIt = this->colliderMap.find(_bodyID);
-		if (bodyIt != this->colliderMap.end())
+		auto it = this->bodyColliderMap.find(_bodyID);
+		if (it != this->bodyColliderMap.end())
 		{
-			auto subIt = bodyIt->second.find(_subShapeID);
-			if (subIt != bodyIt->second.end())
-			{
-				return subIt->second;
-			}
-			// フォールバック: SubShapeID が一致しない場合、0番や最初の登録を返す
-			auto zeroIt = bodyIt->second.find(0);
-			if (zeroIt != bodyIt->second.end())
-			{
-				return zeroIt->second;
-			}
-			if (!bodyIt->second.empty())
-			{
-				return bodyIt->second.begin()->second;
-			}
+			return it->second;
 		}
-		// 存在しない
 		return nullptr;
 	}
 

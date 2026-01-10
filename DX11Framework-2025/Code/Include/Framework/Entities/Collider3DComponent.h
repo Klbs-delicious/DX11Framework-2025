@@ -155,6 +155,16 @@ namespace Framework::Physics
 		 */
 		void SetisTrigger(bool _isTrigger);
 
+		/** @brief コライダーIDを設定する
+		 *  @param _id 設定するID
+		 */
+		void SetColliderID(int _id);
+
+		/** @brief コライダーIDを取得する
+		 *  @return コライダーID
+		 */
+		[[nodiscard]] int GetColliderID() const;
+
 		/// @brief 設定値からShapeSettingsを作成する
 		void BuildShapeSettings();
 
@@ -198,6 +208,7 @@ namespace Framework::Physics
 		float		capsuleHalfHeight;	///< カプセル形状の半分の高さ
 		DX::Vector3 centerOffset;		///< 形状の中心オフセット
 
+		int			colliderID;			///< コライダーID（未割当は -1）
 		bool		isTrigger;			///< true: 衝突判定のみ（押し出しは行わない）
 	};
 }

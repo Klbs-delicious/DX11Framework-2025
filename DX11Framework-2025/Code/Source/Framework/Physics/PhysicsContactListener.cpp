@@ -7,8 +7,6 @@
 #include "Include/Framework/Core/PhysicsSystem.h"
 
 #include <Jolt/Physics/Body/Body.h>
-#include <Jolt/Physics/Collision/Shape/MutableCompoundShape.h>
-
 #include <iostream>
 
 using namespace JPH;
@@ -20,14 +18,17 @@ namespace Framework::Physics
         const ContactManifold& _manifold,
         ContactSettings& _settings)
     {
-		// 接触しているサブシェイプのインデックスを取得する
-        uint32 indexA = _manifold.mSubShapeID1.GetValue();
-        uint32 indexB = _manifold.mSubShapeID2.GetValue();
+        (void)_manifold;
+        (void)_settings;
+
+		// 接触しているコライダーIDを取得する
+        int colliderA = static_cast<int>(_bodyA.GetUserData());
+        int colliderB = static_cast<int>(_bodyB.GetUserData());
 
         // 接触ペアを物理システムに登録する
         this->physicsSystem.AddContactPair(
-            { _bodyA.GetID(), indexA },
-            { _bodyB.GetID(), indexB }
+            { _bodyA.GetID(), colliderA },
+            { _bodyB.GetID(), colliderB }
         );
     }
 
@@ -36,13 +37,16 @@ namespace Framework::Physics
         const ContactManifold& _manifold,
         ContactSettings& _settings)
     {
+        (void)_manifold;
+        (void)_settings;
+
         // 毎フレーム触れている接触も登録する（Stay 判定用）
-        uint32 indexA = _manifold.mSubShapeID1.GetValue();
-        uint32 indexB = _manifold.mSubShapeID2.GetValue();
+        int colliderA = static_cast<int>(_bodyA.GetUserData());
+        int colliderB = static_cast<int>(_bodyB.GetUserData());
 
         this->physicsSystem.AddContactPair(
-            { _bodyA.GetID(), indexA },
-            { _bodyB.GetID(), indexB }
+            { _bodyA.GetID(), colliderA },
+            { _bodyB.GetID(), colliderB }
         );
     }
 

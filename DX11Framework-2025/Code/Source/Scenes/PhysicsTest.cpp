@@ -61,7 +61,7 @@ void PhysicsTest::SetupObjects()
 	//--------------------------------------------------------------
 	// リソースマネージャの取得
 	//--------------------------------------------------------------
-	auto& spriteManager= ResourceHub::Get<SpriteManager>();
+	auto& spriteManager = ResourceHub::Get<SpriteManager>();
 	auto& meshManager = ResourceHub::Get<MeshManager>();
 
 	//--------------------------------------------------------------
@@ -135,6 +135,18 @@ void PhysicsTest::SetupObjects()
 	meshComp->SetMesh(meshManager.Get("Sphere"));
 	sphere->AddComponent<MeshRenderer>();
 
+	// トリガー用球体オブジェクト
+	auto sphereTrigger = this->gameObjectManager.Instantiate("SphereTrigger");
+	sphereTrigger->SetParent(sphere);
+	coll3D = sphereTrigger->AddComponent<Framework::Physics::Collider3DComponent>();
+	coll3D->SetShape(Framework::Physics::ColliderShapeType::Sphere);
+	coll3D->SetCenterOffset(DX::Vector3(0.0f, 0.0f, 5.0f));
+	coll3D->SetisTrigger(true);
+
+	//rigidbody3D = sphereTrigger->AddComponent<Framework::Physics::Rigidbody3D>();
+	//rigidbody3D->SetObjectLayer(Framework::Physics::PhysicsLayer::Enemy);
+	//sphereTrigger->AddComponent<ColliderDebugRenderer>();
+
 	rigidbody3D = sphere->AddComponent<Framework::Physics::Rigidbody3D>();
 	rigidbody3D->SetObjectLayer(Framework::Physics::PhysicsLayer::Enemy);
 	rigidbody3D->SetMotionTypeKinematic();
@@ -143,23 +155,11 @@ void PhysicsTest::SetupObjects()
 	coll3D->SetShape(Framework::Physics::ColliderShapeType::Sphere);
 	sphere->AddComponent<ColliderDebugRenderer>();
 
-	// トリガー用球体オブジェクト
-	auto sphereTrigger = this->gameObjectManager.Instantiate("SphereTrigger");
-	sphereTrigger->SetParent(capsule);
-	coll3D = sphereTrigger->AddComponent<Framework::Physics::Collider3DComponent>();
-	coll3D->SetShape(Framework::Physics::ColliderShapeType::Sphere);
-	//coll3D->SetCenterOffset(DX::Vector3(0.0f, 0.0f, 5.0f));
-	//coll3D->SetisTrigger(true);
-
-	rigidbody3D = sphereTrigger->AddComponent<Framework::Physics::Rigidbody3D>();
-	rigidbody3D->SetObjectLayer(Framework::Physics::PhysicsLayer::Enemy);
-	rigidbody3D->SetMotionTypeKinematic();
-	sphereTrigger->AddComponent<ColliderDebugRenderer>();
 
 	// 平面オブジェクト
 	auto groundObj = this->gameObjectManager.Instantiate("Ground");
 	groundObj->transform->SetLocalPosition(DX::Vector3(0.0f, -20.0f, 0.0f));
-	groundObj->transform->SetLocalScale(DX::Vector3(100.0f, 1.0f,100.0f));
+	groundObj->transform->SetLocalScale(DX::Vector3(100.0f, 1.0f, 100.0f));
 	//DX::Quaternion q =
 	//	DX::Quaternion::CreateFromAxisAngle(
 	//		DX::Vector3(1.0f, 0.0f, 0.0f),   // X軸

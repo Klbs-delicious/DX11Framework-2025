@@ -33,6 +33,7 @@ namespace Framework::Physics
 		, capsuleRadius(0.5f)
 		, capsuleHalfHeight(0.5f)
 		, centerOffset(DX::Vector3::Zero)
+		, colliderID(-1)
 		, isTrigger(false)
 		, shapeSettings(nullptr)
 	{}
@@ -82,6 +83,16 @@ namespace Framework::Physics
 	void Collider3DComponent::SetisTrigger(bool _isTrigger)
 	{
 		this->isTrigger = _isTrigger;
+	}
+
+	void Collider3DComponent::SetColliderID(int _id)
+	{
+		this->colliderID = _id;
+	}
+
+	int Collider3DComponent::GetColliderID() const
+	{
+		return this->colliderID;
 	}
 
 	void Collider3DComponent::BuildShapeSettings()
@@ -164,7 +175,7 @@ namespace Framework::Physics
 		return this->capsuleHalfHeight;
 	}
 
-	DX::Vector3& Collider3DComponent::GetCenterOffset()
+	const DX::Vector3& Collider3DComponent::GetCenterOffset() const
 	{
 		return this->centerOffset;
 	}

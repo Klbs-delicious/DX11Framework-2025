@@ -28,6 +28,12 @@ public:
     void Draw() override;
     void Dispose() override;
 
+    /** @brief スプライトの乗算カラー（ティント）を設定する */
+    void SetColor(const DX::Color& _color) { this->tintColor = _color; }
+
+    /** @brief 現在の乗算カラーを取得する */
+    DX::Color GetColor() const { return this->tintColor; }
+
 private:
     Camera2D* camera;
     Transform* transform;   
@@ -41,4 +47,6 @@ private:
     };
     std::unique_ptr<VertexBuffer>vertexBuffer;
     std::unique_ptr<IndexBuffer>indexBuffer;
+
+    DX::Color tintColor { 1,1,1,1 }; ///< 乗算カラー（UI色）
 };

@@ -83,9 +83,6 @@ void SpriteRenderer::Draw()
     render.SetViewMatrix(&view);
     render.SetProjectionMatrix(&proj);
 
-    // ブレンドステートを設定
-    render.SetBlendState(BlendStateType::BS_ALPHABLEND);
-
     // バッファを送る
     auto ctx = d3d11.GetContext();
     this->vertexBuffer->Bind(ctx);
@@ -94,6 +91,9 @@ void SpriteRenderer::Draw()
 
     // SpriteComponentの画像をMaterialComponentにセットする
     this->materialComponent->SetTexture(const_cast<TextureResource*>(this->spriteComponent->GetSprite()));
+
+    // UI 乗算カラーを Diffuse に反映
+    this->materialComponent->SetDiffuse(this->tintColor);
 
     // マテリアルの適用
     this->materialComponent->Apply(ctx, &render);

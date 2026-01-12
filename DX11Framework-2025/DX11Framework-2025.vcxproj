@@ -86,6 +86,7 @@
     <ClInclude Include="Code\Include\Framework\Utils\TreeNode.h" />
     <ClInclude Include="Code\Include\Game\Entities\CameraLookComponent.h" />
     <ClInclude Include="Code\Include\Game\Entities\CharacterController.h" />
+    <ClInclude Include="Code\Include\Game\Entities\FogComponent.h" />
     <ClInclude Include="Code\Include\Game\Entities\FollowCamera.h" />
     <ClInclude Include="Code\Include\Game\Entities\DebugFreeMoveComponent.h" />
     <ClInclude Include="Code\Include\Scenes\PhysicsTest.h" />
@@ -148,6 +149,7 @@
     <ClCompile Include="Code\Source\Framework\Utils\DebugHooks.cpp" />
     <ClCompile Include="Code\Source\Game\Entities\CameraLookComponent.cpp" />
     <ClCompile Include="Code\Source\Game\Entities\CharacterController.cpp" />
+    <ClCompile Include="Code\Source\Game\Entities\FogComponent.cpp" />
     <ClCompile Include="Code\Source\Game\Entities\FollowCamera.cpp" />
     <ClCompile Include="Code\Source\Game\Entities\DebugFreeMoveComponent.cpp" />
     <ClCompile Include="Code\Source\Scenes\PhysicsTest.cpp" />
@@ -163,6 +165,14 @@
     <None Include="Code\Shaders\Common.hlsli" />
   </ItemGroup>
   <ItemGroup>
+    <FxCompile Include="Code\Shaders\PixelShader\PS_BackgroundFog.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
+    </FxCompile>
     <FxCompile Include="Code\Shaders\PixelShader\PS_DebugLine.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
@@ -186,6 +196,14 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="Code\Shaders\VertexShader\VS_BackgroundFog3D.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
     </FxCompile>
     <FxCompile Include="Code\Shaders\VertexShader\VS_DebugLine.hlsl">

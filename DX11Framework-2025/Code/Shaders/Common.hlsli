@@ -1,73 +1,97 @@
 //-----------------------------------------------------------------------------
 // ModelCommon.hlsl
-// ‹¤’Ê’è”ƒoƒbƒtƒ@E\‘¢‘Ì’è‹`
+// å…±é€šå®šæ•°ãƒãƒƒãƒ•ã‚¡ãƒ»æ§‹é€ ä½“å®šç¾©
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
-// ’è”ƒoƒbƒtƒ@
+// å®šæ•°ãƒãƒƒãƒ•ã‚¡
 //-----------------------------------------------------------------------------
 
 cbuffer WorldBuffer : register(b0)
 {
-    matrix world;       // ƒ[ƒ‹ƒh•ÏŠ·s—ñ
+    matrix world;       // ãƒ¯ãƒ¼ãƒ«ãƒ‰å¤‰æ›è¡Œåˆ—
 }
 
 cbuffer ViewBuffer : register(b1)
 {
-    matrix view;        // ƒrƒ…[s—ñ
+    matrix view;        // ãƒ“ãƒ¥ãƒ¼è¡Œåˆ—
 }
 
 cbuffer ProjectionBuffer : register(b2)
 {
-    matrix projection;  // ƒvƒƒWƒFƒNƒVƒ‡ƒ“s—ñ
+    matrix projection;  // ãƒ—ãƒ­ã‚¸ã‚§ã‚¯ã‚·ãƒ§ãƒ³è¡Œåˆ—
 }
 
 cbuffer MaterialBuffer : register(b3)
 {
-    float4 Ambient;     // ŠÂ‹«Œõ”½Ë¬•ª
-    float4 Diffuse;     // ŠgU”½Ë¬•ª
-    float4 Specular;    // ‹¾–Ê”½Ë¬•ª
-    float4 Emission;    // ©ŒÈ”­Œõ¬•ª
-    float Shiness;      // ‰s‚³i‹¾–Ê”½Ë‹­“xj
-    bool TextureEnable; // ƒeƒNƒXƒ`ƒƒg—pƒtƒ‰ƒO
-    float2 Dummy;       // ƒAƒ‰ƒCƒƒ“ƒg’²®
+    float4 Ambient;     // ç’°å¢ƒå…‰åå°„æˆåˆ†
+    float4 Diffuse;     // æ‹¡æ•£åå°„æˆåˆ†
+    float4 Specular;    // é¡é¢åå°„æˆåˆ†
+    float4 Emission;    // è‡ªå·±ç™ºå…‰æˆåˆ†
+    float Shiness;      // é‹­ã•ï¼ˆé¡é¢åå°„å¼·åº¦ï¼‰
+    bool TextureEnable; // ãƒ†ã‚¯ã‚¹ãƒãƒ£ä½¿ç”¨ãƒ•ãƒ©ã‚°
+    float2 Dummy;       // ã‚¢ãƒ©ã‚¤ãƒ¡ãƒ³ãƒˆèª¿æ•´
 }
 
 cbuffer LightBuffer : register(b4)
 {
-    float3 lightDir;    // ƒ[ƒ‹ƒh‹óŠÔ‚Å‚Ìƒ‰ƒCƒg•ûŒüiƒ‰ƒCƒg¨ƒ‚ƒfƒ‹•ûŒüj
+    float3 lightDir;    // ãƒ¯ãƒ¼ãƒ«ãƒ‰ç©ºé–“ã§ã®ãƒ©ã‚¤ãƒˆæ–¹å‘ï¼ˆãƒ©ã‚¤ãƒˆâ†’ãƒ¢ãƒ‡ãƒ«æ–¹å‘ï¼‰
     float pad1;
-    float4 baseColor;   // ƒ‰ƒCƒg‚ÌŠî–{F
+    float4 baseColor;   // ãƒ©ã‚¤ãƒˆã®åŸºæœ¬è‰²
+}
+
+// ç–‘ä¼¼ãƒ•ã‚©ã‚°ç”¨å®šæ•°ãƒãƒƒãƒ•ã‚¡ï¼ˆæ™‚é–“ã§ãƒ¬ãƒ³ã‚¸æºã‚‰ãå¯¾å¿œï¼‰
+cbuffer FogBuffer : register(b5)
+{
+    float3 cameraPos;   // ã‚«ãƒ¡ãƒ©ã®ãƒ¯ãƒ¼ãƒ«ãƒ‰åº§æ¨™
+    float fogStart;     // ãƒ•ã‚©ã‚°é–‹å§‹è·é›¢
+    float fogEnd;       // ãƒ•ã‚©ã‚°çµ‚äº†è·é›¢
+    float3 fogColor;    // ãƒ•ã‚©ã‚°è‰²ï¼ˆRGBï¼‰
+
+    // ãƒ¬ãƒ³ã‚¸æºã‚‰ãç”¨
+    float timeSec;      // çµŒéæ™‚é–“ï¼ˆç§’ï¼‰
+    float waveSpeed;    // æºã‚‰ãé€Ÿåº¦
+    float waveAmp;      // æºã‚‰ãå¼·åº¦
+    float fogPad;       // ã‚¢ãƒ©ã‚¤ãƒ³ãƒ¡ãƒ³ãƒˆ
+}
+
+// æ³•ç·šè¡Œåˆ—ï¼ˆé€†è»¢ç½® 3x3ï¼‰: è¡Œãƒ™ã‚¯ãƒˆãƒ«3æœ¬
+cbuffer NormalMatrixBuffer : register(b6)
+{
+    float3 row0;
+    float3 row1;
+    float3 row2;
+    float  normalPad; // 16ãƒã‚¤ãƒˆã‚¢ãƒ©ã‚¤ãƒ³ãƒ¡ãƒ³ãƒˆç”¨
 }
 
 //-----------------------------------------------------------------------------
-// ƒ‚ƒfƒ‹•`‰æ—p\‘¢‘Ì
+// ãƒ¢ãƒ‡ãƒ«æç”»ç”¨æ§‹é€ ä½“
 //-----------------------------------------------------------------------------
 struct VS_IN_MODEL
 {
-    float3 pos : POSITION;  // ’¸“_ˆÊ’u
-    float3 normal : NORMAL; // –@ü
-    float2 tex : TEXCOORD0; // ƒeƒNƒXƒ`ƒƒÀ•W
+    float3 pos : POSITION;  // é ‚ç‚¹ä½ç½®
+    float3 normal : NORMAL; // æ³•ç·š
+    float2 tex : TEXCOORD0; // ãƒ†ã‚¯ã‚¹ãƒãƒ£åº§æ¨™
 };
 
 struct VS_OUT_MODEL
 {
-    float4 pos : SV_POSITION;       // ƒNƒŠƒbƒv‹óŠÔÀ•W
-    float3 worldPos : POSITION1;    // ƒ[ƒ‹ƒhÀ•W
-    float3 normal : NORMAL;         // –@ü
-    float2 tex : TEXCOORD0;         // ƒeƒNƒXƒ`ƒƒÀ•W
+    float4 pos : SV_POSITION;       // ã‚¯ãƒªãƒƒãƒ—ç©ºé–“åº§æ¨™
+    float3 worldPos : POSITION1;    // ãƒ¯ãƒ¼ãƒ«ãƒ‰åº§æ¨™
+    float3 normal : NORMAL;         // æ³•ç·š
+    float2 tex : TEXCOORD0;         // ãƒ†ã‚¯ã‚¹ãƒãƒ£åº§æ¨™
 };
 
 struct PS_IN_MODEL
 {
-    float4 pos : SV_POSITION;       // ƒNƒŠƒbƒv‹óŠÔÀ•W
-    float3 worldPos : POSITION1;    // ƒ[ƒ‹ƒhÀ•W
-    float3 normal : NORMAL;         // –@ü
-    float2 tex : TEXCOORD0;         // ƒeƒNƒXƒ`ƒƒÀ•W
+    float4 pos : SV_POSITION;       // ã‚¯ãƒªãƒƒãƒ—ç©ºé–“åº§æ¨™
+    float3 worldPos : POSITION1;    // ãƒ¯ãƒ¼ãƒ«ãƒ‰åº§æ¨™
+    float3 normal : NORMAL;         // æ³•ç·š
+    float2 tex : TEXCOORD0;         // ãƒ†ã‚¯ã‚¹ãƒãƒ£åº§æ¨™
 };
 
 //-----------------------------------------------------------------------------
-// ƒXƒvƒ‰ƒCƒg•`‰æ—p\‘¢‘Ì
+// ã‚¹ãƒ—ãƒ©ã‚¤ãƒˆæç”»ç”¨æ§‹é€ ä½“
 //-----------------------------------------------------------------------------
 struct VS_IN_SPRITE
 {
@@ -84,7 +108,7 @@ struct VS_OUT_SPRITE
 };
 
 //-----------------------------------------------------------------------------
-// ƒfƒoƒbƒOƒ‰ƒCƒ“•`‰æ—p\‘¢‘Ì
+// ãƒ‡ãƒãƒƒã‚°ãƒ©ã‚¤ãƒ³æç”»ç”¨æ§‹é€ ä½“
 //-----------------------------------------------------------------------------
 
 struct VS_IN_DEBUGLINE
@@ -98,68 +122,7 @@ struct VS_OUT_DEBUGLINE
 };
 
 //-----------------------------------------------------------------------------
-// ƒŠƒ\[ƒX
+// ãƒªã‚½ãƒ¼ã‚¹
 //-----------------------------------------------------------------------------
-Texture2D tex : register(t0);       // ƒeƒNƒXƒ`ƒƒiƒ‚ƒfƒ‹EƒXƒvƒ‰ƒCƒg‹¤’Êj
-SamplerState samp : register(s0);   // ƒTƒ“ƒvƒ‰[i‹¤’Êj
-
-//struct MATERIAL
-//{
-//    float4 ambient;
-//    float4 diffuse;
-//    float4 specular;
-//    float4 emission;
-//    float shininess;
-//    bool textureEnable;
-//    float2 dummy;
-//};
-
-//cbuffer MaterialBuffer : register(b3)
-//{
-//    MATERIAL material;
-//}
-
-//struct LIGHT
-//{
-//    bool enable; // g—p‚·‚é‚©”Û‚©
-//    bool3 dummy; // PADDING
-//    float4 direction; // •ûŒü
-//    float4 diffuse; // ŠgU”½Ë—p‚ÌŒõ‚Ì‹­‚³
-//    float4 ambient; // ŠÂ‹«Œõ—p‚ÌŒõ‚Ì‹­‚³
-//};
-
-//cbuffer LightBuffer : register(b4)
-//{
-//    LIGHT light;
-//};
-
-//#define MAX_BONE 400
-//cbuffer BoneMatrixBuffer : register(b5)
-//{
-//    matrix boneMatrix[MAX_BONE];
-//}
-
-//struct VS_IN
-//{
-//    float4 Position : POSITION0;
-//    float4 Normal : NORMAL0;
-//    float4 Diffuse : COLOR0;
-//    float2 TexCoord : TEXCOORD0;
-//};
-
-//struct VSONESKIN_IN
-//{
-//    float4 Position : POSITION0;
-//    float4 Normal : NORMAL0;
-//    float4 Diffuse : COLOR0;
-//    float2 TexCoord : TEXCOORD0;
-//    int4 BoneIndex : BONEINDEX;
-//    float4 BoneWeight : BONEWEIGHT;
-//};
-
-//struct PS_IN
-//{
-//    float4 Position : SV_POSITION;
-//    float4 Diffuse : COLOR0;
-//    float2 TexCoord : TEXCOORD0;
-//};
+Texture2D tex : register(t0);       // ãƒ†ã‚¯ã‚¹ãƒãƒ£ï¼ˆãƒ¢ãƒ‡ãƒ«ãƒ»ã‚¹ãƒ—ãƒ©ã‚¤ãƒˆå…±é€šï¼‰
+SamplerState samp : register(s0);   // ã‚µãƒ³ãƒ—ãƒ©ãƒ¼ï¼ˆå…±é€šï¼‰

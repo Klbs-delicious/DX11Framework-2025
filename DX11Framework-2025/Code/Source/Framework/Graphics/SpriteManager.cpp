@@ -20,6 +20,12 @@ void SpriteManager::TexturepathRegister()
 	// 画像のパスを登録していく
 	this->spritePathMap["Default"] = u8"Assets/Textures/Default.png";
 	this->spritePathMap["Eidan"] = u8"Assets/Textures/Eidan.png";
+
+	// タイトル用
+	this->spritePathMap["TitleLogo"] = u8"Assets/Textures/TitleLogo_01.png";
+	this->spritePathMap["UI_Start"] = u8"Assets/Textures/UI_Start.png";
+	this->spritePathMap["UI_HowToPlay"] = u8"Assets/Textures/UI_HowToPlay.png";
+	this->spritePathMap["UI_Exit"] = u8"Assets/Textures/UI_Exit.png";
 }
 
 //// @brief コンストラクタ

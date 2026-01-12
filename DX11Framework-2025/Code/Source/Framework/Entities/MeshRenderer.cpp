@@ -57,13 +57,17 @@ void MeshRenderer::Initialize()
     }
     this->transform = this->Owner()->GetComponent<Transform>();
 
-    // マテリアル情報を取得
-    auto& materials = this->Owner()->Services()->materials;
-    this->materialComponent->SetMaterial(materials->Get("ModelBasic"));
+    // 未設定 または Default マテリアルの場合は基本マテリアルを設定する
+	auto& materials = this->Owner()->Services()->materials;
+	Material* current = this->materialComponent->GetMaterial();
+	if (!current || current == materials->Default())
+	{
+		this->materialComponent->SetMaterial(materials->Get("ModelBasic"));
+	}
 
     // ライト定数バッファを作成
     this->light.lightDir = { 0.4f, -1.0f, 0.3f };
-    this->light.baseColor = { 1.0f, 0.85f, 0.7f, 1.0f };
+    this->light.baseColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 
     this->lightBuffer = std::make_unique<DynamicConstantBuffer<LightBuffer>>();
 	this->lightBuffer->Create(device);
@@ -86,9 +90,6 @@ void MeshRenderer::Draw()
     render.SetWorldMatrix(&world);
     render.SetViewMatrix(&view);
     render.SetProjectionMatrix(&proj);
-
-    // ブレンドステートを設定
-    render.SetBlendState(BlendStateType::BS_NONE);
 
 	// ライト用定数バッファを更新
 	this->lightBuffer->Update(ctx, this->light);

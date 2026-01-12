@@ -86,7 +86,7 @@ public:
 	 */
 	void SetOriginMode(OriginMode _mode) 
     { 
-        this->originMode = _mode; 
+        this->originMode = _mode;
         this->isDirty = true; 
     }
 private:

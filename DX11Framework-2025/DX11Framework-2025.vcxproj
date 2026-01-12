@@ -69,6 +69,7 @@
     <ClInclude Include="Code\Include\Framework\Graphics\TextureFactory.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\TextureLoader.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\VertexBuffer.h" />
+    <ClInclude Include="Code\Include\Framework\Physics\PhysicsContactListener.h" />
     <ClInclude Include="Code\Include\Framework\Physics\StagedTransform.h" />
     <ClInclude Include="Code\Include\Framework\Physics\PhysicsLayers.h" />
     <ClInclude Include="Code\Include\Framework\Physics\StagedTransform.h" />
@@ -87,10 +88,12 @@
     <ClInclude Include="Code\Include\Game\Entities\CharacterController.h" />
     <ClInclude Include="Code\Include\Game\Entities\FollowCamera.h" />
     <ClInclude Include="Code\Include\Game\Entities\DebugFreeMoveComponent.h" />
+    <ClInclude Include="Code\Include\Scenes\PhysicsTest.h" />
     <ClInclude Include="Code\Include\Scenes\SceneManager.h" />
     <ClInclude Include="Code\Include\Scenes\TestScene.h" />
     <ClInclude Include="Code\Include\Scenes\TitleScene.h" />
     <ClInclude Include="Code\Include\Tests\FreeMoveTestComponent.h" />
+    <ClInclude Include="Code\Include\Tests\TestCollisionHandler.h" />
     <ClInclude Include="Code\Include\Tests\TestMoveComponent.h" />
     <ClInclude Include="Code\Include\Tests\TimeScaleTestComponent.h" />
   </ItemGroup>
@@ -133,6 +136,7 @@
     <ClCompile Include="Code\Source\Framework\Graphics\TextureLoader.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\VertexBuffer.cpp" />
     <ClCompile Include="Code\Source\Framework\main.cpp" />
+    <ClCompile Include="Code\Source\Framework\Physics\PhysicsContactListener.cpp" />
     <ClCompile Include="Code\Source\Framework\Physics\PhysicsLayers.cpp" />
     <ClCompile Include="Code\Source\Framework\Scenes\BaseScene.cpp" />
     <ClCompile Include="Code\Source\Framework\Scenes\SceneFactory.cpp" />
@@ -146,10 +150,12 @@
     <ClCompile Include="Code\Source\Game\Entities\CharacterController.cpp" />
     <ClCompile Include="Code\Source\Game\Entities\FollowCamera.cpp" />
     <ClCompile Include="Code\Source\Game\Entities\DebugFreeMoveComponent.cpp" />
+    <ClCompile Include="Code\Source\Scenes\PhysicsTest.cpp" />
     <ClCompile Include="Code\Source\Scenes\SceneManager.cpp" />
     <ClCompile Include="Code\Source\Scenes\TestScene.cpp" />
     <ClCompile Include="Code\Source\Scenes\TitleScene.cpp" />
     <ClCompile Include="Code\Source\Tests\FreeMoveTestComponent.cpp" />
+    <ClCompile Include="Code\Source\Tests\TestCollisionHandler.cpp" />
     <ClCompile Include="Code\Source\Tests\TestMoveComponent.cpp" />
     <ClCompile Include="Code\Source\Tests\TimeScaleTestComponent.cpp" />
   </ItemGroup>
@@ -305,7 +311,8 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(SolutionDir)Code;$(ProjectDir)External\assimp\include;$(ProjectDir)External\joltphysics\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <AdditionalOptions>/Zc:char8_t- %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/Zc:char8_t- 
+ %(AdditionalOptions)</AdditionalOptions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -337,7 +344,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)External\assimp\lib\Release;$(ProjectDir)External\joltphysics\lib\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>assimp-vc143-mt.lib;zlibstaticd.lib;Jolt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>assimp-vc143-mt.lib;zs.lib;Jolt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

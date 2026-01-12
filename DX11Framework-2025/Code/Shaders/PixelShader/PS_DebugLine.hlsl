@@ -2,8 +2,13 @@
 // Debug Line Pixel Shader
 //-----------------------------------------------------------------------------
 
+cbuffer DebugLineBuffer : register(b0)
+{
+    float4 lineColor; // ラインの色
+}
+
 float4 main() : SV_TARGET
 {
-    // デバッグ用ワイヤーフレーム色（赤）
-    return float4(1.0f, 0.1f, 0.1f, 1.0f);
+    // デバッグ用ワイヤーフレーム色
+    return lineColor;
 }

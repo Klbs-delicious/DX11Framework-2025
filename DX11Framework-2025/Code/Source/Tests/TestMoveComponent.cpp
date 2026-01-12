@@ -18,7 +18,14 @@ TestMoveComponent::~TestMoveComponent() {}
 void TestMoveComponent::Initialize()
 {
 	std::cout << "[TestMoveComponent] owner=" << this->Owner()->GetName().c_str()
-		<< " transform=" << this->transform << std::endl;
+		<< " transform=" << this->transform << std::endl;		
+
+	// Rigidbody の取得（なければ追加）
+	this->rigidbody = this->Owner()->GetComponent<Framework::Physics::Rigidbody3D>();
+	if (!this->rigidbody)
+	{
+		this->rigidbody = this->Owner()->AddComponent<Framework::Physics::Rigidbody3D>();
+	}
 
 	// --- 移動用キー ---
 	this->inputSystem.RegisterKeyBinding("MoveUp", static_cast<int>(DirectInputDevice::KeyboardKey::UpArrow));
@@ -37,60 +44,75 @@ void TestMoveComponent::Initialize()
 
 void TestMoveComponent::Update(float _deltaTime)
 {
-    if (!this->transform) return;
+	if (!this->transform || !this->rigidbody) return;
 
-    DX::Vector3 movement(0.0f, 0.0f, 0.0f);
-    DX::Vector3 rotationInput(0.0f, 0.0f, 0.0f);
+	DX::Vector3 movementLocal(0.0f, 0.0f, 0.0f);
+	DX::Vector3 rotationInput(0.0f, 0.0f, 0.0f);
 
-    // --- 移動入力 ---
-    if (this->inputSystem.IsActionPressed("MoveDown"))  movement.y += 1.0f;
-    if (this->inputSystem.IsActionPressed("MoveUp"))    movement.y -= 1.0f;
-    if (this->inputSystem.IsActionPressed("MoveLeft"))  movement.x -= 1.0f;
-    if (this->inputSystem.IsActionPressed("MoveRight")) movement.x += 1.0f;
-    if (this->inputSystem.IsActionPressed("MoveForward")) movement.z += 1.0f;
-    if (this->inputSystem.IsActionPressed("MoveBack"))    movement.z -= 1.0f;
+	// --- 移動入力（ローカル空間） ---
+	if (this->inputSystem.IsActionPressed("MoveDown"))  movementLocal.y += 1.0f;
+	if (this->inputSystem.IsActionPressed("MoveUp"))    movementLocal.y -= 1.0f;
+	if (this->inputSystem.IsActionPressed("MoveLeft"))  movementLocal.x -= 1.0f;
+	if (this->inputSystem.IsActionPressed("MoveRight")) movementLocal.x += 1.0f;
+	if (this->inputSystem.IsActionPressed("MoveForward")) movementLocal.z += 1.0f;
+	if (this->inputSystem.IsActionPressed("MoveBack"))    movementLocal.z -= 1.0f;
 
-    // --- 回転入力（キーボード） ---
-    if (this->inputSystem.IsActionPressed("RotateLeft"))  rotationInput.y -= 1.0f;
-    if (this->inputSystem.IsActionPressed("RotateRight")) rotationInput.y += 1.0f;
-    if (this->inputSystem.IsActionPressed("RotateUp"))    rotationInput.x -= 1.0f;
-    if (this->inputSystem.IsActionPressed("RotateDown"))  rotationInput.x += 1.0f;
+	// --- 回転入力（キーボード） ---
+	if (this->inputSystem.IsActionPressed("RotateLeft"))  rotationInput.y -= 1.0f;
+	if (this->inputSystem.IsActionPressed("RotateRight")) rotationInput.y += 1.0f;
+	if (this->inputSystem.IsActionPressed("RotateUp"))    rotationInput.x -= 1.0f;
+	if (this->inputSystem.IsActionPressed("RotateDown"))  rotationInput.x += 1.0f;
 
-    // --- マウス移動による回転入力 ---
-    int mouseDX = 0, mouseDY = 0;
-    if (this->inputSystem.GetMouseDelta(mouseDX, mouseDY))
-    {
-        constexpr float MOUSE_SENSITIVITY = 0.1f; // 感度
-        rotationInput.y += static_cast<float>(mouseDX) * MOUSE_SENSITIVITY; // 左右（Yaw）
-        rotationInput.x += static_cast<float>(mouseDY) * MOUSE_SENSITIVITY; // 上下（Pitch）
-    }
+	// --- マウス移動による回転入力 ---
+	int mouseDX = 0, mouseDY = 0;
+	if (this->inputSystem.GetMouseDelta(mouseDX, mouseDY))
+	{
+		constexpr float MOUSE_SENSITIVITY = 0.1f; // 感度
+		rotationInput.y += static_cast<float>(mouseDX) * MOUSE_SENSITIVITY; // 左右（Yaw）
+		rotationInput.x += static_cast<float>(mouseDY) * MOUSE_SENSITIVITY; // 上下（Pitch）
+	}
 
-    // --- 移動処理 ---
-    if (movement.LengthSquared() > 0.0f)
-    {
-        movement.Normalize();
-        movement *= this->speed * _deltaTime;
+	// --- 回転処理（Rigidbody のロジック回転に適用） ---
+	if (rotationInput.LengthSquared() > 0.0f)
+	{
+		rotationInput *= this->rotationSpeed * _deltaTime;
 
-        DX::Vector3 pos = this->transform->GetLocalPosition();
-        pos += movement;
-        this->transform->SetLocalPosition(pos);
-    }
+		DX::Quaternion currentRot = this->rigidbody->GetLogicalRotation();
+		DX::Quaternion deltaRot = DX::Quaternion::CreateFromYawPitchRoll(
+			rotationInput.y, rotationInput.x, rotationInput.z
+		);
 
-    // --- 回転処理 ---
-    if (rotationInput.LengthSquared() > 0.0f)
-    {
-        rotationInput *= this->rotationSpeed * _deltaTime;
+		DX::Quaternion newRot = deltaRot * currentRot;
+		newRot.Normalize();
+		this->rigidbody->SetLogicalRotation(newRot);
+	}
 
-        DX::Quaternion currentRot = this->transform->GetLocalRotation();
-        DX::Quaternion deltaRot = DX::Quaternion::CreateFromYawPitchRoll(
-            rotationInput.y, rotationInput.x, rotationInput.z
-        );
+	// --- 移動処理（速度設定：Rigidbody に委譲） ---
+	if (movementLocal.LengthSquared() > 0.0f)
+	{
+		movementLocal.Normalize();
+		// ローカルベクトルをワールド速度へ変換
+		const DX::Quaternion worldRot = this->rigidbody->GetLogicalRotation();
+		const DX::Vector3 forward = DX::Vector3::Transform(DX::Vector3::Forward, worldRot);
+		const DX::Vector3 right   = DX::Vector3::Transform(DX::Vector3::Right, worldRot);
+		const DX::Vector3 up      = DX::Vector3::Transform(DX::Vector3::Up, worldRot);
 
-        DX::Quaternion newRot = deltaRot * currentRot;
-        newRot.Normalize();
-        this->transform->SetLocalRotation(newRot);
-    }
+		DX::Vector3 desiredVel = right * movementLocal.x + up * movementLocal.y + forward * movementLocal.z;
+		desiredVel *= this->speed; // 単位は units/sec
+		this->rigidbody->SetLinearVelocity(desiredVel);
+	}
+	else
+	{
+		// 入力がなければ移動を止める
+		this->rigidbody->SetLinearVelocity(DX::Vector3::Zero);
+	}
 }
 
 
 void TestMoveComponent::Dispose() {}
+
+void TestMoveComponent::OnCollisionEnter(Framework::Physics::Collider3DComponent* _self, Framework::Physics::Collider3DComponent* _other)
+{
+	std::cout << "[TestMoveComponent] OnCollisionEnter: self=" << _self->Owner()->GetName().c_str()
+		<< " other=" << _other->Owner()->GetName().c_str() << std::endl;
+}

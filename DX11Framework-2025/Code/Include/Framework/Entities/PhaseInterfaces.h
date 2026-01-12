@@ -3,6 +3,11 @@
  *	@date	2025/09/16
  */
 #pragma once
+namespace Framework {
+	namespace Physics {
+		class Collider3DComponent;
+	}
+}
 
  /** @class  IUpdatable
   *  @brief  更新フェーズ抽象化クラス
@@ -44,4 +49,23 @@ public:
 
 	/// @brief 描画処理
 	virtual void Draw() = 0;
+};
+
+/** @class	BaseColliderDispatcher3D
+ *	@brief	3Dコライダーの衝突イベントディスパッチャー抽象化クラス
+ *	@details	- コライダーの衝突イベントを受け取るためのインターフェース
+ */
+class BaseColliderDispatcher3D
+{
+public:
+	/// @brief デストラクタ
+	virtual ~BaseColliderDispatcher3D() = default;
+
+	virtual void OnTriggerEnter(Framework::Physics::Collider3DComponent* _self, Framework::Physics::Collider3DComponent* _other){}
+	virtual void OnTriggerStay(Framework::Physics::Collider3DComponent* _self,Framework::Physics::Collider3DComponent* _other){}
+	virtual void OnTriggerExit(Framework::Physics::Collider3DComponent* _self,Framework::Physics::Collider3DComponent* _other){}
+
+	virtual void OnCollisionEnter(Framework::Physics::Collider3DComponent* _self,Framework::Physics::Collider3DComponent* _other){}
+	virtual void OnCollisionStay(Framework::Physics::Collider3DComponent* _self,Framework::Physics::Collider3DComponent* _other){}
+	virtual void OnCollisionExit(Framework::Physics::Collider3DComponent* _self,Framework::Physics::Collider3DComponent* _other){}
 };

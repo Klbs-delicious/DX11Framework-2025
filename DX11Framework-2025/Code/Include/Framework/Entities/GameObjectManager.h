@@ -1,5 +1,5 @@
-﻿/**@file   GameObjectManager.h
- * @date   2025/09/17
+﻿/** @file   GameObjectManager.h
+ *  @date   2025/09/17
  */
 #pragma once
 #include"Include/Framework/Utils/NonCopyable.h"
@@ -58,8 +58,10 @@ public:
 	 */
 	void BeginPhysics(float _deltaTime);
 
-	/// @brief 物理シミュレーション終了後の処理
-	void EndPhysics();
+	/** @brief 物理シミュレーション終了後の処理
+	 *  @param _deltaTime 
+	 */	
+	void EndPhysics(float _deltaTime);
 
 	/// @brief 一括描画
 	void RenderAll();

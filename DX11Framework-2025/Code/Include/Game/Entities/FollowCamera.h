@@ -12,7 +12,7 @@
   *  @brief ターゲットを追従するカメラコンポーネント
   *  @details - Componentを継承し、Updateフェーズで追従処理を行う
   */
-class FollowCamera : public Component, public IUpdatable
+class FollowCamera : public Component, public IFixedUpdatable
 {
 public:
 	/** @brief コンストラクタ
@@ -30,10 +30,10 @@ public:
 	/// @brief 終了処理
 	void Dispose() override;
 
-	/** @brief 更新処理
+	/** @brief 固定更新処理
 	 *  @param _deltaTime 前フレームからの経過時間（秒）
 	 */
-	void Update(float _deltaTime) override;
+	void FixedUpdate(float _deltaTime) override;
 
 	void SetPivot(Transform* _pivot) { this->pivot = _pivot; }
 

@@ -16,6 +16,7 @@
 #include "Include/Framework/Entities/Rigidbody3D.h"
 
 #include "Include/Framework/Graphics/VertexBuffer.h"
+#include "Include/Framework/Graphics/DynamicConstantBuffer.h"
 #include "Include/Framework/Shaders/ShaderCommon.h"
 
 #include "Include/Framework/Utils/CommonTypes.h"
@@ -64,6 +65,12 @@ private:
     /// @brief 実際の描画処理（ラスタライザ切替済み前提）
     void DrawInternal(ID3D11DeviceContext* _context);
 
+	/// @brief デバッグカラー用定数バッファ構造体
+    struct DebugColor
+    {
+        DirectX::XMFLOAT4 color;
+    };
+
 private:
     Transform* transform;                               ///< 対象オブジェクトの Transform
     Camera3D* camera;                                   ///< 描画に使用するカメラ
@@ -74,4 +81,6 @@ private:
     std::vector<DX::Vector3>          linePoints;       ///< ローカル空間でのライン頂点列
 
     ShaderCommon::ShaderProgram* shaders;               ///< デバッグライン用シェーダ
+
+    std::unique_ptr<DynamicConstantBuffer<DebugColor>> lineColorBuffer; ///< デバッグカラー用定数バッファ
 };

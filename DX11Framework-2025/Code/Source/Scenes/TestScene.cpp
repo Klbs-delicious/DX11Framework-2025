@@ -9,7 +9,7 @@
 #include"Include/Framework/Core/ResourceHub.h"
 #include"Include/Framework/Core/SystemLocator.h"
 
-//#include"Include/Framework/Entities/SpriteRenderer.h"
+#include"Include/Framework/Entities/SpriteRenderer.h"
 #include"Include/Framework/Entities/MeshRenderer.h"
 #include"Include/Framework/Entities/Camera2D.h"
 #include"Include/Framework/Entities/Camera3D.h"
@@ -55,7 +55,7 @@ TestScene::~TestScene() {}
 /// @brief	オブジェクトの生成、登録等を行う
 void TestScene::SetupObjects()
 {
-	std::cout << "[TestScene] シーン名" << "TestScene" << std::endl;
+	std::cout << "シーン名" << "TestScene" << std::endl;
 
 	//--------------------------------------------------------------
 	// リソースマネージャの取得
@@ -72,14 +72,14 @@ void TestScene::SetupObjects()
 	camera3D->transform->SetLocalPosition({ 0.0f, 20.0f, -10.0f });
 	camera3D->transform->SetLocalRotation(DX::Quaternion::CreateFromYawPitchRoll(DX::ToRadians(30.0f), DX::ToRadians(30.0f), 0.0f));
 	camera3D->AddComponent<Camera3D>();
-	auto debugMove = camera3D->AddComponent<DebugFreeMoveComponent>();
-	debugMove->SetSpeed(50.0f);
+	//auto debugMove = camera3D->AddComponent<DebugFreeMoveComponent>();
+	//debugMove->SetSpeed(50.0f);
 
 	//camera3D->AddComponent<TestMoveComponent>();
 
-	//// 2Dカメラオブジェクト
-	//auto camera2D = this->gameObjectManager.Instantiate("Camera2D", GameTags::Tag::Camera);
-	//camera2D->AddComponent<Camera2D>();
+	// 2Dカメラオブジェクト
+	auto camera2D = this->gameObjectManager.Instantiate("Camera2D", GameTags::Tag::Camera);
+	camera2D->AddComponent<Camera2D>();
 
 	//--------------------------------------------------------------
 	// オブジェクトの生成
@@ -89,15 +89,6 @@ void TestScene::SetupObjects()
 	auto timeScaleGroup = this->gameObjectManager.Instantiate("TimeScaleGroup");
 	auto timeGroup = timeScaleGroup->AddComponent<TimeScaleGroup>();
 
-	//// スプライトオブジェクト
-	//auto obj_1 = this->gameObjectManager.Instantiate("obj_1");
-	//std::cout << obj_1->GetName() << " : " << std::to_string(obj_1->transform->GetWorldPosition().x) << std::endl;
-	//obj_1->transform->SetLocalPosition(DX::Vector3(320.0f, 240.0f, 0.0f));
-	//obj_1->transform->SetLocalScale(DX::Vector3(150.0f, 150.0f, 0.0f));
-	//obj_1->AddComponent<SpriteRenderer>();
-	//obj_1->AddComponent<TestMoveComponent>();
-	//obj_1->GetComponent<SpriteComponent>()->SetSprite(spriteManager.Get("Eidan"));
-
 	//// 球体オブジェクト
 	//auto obj_2 = this->gameObjectManager.Instantiate("obj_2");
 	//obj_2->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 10.0f));
@@ -105,11 +96,10 @@ void TestScene::SetupObjects()
 	//auto meshComp = obj_2->AddComponent<MeshComponent>();
 	//meshComp->SetMesh(meshManager.Get("Sphere"));
 	//obj_2->AddComponent<MeshRenderer>();
-	//obj_2->OnDestroy();
 
 	// 立方体オブジェクト（プレイヤー）
 	auto player = this->gameObjectManager.Instantiate("Player", GameTags::Tag::Player);
-	player->transform->SetLocalPosition(DX::Vector3(5.0f, 0.0f, 5.0f));
+	player->transform->SetLocalPosition(DX::Vector3(5.0f, -0.0f, 5.0f));
 	auto meshComp = player->AddComponent<MeshComponent>();
 	meshComp->SetMesh(meshManager.Get("Box"));
 	auto matComp = player->AddComponent<MaterialComponent>();
@@ -118,62 +108,71 @@ void TestScene::SetupObjects()
 	auto charaController = player->AddComponent<CharacterController>();
 	auto coll3D = player->AddComponent<Framework::Physics::Collider3DComponent>();
 	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
-	coll3D->BuildShape();
 	auto rigidbody3D = player->AddComponent<Framework::Physics::Rigidbody3D>();
+	//rigidbody3D->SetUseGravity(true);
 	auto testComp = player->AddComponent<TimeScaleTestComponent>();
 	testComp->SetTimeScaleGroup(timeGroup);
 	//charaController->SetTurnSpeed(10.0f);
 	timeGroup->AddGroup("PlayerGroup", player->GetComponent<TimeScaleComponent>());
 
-	// 立方体オブジェクト（親子テスト）
-	auto child = this->gameObjectManager.Instantiate("Child");
-	child->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 0.0f));
-	child->SetParent(player);
-	meshComp = child->AddComponent<MeshComponent>();
-	meshComp->SetMesh(meshManager.Get("Box"));
-	child->AddComponent<MeshRenderer>();
-	child->AddComponent<FreeMoveTestComponent>();
+	//// 立方体オブジェクト（親子テスト）
+	//auto child = this->gameObjectManager.Instantiate("Child");
+	//child->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 0.0f));
+	//child->SetParent(player);
+	//meshComp = child->AddComponent<MeshComponent>();
+	//meshComp->SetMesh(meshManager.Get("Box"));
+	//child->AddComponent<MeshRenderer>();
+	//child->AddComponent<FreeMoveTestComponent>();
 
 	// カメラピボットオブジェクトを生成する
 	auto pivotObj = gameObjectManager.Instantiate("CameraPivot");
-	//meshComp = pivotObj->AddComponent<MeshComponent>();
-	//meshComp->SetMesh(meshManager.Get("Box"));
+	meshComp = pivotObj->AddComponent<MeshComponent>();
+	meshComp->SetMesh(meshManager.Get("Box"));
 	//pivotObj->AddComponent<MeshRenderer>();
 	
 	// カメラ注視コンポーネントを追加する
 	auto cameraLook = pivotObj->AddComponent<CameraLookComponent>();
 	cameraLook->SetTarget(player->transform);
-	cameraLook->SetOffset(DX::Vector3(6.0f, 3.0f, -5.0f)); // 少し右上にオフセット
+	cameraLook->SetOffset(DX::Vector3(12.0f, 6.0f, -10.0f)); // 少し右上にオフセット
 
-	//// カメラ追従コンポーネントを追加する
-	//auto followCamera = camera3D->AddComponent<FollowCamera>();
-	//followCamera->SetTarget(player->transform);
-	//followCamera->SetPivot(pivotObj->transform);
-	//followCamera->SetSmoothSpeed(5.0f);
+	// カメラ追従コンポーネントを追加する
+	auto followCamera = camera3D->AddComponent<FollowCamera>();
+	followCamera->SetTarget(player->transform);
+	followCamera->SetPivot(pivotObj->transform);
+	followCamera->SetSmoothSpeed(5.0f);
 
 	// 平面オブジェクト
 	auto obj_4 = this->gameObjectManager.Instantiate("obj_4");
 	obj_4->transform->SetLocalPosition(DX::Vector3(0.0f, -20.0f, 0.0f));
 	obj_4->transform->SetLocalScale(DX::Vector3(100.0f, 1.0f,100.0f));
-	DX::Quaternion q =
-		DX::Quaternion::CreateFromAxisAngle(
-			DX::Vector3(1.0f, 0.0f, 0.0f),   // X軸
-			DX::ToRadians(30.0f)             // 角度
-		);
+	//DX::Quaternion q =
+	//	DX::Quaternion::CreateFromAxisAngle(
+	//		DX::Vector3(1.0f, 0.0f, 0.0f),   // X軸
+	//		DX::ToRadians(30.0f)             // 角度
+	//	);
 
-	obj_4->transform->SetLocalRotation(q);
+	//obj_4->transform->SetLocalRotation(q);
 
 	meshComp = obj_4->AddComponent<MeshComponent>();
 	meshComp->SetMesh(meshManager.Get("Plane"));
 	obj_4->AddComponent<MeshRenderer>();
 	coll3D = obj_4->AddComponent<Framework::Physics::Collider3DComponent>();
 	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
-	coll3D->BuildShape();
+	//coll3D->BuildShapeSettings();
 	rigidbody3D = obj_4->AddComponent<Framework::Physics::Rigidbody3D>();
 	rigidbody3D->SetMotionTypeStatic();
-	rigidbody3D->SetObjectLayerStatic();
+
 	// 大量オブジェクト生成テスト
-	SpawnManyBoxes(10, 10, 10);
+	SpawnManyBoxes(5, 5, 10);
+
+	//// スプライトオブジェクト
+	//auto obj_1 = this->gameObjectManager.Instantiate("obj_1");
+	//std::cout << obj_1->GetName() << " : " << std::to_string(obj_1->transform->GetWorldPosition().x) << std::endl;
+	//obj_1->transform->SetLocalPosition(DX::Vector3(300.0f, 240.0f, 0.0f));
+	//obj_1->transform->SetLocalScale(DX::Vector3(1690.0f * 0.3f, 1433.0f * 0.3f, 0.0f));
+	//obj_1->AddComponent<SpriteRenderer>();
+	//obj_1->AddComponent<TestMoveComponent>();
+	//obj_1->GetComponent<SpriteComponent>()->SetSprite(spriteManager.Get("UI_idou"));
 
 	//// カプセルオブジェクト
 	//auto obj_5 = this->gameObjectManager.Instantiate("obj_5");
@@ -275,7 +274,7 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 				z * _spacing
 			);
 
-			pos -= center; 
+			pos -= center; // ← これが中心基準化の本体
 
 			obj->transform->SetLocalPosition(pos);
 			obj->transform->SetLocalScale(DX::Vector3(2, 2, 2));
@@ -286,16 +285,16 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 
 			auto coll3D = obj->AddComponent<Framework::Physics::Collider3DComponent>();
 			coll3D->SetShape(Framework::Physics::ColliderShapeType::Sphere);
-			//coll3D->SetCenterOffset(DX::Vector3(2.0f, 0.0f, 0.0f));
-			coll3D->BuildShape();
+			//coll3D->BuildShapeSettings();
 
 			auto rigidbody3D = obj->AddComponent<Framework::Physics::Rigidbody3D>();
-
-			float randomScale = (static_cast<float>(rand()) / RAND_MAX) * 2.0f - 1.0f;
+			rigidbody3D->SetUseGravity(true);
+			rigidbody3D->SetGravity(DX::Vector3(0.0f, -9.8f, 0.0f));
+			//rigidbody3D->SetGravityScale(randomScale);
 
 			obj->AddComponent<MeshRenderer>();
-			obj->AddComponent<ColliderDebugRenderer>();
 			obj->AddComponent<FreeMoveTestComponent>();
+			obj->AddComponent<ColliderDebugRenderer>();
 
 			int groupId = index % 3 + 1;
 			std::string groupName = "EnemyGroup_" + std::to_string(groupId);

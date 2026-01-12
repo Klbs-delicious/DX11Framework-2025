@@ -12,6 +12,7 @@ enum class SceneType
     Gameplay,
     Result,
     Test,
+	PhysicsTest,
 
     Max,
 };

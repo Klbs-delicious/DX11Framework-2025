@@ -14,6 +14,7 @@
 
 #include "Include/Scenes/TestScene.h"
 #include "Include/Scenes/TitleScene.h"
+#include "Include/Scenes/PhysicsTest.h"
 
 #include "Include/Framework/Entities/Rigidbody3D.h"
 
@@ -60,7 +61,16 @@ void GameLoop::Initialize()
     //--------------------------------------------------------------------------    
     // SystemLocatorに登録・管理する
     //--------------------------------------------------------------------------  
-    
+        
+    // 物理システムの管理
+    this->physicsSystem = std::make_unique<Framework::Physics::PhysicsSystem>();
+    if (!this->physicsSystem->Initialize())
+    {
+        std::cerr << "[GameLoop]PhysicsSystemの初期化に失敗しました。\n";
+        return;
+    }
+    SystemLocator::Register<Framework::Physics::PhysicsSystem>(this->physicsSystem.get());
+
     // シーン構成の初期化
     auto factory = std::make_unique<SceneFactory>();
     factory->Register(SceneType::Test, [](GameObjectManager& manager) {
@@ -68,6 +78,9 @@ void GameLoop::Initialize()
         });
     factory->Register(SceneType::Title, [](GameObjectManager& manager) {
         return std::make_unique<TitleScene>(manager);
+        });
+    factory->Register(SceneType::PhysicsTest, [](GameObjectManager& manager) {
+        return std::make_unique<PhysicsTest>(manager);
         });
 
     // シーン管理の作成
@@ -79,15 +92,6 @@ void GameLoop::Initialize()
 
     // シーン管理を登録
     SystemLocator::Register<SceneManager>(this->sceneManager.get());
-
-    // 物理システムの管理
-	this->physicsSystem = std::make_unique<Framework::Physics::PhysicsSystem>();
-    if (!this->physicsSystem->Initialize()) 
-    {
-        std::cerr << "[GameLoop]PhysicsSystemの初期化に失敗しました。\n";
-        return;
-	}
-    SystemLocator::Register<Framework::Physics::PhysicsSystem>(this->physicsSystem.get());
 
     // ゲームオブジェクトの管理
     this->gameObjectManager = std::make_unique<GameObjectManager>(&services);
@@ -117,7 +121,7 @@ void GameLoop::Initialize()
     this->inputSystem->RegisterKeyBinding("GameExit", static_cast<int>(DirectInputDevice::KeyboardKey::Escape));
 
     // シーンの変更
-    this->sceneManager->RequestSceneChange(SceneType::Title);
+    this->sceneManager->RequestSceneChange(SceneType::PhysicsTest);
 }
 
 /// @brief		更新処理を行う
@@ -150,14 +154,17 @@ void GameLoop::Update()
         // 物理とTransformがそろった状態でゲームロジックのFixedUpdateを実行する
         this->gameObjectManager->FixedUpdateAll(fixedDelta);
 
-		// 物理シミュレーション開始前の処理
+		// 自前移動処理のため、物理システムの前にTransformを更新する
 		this->gameObjectManager->BeginPhysics(fixedDelta);
 
         // 物理シミュレーションを実行する
         this->physicsSystem->Step(fixedDelta);
 
-		// 物理シミュレーション終了後の処理
-		this->gameObjectManager->EndPhysics();
+		// 自前の押し戻し、同期処理を行う
+		this->gameObjectManager->EndPhysics(fixedDelta);
+
+        // 接触イベントの処理を行う
+        this->physicsSystem->ProcessContactEvents();
 
 		// 固定ステップを1回分消費する
         this->timeSystem.ConsumeFixedStep();

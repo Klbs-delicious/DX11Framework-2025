@@ -6,6 +6,7 @@
 #include "Include/Framework/Entities/Component.h"
 #include "Include/Framework/Entities/PhaseInterfaces.h"
 #include "Include/Framework/Entities/Camera3D.h"
+#include "Include/Framework/Entities/Rigidbody3D.h"
 #include "Include/Framework/Core/InputSystem.h"
 
  /** @class CharacterController
@@ -44,6 +45,7 @@ public:
 private:
 	InputSystem& inputSystem;	///< 入力処理を管理している
 	Transform* cameraTransform;	///< カメラの座標系
+	Framework::Physics::Rigidbody3D* rigidbody;		///< 自身のRigidbody3Dコンポーネント
 
 	float moveSpeed;		///< 移動速度
 	float turnSpeed;		///< 回転速度

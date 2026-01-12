@@ -136,9 +136,8 @@ void GameObjectManager::BeginPhysics(float _deltaTime)
 	{
 		if (rigidbody)
 		{
-			// 自前の押し戻し結果を visualTransform に反映させる
-			rigidbody->UpdateLogical(_deltaTime);
-			rigidbody->SyncToVisual();
+			// 自前移動の更新を行う
+			rigidbody->StepPhysics(_deltaTime);
 		}
 	}
 
@@ -155,7 +154,7 @@ void GameObjectManager::BeginPhysics(float _deltaTime)
 	}
 }
 
-void GameObjectManager::EndPhysics()
+void GameObjectManager::EndPhysics(float _deltaTime)
 {
 	for (auto& rigidbody : this->rigidbodies)
 	{

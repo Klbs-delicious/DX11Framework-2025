@@ -42,18 +42,21 @@ namespace Graphics::Import
 	 */
 	void ModelImporter::CreateNodeTree(aiNode* _node, TreeNode_t* _tree)
 	{
-		if (!_node || !_tree) return;
+		if (!_node || !_tree) { return; }
 
+		// ノード名の設定
 		_tree->nodedata = _node->mName.length > 0 ? _node->mName.C_Str() : "(UnnamedNode)";
 
+		// 子ノードの作成
 		for (unsigned int n = 0; n < _node->mNumChildren; n++)
 		{
 			aiNode* child = _node->mChildren[n];
-			if (!child) continue;
+			if (!child) { continue; }
 
 			auto childNode = std::make_unique<TreeNode_t>(
 				child->mName.length > 0 ? child->mName.C_Str() : "(UnnamedChild)");
 
+			// 子ノードをツリーに追加
 			_tree->Addchild(std::move(childNode));
 			TreeNode_t* added = _tree->children.back().get();
 			CreateNodeTree(child, added);
@@ -66,13 +69,15 @@ namespace Graphics::Import
 	 */
 	void ModelImporter::CreateEmptyBoneDictionary(aiNode* _node, std::unordered_map<std::string, Bone>& _dict)
 	{
-		if (!_node) return;
+		if (!_node) { return; }
 
 		Bone bone{};
 		_dict[_node->mName.C_Str()] = bone;
 
 		for (unsigned int n = 0; n < _node->mNumChildren; n++)
+		{
 			CreateEmptyBoneDictionary(_node->mChildren[n], _dict);
+		}
 	}
 
 	/** @brief メッシュからボーン情報を取得
@@ -91,7 +96,9 @@ namespace Graphics::Import
 			bone.meshName = _mesh->mBones[bidx]->mNode->mName.C_Str();
 
 			if (_mesh->mBones[bidx]->mArmature)
+			{
 				bone.armatureName = _mesh->mBones[bidx]->mArmature->mName.C_Str();
+			}
 
 			bone.offsetMatrix = _mesh->mBones[bidx]->mOffsetMatrix;
 
@@ -117,7 +124,7 @@ namespace Graphics::Import
 	 */
 	void ModelImporter::SetBoneDataToVertices(ModelData& _model)
 	{
-		// 初期化
+		// 頂点初期化
 		for (auto& meshVertices : _model.vertices)
 		{
 			for (auto& v : meshVertices)
@@ -144,7 +151,7 @@ namespace Graphics::Import
 					break;
 				}
 			}
-			if (meshIndex < 0) continue;
+			if (meshIndex < 0) { continue; }
 
 			for (auto& w : bone.weights)
 			{
@@ -167,26 +174,35 @@ namespace Graphics::Import
 	 */
 	void ModelImporter::GetBone(const aiScene* _scene, ModelData& _model)
 	{
-		if (!_scene || !_scene->mRootNode) return;
+		if (!_scene || !_scene->mRootNode) { return; }
 
+		// 空のボーン辞書を作成する
 		CreateEmptyBoneDictionary(_scene->mRootNode, _model.boneDictionary);
 
+		// ボーン情報を取得して辞書に格納する
 		unsigned int idx = 0;
 		for (auto& [name, bone] : _model.boneDictionary)
+		{
 			bone.index = idx++;
+		}
 
+		// メッシュごとにボーン情報を取得する
 		for (unsigned int m = 0; m < _scene->mNumMeshes; m++)
 		{
 			aiMesh* mesh = _scene->mMeshes[m];
-			if (!mesh) continue;
+			if (!mesh) { continue; }
 
 			auto bones = GetBonesPerMesh(mesh, _model.boneDictionary);
 			for (auto& b : bones)
+			{
 				_model.boneDictionary[b.boneName] = b;
+			}
 		}
 
+		// 頂点にボーンデータを設定する
 		SetBoneDataToVertices(_model);
 
+		// ノードツリーを作成する
 		_model.boneTree = TreeNode<std::string>("Root");
 		CreateNodeTree(_scene->mRootNode, &_model.boneTree);
 	}
@@ -198,9 +214,13 @@ namespace Graphics::Import
 	 */
 	void ModelImporter::GetMaterialData(const aiScene* _scene, const std::string& _textureDir, ModelData& _model)
 	{
+		if (!_scene) return;
+
+		// マテリアルとテクスチャの初期化
 		_model.materials.clear();
 		_model.diffuseTextures.resize(_scene->mNumMaterials);
 
+		// マテリアルごとに情報を取得
 		for (unsigned int m = 0; m < _scene->mNumMaterials; m++)
 		{
 			aiMaterial* material = _scene->mMaterials[m];
@@ -225,6 +245,7 @@ namespace Graphics::Import
 
 			std::vector<std::string> texPaths{};
 
+			// ディフューズテクスチャの取得
 			for (unsigned int t = 0; t < material->GetTextureCount(aiTextureType_DIFFUSE); t++)
 			{
 				aiString path;
@@ -233,6 +254,7 @@ namespace Graphics::Import
 					std::string texPath = path.C_Str();
 					texPaths.push_back(texPath);
 
+					// テクスチャの読み込み
 					if (auto tex = _scene->GetEmbeddedTexture(path.C_Str()))
 					{
 						auto texture = textureLoader->FromMemory(
@@ -241,9 +263,12 @@ namespace Graphics::Import
 						);
 						if (texture) _model.diffuseTextures[m] = std::move(texture);
 					}
+					// ファイルから読み込み
 					else
 					{
 						std::string fullPath = _textureDir + "/" + texPath;
+						std::cout << fullPath.c_str() << "\n";
+
 						auto texture = textureLoader->FromFile(fullPath);
 						if (texture)
 							_model.diffuseTextures[m] = std::move(texture);
@@ -251,6 +276,7 @@ namespace Graphics::Import
 				}
 			}
 
+			// マテリアルにテクスチャ名を設定する
 			mat.diffuseTextureName = texPaths.empty() ? "" : texPaths[0];
 			_model.materials.push_back(mat);
 		}
@@ -264,6 +290,7 @@ namespace Graphics::Import
 	 */
 	bool ModelImporter::Load(const std::string& _filename, const std::string& _textureDir, ModelData& _model)
 	{
+		// モデルファイルの読み込み
 		Assimp::Importer importer;
 		const aiScene* scene = importer.ReadFile(
 			_filename,
@@ -279,6 +306,7 @@ namespace Graphics::Import
 			return false;
 		}
 
+		// モデルデータの初期化
 		_model.vertices.clear();
 		_model.indices.clear();
 		_model.materials.clear();
@@ -286,8 +314,10 @@ namespace Graphics::Import
 		_model.subsets.clear();
 		_model.boneDictionary.clear();
 
+		// マテリアルとテクスチャの取得
 		GetMaterialData(scene, _textureDir, _model);
 
+		// メッシュデータの取得
 		_model.vertices.resize(scene->mNumMeshes);
 		_model.indices.resize(scene->mNumMeshes);
 		_model.subsets.resize(scene->mNumMeshes);
@@ -295,6 +325,7 @@ namespace Graphics::Import
 		unsigned int globalVertexBase = 0;
 		unsigned int globalIndexBase = 0;
 
+		// メッシュごとに頂点・インデックス・サブセット情報を取得する
 		for (unsigned int m = 0; m < scene->mNumMeshes; m++)
 		{
 			aiMesh* mesh = scene->mMeshes[m];
@@ -313,13 +344,17 @@ namespace Graphics::Import
 				_model.vertices[m].push_back(vert);
 			}
 
+			// インデックス情報の取得
 			for (unsigned int f = 0; f < mesh->mNumFaces; f++)
 			{
 				const aiFace& face = mesh->mFaces[f];
 				for (unsigned int i = 0; i < face.mNumIndices; i++)
+				{
 					_model.indices[m].push_back(face.mIndices[i]);
+				}
 			}
 
+			// サブセット情報の取得
 			Subset subset{};
 			subset.meshName = meshName;
 			subset.materialIndex = mesh->mMaterialIndex;
@@ -335,6 +370,7 @@ namespace Graphics::Import
 			_model.subsets[m] = subset;
 		}
 
+		// ボーン情報の取得
 		GetBone(scene, _model);
 
 		for (unsigned int m = 0; m < scene->mNumMeshes; m++)
@@ -346,8 +382,12 @@ namespace Graphics::Import
 			{
 				const aiFace& face = mesh->mFaces[f];
 				for (unsigned int i = 0; i < face.mNumIndices; i++)
+				{
 					if (face.mIndices[i] > maxIndex)
+					{
 						maxIndex = face.mIndices[i];
+					}
+				}
 			}
 
 			std::cout << "[Mesh " << m << "] " << mesh->mName.C_Str()
@@ -358,4 +398,4 @@ namespace Graphics::Import
 
 		return true;
 	}
-}
+} // namespace Graphics::Import

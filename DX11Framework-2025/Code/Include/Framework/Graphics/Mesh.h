@@ -73,27 +73,9 @@ namespace Graphics
          */
         void SetSubsets(std::vector<MeshSubset>&& _subsets) { this->subsets = std::move(_subsets); }
 
-        ///**@brief 特定のマテリアルを取得する
-        // * @param _index マテリアルのインデックス
-        // * @return Material* マテリアルが存在しなければ nullptr を返す
-        // */
-        //Material* GetMaterial(size_t _index) const
-        //{
-        //    return _index < this->materials.size() ? this->materials[_index].get() : nullptr;
-        //}
-
-        ///**@brief マテリアルを追加する
-        // * @param _mat マテリアル情報
-        // */
-        //void AddMaterial(std::unique_ptr<Material> _mat)
-        //{
-        //    this->materials.emplace_back(std::move(_mat));
-        //}
-
     private:
         std::unique_ptr<VertexBuffer> vertexBuffer;         ///< 頂点バッファ
         std::unique_ptr<IndexBuffer> indexBuffer;           ///< インデックスバッファ
         std::vector<MeshSubset> subsets;                    ///< サブセット情報
-        //std::vector<std::unique_ptr<Material>> materials;   ///< マテリアル群
     };
 }// namespace Graphics

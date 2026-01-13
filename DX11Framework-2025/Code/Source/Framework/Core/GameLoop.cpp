@@ -15,6 +15,7 @@
 #include "Include/Scenes/TestScene.h"
 #include "Include/Scenes/TitleScene.h"
 #include "Include/Scenes/PhysicsTest.h"
+#include "Include/Scenes/ModelTest.h"
 
 #include "Include/Framework/Entities/Rigidbody3D.h"
 
@@ -50,12 +51,17 @@ void GameLoop::Initialize()
     this->meshManager = std::make_unique<MeshManager>();
     ResourceHub::Register(this->meshManager.get());
 
+	// モデル管理
+	this->modelManager = std::make_unique<ModelManager>();
+	ResourceHub::Register(this->modelManager.get());
+
 	// エンジンサービス構造体に参照を設定
     this->services = {
         &ResourceHub::Get<SpriteManager>(),
         &ResourceHub::Get<MaterialManager>(),
         &ResourceHub::Get<MeshManager>(),
         &ResourceHub::Get<ShaderManager>(),
+		&ResourceHub::Get<ModelManager>()
     };
 
     //--------------------------------------------------------------------------    
@@ -81,6 +87,9 @@ void GameLoop::Initialize()
         });
     factory->Register(SceneType::PhysicsTest, [](GameObjectManager& manager) {
         return std::make_unique<PhysicsTest>(manager);
+        });
+    factory->Register(SceneType::ModelTest, [](GameObjectManager& manager) {
+        return std::make_unique<ModelTest>(manager);
         });
 
     // シーン管理の作成
@@ -121,7 +130,7 @@ void GameLoop::Initialize()
     this->inputSystem->RegisterKeyBinding("GameExit", static_cast<int>(DirectInputDevice::KeyboardKey::Escape));
 
     // シーンの変更
-    this->sceneManager->RequestSceneChange(SceneType::PhysicsTest);
+    this->sceneManager->RequestSceneChange(SceneType::ModelTest);
 }
 
 /// @brief		更新処理を行う
@@ -214,4 +223,7 @@ void GameLoop::Dispose()
 
     ResourceHub::Unregister<SpriteManager>();
     this->spriteManager.reset();
+
+    ResourceHub::Unregister<ModelManager>();
+    this->modelManager.reset();
 }

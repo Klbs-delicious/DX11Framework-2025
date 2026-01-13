@@ -113,7 +113,6 @@ void MaterialComponent::Apply(ID3D11DeviceContext* _context, RenderSystem* _rend
     // Shader
     if (this->baseMaterial->shaders)
         this->baseMaterial->shaders->Bind(*_context);
-
     // Sampler 
     _renderSystem->SetSampler(this->baseMaterial->samplerType);
 

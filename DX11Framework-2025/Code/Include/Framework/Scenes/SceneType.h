@@ -13,6 +13,7 @@ enum class SceneType
     Result,
     Test,
 	PhysicsTest,
+	ModelTest,
 
     Max,
 };

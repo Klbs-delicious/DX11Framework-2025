@@ -7,6 +7,7 @@ class SpriteManager;
 class MaterialManager;
 class MeshManager;
 class ShaderManager;
+class ModelManager;
 
 /** @struct     EngineServices
  *  @brief      リソース関連の依存を保持
@@ -18,4 +19,5 @@ struct EngineServices final
     MaterialManager* materials = nullptr;
     MeshManager* meshes = nullptr;
     ShaderManager* shaders = nullptr;
+	ModelManager* models = nullptr;
 };

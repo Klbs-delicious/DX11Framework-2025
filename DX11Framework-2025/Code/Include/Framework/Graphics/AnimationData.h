@@ -39,10 +39,10 @@ namespace Graphics::Import
 	 */
 	struct NodeTrack
 	{
-		std::string nodeName{};
-		std::vector<AnimKeyVec3> positionKeys{};
-		std::vector<AnimKeyQuat> rotationKeys{};
-		std::vector<AnimKeyVec3> scaleKeys{};
+		std::string nodeName{};						///< ノード名
+		std::vector<AnimKeyVec3> positionKeys{};	///< 位置キー
+		std::vector<AnimKeyQuat> rotationKeys{};	///< 回転キー
+		std::vector<AnimKeyVec3> scaleKeys{};		///< スケールキー
 	};
 
 	/** @struct AnimationClip
@@ -50,9 +50,9 @@ namespace Graphics::Import
 	 */
 	struct AnimationClip
 	{
-		std::string name{};
-		double durationTicks = 0.0;
-		double ticksPerSecond = 0.0;
-		std::unordered_map<std::string, NodeTrack> tracks{};
+		std::string name{};										///< クリップ名
+		double durationTicks = 0.0;								///< クリップの長さ（ティック単位）
+		double ticksPerSecond = 0.0;							///< 1秒あたりのティック数
+		std::unordered_map<std::string, NodeTrack> tracks{};	/// ノード名からノードトラックへの辞書
 	};
 } // namespace Graphics::Import

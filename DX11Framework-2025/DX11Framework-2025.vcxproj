@@ -34,6 +34,7 @@
     <ClInclude Include="Code\Include\Framework\Core\TimeScaleSystem.h" />
     <ClInclude Include="Code\Include\Framework\Core\TimeSystem.h" />
     <ClInclude Include="Code\Include\Framework\Core\WindowSystem.h" />
+    <ClInclude Include="Code\Include\Framework\Entities\AnimationComponent.h" />
     <ClInclude Include="Code\Include\Framework\Entities\Camera2D.h" />
     <ClInclude Include="Code\Include\Framework\Entities\Camera3D.h" />
     <ClInclude Include="Code\Include\Framework\Entities\Collider3DComponent.h" />
@@ -112,6 +113,7 @@
     <ClCompile Include="Code\Source\Framework\Core\TimeScaleSystem.cpp" />
     <ClCompile Include="Code\Source\Framework\Core\TimeSystem.cpp" />
     <ClCompile Include="Code\Source\Framework\Core\WindowsSystem.cpp" />
+    <ClCompile Include="Code\Source\Framework\Entities\AnimationComponent.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\Camera2D.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\Camera3D.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\Collider3DComponent.cpp" />

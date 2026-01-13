@@ -74,9 +74,7 @@
     <ClInclude Include="Code\Include\Framework\Graphics\TextureLoader.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\VertexBuffer.h" />
     <ClInclude Include="Code\Include\Framework\Physics\PhysicsContactListener.h" />
-    <ClInclude Include="Code\Include\Framework\Physics\StagedTransform.h" />
     <ClInclude Include="Code\Include\Framework\Physics\PhysicsLayers.h" />
-    <ClInclude Include="Code\Include\Framework\Physics\StagedTransform.h" />
     <ClInclude Include="Code\Include\Framework\Scenes\SceneFactory.h" />
     <ClInclude Include="Code\Include\Framework\Scenes\SceneType.h" />
     <ClInclude Include="Code\Include\Framework\Shaders\PixelShader.h" />

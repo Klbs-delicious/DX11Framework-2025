@@ -31,7 +31,7 @@ ModelManager::ModelManager() : modelImporter()
 	// モデル情報登録
 	 this->modelInfoTable.emplace(
 	     "Player",
-	     ModelInfo{ "Assets/Models/Stickman/source/stickman.fbx", "Assets/Models/Stickman/textures" }
+		 Graphics::ModelInfo{ "Assets/Models/Stickman/source/stickman.fbx", "Assets/Models/Stickman/textures" }
 	 );
 
 	this->defaultModel = nullptr;
@@ -42,7 +42,7 @@ ModelManager::~ModelManager()
 	this->Clear();
 }
 
-ModelEntry* ModelManager::Register(const std::string& _key)
+Graphics::ModelEntry* ModelManager::Register(const std::string& _key)
 {
 	// 既に登録済みならそれを返す
 	{
@@ -61,7 +61,7 @@ ModelEntry* ModelManager::Register(const std::string& _key)
 		return nullptr;
 	}
 
-	const ModelInfo& info = infoIt->second;
+	const Graphics::ModelInfo& info = infoIt->second;
 
 	// Import して ModelData を作る
 	auto modelData = std::make_unique<Graphics::Import::ModelData>();
@@ -103,12 +103,12 @@ ModelEntry* ModelManager::Register(const std::string& _key)
 	}
 
 	// Entry を作って保持（ModelData の寿命は Entry が握る）
-	auto entry = std::make_unique<ModelEntry>();
+	auto entry = std::make_unique<Graphics::ModelEntry>();
 	entry->mesh = meshRaw;
 	entry->material = matRaw;
 	entry->SetModelData(std::move(modelData));
 
-	ModelEntry* entryRaw = entry.get();
+	Graphics::ModelEntry* entryRaw = entry.get();
 	this->modelTable.emplace(_key, std::move(entry));
 
 	return entryRaw;
@@ -154,7 +154,7 @@ void ModelManager::Register(const std::string& _key, std::unique_ptr<Graphics::I
 	}
 
 	// Entry を作って保持
-	auto entry = std::make_unique<ModelEntry>();
+	auto entry = std::make_unique<Graphics::ModelEntry>();
 	entry->mesh = meshRaw;
 	entry->material = matRaw;
 	entry->SetModelData(std::move(_model));
@@ -181,7 +181,7 @@ void ModelManager::Unregister(const std::string& _key)
 	this->modelTable.erase(it);
 }
 
-ModelEntry* ModelManager::Get(const std::string& _key)
+Graphics::ModelEntry* ModelManager::Get(const std::string& _key)
 {
 	auto it = this->modelTable.find(_key);
 	if (it == this->modelTable.end())
@@ -192,7 +192,7 @@ ModelEntry* ModelManager::Get(const std::string& _key)
 	return it->second.get();
 }
 
-ModelEntry* ModelManager::Default() const
+Graphics::ModelEntry* ModelManager::Default() const
 {
 	return this->defaultModel.get();
 }

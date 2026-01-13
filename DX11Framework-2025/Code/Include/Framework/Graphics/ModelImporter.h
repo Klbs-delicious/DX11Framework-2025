@@ -81,8 +81,19 @@ namespace Graphics::Import
 		 */
 		void GetMaterialData(const aiScene* _scene, const std::string& _textureDir, ModelData& _model);
 
+		/** @brief グローバルバインド行列を構築
+		 *  @param const Utils::TreeNode<BoneNode>& _node ボーンノード
+		 *  @param const aiMatrix4x4& _parent 親のグローバル行列
+		 *  @param std::unordered_map<std::string, Bone>& _dict ボーン辞書
+		 */
 		void BuildGlobalBindMatrices(const Utils::TreeNode<BoneNode>& _node, const aiMatrix4x4& _parent, std::unordered_map<std::string, Bone>& _dict);
 
+		/** @brief ボーンインデックスをツリーから割り当て
+		 *  @param const Utils::TreeNode<BoneNode>& _node ボーンノード
+		 *  @param unsigned int& _idx インデックスカウンタ
+		 *  @param std::unordered_map<std::string, Bone>& _dict ボーン辞書
+		 */
+		void AssignBoneIndicesFromTree(const Utils::TreeNode<BoneNode>& _node, unsigned int& _idx, std::unordered_map<std::string, Bone>& _dict);
 	private:
 		std::unique_ptr<TextureLoader> textureLoader;	///< テクスチャ読み込み
 	};

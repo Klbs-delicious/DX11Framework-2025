@@ -180,50 +180,124 @@ namespace Graphics::Import
 		}
 	}
 
-	/** @brief シーン全体からボーン情報を取得
-	 *  @param const aiScene* _scene シーンデータ
-	 *  @param ModelData& _model モデルデータ
-	 */
+	//-----------------------------------------------------------------------------
+	// Bone helper
+	//-----------------------------------------------------------------------------
+
+	void ModelImporter::AssignBoneIndicesFromTree(const Utils::TreeNode<BoneNode>& _node, unsigned int& _idx, std::unordered_map<std::string, Bone>& _dict)
+	{
+		const std::string& name = _node.nodedata.name;
+
+		auto it = _dict.find(name);
+		if (it != _dict.end())
+		{
+			it->second.index = static_cast<int>(_idx);
+			_idx++;
+		}
+
+		for (const auto& child : _node.children)
+		{
+			AssignBoneIndicesFromTree(*child, _idx, _dict);
+		}
+	}
+
+	void ModelImporter::BuildGlobalBindMatrices(const Utils::TreeNode<BoneNode>& _node, const aiMatrix4x4& _parent, std::unordered_map<std::string, Bone>& _dict)
+	{
+		const BoneNode& data = _node.nodedata;
+
+		aiMatrix4x4 global = _parent * data.localBind;
+
+		auto it = _dict.find(data.name);
+		if (it != _dict.end())
+		{
+			it->second.globalBind = global;
+		}
+
+		for (const auto& child : _node.children)
+		{
+			BuildGlobalBindMatrices(*child, global, _dict);
+		}
+	}
+
+	//-----------------------------------------------------------------------------
+	// GetBone
+	//-----------------------------------------------------------------------------
+
 	void ModelImporter::GetBone(const aiScene* _scene, ModelData& _model)
 	{
 		if (!_scene || !_scene->mRootNode) { return; }
 
-		// 空のボーン辞書を作成する
-		CreateEmptyBoneDictionary(_scene->mRootNode, _model.boneDictionary);
+		// 辞書とツリーを先に作る（初期ローカル行列を確保する）
+		_model.boneDictionary.clear();
 
-		// ボーン情報を取得して辞書に格納する
-		unsigned int idx = 0;
-		for (auto& [name, bone] : _model.boneDictionary)
-		{
-			bone.index = idx++;
-		}
-
-		// メッシュごとにボーン情報を取得する
-		for (unsigned int m = 0; m < _scene->mNumMeshes; m++)
-		{
-			aiMesh* mesh = _scene->mMeshes[m];
-			if (!mesh) { continue; }
-
-			auto bones = GetBonesPerMesh(mesh, _model.boneDictionary);
-			for (auto& b : bones)
-			{
-				_model.boneDictionary[b.boneName] = b;
-			}
-		}
-
-		// 頂点にボーンデータを設定する
-		SetBoneDataToVertices(_model);
-
-		// ノードツリーを作成
 		_model.boneTree = TreeNode_t{};
 		CreateNodeTree(_scene->mRootNode, &_model.boneTree);
 
-		// 初期グローバル行列を計算
-		BuildGlobalBindMatrices(
-			_model.boneTree,
-			aiMatrix4x4(),
-			_model.boneDictionary
-		);
+		CreateEmptyBoneDictionary(_scene->mRootNode, _model.boneDictionary);
+
+		// メッシュ側の bone 情報を辞書へ「追記」する（丸ごと代入で上書きしない）
+		for (unsigned int m = 0; m < _scene->mNumMeshes; m++)
+		{
+			const aiMesh* mesh = _scene->mMeshes[m];
+			if (!mesh) { continue; }
+
+			for (unsigned int bidx = 0; bidx < mesh->mNumBones; bidx++)
+			{
+				const aiBone* aiBonePtr = mesh->mBones[bidx];
+				if (!aiBonePtr) { continue; }
+
+				const std::string boneName = aiBonePtr->mName.C_Str();
+
+				auto it = _model.boneDictionary.find(boneName);
+				if (it == _model.boneDictionary.end())
+				{
+					// 辞書に無い場合は追加（例外ケース、通常は CreateEmptyBoneDictionary に存在する想定）
+					Bone newBone{};
+					newBone.boneName = boneName;
+					_model.boneDictionary.emplace(boneName, newBone);
+					it = _model.boneDictionary.find(boneName);
+				}
+
+				Bone& dst = it->second;
+
+				// ここでは index を壊さない（後で tree から振る）
+				dst.boneName = boneName;
+				dst.offsetMatrix = aiBonePtr->mOffsetMatrix;
+
+				if (aiBonePtr->mNode)
+				{
+					dst.meshName = aiBonePtr->mNode->mName.C_Str();
+				}
+
+				if (aiBonePtr->mArmature)
+				{
+					dst.armatureName = aiBonePtr->mArmature->mName.C_Str();
+				}
+
+				// weights は追記（必要なら dst.weights.clear() を入れて毎回作り直す）
+				for (unsigned int widx = 0; widx < aiBonePtr->mNumWeights; widx++)
+				{
+					Weight w{};
+					w.meshName = dst.meshName;
+					w.boneName = dst.boneName;
+					w.weight = aiBonePtr->mWeights[widx].mWeight;
+					w.vertexIndex = aiBonePtr->mWeights[widx].mVertexId;
+					dst.weights.emplace_back(w);
+				}
+			}
+		}
+
+		// boneTree を走査して index を安定順で振る
+		unsigned int idx = 0;
+		AssignBoneIndicesFromTree(_model.boneTree, idx, _model.boneDictionary);
+
+		// 頂点へ index/weight を反映（index が確定してから）
+		SetBoneDataToVertices(_model);
+
+		// 初期グローバル行列（Bind姿勢の global）を計算
+		aiMatrix4x4 identity;
+		identity = aiMatrix4x4(); 
+		BuildGlobalBindMatrices(_model.boneTree, identity, _model.boneDictionary);
 	}
 
 	/** @brief マテリアルとテクスチャを取得
@@ -298,24 +372,6 @@ namespace Graphics::Import
 			// マテリアルにテクスチャ名を設定する
 			mat.diffuseTextureName = texPaths.empty() ? "" : texPaths[0];
 			_model.materials.push_back(mat);
-		}
-	}
-
-	void ModelImporter::BuildGlobalBindMatrices(const Utils::TreeNode<BoneNode>& _node, const aiMatrix4x4& _parent, std::unordered_map<std::string, Bone>& _dict)
-	{
-		const BoneNode& data = _node.nodedata;
-
-		aiMatrix4x4 global = _parent * data.localBind;
-
-		auto it = _dict.find(data.name);
-		if (it != _dict.end())
-		{
-			it->second.globalBind = global;
-		}
-
-		for (const auto& child : _node.children)
-		{
-			BuildGlobalBindMatrices(*child, global, _dict);
 		}
 	}
 

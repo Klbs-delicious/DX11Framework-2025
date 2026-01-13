@@ -3,6 +3,7 @@
  */
 #pragma once
 #include "Include/Framework/Graphics/Mesh.h"
+#include "Include/Framework/Graphics/ModelData.h"
 #include "Include/Framework/Graphics/PrimitiveMeshData.h"
 #include "Include/Framework/Core/IResourceManager.h"
 

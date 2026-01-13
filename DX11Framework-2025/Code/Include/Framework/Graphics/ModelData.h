@@ -12,6 +12,10 @@
 #include <assimp/matrix4x4.h>
 #include <assimp/color4.h>
 
+ // 前方宣言
+struct Material;
+namespace Graphics { class Mesh; }
+
 namespace Graphics::Import
 {
     /** @struct Vertex
@@ -112,5 +116,38 @@ namespace Graphics::Import
         std::vector<std::unique_ptr<TextureResource>> diffuseTextures{};    ///< テクスチャ配列
         std::unordered_map<std::string, Bone> boneDictionary{};             ///< ボーン辞書
 		Utils::TreeNode<BoneNode> boneTree{};                               ///< 名前+初期ローカル行列のボーン階層ツリー
+    };
+} // namespace Graphics::Import
+
+namespace Graphics
+{    
+    /** @brief モデルで使用するデータのエントリ
+    */
+    struct ModelEntry
+    {
+    public:
+        Graphics::Mesh* mesh = nullptr;
+        Material* material = nullptr;
+
+        void SetModelData(std::unique_ptr<Graphics::Import::ModelData> _modelData)
+        {
+            this->modelData = std::move(_modelData);
+        }
+
+        Graphics::Import::ModelData* GetModelData() const
+        {
+            return this->modelData.get();
+        }
+
+    private:
+        std::unique_ptr<Graphics::Import::ModelData> modelData = nullptr;
+    };
+
+    /** @brief モデル情報
+    */
+    struct ModelInfo
+    {
+        const std::string filename;     ///< モデルファイル名
+        const std::string textureDir;   ///< テクスチャディレクトリ
     };
 }

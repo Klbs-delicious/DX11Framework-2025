@@ -44,20 +44,29 @@ namespace Graphics::Import
 	{
 		if (!_node || !_tree) { return; }
 
-		// ノード名の設定
-		_tree->nodedata = _node->mName.length > 0 ? _node->mName.C_Str() : "(UnnamedNode)";
+		// ノードデータを作成
+		BoneNode node{};
+		node.name = (_node->mName.length > 0) ? _node->mName.C_Str() : "(UnnamedNode)";
+		node.localBind = _node->mTransformation;
 
-		// 子ノードの作成
+		_tree->nodedata = node;
+
 		for (unsigned int n = 0; n < _node->mNumChildren; n++)
 		{
+			// 子ノード取得
 			aiNode* child = _node->mChildren[n];
 			if (!child) { continue; }
 
-			auto childNode = std::make_unique<TreeNode_t>(
-				child->mName.length > 0 ? child->mName.C_Str() : "(UnnamedChild)");
+			// 子ノードデータを作成
+			BoneNode childData{};
+			childData.name = (child->mName.length > 0) ? child->mName.C_Str() : "(UnnamedChild)";
+			childData.localBind = child->mTransformation;
 
-			// 子ノードをツリーに追加
+			// 子ノードを作成して追加
+			auto childNode = std::make_unique<TreeNode_t>(childData);
 			_tree->Addchild(std::move(childNode));
+
+			// 再帰的に子ノードを作成
 			TreeNode_t* added = _tree->children.back().get();
 			CreateNodeTree(child, added);
 		}
@@ -69,14 +78,17 @@ namespace Graphics::Import
 	 */
 	void ModelImporter::CreateEmptyBoneDictionary(aiNode* _node, std::unordered_map<std::string, Bone>& _dict)
 	{
-		if (!_node) { return; }
+		if (!_node) return;
 
 		Bone bone{};
-		_dict[_node->mName.C_Str()] = bone;
+		bone.boneName = _node->mName.C_Str();
+		bone.localBind = _node->mTransformation;
 
-		for (unsigned int n = 0; n < _node->mNumChildren; n++)
+		_dict[bone.boneName] = bone;
+
+		for (unsigned int i = 0; i < _node->mNumChildren; i++)
 		{
-			CreateEmptyBoneDictionary(_node->mChildren[n], _dict);
+			CreateEmptyBoneDictionary(_node->mChildren[i], _dict);
 		}
 	}
 
@@ -202,9 +214,16 @@ namespace Graphics::Import
 		// 頂点にボーンデータを設定する
 		SetBoneDataToVertices(_model);
 
-		// ノードツリーを作成する
-		_model.boneTree = TreeNode<std::string>("Root");
+		// ノードツリーを作成
+		_model.boneTree = TreeNode_t{};
 		CreateNodeTree(_scene->mRootNode, &_model.boneTree);
+
+		// 初期グローバル行列を計算
+		BuildGlobalBindMatrices(
+			_model.boneTree,
+			aiMatrix4x4(),
+			_model.boneDictionary
+		);
 	}
 
 	/** @brief マテリアルとテクスチャを取得
@@ -282,6 +301,24 @@ namespace Graphics::Import
 		}
 	}
 
+	void ModelImporter::BuildGlobalBindMatrices(const Utils::TreeNode<BoneNode>& _node, const aiMatrix4x4& _parent, std::unordered_map<std::string, Bone>& _dict)
+	{
+		const BoneNode& data = _node.nodedata;
+
+		aiMatrix4x4 global = _parent * data.localBind;
+
+		auto it = _dict.find(data.name);
+		if (it != _dict.end())
+		{
+			it->second.globalBind = global;
+		}
+
+		for (const auto& child : _node.children)
+		{
+			BuildGlobalBindMatrices(*child, global, _dict);
+		}
+	}
+
 	/** @brief モデルファイルを読み込み ModelData に変換
 	 *  @param const std::string& _filename モデルファイルパス
 	 *  @param const std::string& _textureDir テクスチャディレクトリ
@@ -296,8 +333,7 @@ namespace Graphics::Import
 			_filename,
 			aiProcessPreset_TargetRealtime_MaxQuality |
 			aiProcess_ConvertToLeftHanded |
-			aiProcess_PopulateArmatureData |
-			aiProcess_PreTransformVertices
+			aiProcess_PopulateArmatureData 
 		);
 
 		if (!scene)

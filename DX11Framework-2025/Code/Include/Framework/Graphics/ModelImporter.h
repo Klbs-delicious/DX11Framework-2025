@@ -26,9 +26,9 @@ namespace Graphics::Import
 	 */
 	class ModelImporter
 	{
-		using TreeNode_t = Utils::TreeNode<std::string>;
-
 	public:
+		using TreeNode_t = Utils::TreeNode<BoneNode>;
+
 		/// @brief コンストラクタ
 		ModelImporter();
 
@@ -80,6 +80,8 @@ namespace Graphics::Import
 		 *  @param ModelData& _model モデルデータ
 		 */
 		void GetMaterialData(const aiScene* _scene, const std::string& _textureDir, ModelData& _model);
+
+		void BuildGlobalBindMatrices(const Utils::TreeNode<BoneNode>& _node, const aiMatrix4x4& _parent, std::unordered_map<std::string, Bone>& _dict);
 
 	private:
 		std::unique_ptr<TextureLoader> textureLoader;	///< テクスチャ読み込み

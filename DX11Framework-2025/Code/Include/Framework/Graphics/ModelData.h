@@ -72,6 +72,15 @@ namespace Graphics::Import
         int vertexIndex = -1;           ///< 頂点インデックス
     };
 
+    /** @struct BoneNode
+     *  @brief ボーンノード情報（名前・ローカル行列）
+	 */
+    struct BoneNode
+    {
+        std::string name = "";
+        aiMatrix4x4 localBind{};   ///< aiNode::mTransformation（初期ローカル行列）
+    };
+
     /** @struct Bone
      *  @brief ボーン情報（階層・オフセット・ウェイト）
      */
@@ -80,9 +89,13 @@ namespace Graphics::Import
         std::string boneName = "";      ///< ボーン名
         std::string meshName = "";      ///< メッシュ名
         std::string armatureName = "";  ///< アーマチュア名
-        aiMatrix4x4 matrix{};           ///< 親子関係を考慮した行列
-        aiMatrix4x4 animationMatrix{};  ///< 自分の事だけを考えた行列
-        aiMatrix4x4 offsetMatrix{};     ///< ボーンオフセット行列
+
+        aiMatrix4x4 localBind{};        ///< aiNode::mTransformation
+        aiMatrix4x4 globalBind{};       ///< 親から合成した初期行列
+
+        aiMatrix4x4 animationLocal{};   ///< アニメーションから来るローカル
+        aiMatrix4x4 offsetMatrix{};     ///< AssimpのOffset
+
         int index = -1;                 ///< 配列の何番目か
         std::vector<Weight> weights{};  ///< このボーンが影響を与える頂点情報
     };
@@ -98,6 +111,6 @@ namespace Graphics::Import
         std::vector<Material> materials{};                                  ///< マテリアル配列
         std::vector<std::unique_ptr<TextureResource>> diffuseTextures{};    ///< テクスチャ配列
         std::unordered_map<std::string, Bone> boneDictionary{};             ///< ボーン辞書
-        Utils::TreeNode<std::string> boneTree{};                            ///< ボーン階層ツリー
+		Utils::TreeNode<BoneNode> boneTree{};                               ///< 名前+初期ローカル行列のボーン階層ツリー
     };
 }

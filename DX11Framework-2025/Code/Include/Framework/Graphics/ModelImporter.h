@@ -86,4 +86,4 @@ namespace Graphics::Import
 	private:
 		std::unique_ptr<TextureLoader> textureLoader;	///< テクスチャ読み込み
 	};
-}
+}// namespace Graphics::Import

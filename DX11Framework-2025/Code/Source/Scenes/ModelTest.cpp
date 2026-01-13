@@ -30,8 +30,7 @@
 #include"Include/Framework/Graphics/MeshManager.h"
 #include"Include/Framework/Graphics/TextureFactory.h"
 #include"Include/Framework/Graphics/ModelManager.h"
-//#include"Include/Framework/Graphics/ModelImporter.h"
-//#include"Include/Framework/Shaders/ShaderManager.h"
+#include"Include/Framework/Graphics/AnimationImporter.h"
 
 #include"Include/Tests/TestMoveComponent.h"
 #include"Include/Tests/TimeScaleTestComponent.h"
@@ -100,4 +99,19 @@ void ModelTest::SetupObjects()
 	auto materialComp = player->AddComponent<MaterialComponent>();
 	materialComp->SetMaterial(modelData->material);
 	player->AddComponent<MeshRenderer>();
+
+	// アニメーションデータの取得テスト
+	Graphics::Import::AnimationClip walkClip;
+	Graphics::Import::AnimationImporter animImporter;
+	if (animImporter.Load("Assets/Animations/Wheelbarrow Walk Turn.fbx", walkClip))
+	{
+		std::cout << "[ModelTest] Animation Clip Loaded: " << walkClip.name << std::endl;
+		std::cout << " Duration (ticks): " << walkClip.durationTicks << std::endl;
+		std::cout << " Ticks Per Second: " << walkClip.ticksPerSecond << std::endl;
+		std::cout << " Number of Tracks: " << walkClip.tracks.size() << std::endl;
+	}
+	else
+	{
+		std::cerr << "[ModelTest] Failed to load animation clip." << std::endl;
+	}
 }

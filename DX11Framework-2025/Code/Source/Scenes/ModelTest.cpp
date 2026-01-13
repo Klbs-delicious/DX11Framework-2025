@@ -30,7 +30,7 @@
 #include"Include/Framework/Graphics/MeshManager.h"
 #include"Include/Framework/Graphics/TextureFactory.h"
 #include"Include/Framework/Graphics/ModelManager.h"
-#include"Include/Framework/Graphics/AnimationImporter.h"
+#include"Include/Framework/Graphics/AnimationClipManager.h"
 
 #include"Include/Tests/TestMoveComponent.h"
 #include"Include/Tests/TimeScaleTestComponent.h"
@@ -64,6 +64,7 @@ void ModelTest::SetupObjects()
 	auto& spriteManager = ResourceHub::Get<SpriteManager>();
 	auto& meshManager = ResourceHub::Get<MeshManager>();
 	auto& modelManager = ResourceHub::Get<ModelManager>();
+	auto& animationClipManager = ResourceHub::Get<AnimationClipManager>();
 
 	//--------------------------------------------------------------
 	// カメラの生成
@@ -101,14 +102,16 @@ void ModelTest::SetupObjects()
 	player->AddComponent<MeshRenderer>();
 
 	// アニメーションデータの取得テスト
-	Graphics::Import::AnimationClip walkClip;
-	Graphics::Import::AnimationImporter animImporter;
-	if (animImporter.Load("Assets/Animations/Wheelbarrow Walk Turn.fbx", walkClip))
+	animationClipManager.Register("Walk");
+	animationClipManager.Register("Run");
+	animationClipManager.Register("Jump");
+	auto clip = animationClipManager.Get("Run");
+	if (clip)
 	{
-		std::cout << "[ModelTest] Animation Clip Loaded: " << walkClip.name << std::endl;
-		std::cout << " Duration (ticks): " << walkClip.durationTicks << std::endl;
-		std::cout << " Ticks Per Second: " << walkClip.ticksPerSecond << std::endl;
-		std::cout << " Number of Tracks: " << walkClip.tracks.size() << std::endl;
+		std::cout << "[ModelTest] Animation Clip Loaded: " << clip->name << std::endl;
+		std::cout << " Duration (ticks): " << clip->durationTicks << std::endl;
+		std::cout << " Ticks Per Second: " << clip->ticksPerSecond << std::endl;
+		std::cout << " Number of Tracks: " << clip->tracks.size() << std::endl;
 	}
 	else
 	{

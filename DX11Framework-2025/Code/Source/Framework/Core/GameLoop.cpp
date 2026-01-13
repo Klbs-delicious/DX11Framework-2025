@@ -55,13 +55,18 @@ void GameLoop::Initialize()
 	this->modelManager = std::make_unique<ModelManager>();
 	ResourceHub::Register(this->modelManager.get());
 
+	// アニメーションクリップ管理
+    this->animationClipManager = std::make_unique<AnimationClipManager>();
+	ResourceHub::Register(this->animationClipManager.get());
+
 	// エンジンサービス構造体に参照を設定
     this->services = {
         &ResourceHub::Get<SpriteManager>(),
         &ResourceHub::Get<MaterialManager>(),
         &ResourceHub::Get<MeshManager>(),
         &ResourceHub::Get<ShaderManager>(),
-		&ResourceHub::Get<ModelManager>()
+		&ResourceHub::Get<ModelManager>(),
+		&ResourceHub::Get<AnimationClipManager>()
     };
 
     //--------------------------------------------------------------------------    
@@ -212,6 +217,12 @@ void GameLoop::Dispose()
     SystemLocator::Unregister<Framework::Physics::PhysicsSystem>();
     this->physicsSystem.reset();
 
+	ResourceHub::Unregister<AnimationClipManager>();
+	this->animationClipManager.reset();
+
+    ResourceHub::Unregister<ModelManager>();
+    this->modelManager.reset();
+
     ResourceHub::Unregister<MeshManager>();
     this->meshManager.reset();
     
@@ -223,7 +234,4 @@ void GameLoop::Dispose()
 
     ResourceHub::Unregister<SpriteManager>();
     this->spriteManager.reset();
-
-    ResourceHub::Unregister<ModelManager>();
-    this->modelManager.reset();
 }

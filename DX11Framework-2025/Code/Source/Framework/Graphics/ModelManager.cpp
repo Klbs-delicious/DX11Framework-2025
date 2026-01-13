@@ -37,6 +37,11 @@ ModelManager::ModelManager() : modelImporter()
 	this->defaultModel = nullptr;
 }
 
+ModelManager::~ModelManager()
+{
+	this->Clear();
+}
+
 ModelEntry* ModelManager::Register(const std::string& _key)
 {
 	// 既に登録済みならそれを返す

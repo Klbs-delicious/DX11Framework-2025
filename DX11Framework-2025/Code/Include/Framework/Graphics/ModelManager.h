@@ -52,7 +52,7 @@ class ModelManager : public IResourceManager<ModelEntry>
 {
 public:
     ModelManager();
-    ~ModelManager() override = default;
+    ~ModelManager() override;
 
     /** @brief モデルを登録
      *  @param _key 登録名

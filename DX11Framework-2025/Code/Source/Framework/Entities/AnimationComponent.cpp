@@ -322,6 +322,14 @@ void AnimationComponent::Initialize()
 		return;
 	}
 
+	if (boneCount > MaxBones)
+	{
+		std::cerr << "[Error] AnimationComponent::Initialize: boneCount(" << boneCount
+			<< ") exceeds MaxBones(" << MaxBones << ")." << std::endl;
+		this->isSkeletonCached = false;
+		return;
+	}
+
 	this->isSkeletonCached = true;
 
 	this->isPlaying = false;
@@ -392,22 +400,29 @@ void AnimationComponent::FixedUpdate(float _deltaTime)
 	if (!this->modelData) { return; }
 	if (!this->isSkeletonCached) { return; }
 
+	// 時間を進める
 	const double dt = static_cast<double>(_deltaTime) * static_cast<double>(this->playbackSpeed);
 	this->currentTime += dt;
 
+	// サンプリング時間を計算
 	const double tps = (this->currentClip->ticksPerSecond > 0.0) ? this->currentClip->ticksPerSecond : 30.0;
 	const double durationTicks = this->currentClip->durationTicks;
 	if (durationTicks <= 0.0) { return; }
 
+	// 一旦時間をループ
 	const double timeTicks = std::fmod(this->currentTime * tps, durationTicks);
 
+	// 各ノードの変換行列を計算
 	const size_t nodeCount = this->nodeNames.size();
 	if (nodeCount == 0) { return; }
 
+	// ローカル変換行列を計算
 	for (size_t i = 0; i < nodeCount; i++)
 	{
+		// ノード名を取得
 		const std::string& nodeName = this->nodeNames[i];
 
+		// バインドポーズをデフォルト値として使用
 		const aiVector3D fallbackT = this->bindTrs[i].t;
 		const aiVector3D fallbackS = this->bindTrs[i].s;
 		const aiQuaternion fallbackR = this->bindTrs[i].r;
@@ -416,6 +431,7 @@ void AnimationComponent::FixedUpdate(float _deltaTime)
 		aiQuaternion r = fallbackR;
 		aiVector3D s = fallbackS;
 
+		// アニメーショントラックがあればサンプリングを行う
 		auto trackIt = this->currentClip->tracks.find(nodeName);
 		if (trackIt != this->currentClip->tracks.end())
 		{
@@ -442,17 +458,24 @@ void AnimationComponent::FixedUpdate(float _deltaTime)
 		else
 		{
 			const XMMATRIX parentM = ToXmMatrix(this->globalPose[static_cast<size_t>(p)]);
-			this->globalPose[i] = ToDxMatrix(parentM * localM);
+			this->globalPose[i] = ToDxMatrix(localM * parentM);
 		}
 	}
 
+	// スキニング行列を計算
 	for (size_t i = 0; i < nodeCount; i++)
 	{
-		const XMMATRIX g = ToXmMatrix(this->globalPose[i]);
-		const XMMATRIX off = ToXmMatrix(this->offsetMatrices[i]);
-		const XMMATRIX rootInv = ToXmMatrix(this->inverseRootBind);
+		const XMMATRIX g = ToXmMatrix(this->globalPose[i]);				// 現在時刻のボーンのワールド行列
+		const XMMATRIX off = ToXmMatrix(this->offsetMatrices[i]);		// モデル空間 -> ボーン空間 に戻す
+		const XMMATRIX rootInv = ToXmMatrix(this->inverseRootBind);		// バインド時の変換を打ち消す
 
-		const XMMATRIX skin = rootInv * g * off;
+		//// 行ベクトル前提：skin = offset * global * inverseRoot
+		//const XMMATRIX skin = off * g * rootInv;
+
+		// 行ベクトル前提：skin = offset * global
+		// バインド姿勢の頂点 → 現在のボーン姿勢の頂点
+		const XMMATRIX skin = off * g;
+
 		this->skinMatrices[i] = ToDxMatrix(skin);
 	}
 

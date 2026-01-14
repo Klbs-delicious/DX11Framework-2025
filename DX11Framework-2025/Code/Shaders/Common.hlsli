@@ -64,8 +64,18 @@ cbuffer NormalMatrixBuffer : register(b6)
     float  normalPad; // 16バイトアラインメント用
 }
 
+// スキニング用定数バッファ
+cbuffer BoneBuffer : register(b7)
+{
+    float4x4 boneMatrices[256];
+    uint boneCount = 0;
+    uint4 _pad0 = 0;
+    uint4 _pad1 = 0;
+    uint4 _pad2 = 0;
+}
+
 //-----------------------------------------------------------------------------
-// モデル描画用構造体
+// 通常モデル描画用構造体
 //-----------------------------------------------------------------------------
 struct VS_IN_MODEL
 {
@@ -88,6 +98,18 @@ struct PS_IN_MODEL
     float3 worldPos : POSITION1;    // ワールド座標
     float3 normal : NORMAL;         // 法線
     float2 tex : TEXCOORD0;         // テクスチャ座標
+};
+
+// ----------------------------------------------------------------------------
+// スキニングモデル描画用構造体
+// ----------------------------------------------------------------------------
+struct VS_IN_SKINNED_MODEL
+{
+    float3 pos : POSITION;          // 頂点位置
+    float3 normal : NORMAL;         // 法線
+    float2 tex : TEXCOORD0;         // テクスチャ座標
+    uint4 boneIndex : INDICES;      // ボーンインデックス（未使用の場合は 0 が入る）
+    float4 boneWeight : WEIGHTS;    // ボーンウェイト
 };
 
 //-----------------------------------------------------------------------------

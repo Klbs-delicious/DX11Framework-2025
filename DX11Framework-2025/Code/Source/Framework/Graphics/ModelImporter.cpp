@@ -18,6 +18,110 @@
 #include <assimp/postprocess.h>
 
 //-----------------------------------------------------------------------------
+// Local Helpers
+//-----------------------------------------------------------------------------
+namespace
+{
+	/// @brief aiMatrix4x4 を行ベクトル運用向けに転置して返す
+	static aiMatrix4x4 ToRowVectorMatrix(const aiMatrix4x4& _m)
+	{
+		aiMatrix4x4 out = _m;
+		out.Transpose();
+		return out;
+	}
+
+	/** @brief 頂点にボーン影響を追加（上位4本を維持） 
+	 */
+	void AddInfluence(Graphics::Import::Vertex& _v, UINT _boneIndex, float _weight)
+	{
+		if (_weight <= 0.0f) { return; }
+
+		// 既に同じボーンが入っているなら加算
+		for (int i = 0; i < 4; i++)
+		{
+			if (_v.boneWeight[i] > 0.0f && _v.boneIndex[i] == _boneIndex)
+			{
+				_v.boneWeight[i] += _weight;
+				return;
+			}
+		}
+
+		// 空き（weight==0）へ入れる
+		for (int i = 0; i < 4; i++)
+		{
+			if (_v.boneWeight[i] <= 0.0f)
+			{
+				_v.boneIndex[i] = _boneIndex;
+				_v.boneWeight[i] = _weight;
+				return;
+			}
+		}
+
+		// 空き無し：最小ウェイトより大きい場合だけ差し替え
+		int minSlot = 0;
+		float minW = _v.boneWeight[0];
+		for (int i = 1; i < 4; i++)
+		{
+			if (_v.boneWeight[i] < minW)
+			{
+				minW = _v.boneWeight[i];
+				minSlot = i;
+			}
+		}
+
+		if (_weight > minW)
+		{
+			_v.boneIndex[minSlot] = _boneIndex;
+			_v.boneWeight[minSlot] = _weight;
+		}
+	}
+
+	/** @brief ウェイトを正規化し、boneCount を更新 
+	 */
+	void NormalizeInfluences(Graphics::Import::Vertex& _v)
+	{
+		float sum = 0.0f;
+		for (int i = 0; i < 4; i++)
+		{
+			if (_v.boneWeight[i] > 0.0f)
+			{
+				sum += _v.boneWeight[i];
+			}
+		}
+
+		if (sum > 0.0f)
+		{
+			const float inv = 1.0f / sum;
+
+			int count = 0;
+			for (int i = 0; i < 4; i++)
+			{
+				if (_v.boneWeight[i] > 0.0f)
+				{
+					_v.boneWeight[i] *= inv;
+					count++;
+				}
+				else
+				{
+					_v.boneWeight[i] = 0.0f;
+					_v.boneIndex[i] = 0; // 未使用
+				}
+			}
+			_v.boneCount = count;
+		}
+		else
+		{
+			_v.boneCount = 0;
+			for (int i = 0; i < 4; i++)
+			{
+				_v.boneIndex[i] = 0;
+				_v.boneWeight[i] = 0.0f;
+			}
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
 // Namespace : Graphics::Import
 //-----------------------------------------------------------------------------
 namespace Graphics::Import
@@ -36,53 +140,47 @@ namespace Graphics::Import
 		textureLoader.reset();
 	}
 
-	/** @brief ノード階層を再帰的に作成
-	 *  @param aiNode* _node 元ノード
-	 *  @param TreeNode_t* _tree 生成先ツリー
-	 */
+	//-----------------------------------------------------------------------------
+	// ModelImporter::CreateNodeTree（この関数だけ置き換え推奨）
+	//-----------------------------------------------------------------------------
+
 	void ModelImporter::CreateNodeTree(aiNode* _node, TreeNode_t* _tree)
 	{
 		if (!_node || !_tree) { return; }
 
-		// ノードデータを作成
 		BoneNode node{};
 		node.name = (_node->mName.length > 0) ? _node->mName.C_Str() : "(UnnamedNode)";
-		node.localBind = _node->mTransformation;
+		node.localBind = ToRowVectorMatrix(_node->mTransformation);
 
 		_tree->nodedata = node;
 
 		for (unsigned int n = 0; n < _node->mNumChildren; n++)
 		{
-			// 子ノード取得
 			aiNode* child = _node->mChildren[n];
 			if (!child) { continue; }
 
-			// 子ノードデータを作成
-			BoneNode childData{};
-			childData.name = (child->mName.length > 0) ? child->mName.C_Str() : "(UnnamedChild)";
-			childData.localBind = child->mTransformation;
-
-			// 子ノードを作成して追加
-			auto childNode = std::make_unique<TreeNode_t>(childData);
+			auto childNode = std::make_unique<TreeNode_t>();
 			_tree->Addchild(std::move(childNode));
 
-			// 再帰的に子ノードを作成
 			TreeNode_t* added = _tree->children.back().get();
 			CreateNodeTree(child, added);
 		}
 	}
 
-	/** @brief 空のボーン辞書を作成
-	 *  @param aiNode* _node 対象ノード
-	 *  @param std::unordered_map<std::string, Bone>& _dict ボーン辞書
-	 */
+	//-----------------------------------------------------------------------------
+	// ModelImporter::CreateEmptyBoneDictionary
+	//-----------------------------------------------------------------------------
+
 	void ModelImporter::CreateEmptyBoneDictionary(aiNode* _node, std::unordered_map<std::string, Bone>& _dict)
 	{
-		if (!_node) return;
+		if (!_node) { return; }
 
 		Bone bone{};
 		bone.boneName = _node->mName.C_Str();
-		bone.localBind = _node->mTransformation;
+		bone.localBind = ToRowVectorMatrix(_node->mTransformation);
+
+		bone.offsetMatrix = aiMatrix4x4();
+		bone.globalBind = aiMatrix4x4();
 
 		_dict[bone.boneName] = bone;
 
@@ -92,50 +190,19 @@ namespace Graphics::Import
 		}
 	}
 
-	/** @brief メッシュからボーン情報を取得
-	 *  @param const aiMesh* _mesh メッシュデータ
-	 *  @param std::unordered_map<std::string, Bone>& _dict ボーン辞書
-	 *  @return std::vector<Bone> 取得したボーン配列
-	 */
-	std::vector<Bone> ModelImporter::GetBonesPerMesh(const aiMesh* _mesh, std::unordered_map<std::string, Bone>& _dict)
-	{
-		std::vector<Bone> bones;
-
-		for (unsigned int bidx = 0; bidx < _mesh->mNumBones; bidx++)
-		{
-			Bone bone{};
-			bone.boneName = _mesh->mBones[bidx]->mName.C_Str();
-			bone.meshName = _mesh->mBones[bidx]->mNode->mName.C_Str();
-
-			if (_mesh->mBones[bidx]->mArmature)
-			{
-				bone.armatureName = _mesh->mBones[bidx]->mArmature->mName.C_Str();
-			}
-
-			bone.offsetMatrix = _mesh->mBones[bidx]->mOffsetMatrix;
-
-			for (unsigned int widx = 0; widx < _mesh->mBones[bidx]->mNumWeights; widx++)
-			{
-				Weight w{};
-				w.meshName = bone.meshName;
-				w.boneName = bone.boneName;
-				w.weight = _mesh->mBones[bidx]->mWeights[widx].mWeight;
-				w.vertexIndex = _mesh->mBones[bidx]->mWeights[widx].mVertexId;
-				bone.weights.emplace_back(w);
-			}
-
-			bones.emplace_back(bone);
-			_dict[bone.boneName].offsetMatrix = bone.offsetMatrix;
-		}
-
-		return bones;
-	}
-
-	/** @brief ボーンデータを頂点へ設定
-	 *  @param ModelData& _model 対象モデル
-	 */
+	//-----------------------------------------------------------------------------
+	// ModelImporter::SetBoneDataToVertices
+	//-----------------------------------------------------------------------------
 	void ModelImporter::SetBoneDataToVertices(ModelData& _model)
 	{
+		// メッシュ名 -> meshIndex（_model.vertices の添字）対応表を作る
+		std::unordered_map<std::string, int> meshNameToIndex;
+		meshNameToIndex.reserve(_model.subsets.size());
+		for (size_t i = 0; i < _model.subsets.size(); i++)
+		{
+			meshNameToIndex.emplace(_model.subsets[i].meshName, static_cast<int>(i));
+		}
+
 		// 頂点初期化
 		for (auto& meshVertices : _model.vertices)
 		{
@@ -144,38 +211,48 @@ namespace Graphics::Import
 				v.boneCount = 0;
 				for (int i = 0; i < 4; i++)
 				{
-					v.boneIndex[i] = -1;
+					v.boneIndex[i] = 0;
 					v.boneWeight[i] = 0.0f;
 					v.boneName[i].clear();
 				}
 			}
 		}
 
-		// 頂点反映
+		// 影響を一旦入れる（上位4本を維持しながら）
 		for (auto& [boneName, bone] : _model.boneDictionary)
 		{
-			int meshIndex = -1;
-			for (size_t i = 0; i < _model.subsets.size(); i++)
+			if (bone.index < 0) { continue; }
+
+			for (const auto& w : bone.weights)
 			{
-				if (_model.subsets[i].meshName == bone.meshName)
+				auto itMesh = meshNameToIndex.find(w.meshName);
+				if (itMesh == meshNameToIndex.end()) { continue; }
+
+				const int meshIndex = itMesh->second;
+				if (meshIndex < 0 || meshIndex >= static_cast<int>(_model.vertices.size())) { continue; }
+				if (w.vertexIndex < 0 || w.vertexIndex >= static_cast<int>(_model.vertices[meshIndex].size())) { continue; }
+
+				auto& v = _model.vertices[meshIndex][w.vertexIndex];
+
+				AddInfluence(v, static_cast<UINT>(bone.index), w.weight);
+
+				// デバッグ用途として boneName も入れておく（同じスロットに対応付けたい場合）
+				for (int i = 0; i < 4; i++)
 				{
-					meshIndex = static_cast<int>(i);
-					break;
+					if (v.boneIndex[i] == static_cast<UINT>(bone.index))
+					{
+						v.boneName[i] = boneName;
+					}
 				}
 			}
-			if (meshIndex < 0) { continue; }
+		}
 
-			for (auto& w : bone.weights)
+		// 正規化して boneCount を確定
+		for (auto& meshVertices : _model.vertices)
+		{
+			for (auto& v : meshVertices)
 			{
-				auto& v = _model.vertices[meshIndex][w.vertexIndex];
-				int& idx = v.boneCount;
-				if (idx < 4)
-				{
-					v.boneName[idx] = w.boneName;
-					v.boneWeight[idx] = w.weight;
-					v.boneIndex[idx] = bone.index;
-					idx++;
-				}
+				NormalizeInfluences(v);
 			}
 		}
 	}
@@ -205,7 +282,7 @@ namespace Graphics::Import
 	{
 		const BoneNode& data = _node.nodedata;
 
-		aiMatrix4x4 global = _parent * data.localBind;
+		aiMatrix4x4 global = data.localBind * _parent;
 
 		auto it = _dict.find(data.name);
 		if (it != _dict.end())
@@ -235,11 +312,13 @@ namespace Graphics::Import
 
 		CreateEmptyBoneDictionary(_scene->mRootNode, _model.boneDictionary);
 
-		// メッシュ側の bone 情報を辞書へ「追記」する（丸ごと代入で上書きしない）
+		// メッシュ側の bone 情報を辞書へ
 		for (unsigned int m = 0; m < _scene->mNumMeshes; m++)
 		{
 			const aiMesh* mesh = _scene->mMeshes[m];
 			if (!mesh) { continue; }
+
+			const std::string meshName = (mesh->mName.length > 0) ? mesh->mName.C_Str() : "";
 
 			for (unsigned int bidx = 0; bidx < mesh->mNumBones; bidx++)
 			{
@@ -251,34 +330,31 @@ namespace Graphics::Import
 				auto it = _model.boneDictionary.find(boneName);
 				if (it == _model.boneDictionary.end())
 				{
-					// 辞書に無い場合は追加（例外ケース、通常は CreateEmptyBoneDictionary に存在する想定）
 					Bone newBone{};
 					newBone.boneName = boneName;
 					_model.boneDictionary.emplace(boneName, newBone);
 					it = _model.boneDictionary.find(boneName);
 				}
-
 				Bone& dst = it->second;
 
-				// ここでは index を壊さない（後で tree から振る）
 				dst.boneName = boneName;
-				dst.offsetMatrix = aiBonePtr->mOffsetMatrix;
 
-				if (aiBonePtr->mNode)
-				{
-					dst.meshName = aiBonePtr->mNode->mName.C_Str();
-				}
+				// 転置処理
+				dst.offsetMatrix = aiBonePtr->mOffsetMatrix;
+				dst.offsetMatrix.Transpose();
+
+				// 頂点反映は Weight::meshName を使う
+				dst.meshName = meshName;
 
 				if (aiBonePtr->mArmature)
 				{
 					dst.armatureName = aiBonePtr->mArmature->mName.C_Str();
 				}
 
-				// weights は追記（必要なら dst.weights.clear() を入れて毎回作り直す）
 				for (unsigned int widx = 0; widx < aiBonePtr->mNumWeights; widx++)
 				{
 					Weight w{};
-					w.meshName = dst.meshName;
+					w.meshName = meshName;
 					w.boneName = dst.boneName;
 					w.weight = aiBonePtr->mWeights[widx].mWeight;
 					w.vertexIndex = aiBonePtr->mWeights[widx].mVertexId;

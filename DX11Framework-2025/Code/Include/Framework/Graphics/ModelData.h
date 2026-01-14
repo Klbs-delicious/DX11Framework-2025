@@ -31,10 +31,10 @@ namespace Graphics::Import
         int materialIndex = -1;             ///< マテリアルインデックス
         std::string materialName = "";      ///< マテリアル名
 
-        int boneIndex[4] = { -1, -1, -1, -1 };              ///< ボーンインデックス
-        float boneWeight[4] = { 0.0f, 0.0f, 0.0f, 0.0f };   ///< ボーンウェイト
-        std::string boneName[4] = { "", "", "", "" };       ///< ボーン名
-        int boneCount = 0;                                  ///< ボーン数
+        UINT boneIndex[4] = { 0, 0, 0, 0 };                 ///< ボーンインデックス（未使用は 0）
+        float boneWeight[4] = { 0.0f, 0.0f, 0.0f, 0.0f };    ///< ボーンウェイト（未使用は 0）
+        std::string boneName[4] = { "", "", "", "" };        ///< ボーン名（デバッグ用）
+        int boneCount = 0;                                   ///< 有効ボーン数
     };
 
     /** @struct Subset

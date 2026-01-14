@@ -56,13 +56,6 @@ namespace Graphics::Import
 		 */
 		void CreateEmptyBoneDictionary(aiNode* _node, std::unordered_map<std::string, Bone>& _boneDict);
 
-		/** @brief メッシュのボーン情報を取得
-		 *  @param const aiMesh* _mesh メッシュデータ
-		 *  @param std::unordered_map<std::string, Bone>& _boneDict ボーン辞書
-		 *  @return std::vector<Bone> ボーン配列
-		 */
-		std::vector<Bone> GetBonesPerMesh(const aiMesh* _mesh, std::unordered_map<std::string, Bone>& _boneDict);
-
 		/** @brief 頂点にボーンデータを設定
 		 *  @param ModelData& _model 対象モデル
 		 */

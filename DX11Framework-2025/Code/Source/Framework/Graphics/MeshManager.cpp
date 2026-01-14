@@ -171,7 +171,9 @@ std::unique_ptr<Graphics::Mesh> MeshManager::CreateFromModelData(
 {
     auto mesh = std::make_unique<Graphics::Mesh>();
 
-    // --- Subset 構築 ---
+	//-----------------------------------------------------------
+    // Subset 構築 
+	//-----------------------------------------------------------
     std::vector<Graphics::MeshSubset> subsets;
     subsets.reserve(_modelData.subsets.size());
 
@@ -187,10 +189,13 @@ std::unique_ptr<Graphics::Mesh> MeshManager::CreateFromModelData(
     }
     mesh->SetSubsets(std::move(subsets));
 
-    // --- 頂点／インデックス統合 ---
+    //-----------------------------------------------------------
+    // 頂点／インデックス統合
+	//-----------------------------------------------------------
     std::vector<Graphics::ModelVertexGPU> vertexData;
     std::vector<uint32_t> indexData;
 
+	// 必要なサイズを計算して確保する
     size_t totalVerts = 0, totalIdx = 0;
     for (size_t i = 0; i < _modelData.vertices.size(); ++i)
     {
@@ -200,21 +205,33 @@ std::unique_ptr<Graphics::Mesh> MeshManager::CreateFromModelData(
     vertexData.reserve(totalVerts);
     indexData.reserve(totalIdx);
 
+	// 各メッシュの頂点・インデックスを統合する
     uint32_t vertexOffset = 0;
     for (size_t meshIndex = 0; meshIndex < _modelData.vertices.size(); ++meshIndex)
     {
         const auto& verts = _modelData.vertices[meshIndex];
         const auto& idx = _modelData.indices[meshIndex];
 
+		// 頂点データを GPU 用に変換して格納する
         for (const auto& v : verts)
         {
+			// 頂点データを GPU 用に変換する
             Graphics::ModelVertexGPU gpu{};
             gpu.position = { v.pos.x, v.pos.y, v.pos.z };
             gpu.normal = { v.normal.x, v.normal.y, v.normal.z };
             gpu.texcoord = { v.texCoord.x, v.texCoord.y };
+
+            // スキニング情報を格納する（未使用は 0 / 0）
+            for (int k = 0; k < 4; k++)
+            {
+                gpu.boneIndex[k] = v.boneIndex[k];      // UINT -> UINT
+                gpu.boneWeight[k] = v.boneWeight[k];    // float -> float
+            }
+
             vertexData.push_back(gpu);
         }
 
+		// インデックスは頂点オフセットを加算して格納する
         for (const auto& i : idx)
         {
             indexData.push_back(i + vertexOffset);
@@ -223,7 +240,9 @@ std::unique_ptr<Graphics::Mesh> MeshManager::CreateFromModelData(
         vertexOffset += static_cast<uint32_t>(verts.size());
     }
 
-    // --- GPUバッファ生成 ---
+	//-----------------------------------------------------------
+    //  GPUバッファを生成する
+	//-----------------------------------------------------------
     auto device = this->d3d11System.GetDevice();
 
     auto vb = std::make_unique<VertexBuffer>();

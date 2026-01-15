@@ -101,6 +101,7 @@ public:
 	/** @brief デバッグ用：ボーン行列を転置してGPUへ送るか
 	 *  @details 行列の流儀（row-major/column-major）が合っていない場合の切り分け用
 	 */
+	// Row-vector CPU convention: keep this enabled to transpose before GPU upload.
 	void SetTransposeBoneMatricesOnUpload(bool _enable) { this->transposeBoneMatricesOnUpload = _enable; }
 
 	/// @brief 現在の設定を取得（デバッグ用）

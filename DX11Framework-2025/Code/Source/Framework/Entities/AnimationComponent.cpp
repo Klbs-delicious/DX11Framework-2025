@@ -31,10 +31,9 @@ namespace
 {
 	static DX::Matrix4x4 ToDxMatrix(const aiMatrix4x4& _m)
 	{
-		// Assimp aiMatrix4x4 is column-major style. Our engine/shaders operate in row-vector (mul(v, M)).
-		// Convert by transposing so that translation/rotation land in expected components.
-		aiMatrix4x4 mt = _m;
-		mt.Transpose();
+		// Assimp matrices are converted to row-vector layout at import time.
+		// Keep the values as-is to avoid double-transpose.
+		const aiMatrix4x4& mt = _m;
 
 		DX::Matrix4x4 out;
 		out._11 = mt.a1; out._12 = mt.a2; out._13 = mt.a3; out._14 = mt.a4;
@@ -184,7 +183,7 @@ AnimationComponent::AnimationComponent(GameObject* _owner, bool _isActive)
 	, currentTime(0.0)
 	, playbackSpeed(1.0f)
 	, isSkeletonCached(false)
-	, transposeBoneMatricesOnUpload(false)
+	, transposeBoneMatricesOnUpload(true)
 	, boneBuffer{}
 	, boneCB(nullptr)
 {

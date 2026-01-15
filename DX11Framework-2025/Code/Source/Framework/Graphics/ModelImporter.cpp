@@ -356,7 +356,8 @@ namespace Graphics::Import
 	{
 		const BoneNode& data = _node.nodedata;
 
-		aiMatrix4x4 global = data.localBind * _parent;
+		// Row-vector convention: global = parent * local
+		aiMatrix4x4 global = _parent * data.localBind;
 
 		auto it = _dict.find(data.name);
 		if (it != _dict.end())
@@ -413,10 +414,9 @@ namespace Graphics::Import
 
 				dst.boneName = boneName;
 
-				// オフセット行列（inverse bind）は Assimp の値をそのまま保持する。
-				// ここで転置すると、AnimationComponent 側の合成と食い違いスケール/せん断（引き伸ばし）が発生しやすい。
-				dst.offsetMatrix = aiBonePtr->mOffsetMatrix;
-				// dst.offsetMatrix.Transpose();
+				// オフセット行列（inverse bind）は row-vector 規約に合わせて転置して保持する。
+				// CPU 側は row-vectorで運用し、GPU 送信時に transpose する前提。
+				dst.offsetMatrix = ToRowVectorMatrix(aiBonePtr->mOffsetMatrix);
 
 				// 頂点反映は Weight::meshName を使う+
 				dst.meshName = meshName;

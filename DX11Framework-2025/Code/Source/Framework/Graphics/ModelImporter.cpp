@@ -8,6 +8,7 @@
 #include <cassert>
 #include <unordered_map>
 #include <memory>
+#include <optional>
 
  //-----------------------------------------------------------------------------
  // Assimp
@@ -118,6 +119,79 @@ namespace
 				_v.boneWeight[i] = 0.0f;
 			}
 		}
+	}
+
+	// ------------------------------------------------------------
+	// Debug helpers
+	// ------------------------------------------------------------
+	static void DebugDumpOneVertexInfluencesOnce(const Graphics::Import::ModelData& _model)
+	{
+		static bool s_dumped = false;
+		if (s_dumped) { return; }
+		s_dumped = true;
+
+		// 1頂点だけ（最初に見つかった頂点）を対象にする
+		size_t meshIndex = 0;
+		size_t vertexIndex = 0;
+		const Graphics::Import::Vertex* vtx = nullptr;
+
+		for (size_t mi = 0; mi < _model.vertices.size(); ++mi)
+		{
+			if (!_model.vertices[mi].empty())
+			{
+				meshIndex = mi;
+				vertexIndex = 0;
+				vtx = &_model.vertices[mi][0];
+				break;
+			}
+		}
+
+		if (!vtx)
+		{
+			std::cout << "[ModelImporter][Debug] vertices are empty.\n";
+			return;
+		}
+
+		// index -> boneName を引けるように逆引き辞書を作る
+		std::unordered_map<int, std::string> indexToName;
+		indexToName.reserve(_model.boneDictionary.size());
+		for (const auto& [name, bone] : _model.boneDictionary)
+		{
+			if (bone.index >= 0)
+			{
+				// 同じ index が複数名に割り当たっている場合もログで気づけるようにする
+				if (indexToName.find(bone.index) == indexToName.end())
+				{
+					indexToName.emplace(bone.index, name);
+				}
+			}
+		}
+
+		std::cout << "[ModelImporter][Debug] ---- One Vertex Bone Influence Dump ----\n";
+		std::cout << " meshIndex=" << meshIndex << " meshName='" << vtx->meshName << "' vertexIndex=" << vertexIndex << "\n";
+		std::cout << " boneCount=" << vtx->boneCount << "\n";
+
+		for (int i = 0; i < 4; ++i)
+		{
+			const int idx = static_cast<int>(vtx->boneIndex[i]);
+			const float w = vtx->boneWeight[i];
+
+			std::string resolvedName = "(unknown)";
+			auto it = indexToName.find(idx);
+			if (it != indexToName.end())
+			{
+				resolvedName = it->second;
+			}
+
+			std::cout
+				<< "  slot[" << i << "] index=" << idx
+				<< " weight=" << w
+				<< " resolvedBoneName='" << resolvedName << "'"
+				<< " vertexStoredBoneName='" << vtx->boneName[i] << "'\n";
+		}
+
+		std::cout << "[ModelImporter][Debug] -----------------------------------------\n";
+		std::cout << "[ModelImporter][Debug] Please confirm whether resolvedBoneName matches the intended body part.\n";
 	}
 }
 
@@ -339,11 +413,12 @@ namespace Graphics::Import
 
 				dst.boneName = boneName;
 
-				// 転置処理
+				// オフセット行列（inverse bind）は Assimp の値をそのまま保持する。
+				// ここで転置すると、AnimationComponent 側の合成と食い違いスケール/せん断（引き伸ばし）が発生しやすい。
 				dst.offsetMatrix = aiBonePtr->mOffsetMatrix;
-				dst.offsetMatrix.Transpose();
+				// dst.offsetMatrix.Transpose();
 
-				// 頂点反映は Weight::meshName を使う
+				// 頂点反映は Weight::meshName を使う+
 				dst.meshName = meshName;
 
 				if (aiBonePtr->mArmature)
@@ -370,9 +445,12 @@ namespace Graphics::Import
 		// 頂点へ index/weight を反映（index が確定してから）
 		SetBoneDataToVertices(_model);
 
+		// デバッグ: 1頂点分だけ boneIndex/boneWeight と対応ボーン名を出す（1回だけ）
+		DebugDumpOneVertexInfluencesOnce(_model);
+
 		// 初期グローバル行列（Bind姿勢の global）を計算
 		aiMatrix4x4 identity;
-		identity = aiMatrix4x4(); 
+		identity = aiMatrix4x4();
 		BuildGlobalBindMatrices(_model.boneTree, identity, _model.boneDictionary);
 	}
 

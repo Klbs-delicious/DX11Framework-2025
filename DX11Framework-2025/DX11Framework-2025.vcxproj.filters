@@ -310,9 +310,6 @@
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Code\Include\Framework\Physics\StagedTransform.h">
-      <Filter>ソース ファイル\Framework\Physics</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Physics\StagedTransform.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Code\Include\Framework\Physics\StagedTransform.h">
@@ -341,6 +338,30 @@
     </ClInclude>
     <ClInclude Include="Code\Include\Tests\TestCollisionHandler.h">
       <Filter>ソース ファイル\Test</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\AnimationComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\SkinnedMeshRenderer.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\AnimationClipManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\AnimationData.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\AnimationImporter.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\ModelManager.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Game\Entities\FogComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Scenes\ModelTest.h">
+      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -524,6 +545,27 @@
     <ClCompile Include="Code\Source\Tests\TestCollisionHandler.cpp">
       <Filter>ソース ファイル\Test</Filter>
     </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Entities\AnimationComponent.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Entities\SkinnedMeshRenderer.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\AnimationClipManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\AnimationImporter.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\ModelManager.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Game\Entities\FogComponent.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Scenes\ModelTest.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Code\Shaders\Common.hlsli">
@@ -554,6 +596,15 @@
     </FxCompile>
     <FxCompile Include="Code\Shaders\PixelShader\PS_DebugLine.hlsl">
       <Filter>リソース ファイル\PixelShader</Filter>
+    </FxCompile>
+    <FxCompile Include="Code\Shaders\VertexShader\VS_SkinnedModel.hlsl">
+      <Filter>リソース ファイル\VertexShader</Filter>
+    </FxCompile>
+    <FxCompile Include="Code\Shaders\PixelShader\PS_BackgroundFog.hlsl">
+      <Filter>リソース ファイル\PixelShader</Filter>
+    </FxCompile>
+    <FxCompile Include="Code\Shaders\VertexShader\VS_BackgroundFog3D.hlsl">
+      <Filter>リソース ファイル\VertexShader</Filter>
     </FxCompile>
   </ItemGroup>
 </Project>

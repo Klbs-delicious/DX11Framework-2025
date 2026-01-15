@@ -47,6 +47,7 @@
     <ClInclude Include="Code\Include\Framework\Entities\MeshRenderer.h" />
     <ClInclude Include="Code\Include\Framework\Entities\PhaseInterfaces.h" />
     <ClInclude Include="Code\Include\Framework\Entities\Rigidbody3D.h" />
+    <ClInclude Include="Code\Include\Framework\Entities\SkinnedMeshRenderer.h" />
     <ClInclude Include="Code\Include\Framework\Entities\SpriteComponent.h" />
     <ClInclude Include="Code\Include\Framework\Entities\SpriteRenderer.h" />
     <ClInclude Include="Code\Include\Framework\Entities\TestComponent.h" />
@@ -125,6 +126,7 @@
     <ClCompile Include="Code\Source\Framework\Entities\MeshComponent.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\MeshRenderer.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\Rigidbody3D.cpp" />
+    <ClCompile Include="Code\Source\Framework\Entities\SkinnedMeshRenderer.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\SpriteComponent.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\SpriteRenderer.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\TestRenderer.cpp" />

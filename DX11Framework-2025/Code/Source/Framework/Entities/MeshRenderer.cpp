@@ -114,8 +114,10 @@ void MeshRenderer::Draw()
 
 void MeshRenderer::Dispose()
 {
-	this->lightBuffer.reset();
+    this->lightBuffer.reset();
 
     this->materialComponent = nullptr;
     this->meshComponent = nullptr;
+    this->camera = nullptr;
+    this->transform = nullptr;
 }

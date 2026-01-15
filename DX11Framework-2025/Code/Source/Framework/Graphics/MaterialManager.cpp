@@ -31,6 +31,10 @@ MaterialManager::MaterialManager()
 	auto fog = this->Register("Fog");
 	fog->shaders = ResourceHub::Get<ShaderManager>().GetShaderProgram("Fog");
 	fog->blendStateType = BlendStateType::BS_ALPHABLEND;
+
+    // 疑似フォグ用
+    auto skinned = this->Register("SkinnedModel");
+    skinned->shaders = ResourceHub::Get<ShaderManager>().GetShaderProgram("SkinnedModel");
 }
 
 MaterialManager::~MaterialManager()

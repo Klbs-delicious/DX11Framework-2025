@@ -11,6 +11,7 @@
 
 //#include"Include/Framework/Entities/SpriteRenderer.h"
 #include"Include/Framework/Entities/MeshRenderer.h"
+#include"Include/Framework/Entities/SkinnedMeshRenderer.h"
 #include"Include/Framework/Entities/Camera2D.h"
 #include"Include/Framework/Entities/Camera3D.h"
 #include"Include/Framework/Entities/MeshComponent.h"
@@ -19,6 +20,7 @@
 #include"Include/Framework/Entities/Rigidbody3D.h"
 #include"Include/Framework/Entities/Collider3DComponent.h"
 #include"Include/Framework/Entities/ColliderDebugRenderer.h"
+#include"Include/Framework/Entities/AnimationComponent.h"
 
 #include"Include/Game/Entities/FollowCamera.h"
 #include"Include/Game/Entities/DebugFreeMoveComponent.h"
@@ -89,23 +91,30 @@ void ModelTest::SetupObjects()
 	//--------------------------------------------------------------
 	
 	// モデルデータの取得テスト
-	modelManager.Register("Player");
-	auto modelData = modelManager.Get("Player");
+	modelManager.Register("Woman");
+	auto modelData = modelManager.Get("Woman");
 
 	auto player = this->gameObjectManager.Instantiate("Player", GameTags::Tag::Player);
 	player->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 0.0f));
-	player->transform->SetLocalScale(DX::Vector3(0.001f, 0.001f, 0.001f));
+	player->transform->SetLocalScale(DX::Vector3(0.1, 0.1f, 0.1f));
 	auto meshComp = player->AddComponent<MeshComponent>();
 	meshComp->SetMesh(modelData->mesh);
 	auto materialComp = player->AddComponent<MaterialComponent>();
 	materialComp->SetMaterial(modelData->material);
-	player->AddComponent<MeshRenderer>();
+	//player->AddComponent<MeshRenderer>();
+	auto animComp = player->AddComponent<AnimationComponent>();
+	animComp->SetModelData(modelData->GetModelData());
+
+	// デバッグ: ボーン行列の row/column-major 不一致切り分け
+	// true で改善する場合は「GPUへ送る直前に転置が必要」な可能性が高い
+	animComp->SetTransposeBoneMatricesOnUpload(true);
 
 	// アニメーションデータの取得テスト
 	animationClipManager.Register("Walk");
 	animationClipManager.Register("Run");
 	animationClipManager.Register("Jump");
-	auto clip = animationClipManager.Get("Run");
+	animationClipManager.Register("Dance");
+	auto clip = animationClipManager.Get("Dance");
 	if (clip)
 	{
 		std::cout << "[ModelTest] Animation Clip Loaded: " << clip->name << std::endl;
@@ -117,4 +126,11 @@ void ModelTest::SetupObjects()
 	{
 		std::cerr << "[ModelTest] Failed to load animation clip." << std::endl;
 	}
+
+	animComp->SetAnimationClip(clip);
+	animComp->Play();
+	//animComp->SetTransposeBoneMatricesOnUpload(true);
+	//animComp->SetPlaybackSpeed(0.1f);
+
+	player->AddComponent<SkinnedMeshRenderer>();
 }

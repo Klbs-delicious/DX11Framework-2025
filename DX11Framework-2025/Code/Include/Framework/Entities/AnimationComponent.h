@@ -4,9 +4,9 @@
  */
 #pragma once
 
- //-----------------------------------------------------------------------------
- // Includes
- //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// Includes
+//-----------------------------------------------------------------------------
 #include "Include/Framework/Entities/Component.h"
 #include "Include/Framework/Entities/PhaseInterfaces.h"
 #include "Include/Framework/Entities/MeshComponent.h"
@@ -93,6 +93,19 @@ public:
 	 */
 	void SetCurrentTime(double _time) { this->currentTime = _time; }
 
+	/** @brief モデルデータを設定する
+	 *  @param _modelData モデルデータ
+	 */
+	void SetModelData(Graphics::Import::ModelData* _modelData);
+
+	/** @brief デバッグ用：ボーン行列を転置してGPUへ送るか
+	 *  @details 行列の流儀（row-major/column-major）が合っていない場合の切り分け用
+	 */
+	void SetTransposeBoneMatricesOnUpload(bool _enable) { this->transposeBoneMatricesOnUpload = _enable; }
+
+	/// @brief 現在の設定を取得（デバッグ用）
+	bool GetTransposeBoneMatricesOnUpload() const { return this->transposeBoneMatricesOnUpload; }
+
 private:
 	struct BindTRS
 	{
@@ -101,45 +114,64 @@ private:
 		aiVector3D s{ 1.0f, 1.0f, 1.0f };
 	};
 
-	Graphics::Import::AnimationClip* currentClip;	///< 現在のアニメーションクリップ
-	MeshComponent* meshComponent;	///< メッシュコンポーネント
-	Graphics::Import::ModelData* modelData;		///< モデルデータ
-
-	bool	isPlaying;		///< アニメーション再生中か
-	double	currentTime;	///< 現在のアニメーション時間（秒）
-	float	playbackSpeed;	///< 再生速度
-
-	bool isSkeletonCached = false;	///< スケルトンキャッシュ生成済みか
-
-	std::vector<std::string> nodeNames{};						///< index -> nodeName
-	std::unordered_map<std::string, int> nodeIndexMap{};		///< nodeName -> index
-	std::vector<int> parentIndex{};								///< index -> parentIndex（rootは-1）
-
-	DX::Matrix4x4 inverseRootBind = DX::Matrix4x4::Identity;	///< root globalBind の逆行列
-
-	std::vector<BindTRS> bindTrs{};								///< bind姿勢のTRS（fallback用）
-
-	std::vector<DX::Matrix4x4> localPose{};			///< 現在のローカル行列
-	std::vector<DX::Matrix4x4> globalPose{};		///< 現在グローバル行列
-	std::vector<DX::Matrix4x4> skinMatrices{};		///< GPU に渡す最終行列
-
-	std::vector<DX::Matrix4x4> localBindPose{};		///< モデルの初期ローカル姿勢
-	std::vector<DX::Matrix4x4> offsetMatrices{};	///< ボーンごとのオフセット行列
-
-	static constexpr size_t MaxBones = 256;
-
-	/** @struct BoneCBData
-	 *  @brief ボーン行列用定数バッファデータ構造
-	 */
+	// HLSL `Common.hlsli`:
+	// cbuffer BoneBuffer : register(b7)
+	// {
+	//     float4x4 boneMatrices[256];
+	//     uint boneCount;
+	//     uint4 _pad0;
+	//     uint4 _pad1;
+	//     uint4 _pad2;
+	// }
 	struct BoneBuffer
 	{
-		std::array<DX::Matrix4x4, MaxBones> skin{};	///< 最終スキン行列
-		UINT boneCount = 0;							///< 実ボーン数
-		UINT _pad0 = 0;
-		UINT _pad1 = 0;
-		UINT _pad2 = 0;
+		static constexpr size_t MaxBones = 256;
+		std::array<DX::Matrix4x4, MaxBones> boneMatrices{};
+		uint32_t boneCount = 0;
+		DX::Vector3 _pad0{ 0,0,0 }; // 16-byte alignment for `boneCount`
+		DX::Vector4 _pad1{ 0,0,0,0 };
+		DX::Vector4 _pad2{ 0,0,0,0 };
+		DX::Vector4 _pad3{ 0,0,0,0 };
 	};
 
-	std::unique_ptr<DynamicConstantBuffer<BoneBuffer>> skinningBuffer;	///< スキニング用定数バッファ
-	BoneBuffer boneBuffer{};											///< 定数バッファ用データ
+	// -----------------------------
+	// References
+	// -----------------------------
+	Graphics::Import::AnimationClip* currentClip = nullptr; ///< 現在のアニメーションクリップ
+	MeshComponent* meshComponent = nullptr;                ///< メッシュコンポーネント
+	Graphics::Import::ModelData* modelData = nullptr;      ///< 対象モデルデータ
+
+	// -----------------------------
+	// Playback
+	// -----------------------------
+	bool isPlaying = false;        ///< 再生中フラグ
+	double currentTime = 0.0;      ///< 現在の再生時間（秒）
+	float playbackSpeed = 1.0f;    ///< 再生速度
+
+	// -----------------------------
+	// Skeleton cache
+	// -----------------------------
+	bool isSkeletonCached = false; ///< スケルトンキャッシュ生成済みか
+	std::vector<std::string> nodeNames{};                 ///< index -> nodeName
+	std::unordered_map<std::string, int> nodeIndexMap{};  ///< nodeName -> nodeTreeIndex
+	std::vector<int> parentIndex{};                       ///< nodeTreeIndex -> parentIndex（rootは-1）
+	std::vector<int> boneIndexMap{};                      ///< nodeTreeIndex -> Bone::index（頂点boneIndexと一致させる）
+	DX::Matrix4x4 inverseRootBind = DX::Matrix4x4::Identity; ///< root globalBind の逆行列
+	std::vector<BindTRS> bindTrs{};                       ///< bind姿勢のTRS（fallback用）
+
+	// Current pose
+	std::vector<DX::Matrix4x4> localPose{};       ///< 現在のローカル行列
+	std::vector<DX::Matrix4x4> globalPose{};      ///< 現在グローバル行列
+	std::vector<DX::Matrix4x4> skinMatrices{};    ///< CPU計算した最終行列（デバッグ用）
+
+	// Bind data
+	std::vector<DX::Matrix4x4> localBindPose{};   ///< モデルの初期ローカル姿勢
+	std::vector<DX::Matrix4x4> offsetMatrices{};  ///< ボーンごとのオフセット行列
+
+	// -----------------------------
+	// GPU upload
+	// -----------------------------
+	bool transposeBoneMatricesOnUpload = false;   ///< デバッグ用スイッチ
+	BoneBuffer boneBuffer{};                     ///< CPU側の送信データ
+	std::unique_ptr<DynamicConstantBuffer<BoneBuffer>> boneCB; ///< GPU定数バッファ
 };

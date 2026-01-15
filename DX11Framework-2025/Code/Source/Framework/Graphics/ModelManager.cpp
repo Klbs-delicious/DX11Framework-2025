@@ -34,6 +34,11 @@ ModelManager::ModelManager() : modelImporter()
 		 Graphics::ModelInfo{ "Assets/Models/Stickman/source/stickman.fbx", "Assets/Models/Stickman/textures" }
 	 );
 
+	 this->modelInfoTable.emplace(
+		 "Woman",
+		 Graphics::ModelInfo{ "Assets/Models/Woman/woman.fbx", "Assets/Models/Woman" }
+	 );
+
 	this->defaultModel = nullptr;
 }
 

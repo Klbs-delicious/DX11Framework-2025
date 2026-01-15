@@ -44,6 +44,9 @@ ShaderManager::ShaderManager() :
 	this->PreRegisterShaderInfo("VS_Fog", ShaderInfo(ShaderType::VertexShader, L"VertexShader/VS_BackgroundFog3D", LayoutType::ModelBasic));
 	this->PreRegisterShaderInfo("PS_Fog", ShaderInfo(ShaderType::PixelShader, L"PixelShader/PS_BackgroundFog", LayoutType::ModelBasic));
 
+	// スキニング用
+	this->PreRegisterShaderInfo("VS_SkinnedModel", ShaderInfo(ShaderType::VertexShader, L"VertexShader/VS_SkinnedModel", LayoutType::Skinned));
+
 	// シェーダープログラムの登録
 	this->CreateShaderProgram("Default", { "TestVS","TestPS","","","" });
 	this->CreateShaderProgram("ModelTest", { "VS_TestModel","PS_TestModel","","","" });
@@ -51,6 +54,7 @@ ShaderManager::ShaderManager() :
 	this->CreateShaderProgram("ModelBasic", { "VS_Model","PS_Model","","","" });
 	this->CreateShaderProgram("DebugWireframe", { "VS_DebugLine","PS_DebugLine","","","" });
 	this->CreateShaderProgram("Fog", { "VS_Fog","PS_Fog","","","" });
+	this->CreateShaderProgram("SkinnedModel", { "VS_SkinnedModel","PS_Model","","","" });
 
 	// デフォルト設定のシェーダーリソースを登録
 	this->defaultShadersMap[ShaderType::VertexShader] = this->Get("TestVS");

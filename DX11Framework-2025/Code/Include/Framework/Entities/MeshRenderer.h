@@ -20,14 +20,6 @@
 #include <SimpleMath.h>
 #include <memory>
 
- // 簡易ライト設定
-struct LightBuffer
-{
-    DX::Vector3 lightDir;
-    float pad1;
-    DX::Vector4 baseColor;
-};
-
  /** @class	MeshRenderer
   *	 @brief	 静的メッシュ描画コンポーネント
   */
@@ -44,6 +36,14 @@ public:
     void Initialize() override;
     void Draw() override;
     void Dispose() override;
+
+    // 簡易ライト設定
+    struct LightBuffer
+    {
+        DX::Vector3 lightDir;
+        float pad1;
+        DX::Vector4 baseColor;
+    };
 
 private:
     Transform* transform = nullptr;

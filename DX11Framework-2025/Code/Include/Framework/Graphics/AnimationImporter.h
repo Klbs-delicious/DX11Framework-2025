@@ -32,18 +32,26 @@ namespace Graphics::Import
 		/// @brief デストラクタ
 		~AnimationImporter();
 
-		/** @brief アニメーションを読み込み AnimationClip に変換
-		 *  @param _filename アニメーションファイルパス
-		 *  @param _outClip 出力先アニメーションクリップ
+		/** @brief ファイルからアニメーションクリップを1つ読み込む
+		 *  @param _filename ファイルパス（アニメ入りFBXなど）
+		 *  @param _outClip 出力先
 		 *  @return 成功時 true
 		 */
-		bool Load(const std::string& _filename, AnimationClip& _outClip);
+		bool LoadSingleClip(const std::string& _filename, AnimationClip& _outClip) const;
+
+		/** @brief ファイルからアニメーションクリップを読み込む
+		 *  @param _filename ファイルパス（アニメ入りFBXなど）
+		 *  @param _outClips 出力先（複数アニメ対応）
+		 *  @return 成功時 true
+		 */
+		bool LoadClips(const std::string& _filename, std::vector<AnimationClip>& _outClips) const;
 
 	private:
-		/** @brief アニメーションクリップを読み込み
-		 *  @param _scene Assimpシーン
-		 *  @param _outClip 出力先アニメーションクリップ
+
+		/** @brief Assimp の aiAnimation から AnimationClip を構築する
+		 *  @param _anim Assimp アニメーション
+		 *  @return AnimationClip
 		 */
-		void ReadClip(const aiScene* _scene, AnimationClip& _outClip) const;
+		AnimationClip BuildClipFromAssimp(const aiAnimation* _anim) const;
 	};
 } // namespace Graphics::Import

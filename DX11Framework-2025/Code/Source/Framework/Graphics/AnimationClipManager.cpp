@@ -60,7 +60,7 @@ Graphics::Import::AnimationClip* AnimationClipManager::Register(const std::strin
 	auto clip = std::make_unique<Graphics::Import::AnimationClip>();
 
 	Graphics::Import::AnimationImporter importer;
-	if (!importer.Load(filename, *clip))
+	if (!importer.LoadSingleClip(filename, *clip))
 	{
 		std::cerr << "[Error] AnimationClipManager::Register: Import failed: " << _key
 			<< " (" << filename << ")" << std::endl;

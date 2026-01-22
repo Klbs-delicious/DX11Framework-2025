@@ -31,7 +31,7 @@ ModelManager::ModelManager() : modelImporter()
 	// モデル情報登録
 	 this->modelInfoTable.emplace(
 	     "Player",
-		 Graphics::ModelInfo{ "Assets/Models/Stickman/source/stickman.fbx", "Assets/Models/Stickman/textures" }
+		 Graphics::ModelInfo{ "Assets/Models/Stickman/source/Idle.fbx", "Assets/Models/Stickman/textures" }
 	 );
 
 	 this->modelInfoTable.emplace(

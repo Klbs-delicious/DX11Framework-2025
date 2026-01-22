@@ -2,8 +2,13 @@
  *  @date   2025/10/26
  */
 #pragma once
+
+ //-----------------------------------------------------------------------------
+ // Includes
+ //-----------------------------------------------------------------------------
 #include "Include/Framework/Graphics/TextureResource.h"
 #include "Include/Framework/Utils/TreeNode.h"
+#include "Include/Framework/Shaders/ShaderCommon.h"
 
 #include <string>
 #include <vector>
@@ -11,11 +16,20 @@
 #include <unordered_map>
 #include <assimp/matrix4x4.h>
 #include <assimp/color4.h>
+#include <assimp/vector3.h>
+#include <assimp/quaternion.h>
 
- // 前方宣言
+
+//-----------------------------------------------------------------------------
+// 前方宣言
+//-----------------------------------------------------------------------------
 struct Material;
 namespace Graphics { class Mesh; }
+namespace Graphics::Import { struct NodeTrack; }
 
+//-----------------------------------------------------------------------------
+// Namespace : Graphics::Import
+//-----------------------------------------------------------------------------
 namespace Graphics::Import
 {
     /** @struct Vertex
@@ -31,7 +45,7 @@ namespace Graphics::Import
         int materialIndex = -1;             ///< マテリアルインデックス
         std::string materialName = "";      ///< マテリアル名
 
-        UINT boneIndex[4] = { 0, 0, 0, 0 };                 ///< ボーンインデックス（未使用は 0）
+        UINT boneIndex[4] = { 0, 0, 0, 0 };                  ///< ボーンインデックス（未使用は 0）
         float boneWeight[4] = { 0.0f, 0.0f, 0.0f, 0.0f };    ///< ボーンウェイト（未使用は 0）
         std::string boneName[4] = { "", "", "", "" };        ///< ボーン名（デバッグ用）
         int boneCount = 0;                                   ///< 有効ボーン数
@@ -74,6 +88,16 @@ namespace Graphics::Import
         std::string meshName = "";      ///< メッシュ名
         float weight = 0.0f;            ///< ウェイト値
         int vertexIndex = -1;           ///< 頂点インデックス
+        int meshIndex = -1;             ///< Assimp のメッシュ順（m）
+    };
+
+    /** @brief 頂点へのボーン影響情報（一時保存用）
+     */
+    struct VertexInfluence
+    {
+        int boneIndex = -1;
+        float weight = 0.0f;
+        std::string boneName = "";
     };
 
     /** @struct BoneNode
@@ -114,9 +138,57 @@ namespace Graphics::Import
         std::vector<Subset> subsets{};                                      ///< サブセット配列
         std::vector<Material> materials{};                                  ///< マテリアル配列
         std::vector<std::unique_ptr<TextureResource>> diffuseTextures{};    ///< テクスチャ配列
-        std::unordered_map<std::string, Bone> boneDictionary{};             ///< ボーン辞書
-		Utils::TreeNode<BoneNode> boneTree{};                               ///< 名前+初期ローカル行列のボーン階層ツリー
+
+        std::unordered_map<std::string, Bone> boneDictionary{};             ///< ボーン辞書（スキニング用）
+		Utils::TreeNode<BoneNode> nodeTree{};                               ///< ノードツリー（骨格構造用）
     };
+
+    /** @struct SkeletonNodeCache
+     *  @brief スケルトンノードキャッシュ情報
+	 */
+    struct SkeletonNodeCache
+    {
+		std::string name = "";              ///< ノード名
+		int parentIndex = -1;               ///< 親ノードの index（親なしは -1）
+
+		DX::Matrix4x4 bindLocalMatrix;      ///< バインドローカル行列
+
+		const NodeTrack* nodeTrackRef = nullptr;    ///< ノードトラック参照（なしは nullptr）
+		int boneIndex = -1;                         ///< ボーンの index（なしは -1）
+    };
+
+    /** @struct SkeletonCache
+     *  @brief スケルトンキャッシュ情報（モデルが変わるまで固定）
+     */
+    struct SkeletonCache
+    {
+        std::vector<SkeletonNodeCache> nodes;       ///< ノード配列（不変）
+        std::vector<int> order;                     ///< 計算順（親が必ず先）
+        std::vector<DX::Matrix4x4> boneOffset;      ///< boneIndex ごとの OffsetMatrix（逆バインド）
+    };
+
+    /** @struct Pose
+     *  @brief ポーズ情報（毎フレーム更新）
+     */
+    struct Pose
+    {
+        std::vector<DX::Matrix4x4> localMatrices{};           ///< ローカル行列（ボーン数分）
+        std::vector<DX::Matrix4x4> globalMatrices{};          ///< グローバル行列（ボーン数分）
+        std::vector<DX::Matrix4x4> skinMatrices{};            ///< スキニング行列（ボーン数分）
+
+        std::array<DX::Matrix4x4, ShaderCommon::MaxBones> gpuBoneMatrices{};  ///< GPUへ詰める最終配列
+    };
+
+    /** @struct BindTRS
+     *  @brief バインド姿勢のTRS情報
+     */
+    struct BindTRS
+    {
+        aiVector3D translation = { 0.0f, 0.0f, 0.0f };
+        aiQuaternion rotation = { 0.0f, 0.0f, 0.0f, 1.0f };
+        aiVector3D scale = { 1.0f, 1.0f, 1.0f };
+    };
+
 } // namespace Graphics::Import
 
 namespace Graphics

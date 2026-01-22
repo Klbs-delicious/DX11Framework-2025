@@ -23,176 +23,149 @@
 //-----------------------------------------------------------------------------
 namespace
 {
-	/// @brief aiMatrix4x4 を行ベクトル運用向けに転置して返す
-	static aiMatrix4x4 ToRowVectorMatrix(const aiMatrix4x4& _m)
-	{
-		aiMatrix4x4 out = _m;
-		out.Transpose();
-		return out;
-	}
-
-	/** @brief 頂点にボーン影響を追加（上位4本を維持） 
+	/** @brief テクスチャパスを textureDir と結合
+	 *  @param _textureDir	テクスチャディレクトリ
+	 *  @param _texPath		テクスチャパス
+	 *  @return 結合されたテクスチャパス
 	 */
-	void AddInfluence(Graphics::Import::Vertex& _v, UINT _boneIndex, float _weight)
+	static std::string MakeTextureFullPath(const std::string& _textureDir, const std::string& _texPath)
 	{
-		if (_weight <= 0.0f) { return; }
-
-		// 既に同じボーンが入っているなら加算
-		for (int i = 0; i < 4; i++)
+		if (_texPath.empty())
 		{
-			if (_v.boneWeight[i] > 0.0f && _v.boneIndex[i] == _boneIndex)
-			{
-				_v.boneWeight[i] += _weight;
-				return;
-			}
+			// 空のテクスチャパスの場合
+			return "";
 		}
 
-		// 空き（weight==0）へ入れる
-		for (int i = 0; i < 4; i++)
+		if (_texPath.size() >= 2 && _texPath[1] == ':')
 		{
-			if (_v.boneWeight[i] <= 0.0f)
-			{
-				_v.boneIndex[i] = _boneIndex;
-				_v.boneWeight[i] = _weight;
-				return;
-			}
+			// すでに絶対パスっぽい場合
+			return _texPath;
 		}
 
-		// 空き無し：最小ウェイトより大きい場合だけ差し替え
-		int minSlot = 0;
-		float minW = _v.boneWeight[0];
-		for (int i = 1; i < 4; i++)
+		if (_textureDir.empty())
 		{
-			if (_v.boneWeight[i] < minW)
-			{
-				minW = _v.boneWeight[i];
-				minSlot = i;
-			}
+			// テクスチャディレクトリが空の場合
+			return _texPath;
 		}
 
-		if (_weight > minW)
+		const char last = _textureDir.back();
+		if (last == '/' || last == '\\')
 		{
-			_v.boneIndex[minSlot] = _boneIndex;
-			_v.boneWeight[minSlot] = _weight;
+			// テクスチャディレクトリの末尾が / または \ の場合
+			return _textureDir + _texPath;
 		}
+
+		// それ以外
+		return _textureDir + "/" + _texPath;
 	}
 
-	/** @brief ウェイトを正規化し、boneCount を更新 
+	/** @brief aiMaterial からマテリアル名を取得
+	 *  @param _mat aiMaterial
 	 */
-	void NormalizeInfluences(Graphics::Import::Vertex& _v)
+	static std::string GetMaterialName(const aiMaterial* _mat)
 	{
-		float sum = 0.0f;
-		for (int i = 0; i < 4; i++)
+		if (!_mat)
 		{
-			if (_v.boneWeight[i] > 0.0f)
-			{
-				sum += _v.boneWeight[i];
-			}
+			// null ポインタの場合
+			return "";
 		}
 
-		if (sum > 0.0f)
+		aiString name;
+		if (_mat->Get(AI_MATKEY_NAME, name) == AI_SUCCESS)
 		{
-			const float inv = 1.0f / sum;
-
-			int count = 0;
-			for (int i = 0; i < 4; i++)
-			{
-				if (_v.boneWeight[i] > 0.0f)
-				{
-					_v.boneWeight[i] *= inv;
-					count++;
-				}
-				else
-				{
-					_v.boneWeight[i] = 0.0f;
-					_v.boneIndex[i] = 0; // 未使用
-				}
-			}
-			_v.boneCount = count;
+			// 取得成功
+			return name.C_Str();
 		}
-		else
+
+		// 取得失敗
+		return "";
+	}
+
+	/** @brief aiMaterial から色を取得（失敗時は既定値維持）
+	 *  @param _mat		aiMaterial
+	 *  @param _key		キー
+	 *  @param _type	タイプ
+	 *  @param _index	インデックス
+	 *  @param _ioColor	出力先カラー
+	 */
+	static void TryGetColor(
+		const aiMaterial* _mat,
+		const char* _key,
+		unsigned int _type,
+		unsigned int _index,
+		aiColor4D& _ioColor)
+	{
+		if (!_mat) { return; }
+
+		// 色を取得
+		aiColor4D c;
+		if (aiGetMaterialColor(_mat, _key, _type, _index, &c) == AI_SUCCESS)
 		{
-			_v.boneCount = 0;
-			for (int i = 0; i < 4; i++)
-			{
-				_v.boneIndex[i] = 0;
-				_v.boneWeight[i] = 0.0f;
-			}
+			_ioColor = c;
 		}
 	}
 
-	// ------------------------------------------------------------
-	// Debug helpers
-	// ------------------------------------------------------------
-	static void DebugDumpOneVertexInfluencesOnce(const Graphics::Import::ModelData& _model)
+	/** @brief aiMaterial から色を取得（失敗時は既定値維持）
+	 *  @param _mat		aiMaterial
+	 *  @param _keyColor	色キー
+	 *  @param _ioColor	出力先カラー
+	 */
+	static void TryGetColor(const aiMaterial* _mat, const char* _keyColor, aiColor4D& _ioColor)
 	{
-		static bool s_dumped = false;
-		if (s_dumped) { return; }
-		s_dumped = true;
-
-		// 1頂点だけ（最初に見つかった頂点）を対象にする
-		size_t meshIndex = 0;
-		size_t vertexIndex = 0;
-		const Graphics::Import::Vertex* vtx = nullptr;
-
-		for (size_t mi = 0; mi < _model.vertices.size(); ++mi)
-		{
-			if (!_model.vertices[mi].empty())
-			{
-				meshIndex = mi;
-				vertexIndex = 0;
-				vtx = &_model.vertices[mi][0];
-				break;
-			}
-		}
-
-		if (!vtx)
-		{
-			std::cout << "[ModelImporter][Debug] vertices are empty.\n";
-			return;
-		}
-
-		// index -> boneName を引けるように逆引き辞書を作る
-		std::unordered_map<int, std::string> indexToName;
-		indexToName.reserve(_model.boneDictionary.size());
-		for (const auto& [name, bone] : _model.boneDictionary)
-		{
-			if (bone.index >= 0)
-			{
-				// 同じ index が複数名に割り当たっている場合もログで気づけるようにする
-				if (indexToName.find(bone.index) == indexToName.end())
-				{
-					indexToName.emplace(bone.index, name);
-				}
-			}
-		}
-
-		std::cout << "[ModelImporter][Debug] ---- One Vertex Bone Influence Dump ----\n";
-		std::cout << " meshIndex=" << meshIndex << " meshName='" << vtx->meshName << "' vertexIndex=" << vertexIndex << "\n";
-		std::cout << " boneCount=" << vtx->boneCount << "\n";
-
-		for (int i = 0; i < 4; ++i)
-		{
-			const int idx = static_cast<int>(vtx->boneIndex[i]);
-			const float w = vtx->boneWeight[i];
-
-			std::string resolvedName = "(unknown)";
-			auto it = indexToName.find(idx);
-			if (it != indexToName.end())
-			{
-				resolvedName = it->second;
-			}
-
-			std::cout
-				<< "  slot[" << i << "] index=" << idx
-				<< " weight=" << w
-				<< " resolvedBoneName='" << resolvedName << "'"
-				<< " vertexStoredBoneName='" << vtx->boneName[i] << "'\n";
-		}
-
-		std::cout << "[ModelImporter][Debug] -----------------------------------------\n";
-		std::cout << "[ModelImporter][Debug] Please confirm whether resolvedBoneName matches the intended body part.\n";
+		// aiGetMaterialColor は (key,type,index) が必要なのでラップする
+		::TryGetColor(_mat, _keyColor, 0, 0, _ioColor);
 	}
+
+	/** @brief aiMaterial から shininess を取得
+	 *  @param _mat			aiMaterial
+	 *  @param _ioShininess	出力先 shininess
+	 */
+	static void TryGetShininess(const aiMaterial* _mat, float& _ioShininess)
+	{
+		if (!_mat) { return; }
+
+		// shininess を取得
+		float s = 0.0f;
+		unsigned int max = 1;
+		if (aiGetMaterialFloatArray(_mat, AI_MATKEY_SHININESS, &s, &max) == AI_SUCCESS)
+		{
+			_ioShininess = s;
+		}
+	}
+
+	/** @brief Diffuse テクスチャパスを取得（最初の1枚）
+	 *  @param _mat aiMaterial
+	 */
+	static std::string GetDiffuseTexturePath(const aiMaterial* _mat)
+	{
+		if (!_mat) { return ""; }
+
+		if (_mat->GetTextureCount(aiTextureType_DIFFUSE) == 0)
+		{
+			// テクスチャが存在しない場合
+			return "";
+		}
+
+		aiString path;
+		if (_mat->GetTexture(aiTextureType_DIFFUSE, 0, &path) == AI_SUCCESS)
+		{
+			//	取得成功
+			return path.C_Str();
+		}
+
+		// 取得失敗
+		return "";
+	}
+
+	/** @struct VertexInfluence
+	 *  @brief 一時的に頂点ごとの影響（ボーンindexと重み）を保持する
+	 */
+	struct VertexInfluence
+	{
+		int boneIndex = -1;
+		float weight = 0.0f;
+		std::string boneName = "";
+	};
 }
 
 //-----------------------------------------------------------------------------
@@ -214,319 +187,537 @@ namespace Graphics::Import
 		textureLoader.reset();
 	}
 
-	//-----------------------------------------------------------------------------
-	// ModelImporter::CreateNodeTree（この関数だけ置き換え推奨）
-	//-----------------------------------------------------------------------------
-
-	void ModelImporter::CreateNodeTree(aiNode* _node, TreeNode_t* _tree)
+	//-------------------------------------------------------------
+	// Assimp シーンから Material / DiffuseTexture を構築する
+	//-------------------------------------------------------------
+	void ModelImporter::BuildMaterials(const aiScene* _scene, ModelData& _modelData, const std::string& _textureDir)const
 	{
-		if (!_node || !_tree) { return; }
+		assert(_scene != nullptr);
+		assert(textureLoader != nullptr);
 
-		BoneNode node{};
-		node.name = (_node->mName.length > 0) ? _node->mName.C_Str() : "(UnnamedNode)";
-		node.localBind = ToRowVectorMatrix(_node->mTransformation);
+		// マテリアル情報を構築
+		const unsigned int materialCount = _scene->mNumMaterials;
 
-		_tree->nodedata = node;
+		_modelData.materials.clear();
+		_modelData.diffuseTextures.clear();
+		_modelData.materials.resize(materialCount);
+		_modelData.diffuseTextures.resize(materialCount);
 
-		for (unsigned int n = 0; n < _node->mNumChildren; n++)
+		//-------------------------------------------------------------
+		// マテリアル情報を設定
+		//-------------------------------------------------------------
+		for (unsigned int i = 0; i < materialCount; i++)
 		{
-			aiNode* child = _node->mChildren[n];
-			if (!child) { continue; }
+			const aiMaterial* mat = _scene->mMaterials[i];
 
-			auto childNode = std::make_unique<TreeNode_t>();
-			_tree->Addchild(std::move(childNode));
+			Material out{};
+			out.materialName = GetMaterialName(mat);
 
-			TreeNode_t* added = _tree->children.back().get();
-			CreateNodeTree(child, added);
-		}
-	}
+			// 既定値
+			out.ambient = aiColor4D(0, 0, 0, 1);
+			out.diffuse = aiColor4D(1, 1, 1, 1);
+			out.specular = aiColor4D(1, 1, 1, 1);
+			out.emission = aiColor4D(0, 0, 0, 1);
+			out.shiness = 0.0f;
 
-	//-----------------------------------------------------------------------------
-	// ModelImporter::CreateEmptyBoneDictionary
-	//-----------------------------------------------------------------------------
+			// 各種色を取得
+			::TryGetColor(mat, AI_MATKEY_COLOR_AMBIENT, out.ambient);
+			::TryGetColor(mat, AI_MATKEY_COLOR_DIFFUSE, out.diffuse);
+			::TryGetColor(mat, AI_MATKEY_COLOR_SPECULAR, out.specular);
+			::TryGetColor(mat, AI_MATKEY_COLOR_EMISSIVE, out.emission);
+			::TryGetShininess(mat, out.shiness);
 
-	void ModelImporter::CreateEmptyBoneDictionary(aiNode* _node, std::unordered_map<std::string, Bone>& _dict)
-	{
-		if (!_node) { return; }
-
-		Bone bone{};
-		bone.boneName = _node->mName.C_Str();
-		bone.localBind = ToRowVectorMatrix(_node->mTransformation);
-
-		bone.offsetMatrix = aiMatrix4x4();
-		bone.globalBind = aiMatrix4x4();
-
-		_dict[bone.boneName] = bone;
-
-		for (unsigned int i = 0; i < _node->mNumChildren; i++)
-		{
-			CreateEmptyBoneDictionary(_node->mChildren[i], _dict);
-		}
-	}
-
-	//-----------------------------------------------------------------------------
-	// ModelImporter::SetBoneDataToVertices
-	//-----------------------------------------------------------------------------
-	void ModelImporter::SetBoneDataToVertices(ModelData& _model)
-	{
-		// メッシュ名 -> meshIndex（_model.vertices の添字）対応表を作る
-		std::unordered_map<std::string, int> meshNameToIndex;
-		meshNameToIndex.reserve(_model.subsets.size());
-		for (size_t i = 0; i < _model.subsets.size(); i++)
-		{
-			meshNameToIndex.emplace(_model.subsets[i].meshName, static_cast<int>(i));
-		}
-
-		// 頂点初期化
-		for (auto& meshVertices : _model.vertices)
-		{
-			for (auto& v : meshVertices)
+			//-------------------------------------------------------------
+			// Diffuse テクスチャ読み込み
+			//-------------------------------------------------------------
+			out.diffuseTextureName = GetDiffuseTexturePath(mat);
+			if (!out.diffuseTextureName.empty())
 			{
-				v.boneCount = 0;
-				for (int i = 0; i < 4; i++)
+				const std::string fullPath = MakeTextureFullPath(_textureDir, out.diffuseTextureName);
+
+				// 既存方針：メンバ変数の TextureLoader を使用する
+				_modelData.diffuseTextures[i] = textureLoader->FromFile(fullPath);
+			}
+			else
+			{
+				// テクスチャ無し
+				_modelData.diffuseTextures[i] = nullptr;
+			}
+
+			_modelData.materials[i] = std::move(out);
+		}
+	}
+
+
+	//-------------------------------------------------------------
+	// メッシュごとの頂点配列とインデックス配列を構築する
+	//-------------------------------------------------------------
+	void ModelImporter::BuildMeshBuffers(const aiScene* _scene, ModelData& _modelData)const
+	{
+		assert(_scene != nullptr);
+
+		// メッシュごとに頂点配列とインデックス配列を構築
+		const unsigned int meshCount = _scene->mNumMeshes;
+		_modelData.vertices.clear();
+		_modelData.indices.clear();
+		_modelData.vertices.resize(meshCount);
+		_modelData.indices.resize(meshCount);
+
+		for (unsigned int meshIndex = 0; meshIndex < meshCount; meshIndex++)
+		{
+			// メッシュ取得
+			const aiMesh* mesh = _scene->mMeshes[meshIndex];
+			if (!mesh)
+			{
+				continue;
+			}
+
+			// メッシュ情報取得
+			const std::string meshName = mesh->mName.C_Str();
+			const unsigned int vCount = mesh->mNumVertices;
+
+			// 頂点配列構築
+			auto& outVerts = _modelData.vertices[meshIndex];
+			outVerts.clear();
+			outVerts.resize(vCount);
+
+			// 頂点属性の有無を確認
+			const bool hasNormals = (mesh->mNormals != nullptr);
+			const bool hasColors0 = (mesh->mColors[0] != nullptr);
+			const bool hasTex0 = (mesh->mTextureCoords[0] != nullptr);
+
+			//-------------------------------------------------------------
+			// マテリアル情報設定
+			//-------------------------------------------------------------
+			const int materialIndex = static_cast<int>(mesh->mMaterialIndex);
+			std::string materialName = "";
+			if (materialIndex >= 0 && static_cast<size_t>(materialIndex) < _modelData.materials.size())
+			{
+				materialName = _modelData.materials[materialIndex].materialName;
+			}
+
+			//-------------------------------------------------------------
+			// 頂点情報設定
+			//-------------------------------------------------------------
+			for (unsigned int v = 0; v < vCount; v++)
+			{
+				Vertex vert{};
+				vert.meshName = meshName;
+
+				// 位置
+				vert.pos = mesh->mVertices[v];
+
+				// 法線
+				if (hasNormals)
 				{
-					v.boneIndex[i] = 0;
-					v.boneWeight[i] = 0.0f;
-					v.boneName[i].clear();
+					vert.normal = mesh->mNormals[v];
+				}
+				else
+				{
+					// 法線情報が無い場合は上向きに設定
+					vert.normal = aiVector3D(0.0f, 1.0f, 0.0f);
+				}
+
+				// 頂点カラー
+				if (hasColors0)
+				{
+					vert.color = mesh->mColors[0][v];
+				}
+				else
+				{
+					// 頂点カラー情報が無い場合は白に設定
+					vert.color = aiColor4D(1.0f, 1.0f, 1.0f, 1.0f);
+				}
+
+				// テクスチャ座標
+				if (hasTex0)
+				{
+					// テクスチャ座標は3Dベクトルで格納されているが、2Dテクスチャ座標として扱うためZ成分は0にする
+					const aiVector3D uvw = mesh->mTextureCoords[0][v];
+					vert.texCoord = aiVector3D(uvw.x, uvw.y, 0.0f);
+				}
+				else
+				{
+					// テクスチャ座標情報が無い場合は(0,0)に設定
+					vert.texCoord = aiVector3D(0.0f, 0.0f, 0.0f);
+				}
+
+				// マテリアル情報を設定
+				vert.materialIndex = materialIndex;
+				vert.materialName = materialName;
+
+				outVerts[v] = vert;
+			}
+
+			//-------------------------------------------------------------
+			// インデックス情報の設定
+			//-------------------------------------------------------------
+			auto& outIdx = _modelData.indices[meshIndex];
+			outIdx.clear();
+			outIdx.reserve(mesh->mNumFaces * 3);
+
+			for (unsigned int f = 0; f < mesh->mNumFaces; f++)
+			{
+				const aiFace& face = mesh->mFaces[f];
+
+				if (face.mNumIndices < 3)
+				{
+					// 3頂点未満のポリゴンは無視する
+					continue;
+				}
+
+				// 三角形としてインデックスを追加
+				outIdx.push_back(static_cast<unsigned int>(face.mIndices[0]));
+				outIdx.push_back(static_cast<unsigned int>(face.mIndices[1]));
+				outIdx.push_back(static_cast<unsigned int>(face.mIndices[2]));
+
+				if (face.mNumIndices == 4)
+				{
+					// 四角形ポリゴンの場合、2つ目の三角形も追加する
+					outIdx.push_back(static_cast<unsigned int>(face.mIndices[0]));
+					outIdx.push_back(static_cast<unsigned int>(face.mIndices[2]));
+					outIdx.push_back(static_cast<unsigned int>(face.mIndices[3]));
 				}
 			}
 		}
+	}
 
-		// 影響を一旦入れる（上位4本を維持しながら）
-		for (auto& [boneName, bone] : _model.boneDictionary)
+	//-------------------------------------------------------------
+	// メッシュ単位の Subset 情報を構築する
+	//-------------------------------------------------------------
+	void ModelImporter::BuildSubsets(const aiScene* _scene, ModelData& _modelData, bool _useUnifiedBuffers)const
+	{
+		assert(_scene != nullptr);
+
+		// サブセット情報を構築
+		_modelData.subsets.clear();
+		const unsigned int meshCount = _scene->mNumMeshes;
+		_modelData.subsets.reserve(meshCount);
+
+		//-------------------------------------------------------------
+		// サブセット情報の作成
+		//-------------------------------------------------------------
+		unsigned int vertexCursor = 0;
+		unsigned int indexCursor = 0;
+		for (unsigned int meshIndex = 0; meshIndex < meshCount; meshIndex++)
 		{
-			if (bone.index < 0) { continue; }
-
-			for (const auto& w : bone.weights)
+			const aiMesh* mesh = _scene->mMeshes[meshIndex];
+			if (!mesh)
 			{
-				auto itMesh = meshNameToIndex.find(w.meshName);
-				if (itMesh == meshNameToIndex.end()) { continue; }
+				continue;
+			}
 
-				const int meshIndex = itMesh->second;
-				if (meshIndex < 0 || meshIndex >= static_cast<int>(_model.vertices.size())) { continue; }
-				if (w.vertexIndex < 0 || w.vertexIndex >= static_cast<int>(_model.vertices[meshIndex].size())) { continue; }
+			// サブセット情報を構築
+			Subset subset{};
+			subset.meshName = mesh->mName.C_Str();
+			subset.materialIndex = static_cast<int>(mesh->mMaterialIndex);
 
-				auto& v = _model.vertices[meshIndex][w.vertexIndex];
+			// マテリアル名を設定
+			if (subset.materialIndex >= 0 && static_cast<size_t>(subset.materialIndex) < _modelData.materials.size())
+			{
+				subset.materialName = _modelData.materials[subset.materialIndex].materialName;
+			}
+			else
+			{
+				// マテリアル情報が無い場合は空文字列を設定する
+				subset.materialName = "";
+			}
 
-				AddInfluence(v, static_cast<UINT>(bone.index), w.weight);
+			// 頂点数・インデックス数を設定
+			if (meshIndex < _modelData.vertices.size())
+			{
+				subset.vertexNum = static_cast<unsigned int>(_modelData.vertices[meshIndex].size());
+			}
+			else
+			{
+				// メッシュ情報が無い場合は0を設定する
+				subset.vertexNum = 0;
+			}
 
-				// デバッグ用途として boneName も入れておく（同じスロットに対応付けたい場合）
+			// インデックス数を設定
+			if (meshIndex < _modelData.indices.size())
+			{
+				subset.indexNum = static_cast<unsigned int>(_modelData.indices[meshIndex].size());
+			}
+			else
+			{
+				// メッシュ情報が無い場合は0を設定する
+				subset.indexNum = 0;
+			}
+
+			// ベースインデックスを設定
+			if (_useUnifiedBuffers)
+			{
+				subset.vertexBase = vertexCursor;
+				subset.indexBase = indexCursor;
+
+				vertexCursor += subset.vertexNum;
+				indexCursor += subset.indexNum;
+			}
+			else
+			{
+				// メッシュごとのバッファを使用する場合は0を設定する
+				subset.vertexBase = 0;
+				subset.indexBase = 0;
+			}
+
+			_modelData.subsets.push_back(subset);
+		}
+	}
+
+	//-------------------------------------------------------------
+	// ボーン辞書（boneDictionary）と頂点の boneIndex/boneWeight を構築する
+	//-------------------------------------------------------------
+	void ModelImporter::BuildBonesAndSkinWeights(const aiScene* _scene, ModelData& _modelData)const
+	{
+		assert(_scene != nullptr);
+		const unsigned int meshCount = _scene->mNumMeshes;
+		_modelData.boneDictionary.clear();
+
+		//-------------------------------------------------------------
+		// 頂点のスキン情報を初期化（前のデータが残らないように）
+		//-------------------------------------------------------------
+		for (unsigned int m = 0; m < meshCount && m < _modelData.vertices.size(); m++)
+		{
+			for (auto& vtx : _modelData.vertices[m])
+			{
 				for (int i = 0; i < 4; i++)
 				{
-					if (v.boneIndex[i] == static_cast<UINT>(bone.index))
-					{
-						v.boneName[i] = boneName;
-					}
+					vtx.boneIndex[i] = 0;
+					vtx.boneWeight[i] = 0.0f;
+					vtx.boneName[i].clear();
 				}
+				vtx.boneCount = 0;
 			}
 		}
 
-		// 正規化して boneCount を確定
-		for (auto& meshVertices : _model.vertices)
-		{
-			for (auto& v : meshVertices)
-			{
-				NormalizeInfluences(v);
-			}
-		}
-	}
-
-	//-----------------------------------------------------------------------------
-	// Bone helper
-	//-----------------------------------------------------------------------------
-
-	void ModelImporter::AssignBoneIndicesFromTree(const Utils::TreeNode<BoneNode>& _node, unsigned int& _idx, std::unordered_map<std::string, Bone>& _dict)
-	{
-		const std::string& name = _node.nodedata.name;
-
-		auto it = _dict.find(name);
-		if (it != _dict.end())
-		{
-			it->second.index = static_cast<int>(_idx);
-			_idx++;
-		}
-
-		for (const auto& child : _node.children)
-		{
-			AssignBoneIndicesFromTree(*child, _idx, _dict);
-		}
-	}
-
-	void ModelImporter::BuildGlobalBindMatrices(const Utils::TreeNode<BoneNode>& _node, const aiMatrix4x4& _parent, std::unordered_map<std::string, Bone>& _dict)
-	{
-		const BoneNode& data = _node.nodedata;
-
-		aiMatrix4x4 global = data.localBind * _parent;
-
-		auto it = _dict.find(data.name);
-		if (it != _dict.end())
-		{
-			it->second.globalBind = global;
-		}
-
-		for (const auto& child : _node.children)
-		{
-			BuildGlobalBindMatrices(*child, global, _dict);
-		}
-	}
-
-	//-----------------------------------------------------------------------------
-	// GetBone
-	//-----------------------------------------------------------------------------
-
-	void ModelImporter::GetBone(const aiScene* _scene, ModelData& _model)
-	{
-		if (!_scene || !_scene->mRootNode) { return; }
-
-		// 辞書とツリーを先に作る（初期ローカル行列を確保する）
-		_model.boneDictionary.clear();
-
-		_model.boneTree = TreeNode_t{};
-		CreateNodeTree(_scene->mRootNode, &_model.boneTree);
-
-		CreateEmptyBoneDictionary(_scene->mRootNode, _model.boneDictionary);
-
-		// メッシュ側の bone 情報を辞書へ
-		for (unsigned int m = 0; m < _scene->mNumMeshes; m++)
+		//-------------------------------------------------------------
+		// 一時: meshごと、vertexごとに影響リストを貯める
+		//-------------------------------------------------------------
+		std::vector<std::vector<std::vector<VertexInfluence>>> influences;
+		influences.resize(meshCount);
+		for (unsigned int m = 0; m < meshCount; m++)
 		{
 			const aiMesh* mesh = _scene->mMeshes[m];
-			if (!mesh) { continue; }
-
-			const std::string meshName = (mesh->mName.length > 0) ? mesh->mName.C_Str() : "";
-
-			for (unsigned int bidx = 0; bidx < mesh->mNumBones; bidx++)
+			if (!mesh)
 			{
-				const aiBone* aiBonePtr = mesh->mBones[bidx];
-				if (!aiBonePtr) { continue; }
+				continue;
+			}
 
+			// メッシュの頂点数に合わせてリストを確保する
+			const size_t vCount = (m < _modelData.vertices.size()) ? _modelData.vertices[m].size() : 0;
+			influences[m].resize(vCount);
+		}
+
+		//-------------------------------------------------------------
+		// ボーン収集 & 影響リストを作成
+		//-------------------------------------------------------------
+		int nextBoneIndex = 0;
+		for (unsigned int m = 0; m < meshCount; m++)
+		{
+			const aiMesh* mesh = _scene->mMeshes[m];
+			if (!mesh)
+			{
+				continue;
+			}
+
+			const std::string meshName = mesh->mName.C_Str();
+
+			// このメッシュの頂点数と ModelData 側が一致している前提で処理を行う
+			if (m >= _modelData.vertices.size())
+			{
+				continue;
+			}
+
+			for (unsigned int b = 0; b < mesh->mNumBones; b++)
+			{
+				// ボーンを取得
+				const aiBone* aiBonePtr = mesh->mBones[b];
+				if (!aiBonePtr)
+				{
+					continue;
+				}
+
+				// ボーン名を取得
 				const std::string boneName = aiBonePtr->mName.C_Str();
 
-				auto it = _model.boneDictionary.find(boneName);
-				if (it == _model.boneDictionary.end())
+				// ボーン辞書に登録
+				auto it = _modelData.boneDictionary.find(boneName);
+				if (it == _modelData.boneDictionary.end())
 				{
-					Bone newBone{};
-					newBone.boneName = boneName;
-					_model.boneDictionary.emplace(boneName, newBone);
-					it = _model.boneDictionary.find(boneName);
+					Bone bone{};
+					bone.boneName = boneName;
+					bone.meshName = meshName;
+					bone.armatureName = "";
+
+					// ここは nodeTree 構築時に埋める想定
+					bone.localBind = aiMatrix4x4();
+					bone.globalBind = aiMatrix4x4();
+
+					bone.animationLocal = aiMatrix4x4(); // 毎フレーム更新される想定
+					bone.offsetMatrix = aiBonePtr->mOffsetMatrix;
+
+					bone.index = nextBoneIndex;
+					nextBoneIndex++;
+
+					// 辞書に登録する
+					auto inserted = _modelData.boneDictionary.emplace(boneName, std::move(bone));
+					it = inserted.first;
 				}
-				Bone& dst = it->second;
-
-				dst.boneName = boneName;
-
-				// オフセット行列（inverse bind）は Assimp の値をそのまま保持する。
-				// ここで転置すると、AnimationComponent 側の合成と食い違いスケール/せん断（引き伸ばし）が発生しやすい。
-				dst.offsetMatrix = aiBonePtr->mOffsetMatrix;
-				// dst.offsetMatrix.Transpose();
-
-				// 頂点反映は Weight::meshName を使う+
-				dst.meshName = meshName;
-
-				if (aiBonePtr->mArmature)
+				else
 				{
-					dst.armatureName = aiBonePtr->mArmature->mName.C_Str();
+					// 既にある場合でも、このメッシュ名を上書きしたくないなら何もしない
+					// it->second.meshName は最初に見つけた meshName のままになる
 				}
 
-				for (unsigned int widx = 0; widx < aiBonePtr->mNumWeights; widx++)
+				//-------------------------------------------------------------
+				// ウェイト収集 & 影響リストへ追加
+				//-------------------------------------------------------------
+				Bone& bone = it->second;
+				for (unsigned int w = 0; w < aiBonePtr->mNumWeights; w++)
 				{
-					Weight w{};
-					w.meshName = meshName;
-					w.boneName = dst.boneName;
-					w.weight = aiBonePtr->mWeights[widx].mWeight;
-					w.vertexIndex = aiBonePtr->mWeights[widx].mVertexId;
-					dst.weights.emplace_back(w);
+					const aiVertexWeight& vw = aiBonePtr->mWeights[w];
+
+					// 頂点ID と 重み を取得
+					const int vertexIndex = static_cast<int>(vw.mVertexId);
+					const float weight = static_cast<float>(vw.mWeight);
+					if (weight <= 0.0f)
+					{
+						// 重み0以下は無視する
+						continue;
+					}
+					if (vertexIndex < 0 || static_cast<size_t>(vertexIndex) >= _modelData.vertices[m].size())
+					{
+						// 頂点インデックスが範囲外なら無視する
+						continue;
+					}
+
+					// ボーンのウェイトリストへ追加
+					Weight outW{};
+					outW.boneName = boneName;
+					outW.meshName = meshName;
+					outW.weight = weight;
+					outW.vertexIndex = vertexIndex;
+					outW.meshIndex = static_cast<int>(m);
+					bone.weights.push_back(outW);
+
+					// 影響リストへ追加
+					VertexInfluence inf{};
+					inf.boneIndex = bone.index;
+					inf.weight = weight;
+					inf.boneName = boneName;
+
+					// メッシュmの頂点vertexIndexに対する影響リストへ追加
+					influences[m][static_cast<size_t>(vertexIndex)].push_back(std::move(inf));
 				}
 			}
 		}
 
-		// boneTree を走査して index を安定順で振る
-		unsigned int idx = 0;
-		AssignBoneIndicesFromTree(_model.boneTree, idx, _model.boneDictionary);
+		//-------------------------------------------------------------
+		// 各頂点の影響を「最大4本」に落として正規化して書き込む
+		//-------------------------------------------------------------
+		for (unsigned int m = 0; m < meshCount && m < _modelData.vertices.size(); m++)
+		{
+			// メッシュの頂点配列を取得
+			auto& meshVerts = _modelData.vertices[m];
+			for (size_t v = 0; v < meshVerts.size(); v++)
+			{
+				auto& list = influences[m][v];
+				if (list.empty())
+				{
+					// 影響が無い頂点はスキップ
+					continue;
+				}
 
-		// 頂点へ index/weight を反映（index が確定してから）
-		SetBoneDataToVertices(_model);
+				// 重み降順で上位4本まで採用する
+				std::sort(
+					list.begin(),
+					list.end(),
+					[](const VertexInfluence& a, const VertexInfluence& b)
+					{
+						return a.weight > b.weight;
+					});
+				const size_t count = std::min<size_t>(4, list.size());
 
-		// デバッグ: 1頂点分だけ boneIndex/boneWeight と対応ボーン名を出す（1回だけ）
-		DebugDumpOneVertexInfluencesOnce(_model);
+				// 合計を計算
+				float sum = 0.0f;
+				for (size_t i = 0; i < count; i++)
+				{
+					sum += list[i].weight;
+				}
 
-		// 初期グローバル行列（Bind姿勢の global）を計算
-		aiMatrix4x4 identity;
-		identity = aiMatrix4x4();
-		BuildGlobalBindMatrices(_model.boneTree, identity, _model.boneDictionary);
+				if (sum <= 0.0f)
+				{
+					// 合計が0以下は無視する
+					continue;
+				}
+
+				//-------------------------------------------------------------
+				// 頂点データへ書き込み
+				//-------------------------------------------------------------
+				Vertex& outV = meshVerts[v];
+				for (size_t i = 0; i < count; i++)
+				{
+					// ボーンインデックスと正規化した重みを設定する
+					outV.boneIndex[i] = static_cast<UINT>(list[i].boneIndex);
+					outV.boneWeight[i] = list[i].weight / sum;
+
+					// デバッグ用：採用した上位4本だけ入れる
+					outV.boneName[i] = list[i].boneName;
+				}
+
+				// 有効ボーン数を設定する
+				outV.boneCount = static_cast<int>(count);
+			}
+		}
 	}
 
-	/** @brief マテリアルとテクスチャを取得
-	 *  @param const aiScene* _scene Assimpシーン
-	 *  @param const std::string& _textureDir テクスチャディレクトリ
-	 *  @param ModelData& _model モデルデータ
-	 */
-	void ModelImporter::GetMaterialData(const aiScene* _scene, const std::string& _textureDir, ModelData& _model)
+	//-------------------------------------------------------------
+	// ノードツリーを再帰的に構築する
+	//-------------------------------------------------------------
+	void ModelImporter::BuildNodeTreeRecursive(const aiNode* _aiNode, TreeNode<BoneNode>& _outNode)const
 	{
-		if (!_scene) return;
+		assert(_aiNode != nullptr);
 
-		// マテリアルとテクスチャの初期化
-		_model.materials.clear();
-		_model.diffuseTextures.resize(_scene->mNumMaterials);
+		//　現在のノードを作成
+		_outNode.nodedata.name = _aiNode->mName.C_Str();
+		_outNode.nodedata.localBind = _aiNode->mTransformation;
 
-		// マテリアルごとに情報を取得
-		for (unsigned int m = 0; m < _scene->mNumMaterials; m++)
+		// 子ノード配列を初期化
+		_outNode.children.clear();
+
+		// 子ノードを再帰的に追加
+		for (unsigned int i = 0; i < _aiNode->mNumChildren; i++)
 		{
-			aiMaterial* material = _scene->mMaterials[m];
-
-			Material mat{};
-			mat.materialName = material->GetName().C_Str();
-
-			aiColor4D ambient{}, diffuse{}, specular{}, emission{};
-			float shiness = 0.0f;
-
-			aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient);
-			aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse);
-			aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular);
-			aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &emission);
-			aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shiness);
-
-			mat.ambient = ambient;
-			mat.diffuse = diffuse;
-			mat.specular = specular;
-			mat.emission = emission;
-			mat.shiness = shiness;
-
-			std::vector<std::string> texPaths{};
-
-			// ディフューズテクスチャの取得
-			for (unsigned int t = 0; t < material->GetTextureCount(aiTextureType_DIFFUSE); t++)
+			const aiNode* child = _aiNode->mChildren[i];
+			if (!child)
 			{
-				aiString path;
-				if (AI_SUCCESS == material->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, t), path))
-				{
-					std::string texPath = path.C_Str();
-					texPaths.push_back(texPath);
-
-					// テクスチャの読み込み
-					if (auto tex = _scene->GetEmbeddedTexture(path.C_Str()))
-					{
-						auto texture = textureLoader->FromMemory(
-							(unsigned char*)tex->pcData,
-							tex->mWidth
-						);
-						if (texture) _model.diffuseTextures[m] = std::move(texture);
-					}
-					// ファイルから読み込み
-					else
-					{
-						std::string fullPath = _textureDir + "/" + texPath;
-						std::cout << fullPath.c_str() << "\n";
-
-						auto texture = textureLoader->FromFile(fullPath);
-						if (texture)
-							_model.diffuseTextures[m] = std::move(texture);
-					}
-				}
+				// 無効な子ノードは無視する
+				continue;
 			}
 
-			// マテリアルにテクスチャ名を設定する
-			mat.diffuseTextureName = texPaths.empty() ? "" : texPaths[0];
-			_model.materials.push_back(mat);
+			// 子ノードを作成
+			auto childNode = std::make_unique<TreeNode<BoneNode>>();
+
+			// 再帰的に子ノードを構築して追加していく
+			BuildNodeTreeRecursive(child, *childNode);
+
+			// 親子関係を設定して追加する
+			_outNode.Addchild(std::move(childNode));
 		}
+	}
+
+	//-------------------------------------------------------------
+	// ノードツリーを構築して ModelData に格納する
+	//-------------------------------------------------------------
+	void ModelImporter::BuildNodeTree(const aiScene* _scene, ModelData& _modelData)const
+	{
+		assert(_scene != nullptr);
+		assert(_scene->mRootNode != nullptr);
+
+		// ルートからツリーを構築する
+		_modelData.nodeTree = TreeNode<BoneNode>();
+		BuildNodeTreeRecursive(_scene->mRootNode, _modelData.nodeTree);
 	}
 
 	/** @brief モデルファイルを読み込み ModelData に変換
@@ -537,13 +728,15 @@ namespace Graphics::Import
 	 */
 	bool ModelImporter::Load(const std::string& _filename, const std::string& _textureDir, ModelData& _model)
 	{
-		// モデルファイルの読み込み
+		//-----------------------------------------------------------------------------
+		// Assimpでモデルを読み込む
+		//-----------------------------------------------------------------------------
 		Assimp::Importer importer;
 		const aiScene* scene = importer.ReadFile(
 			_filename,
 			aiProcessPreset_TargetRealtime_MaxQuality |
 			aiProcess_ConvertToLeftHanded |
-			aiProcess_PopulateArmatureData 
+			aiProcess_PopulateArmatureData
 		);
 
 		if (!scene)
@@ -552,7 +745,9 @@ namespace Graphics::Import
 			return false;
 		}
 
-		// モデルデータの初期化
+		//-----------------------------------------------------------------------------
+		// モデルデータ初期化
+		//-----------------------------------------------------------------------------
 		_model.vertices.clear();
 		_model.indices.clear();
 		_model.materials.clear();
@@ -560,87 +755,30 @@ namespace Graphics::Import
 		_model.subsets.clear();
 		_model.boneDictionary.clear();
 
-		// マテリアルとテクスチャの取得
-		GetMaterialData(scene, _textureDir, _model);
+		//-----------------------------------------------------------------------------
+		// マテリアルとテクスチャを作成
+		//-----------------------------------------------------------------------------
+		BuildMaterials(scene, _model, _textureDir);
 
-		// メッシュデータの取得
-		_model.vertices.resize(scene->mNumMeshes);
-		_model.indices.resize(scene->mNumMeshes);
-		_model.subsets.resize(scene->mNumMeshes);
+		//-----------------------------------------------------------------------------
+		// メッシュデータを作成
+		//-----------------------------------------------------------------------------
+		BuildMeshBuffers(scene, _model);
 
-		unsigned int globalVertexBase = 0;
-		unsigned int globalIndexBase = 0;
+		//-----------------------------------------------------------------------------
+		// サブセットを作成
+		//-----------------------------------------------------------------------------
+		BuildSubsets(scene, _model, false);
 
-		// メッシュごとに頂点・インデックス・サブセット情報を取得する
-		for (unsigned int m = 0; m < scene->mNumMeshes; m++)
-		{
-			aiMesh* mesh = scene->mMeshes[m];
-			std::string meshName = mesh->mName.C_Str();
+		//-----------------------------------------------------------------------------
+		// スキニング情報を読み込む
+		//-----------------------------------------------------------------------------
+		BuildBonesAndSkinWeights(scene, _model);
 
-			for (unsigned int v = 0; v < mesh->mNumVertices; v++)
-			{
-				Vertex vert{};
-				vert.meshName = meshName;
-				vert.pos = mesh->mVertices[v];
-				vert.normal = mesh->HasNormals() ? mesh->mNormals[v] : aiVector3D(0, 0, 0);
-				vert.color = mesh->HasVertexColors(0) ? mesh->mColors[0][v] : aiColor4D(1, 1, 1, 1);
-				vert.texCoord = mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][v] : aiVector3D(0, 0, 0);
-				vert.materialIndex = mesh->mMaterialIndex;
-				vert.materialName = _model.materials[vert.materialIndex].materialName;
-				_model.vertices[m].push_back(vert);
-			}
-
-			// インデックス情報の取得
-			for (unsigned int f = 0; f < mesh->mNumFaces; f++)
-			{
-				const aiFace& face = mesh->mFaces[f];
-				for (unsigned int i = 0; i < face.mNumIndices; i++)
-				{
-					_model.indices[m].push_back(face.mIndices[i]);
-				}
-			}
-
-			// サブセット情報の取得
-			Subset subset{};
-			subset.meshName = meshName;
-			subset.materialIndex = mesh->mMaterialIndex;
-			subset.materialName = _model.materials[subset.materialIndex].materialName;
-			subset.vertexNum = static_cast<unsigned int>(_model.vertices[m].size());
-			subset.indexNum = static_cast<unsigned int>(_model.indices[m].size());
-			subset.vertexBase = globalVertexBase;
-			subset.indexBase = globalIndexBase;
-
-			globalVertexBase += subset.vertexNum;
-			globalIndexBase += subset.indexNum;
-
-			_model.subsets[m] = subset;
-		}
-
-		// ボーン情報の取得
-		GetBone(scene, _model);
-
-		for (unsigned int m = 0; m < scene->mNumMeshes; m++)
-		{
-			aiMesh* mesh = scene->mMeshes[m];
-			unsigned int maxIndex = 0;
-
-			for (unsigned int f = 0; f < mesh->mNumFaces; f++)
-			{
-				const aiFace& face = mesh->mFaces[f];
-				for (unsigned int i = 0; i < face.mNumIndices; i++)
-				{
-					if (face.mIndices[i] > maxIndex)
-					{
-						maxIndex = face.mIndices[i];
-					}
-				}
-			}
-
-			std::cout << "[Mesh " << m << "] " << mesh->mName.C_Str()
-				<< " | Vertices: " << mesh->mNumVertices
-				<< " | MaxIndex: " << maxIndex
-				<< " | Faces: " << mesh->mNumFaces << std::endl;
-		}
+		//-----------------------------------------------------------------------------
+		// ノードツリーを作成
+		//-----------------------------------------------------------------------------
+		BuildNodeTree(scene, _model);
 
 		return true;
 	}

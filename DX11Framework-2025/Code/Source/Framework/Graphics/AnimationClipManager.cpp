@@ -24,6 +24,7 @@ AnimationClipManager::AnimationClipManager()
 	this->AddClipInfo("Jump", "Assets/Animations/Jumping.fbx");
 	this->AddClipInfo("Fight", "Assets/Animations/Fighting.fbx");
 	this->AddClipInfo("Dance", "Assets/Animations/dance.fbx");
+	this->AddClipInfo("Idle", "Assets/Animations/Idle.fbx");
 }
 
 AnimationClipManager::~AnimationClipManager()

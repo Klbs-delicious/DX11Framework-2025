@@ -1,89 +1,63 @@
 //-----------------------------------------------------------------------------
 // SkinnedModelVS.hlsl
 // スキニング対応頂点シェーダ（row vector 前提：mul(v, M)）
+// - BoneBuffer(b7) に入っている boneMatrices は CPU 側で Transpose 済み想定
+// - そのため VS 側は「mul(v, boneMatrix)」で良い
 //-----------------------------------------------------------------------------
 #include "../Common.hlsli"
 
 //-----------------------------------------------------------------------------
-// Helpers
-//-----------------------------------------------------------------------------
-
-/** @brief 行列をスカラー倍する
- *  @param _matrix スカラー倍する行列
- *  @param _scalar スカラー値
- */
-static float4x4 ScaleMatrix(float4x4 _matrix, float _scalar)
-{
-    return float4x4(
-        _matrix[0] * _scalar,
-        _matrix[1] * _scalar,
-        _matrix[2] * _scalar,
-        _matrix[3] * _scalar
-    );
-}
-
-/** @brief 単位行列を返す
- *  @return 単位行列
- */
-static float4x4 Identity4x4()
-{
-    return float4x4(
-        1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, 0.0f,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f
-    );
-}
-
-//-----------------------------------------------------------------------------
 // Main
 //-----------------------------------------------------------------------------
-VS_OUT_MODEL main(VS_IN_SKINNED_MODEL _input)
+VS_OUT_MODEL main(VS_IN_SKINNED_MODEL In)
 {
-    VS_OUT_MODEL output;
+    VS_OUT_MODEL Out;
 
-    uint4 idxU = _input.boneIndex;
-    float4 weight = _input.boneWeight;
+    //--------------------------------------------------------------------------
+    // 1) スキニング行列を作る（最大4本、row-vector 運用）
+    //--------------------------------------------------------------------------
+    float4x4 skin = 0.0f;
 
-    // weight 合計が 0 ならスキニング無効（頂点を潰さない）
-    float wsum = weight.x + weight.y + weight.z + weight.w;
+    // boneCount を見て範囲外アクセスを避ける（未使用 0 はそのまま 0 番を参照する）
+    uint i0 = (In.boneIndex.x < boneCount) ? In.boneIndex.x : 0;
+    uint i1 = (In.boneIndex.y < boneCount) ? In.boneIndex.y : 0;
+    uint i2 = (In.boneIndex.z < boneCount) ? In.boneIndex.z : 0;
+    uint i3 = (In.boneIndex.w < boneCount) ? In.boneIndex.w : 0;
 
-    // boneCount が 0 ならスキニング無効
-    bool disableSkin = (boneCount == 0u) || (wsum <= 0.0f);
+    skin += boneMatrices[i0] * In.boneWeight.x;
+    skin += boneMatrices[i1] * In.boneWeight.y;
+    skin += boneMatrices[i2] * In.boneWeight.z;
+    skin += boneMatrices[i3] * In.boneWeight.w;
 
-    float4x4 skin = Identity4x4();
+    //--------------------------------------------------------------------------
+    // 2) 位置・法線をスキニング
+    //--------------------------------------------------------------------------
+    float4 localPos = float4(In.pos, 1.0f);
+    float4 localNrm = float4(In.normal, 0.0f);
 
-    // スキニング計算
-    if (!disableSkin)
-    {
-        uint maxIdx = boneCount - 1u;
-        idxU = min(idxU, uint4(maxIdx, maxIdx, maxIdx, maxIdx));
+    float4 skinnedPos = mul(localPos, skin);
+    float4 skinnedNrm = mul(localNrm, skin);
 
-        int i0 = (int) idxU.x;
-        int i1 = (int) idxU.y;
-        int i2 = (int) idxU.z;
-        int i3 = (int) idxU.w;
-
-        skin =
-              ScaleMatrix(boneMatrices[i0], weight.x)
-            + ScaleMatrix(boneMatrices[i1], weight.y)
-            + ScaleMatrix(boneMatrices[i2], weight.z)
-            + ScaleMatrix(boneMatrices[i3], weight.w);
-    }
-
-    // スキニング後の頂点位置・法線
-    float4 localPos = mul(float4(_input.pos, 1.0f), skin);
-    float3 localNrm = mul(_input.normal, (float3x3) skin);
-
-    float4 worldPos4 = mul(localPos, world);
+    //--------------------------------------------------------------------------
+    // 3) ワールド・ビュー・射影（row-vector）
+    //--------------------------------------------------------------------------
+    float4 worldPos4 = mul(skinnedPos, world);
     float4 viewPos4 = mul(worldPos4, view);
     float4 clipPos4 = mul(viewPos4, projection);
 
-    output.pos = clipPos4;
-    output.worldPos = worldPos4.xyz;
-    output.tex = _input.tex;
+    Out.pos = clipPos4;
+    Out.worldPos = worldPos4.xyz;
 
-    output.normal = normalize(mul(localNrm, (float3x3) world));
+    // ワールド法線は NormalMatrixBuffer(b6) を使用（row-vector 3本）
+    // 正規化まで行う
+    float3 n = skinnedNrm.xyz;
+    float3 wn;
+    wn.x = dot(n, row0);
+    wn.y = dot(n, row1);
+    wn.z = dot(n, row2);
+    Out.normal = normalize(wn);
 
-    return output;
+    Out.tex = In.tex;
+
+    return Out;
 }

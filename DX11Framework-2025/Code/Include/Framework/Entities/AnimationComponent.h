@@ -35,6 +35,17 @@ class GameObject;
 class AnimationComponent : public Component, public IFixedUpdatable
 {
 public:
+	/// @brief ボーン行列用定数バッファ
+	struct BoneBuffer
+	{
+		std::array<DX::Matrix4x4, ShaderCommon::MaxBones> boneMatrices{};
+		uint32_t boneCount = 0;
+		DX::Vector3 _pad0{ 0,0,0 };
+		DX::Vector4 _pad1{ 0,0,0,0 };
+		DX::Vector4 _pad2{ 0,0,0,0 };
+		DX::Vector4 _pad3{ 0,0,0,0 };
+	};
+
 	/** @brief コンストラクタ
 	 *  @param _owner このコンポーネントがアタッチされるオブジェクト
 	 *  @param _isActive コンポーネントの有効/無効
@@ -54,6 +65,17 @@ public:
 	 *  @param _deltaTime 前フレームからの経過時間（秒）
 	 */
 	void FixedUpdate(float _deltaTime) override;
+
+	/** @brief nodeTree と boneDictionary から SkeletonCache を構築する
+	 *  @param _nodeTree モデルのノードツリー
+	 *  @param _boneDict モデルのボーン辞書
+	 *  @param _outCache 出力先キャッシュ
+	 */
+	void BuildSkeletonCache(
+		const Utils::TreeNode<Graphics::Import::BoneNode>& _nodeTree, 
+		const std::unordered_map<std::string, Graphics::Import::Bone>& _boneDict, 
+		Graphics::Import::SkeletonCache& _outCache
+	);
 
 	/** @brief スケルトンキャッシュを再構築する
 	 *  @details モデルデータ変更時に呼び出すこと
@@ -103,20 +125,17 @@ public:
 	void SetModelData(Graphics::Import::ModelData* _modelData);
 
 private:
-	/// @brief ボーン行列用定数バッファ
-	struct BoneBuffer
-	{
-		std::array<DX::Matrix4x4, ShaderCommon::MaxBones> boneMatrices{};
-		uint32_t boneCount = 0;
-		DX::Vector3 _pad0{ 0,0,0 };
-		DX::Vector4 _pad1{ 0,0,0,0 };
-		DX::Vector4 _pad2{ 0,0,0,0 };
-		DX::Vector4 _pad3{ 0,0,0,0 };
-	};
+	DX::Matrix4x4 SampleLocalFromTrack(
+		const Graphics::Import::NodeTrack& track,
+		double tickTicks,
+		double ticksPerSecond,
+		double durationTicks);
+
+private:
 
 	Graphics::Import::AnimationClip* currentClip = nullptr; ///< 現在のアニメーションクリップ
-	MeshComponent* meshComponent = nullptr;					///< メッシュコンポーネント
-	Graphics::Import::ModelData* modelData = nullptr;		///< 対象モデルデータ
+	MeshComponent* meshComponent = nullptr;                    ///< メッシュコンポーネント
+	Graphics::Import::ModelData* modelData = nullptr;        ///< 対象モデルデータ
 
 	bool isPlaying = false;     ///< 再生中フラグ
 	double currentTime = 0.0;   ///< 現在の再生時間（秒）
@@ -124,9 +143,15 @@ private:
 
 	Graphics::Import::SkeletonCache skeletonCache{};	///< スケルトンキャッシュ
 	Graphics::Import::Pose currentPose{};				///< 現在のポーズ
-	bool isSkeletonCached = false;						///< スケルトンキャッシュ生成済みか
+	bool isSkeletonCached = false;                        ///< スケルトンキャッシュ生成済みか
 
 	// ボーン行列用定数バッファ
 	BoneBuffer boneBuffer{};
 	std::unique_ptr<DynamicConstantBuffer<BoneBuffer>> boneCB;
+
+	// Debug logging control: print bursts of frames instead of every frame
+	bool enableBoneDebugLog = true;        ///< enable/disable bone debug logging
+	int debugLogFrameCounter = 0;         ///< incremented each FixedUpdate
+	int debugLogBurstSize = 4;            ///< number of consecutive frames to log
+	int debugLogPeriod = 60;              ///< period (frames) between bursts
 };

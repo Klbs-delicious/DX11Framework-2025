@@ -162,9 +162,10 @@ namespace Graphics::Import
      */
     struct SkeletonCache
     {
-        std::vector<SkeletonNodeCache> nodes;       ///< ノード配列（不変）
-        std::vector<int> order;                     ///< 計算順（親が必ず先）
-        std::vector<DX::Matrix4x4> boneOffset;      ///< boneIndex ごとの OffsetMatrix（逆バインド）
+        std::vector<SkeletonNodeCache> nodes;                   ///< ノード配列（不変）
+        std::vector<int> order;                                 ///< 計算順（親が必ず先）
+        std::vector<DX::Matrix4x4> boneOffset;                  ///< boneIndex ごとの OffsetMatrix（逆バインド）
+        DX::Matrix4x4 globalInverse = DX::Matrix4x4::Identity;  ///< ルートの逆行列（スキニング補正用）
     };
 
     /** @struct Pose
@@ -172,11 +173,93 @@ namespace Graphics::Import
      */
     struct Pose
     {
-        std::vector<DX::Matrix4x4> localMatrices{};           ///< ローカル行列（ボーン数分）
-        std::vector<DX::Matrix4x4> globalMatrices{};          ///< グローバル行列（ボーン数分）
-        std::vector<DX::Matrix4x4> skinMatrices{};            ///< スキニング行列（ボーン数分）
+        std::vector<DX::Matrix4x4> localMatrices{};           ///< ローカル行列（ノード数分）
+        std::vector<DX::Matrix4x4> globalMatrices{};          ///< グローバル行列（ノード数分）
+        std::vector<DX::Matrix4x4> skinMatrices{};            ///< スキニング行列（ノード数分）
 
         std::array<DX::Matrix4x4, ShaderCommon::MaxBones> gpuBoneMatrices{};  ///< GPUへ詰める最終配列
+
+        /** @brief ポーズ情報をリセットする
+         *  @param _skeletonCache スケルトンキャッシュ
+         */
+        void Reset(const SkeletonCache& _skeletonCache)
+        {
+            this->localMatrices.clear();
+            this->globalMatrices.clear();
+            this->skinMatrices.clear();
+
+            const size_t nodeCount = _skeletonCache.nodes.size();
+            this->localMatrices.resize(nodeCount, DX::Matrix4x4::Identity);
+            this->globalMatrices.resize(nodeCount, DX::Matrix4x4::Identity);
+            this->skinMatrices.resize(nodeCount, DX::Matrix4x4::Identity);
+
+            // GPU用配列もリセット
+            for (size_t i = 0; i < ShaderCommon::MaxBones; i++)
+            {
+                this->gpuBoneMatrices[i] = DX::Matrix4x4::Identity;
+            }
+
+            // local を bindLocal で埋める
+            for (size_t i = 0; i < nodeCount; i++)
+            {
+                this->localMatrices[i] = _skeletonCache.nodes[i].bindLocalMatrix;
+            }
+
+            // global を親子合成で埋める（order は親が必ず先）
+            for (size_t oi = 0; oi < _skeletonCache.order.size(); oi++)
+            {
+                const int nodeIndex = _skeletonCache.order[oi];
+                if (nodeIndex < 0 || static_cast<size_t>(nodeIndex) >= nodeCount)
+                {
+                    continue;
+                }
+
+                const int parentIndex = _skeletonCache.nodes[nodeIndex].parentIndex;
+
+                if (parentIndex < 0)
+                {
+                    this->globalMatrices[nodeIndex] = this->localMatrices[nodeIndex];
+                }
+                else
+                {
+                    this->globalMatrices[nodeIndex] = this->localMatrices[nodeIndex] * this->globalMatrices[parentIndex];
+                }
+            }
+
+            //----------------------------------------------
+            // スキン行列＆GPU配列初期化
+            //----------------------------------------------
+            // boneIndex を持つノードだけ skinMatrices と gpuBoneMatrices を埋める
+            // ここでは「バインド姿勢」のスキンを作るため animationLocal は使わない
+            for (size_t i = 0; i < nodeCount; i++)
+            {
+                const int boneIndex = _skeletonCache.nodes[i].boneIndex;
+                if (boneIndex < 0)
+                {
+                    continue;
+                }
+
+                if (static_cast<size_t>(boneIndex) >= _skeletonCache.boneOffset.size())
+                {
+                    continue;
+                }
+
+                // offset *globalBind
+                // offset は Assimpの mOffsetMatrix を変換したもの（inverse bind）
+                const DX::Matrix4x4 skin =
+                    _skeletonCache.boneOffset[static_cast<size_t>(boneIndex)] *
+                    this->globalMatrices[i] *
+                    _skeletonCache.globalInverse;
+
+                this->skinMatrices[i] = skin;
+
+				// GPU用配列にも転置して格納
+                if (boneIndex < static_cast<int>(ShaderCommon::MaxBones))
+                {
+                    this->gpuBoneMatrices[static_cast<size_t>(boneIndex)] = skin.Transpose();
+                }
+            }
+        }
     };
 
     /** @struct BindTRS

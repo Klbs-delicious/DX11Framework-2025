@@ -30,9 +30,7 @@ namespace
 		_dst.reserve(_src->mNumPositionKeys);
 		for (unsigned int i = 0; i < _src->mNumPositionKeys; i++)
 		{
-			Graphics::Import::AnimKeyVec3 key{};
-			key.time = _src->mPositionKeys[i].mTime;
-			key.value = _src->mPositionKeys[i].mValue;
+			Graphics::Import::AnimKeyVec3 key(_src->mPositionKeys[i].mTime, _src->mPositionKeys[i].mValue);
 			_dst.emplace_back(key);
 		}
 	}
@@ -49,9 +47,7 @@ namespace
 		_dst.reserve(_src->mNumRotationKeys);
 		for (unsigned int i = 0; i < _src->mNumRotationKeys; i++)
 		{
-			Graphics::Import::AnimKeyQuat key{};
-			key.time = _src->mRotationKeys[i].mTime;
-			key.value = _src->mRotationKeys[i].mValue;
+			Graphics::Import::AnimKeyQuat key(_src->mRotationKeys[i].mTime, _src->mRotationKeys[i].mValue);
 			_dst.emplace_back(key);
 		}
 	}
@@ -68,9 +64,7 @@ namespace
 		_dst.reserve(_src->mNumScalingKeys);
 		for (unsigned int i = 0; i < _src->mNumScalingKeys; i++)
 		{
-			Graphics::Import::AnimKeyVec3 key{};
-			key.time = _src->mScalingKeys[i].mTime;
-			key.value = _src->mScalingKeys[i].mValue;
+			Graphics::Import::AnimKeyVec3 key(_src->mScalingKeys[i].mTime, _src->mScalingKeys[i].mValue);
 			_dst.emplace_back(key);
 		}
 	}

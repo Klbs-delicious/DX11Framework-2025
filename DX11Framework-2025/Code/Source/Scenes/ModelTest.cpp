@@ -101,32 +101,32 @@ void ModelTest::SetupObjects()
 	meshComp->SetMesh(modelData->mesh);
 	auto materialComp = player->AddComponent<MaterialComponent>();
 	materialComp->SetMaterial(modelData->material);
-	////player->AddComponent<MeshRenderer>();
-	//auto animComp = player->AddComponent<AnimationComponent>();
-	//animComp->SetModelData(modelData->GetModelData());
+	//player->AddComponent<MeshRenderer>();
+	auto animComp = player->AddComponent<AnimationComponent>();
+	animComp->SetModelData(modelData->GetModelData());
 
-	//// アニメーションデータの取得テスト
-	////animationClipManager.Register("Walk");
-	////animationClipManager.Register("Run");
-	////animationClipManager.Register("Jump");
-	//animationClipManager.Register("Idle");
-	//auto clip = animationClipManager.Get("Idle");
-	//if (clip)
-	//{
-	//	std::cout << "[ModelTest] Animation Clip Loaded: " << clip->name << std::endl;
-	//	std::cout << " Duration (ticks): " << clip->durationTicks << std::endl;
-	//	std::cout << " Ticks Per Second: " << clip->ticksPerSecond << std::endl;
-	//	std::cout << " Number of Tracks: " << clip->tracks.size() << std::endl;
-	//}
-	//else
-	//{
-	//	std::cerr << "[ModelTest] Failed to load animation clip." << std::endl;
-	//}
+	// アニメーションデータの取得テスト
+	//animationClipManager.Register("Walk");
+	//animationClipManager.Register("Run");
+	//animationClipManager.Register("Jump");
+	animationClipManager.Register("Idle");
+	auto clip = animationClipManager.Get("Idle");
+	if (clip)
+	{
+		std::cout << "[ModelTest] Animation Clip Loaded: " << clip->name << std::endl;
+		std::cout << " Duration (ticks): " << clip->durationTicks << std::endl;
+		std::cout << " Ticks Per Second: " << clip->ticksPerSecond << std::endl;
+		std::cout << " Number of Tracks: " << clip->tracks.size() << std::endl;
+	}
+	else
+	{
+		std::cerr << "[ModelTest] Failed to load animation clip." << std::endl;
+	}
 
-	//animComp->SetAnimationClip(clip);
-	//animComp->Play();
-	////animComp->SetPlaybackSpeed(0.1f);
+	animComp->SetAnimationClip(clip);
+	animComp->Play();
+	//animComp->SetPlaybackSpeed(0.1f);
 
-	//player->AddComponent<SkinnedMeshRenderer>();
-	player->AddComponent<MeshRenderer>();
+	player->AddComponent<SkinnedMeshRenderer>();
+	//player->AddComponent<MeshRenderer>();
 }

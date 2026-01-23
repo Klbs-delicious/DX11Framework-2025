@@ -85,17 +85,15 @@ Graphics::ModelEntry* ModelManager::Register(const std::string& _key)
 		std::cerr << "[Error] ModelManager::Register: CreateFromModelData failed: " << _key << std::endl;
 		return nullptr;
 	}
-
 	Graphics::Mesh* meshRaw = meshUnique.get();
 	meshManager.Register(_key, meshUnique.release());
 
 	// Material を生成して MaterialManager に登録（当面 0 番のみ）
 	auto& materialManager = ResourceHub::Get<MaterialManager>();
-
 	const std::string matKey = MakeMaterialKey(_key, 0);
 	Material* matRaw = materialManager.Register(matKey);
 
-	// モデル描画用のマテリアル設定を行う
+	// モデル描画用のマテリアル設定を行う(標準)
 	matRaw->shaders = ResourceHub::Get<ShaderManager>().GetShaderProgram("ModelBasic");
 
 	// ModelData 側にテクスチャがあるなら差し替える（当面 0 番のみ）

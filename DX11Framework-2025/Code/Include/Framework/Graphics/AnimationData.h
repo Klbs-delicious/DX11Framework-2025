@@ -22,6 +22,7 @@ namespace Graphics::Import
 	{
 		double time = 0.0;
 		aiVector3D value{};
+		AnimKeyVec3(double _time, const aiVector3D& _v) : time(_time), value(_v) {}
 	};
 
 	/** @struct AnimKeyQuat
@@ -31,6 +32,7 @@ namespace Graphics::Import
 	{
 		double time = 0.0;
 		aiQuaternion value{};
+		AnimKeyQuat(double _time, const aiQuaternion& _q) : time(_time), value(_q) {}
 	};
 
 	/** @struct NodeTrack

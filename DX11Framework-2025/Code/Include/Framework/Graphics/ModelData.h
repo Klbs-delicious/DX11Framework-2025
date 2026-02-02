@@ -9,6 +9,7 @@
 #include "Include/Framework/Graphics/TextureResource.h"
 #include "Include/Framework/Utils/TreeNode.h"
 #include "Include/Framework/Shaders/ShaderCommon.h"
+#include "Include/Tests/SkinningDebug.h"
 
 #include <string>
 #include <vector>
@@ -18,7 +19,6 @@
 #include <assimp/color4.h>
 #include <assimp/vector3.h>
 #include <assimp/quaternion.h>
-
 
 //-----------------------------------------------------------------------------
 // 前方宣言
@@ -148,13 +148,12 @@ namespace Graphics::Import
 	 */
     struct SkeletonNodeCache
     {
-		std::string name = "";              ///< ノード名
-		int parentIndex = -1;               ///< 親ノードの index（親なしは -1）
+        std::string name = ""; ///< ノード名（デバッグ用）
+        int parentIndex = -1; ///< 親ノード（親なしは -1）
+        DX::Matrix4x4 bindLocalMatrix = DX::Matrix4x4::Identity; ///< バインドローカル
 
-		DX::Matrix4x4 bindLocalMatrix;      ///< バインドローカル行列
-
-		const NodeTrack* nodeTrackRef = nullptr;    ///< ノードトラック参照（なしは nullptr）
-		int boneIndex = -1;                         ///< ボーンの index（なしは -1）
+        bool hasMesh = false; ///< このノードにメッシュが付くか
+        int boneIndex = -1; ///< このノードがボーンなら index、なければ -1
     };
 
     /** @struct SkeletonCache
@@ -162,10 +161,14 @@ namespace Graphics::Import
      */
     struct SkeletonCache
     {
-        std::vector<SkeletonNodeCache> nodes;                   ///< ノード配列（不変）
-        std::vector<int> order;                                 ///< 計算順（親が必ず先）
-        std::vector<DX::Matrix4x4> boneOffset;                  ///< boneIndex ごとの OffsetMatrix（逆バインド）
-        DX::Matrix4x4 globalInverse = DX::Matrix4x4::Identity;  ///< ルートの逆行列（スキニング補正用）
+        std::vector<SkeletonNodeCache> nodes{}; ///< ノード配列（不変）
+        std::vector<int> order{}; ///< 親が先に来る順序（不変）
+
+        std::vector<DX::Matrix4x4> boneOffset{}; ///< boneIndex -> offset（不変）
+        std::vector<int> boneIndexToNodeIndex{}; ///< boneIndex -> nodeIndex（不変）
+
+        int meshRootNodeIndex = -1; ///< メッシュ基準ノード（不変）
+        DX::Matrix4x4 globalInverse = DX::Matrix4x4::Identity; ///< inverse(bindGlobal(meshRoot))（不変）
     };
 
     /** @struct Pose
@@ -177,7 +180,7 @@ namespace Graphics::Import
         std::vector<DX::Matrix4x4> globalMatrices{};          ///< グローバル行列（ノード数分）
         std::vector<DX::Matrix4x4> skinMatrices{};            ///< スキニング行列（ノード数分）
 
-        std::array<DX::Matrix4x4, ShaderCommon::MaxBones> gpuBoneMatrices{};  ///< GPUへ詰める最終配列
+        std::array<DX::Matrix4x4, ShaderCommon::MaxBones> cpuBoneMatrices{};  ///< GPUへ詰める最終配列
 
         /** @brief ポーズ情報をリセットする
          *  @param _skeletonCache スケルトンキャッシュ
@@ -196,7 +199,7 @@ namespace Graphics::Import
             // GPU用配列もリセット
             for (size_t i = 0; i < ShaderCommon::MaxBones; i++)
             {
-                this->gpuBoneMatrices[i] = DX::Matrix4x4::Identity;
+                this->cpuBoneMatrices[i] = DX::Matrix4x4::Identity;
             }
 
             // local を bindLocal で埋める
@@ -206,6 +209,7 @@ namespace Graphics::Import
             }
 
             // global を親子合成で埋める（order は親が必ず先）
+            // 行ベクトル（mul(v, M)）運用：global = local * parentGlobal
             for (size_t oi = 0; oi < _skeletonCache.order.size(); oi++)
             {
                 const int nodeIndex = _skeletonCache.order[oi];
@@ -222,7 +226,9 @@ namespace Graphics::Import
                 }
                 else
                 {
-                    this->globalMatrices[nodeIndex] = this->localMatrices[nodeIndex] * this->globalMatrices[parentIndex];
+                    this->globalMatrices[nodeIndex] =
+                        this->localMatrices[nodeIndex] *
+                        this->globalMatrices[parentIndex];
                 }
             }
 
@@ -244,8 +250,7 @@ namespace Graphics::Import
                     continue;
                 }
 
-                // offset *globalBind
-                // offset は Assimpの mOffsetMatrix を変換したもの（inverse bind）
+                // 行ベクトル運用：
                 const DX::Matrix4x4 skin =
                     _skeletonCache.boneOffset[static_cast<size_t>(boneIndex)] *
                     this->globalMatrices[i] *
@@ -253,12 +258,17 @@ namespace Graphics::Import
 
                 this->skinMatrices[i] = skin;
 
-				// GPU用配列にも転置して格納
+                // cpuBoneMatrices は「転置なしのCPU行列」を入れる
                 if (boneIndex < static_cast<int>(ShaderCommon::MaxBones))
                 {
-                    this->gpuBoneMatrices[static_cast<size_t>(boneIndex)] = skin.Transpose();
+                    this->cpuBoneMatrices[static_cast<size_t>(boneIndex)] = skin;
+                    //this->cpuBoneMatrices[static_cast<size_t>(boneIndex)] = DX::Matrix4x4::Identity;
                 }
             }
+
+			// デバッグ出力
+            Graphics::Debug::Output::DumpBindPoseGlobalCheckOnce(_skeletonCache, *this);
+            Graphics::Debug::Output::DumpBindPoseSkinCheckOnce(_skeletonCache, *this);
         }
     };
 
@@ -294,8 +304,19 @@ namespace Graphics
             return this->modelData.get();
         }
 
+        void SetSkeletonCache(std::unique_ptr<Graphics::Import::SkeletonCache> _cache)
+        {
+            this->skeletonCache = std::move(_cache);
+        }
+
+        Graphics::Import::SkeletonCache* GetSkeletonCache() const
+        {
+            return this->skeletonCache.get();
+        }
+
     private:
         std::unique_ptr<Graphics::Import::ModelData> modelData = nullptr;
+        std::unique_ptr<Graphics::Import::SkeletonCache> skeletonCache = nullptr;
     };
 
     /** @brief モデル情報

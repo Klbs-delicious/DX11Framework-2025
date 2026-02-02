@@ -7,19 +7,20 @@
  //-----------------------------------------------------------------------------
  // Includes
  //-----------------------------------------------------------------------------
+#include "Include/Framework/Graphics/AnimationData.h"
+
 #include <assimp/scene.h>
 
 #include <string>
-#include <unordered_map>
 #include <vector>
-
-#include "Include/Framework/Graphics/AnimationData.h"
 
 //-----------------------------------------------------------------------------
 // Namespace : Graphics::Import
 //-----------------------------------------------------------------------------
 namespace Graphics::Import
 {
+	struct SkeletonCache;
+
 	/** @class AnimationImporter
 	 *  @brief アニメーションデータをAssimpで読み込み AnimationClip に変換するクラス
 	 */
@@ -32,25 +33,24 @@ namespace Graphics::Import
 		/// @brief デストラクタ
 		~AnimationImporter();
 
-		/** @brief ファイルからアニメーションクリップを1つ読み込む
-		 *  @param _filename ファイルパス（アニメ入りFBXなど）
+		/** @brief 先頭のアニメーションクリップを読み込む
+		 *  @param _filename ファイル名
 		 *  @param _outClip 出力先
-		 *  @return 成功時 true
+		 *  @return 成功した場合 true
 		 */
 		bool LoadSingleClip(const std::string& _filename, AnimationClip& _outClip) const;
 
-		/** @brief ファイルからアニメーションクリップを読み込む
-		 *  @param _filename ファイルパス（アニメ入りFBXなど）
-		 *  @param _outClips 出力先（複数アニメ対応）
-		 *  @return 成功時 true
+		/** @brief 全アニメーションクリップを読み込む
+		 *  @param _filename ファイル名
+		 *  @param _outClips 出力先
+		 *  @return 成功した場合 true
 		 */
 		bool LoadClips(const std::string& _filename, std::vector<AnimationClip>& _outClips) const;
 
 	private:
-
 		/** @brief Assimp の aiAnimation から AnimationClip を構築する
-		 *  @param _anim Assimp アニメーション
-		 *  @return AnimationClip
+		 *  @param _anim Assimp のアニメーションデータ
+		 *  @return 構築したアニメーションクリップ
 		 */
 		AnimationClip BuildClipFromAssimp(const aiAnimation* _anim) const;
 	};

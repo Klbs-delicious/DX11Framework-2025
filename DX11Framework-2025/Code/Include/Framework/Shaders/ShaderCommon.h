@@ -15,7 +15,7 @@ class ShaderBase;
   */
 namespace ShaderCommon
 {
-	inline constexpr size_t MaxBones = 512; ///< ボーン数
+	inline constexpr size_t MaxBones = 128; ///< ボーン数
 
 	/**	@enum	ShaderType
 	 *	@brief シェーダーの種類

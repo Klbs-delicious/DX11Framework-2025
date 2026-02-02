@@ -5,6 +5,8 @@
 #include "Include/Framework/Graphics/VertexBuffer.h"
 #include "Include/Framework/Graphics/IndexBuffer.h"
 #include "Include/Framework/Graphics/Material.h"
+#include "Include/Framework/Graphics/VertexTypes.h"
+
 #include "Include/Framework/Shaders/ShaderManager.h"
 
 #include <memory>
@@ -12,69 +14,49 @@
 
 namespace Graphics
 {
-    struct ModelVertexGPU
-    {
-        DirectX::XMFLOAT3 position;
-        DirectX::XMFLOAT3 normal;
-        DirectX::XMFLOAT2 texcoord;
+	struct MeshSubset
+	{
+		UINT indexStart = 0;
+		UINT indexCount = 0;
+		UINT vertexBase = 0;
+		UINT vertexCount = 0;
+		int materialIndex = -1;
+	};
 
-        UINT  boneIndex[4] = { 0,0,0,0 };
-        float boneWeight[4] = { 0,0,0,0 };
-    };
+	class Mesh
+	{
+	public:
+		~Mesh() = default;
 
-    /** @struct MeshSubset
-     *  @brief サブセット情報（1つのマテリアルに対応）
-     */
-    struct MeshSubset
-    {
-        UINT indexStart = 0;    ///< 描画開始インデックス
-        UINT indexCount = 0;    ///< 描画インデックス数
-        UINT vertexBase = 0;    ///< 頂点開始位置
-        UINT vertexCount = 0;   ///< 頂点数
-        int materialIndex = -1; ///< 使用マテリアルインデックス
-    };
+		void Bind(ID3D11DeviceContext& _context) const;
 
-    /** @class Mesh
-     *  @brief モデルデータをGPUで扱うための構造
-     */
-    class Mesh
-    {
-    public:
-        ~Mesh() = default;
+		const std::vector<MeshSubset>& GetSubsets() const { return this->subsets; }
+		const IndexBuffer& GetIndex() const { return *this->indexBuffer.get(); }
 
-        /**@brief メッシュをバインド
-         * @param _context
-         */
-        void Bind(ID3D11DeviceContext& _context) const;
+		void SetVertexBuffer(std::unique_ptr<VertexBuffer> _vb) { this->vertexBuffer = std::move(_vb); }
+		void SetIndexBuffer(std::unique_ptr<IndexBuffer> _ib) { this->indexBuffer = std::move(_ib); }
+		void SetSubsets(std::vector<MeshSubset>&& _subsets) { this->subsets = std::move(_subsets); }
 
-        /**@brief 各サブセット情報の取得
-         * @return
-         */
-        const std::vector<MeshSubset>& GetSubsets() const { return this->subsets; }
+		//-----------------------------------------------------------------------------
+		// Debug / CPU cache (for diagnostics)
+		//-----------------------------------------------------------------------------
 
-		/**@brief インデックスバッファの取得
-         * @return 
-         */
-        const  IndexBuffer& GetIndex() const { return *this->indexBuffer.get(); }
+		/**@brief デバッグ用：CPU側頂点配列を設定（boneIndex の範囲チェック等に使用）
+		 * @param _vertices CPU頂点配列
+		 */
+		void SetCpuVertices(std::vector<ModelVertexGPU>&& _vertices) { this->cpuVertices = std::move(_vertices); }
 
-        /**@brief 頂点バッファの設定
-         * @param _vb 
-         */
-        void SetVertexBuffer(std::unique_ptr<VertexBuffer> _vb) { this->vertexBuffer = std::move(_vb); }
-        
-        /**@brief インデックスバッファの設定
-         * @param _ib 
-         */
-        void SetIndexBuffer(std::unique_ptr<IndexBuffer> _ib) { this->indexBuffer = std::move(_ib); }
+		/**@brief デバッグ用：CPU側頂点配列を取得
+		 * @return CPU頂点配列
+		 */
+		const std::vector<ModelVertexGPU>& GetCpuVertices() const { return this->cpuVertices; }
 
-		/**@brief サブセット情報の設定
-         * @param _subsets 
-         */
-        void SetSubsets(std::vector<MeshSubset>&& _subsets) { this->subsets = std::move(_subsets); }
+	private:
+		std::unique_ptr<VertexBuffer> vertexBuffer;
+		std::unique_ptr<IndexBuffer> indexBuffer;
+		std::vector<MeshSubset> subsets;
 
-    private:
-        std::unique_ptr<VertexBuffer> vertexBuffer;         ///< 頂点バッファ
-        std::unique_ptr<IndexBuffer> indexBuffer;           ///< インデックスバッファ
-        std::vector<MeshSubset> subsets;                    ///< サブセット情報
-    };
-}// namespace Graphics}// namespace Graphics
+		// デバッグ用：読み込み時に保持しておく CPU頂点
+		std::vector<ModelVertexGPU> cpuVertices;
+	};
+}

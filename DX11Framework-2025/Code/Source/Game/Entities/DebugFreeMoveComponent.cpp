@@ -29,13 +29,13 @@ void DebugFreeMoveComponent::Initialize()
 {
     // キーをアクション化
     this->inputSystem.RegisterKeyBinding("Free_MoveForward",
-        static_cast<int>(DirectInputDevice::KeyboardKey::UpArrow));
+        static_cast<int>(DirectInputDevice::KeyboardKey::W));
     this->inputSystem.RegisterKeyBinding("Free_MoveBackward",
-        static_cast<int>(DirectInputDevice::KeyboardKey::DownArrow));
+        static_cast<int>(DirectInputDevice::KeyboardKey::S));
     this->inputSystem.RegisterKeyBinding("Free_MoveLeft",
-        static_cast<int>(DirectInputDevice::KeyboardKey::LeftArrow));
+        static_cast<int>(DirectInputDevice::KeyboardKey::A));
     this->inputSystem.RegisterKeyBinding("Free_MoveRight",
-        static_cast<int>(DirectInputDevice::KeyboardKey::RightArrow));
+        static_cast<int>(DirectInputDevice::KeyboardKey::D));
     this->inputSystem.RegisterKeyBinding("Free_MoveUp",
         static_cast<int>(DirectInputDevice::KeyboardKey::E));
     this->inputSystem.RegisterKeyBinding("Free_MoveDown",

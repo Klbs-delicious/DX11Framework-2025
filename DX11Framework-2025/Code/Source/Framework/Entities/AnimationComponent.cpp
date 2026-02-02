@@ -11,598 +11,706 @@
 
 #include "Include/Framework/Core/D3D11System.h"
 #include "Include/Framework/Core/SystemLocator.h"
+#include "Include/Framework/Utils/CommonTypes.h"
 
 #include <algorithm>
+#include <array>
 #include <cassert>
-#include <iostream>
 #include <cmath>
-#include <functional>
+#include <cstring>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #include <DirectXMath.h>
 
 using namespace DirectX;
 
+static_assert(ShaderCommon::MaxBones == 128, "HLSL BoneBuffer boneMatrices[128] と C++ 側 MaxBones が不一致です。");
+
 //-----------------------------------------------------------------------------
-// Internal helpers
+// Debug / Temporary settings
+//---------------------------------------------------
+// --------------------------
+namespace
+{
+	static constexpr double ForceEndTicks = 81.0;		///< 暫定：81固定で挙動確認
+	static constexpr double ForceEndTicksEps = 1.0e-6;	///< 暫定：終端判定用イプシロン
+
+	static constexpr bool EnablePoseDump = true;			///< true の間、毎フレーム txt 出力
+	static constexpr const char* PoseDumpFilePath = "PoseDump_AnimationComponent.txt";
+	static int PoseDumpFrameIndex = 0;
+
+	static constexpr bool EnableTrackPickDumpOnce = true;
+	static bool TrackPickDumped = false;
+
+	static constexpr bool EnableBindVsAnimDumpOnce = true;
+	static bool BindVsAnimDumped = false;
+
+	static constexpr bool EnableGlobalInverseCheckOnce = true;
+	static bool GlobalInverseChecked = false;
+
+	static constexpr bool EnableBoneOffsetCheckOnce = true;
+	static bool BoneOffsetChecked = false;
+
+	static constexpr bool EnableBakeValidationDumpOnce = true;
+	static bool BakeValidationDumped = false;
+
+	static constexpr bool EnableLocalKeyAppliedDumpOnce = true;
+	static bool LocalKeyAppliedDumped = false;
+}
+
+//-----------------------------------------------------------------------------
+// Local Helpers
 //-----------------------------------------------------------------------------
 namespace
-{	
-	/** @brief 値を範囲に収める
-	 *  @param _v 値
-	 *  @param _min 最小
-	 *  @param _max 最大
-	 *  @return クランプ後の値
-	 */
-	static double ClampDouble(double _v, double _min, double _max)
+{
+	static int FindKeyIndex(double _ticksTime, const std::vector<Graphics::Import::AnimKeyVec3>& _keys)
 	{
-		if (_v < _min) { return _min; }
-		if (_v > _max) { return _max; }
-		return _v;
-	}
+		if (_keys.size() < 2) { return 0; }
+		if (_ticksTime >= _keys.back().ticksTime) { return static_cast<int>(_keys.size()) - 2; }
+		if (_ticksTime <= _keys.front().ticksTime) { return 0; }
 
-	/** @brief aiVector3D を線形補間
-	 *  @param _a 開始
-	 *  @param _b 終了
-	 *  @param _alpha 0..1
-	 *  @return 補間結果
-	 */
-	static aiVector3D LerpVec3(const aiVector3D& _a, const aiVector3D& _b, float _alpha)
-	{
-		return aiVector3D(
-			_a.x + (_b.x - _a.x) * _alpha,
-			_a.y + (_b.y - _a.y) * _alpha,
-			_a.z + (_b.z - _a.z) * _alpha
-		);
-	}
-
-	/** @brief キー配列から「区間の左側キー index」を探す（ticks）
-	 *  @param _keys キー配列（time が単調増加想定）
-	 *  @param _t 現在時刻（ticks）
-	 *  @return 左側キー index（最後区間は size-2 を返す）
-	 */
-	template<typename TKey>
-	static int FindLeftKeyIndexByTime(const std::vector<TKey>& _keys, double _t)
-	{
-		if (_keys.size() < 2)
-		{
-			return 0;
-		}
-
-		if (_t <= _keys.front().time)
-		{
-			return 0;
-		}
-		if (_t >= _keys.back().time)
-		{
-			return static_cast<int>(_keys.size()) - 2;
-		}
-
-		int low = 0;
-		int high = static_cast<int>(_keys.size()) - 1;
-		while (low <= high)
-		{
-			const int mid = (low + high) / 2;
-			if (_keys[mid].time <= _t)
+		auto it = std::lower_bound(
+			_keys.begin(),
+			_keys.end(),
+			_ticksTime,
+			[](const Graphics::Import::AnimKeyVec3& _k, double _t)
 			{
-				low = mid + 1;
-			}
-			else
+				return _k.ticksTime < _t;
+			});
+
+		const int idx = static_cast<int>(std::distance(_keys.begin(), it)) - 1;
+		return (idx < 0) ? 0 : idx;
+	}
+
+	static int FindKeyIndex(double _ticksTime, const std::vector<Graphics::Import::AnimKeyQuat>& _keys)
+	{
+		if (_keys.size() < 2) { return 0; }
+		if (_ticksTime >= _keys.back().ticksTime) { return static_cast<int>(_keys.size()) - 2; }
+		if (_ticksTime <= _keys.front().ticksTime) { return 0; }
+
+		auto it = std::lower_bound(
+			_keys.begin(),
+			_keys.end(),
+			_ticksTime,
+			[](const Graphics::Import::AnimKeyQuat& _k, double _t)
 			{
-				high = mid - 1;
-			}
-		}
+				return _k.ticksTime < _t;
+			});
 
-		const int idx = std::max(0, std::min(high, static_cast<int>(_keys.size()) - 2));
-		return idx;
+		const int idx = static_cast<int>(std::distance(_keys.begin(), it)) - 1;
+		return (idx < 0) ? 0 : idx;
 	}
 
-	/** @brief 位置/スケール（Vec3）をキー配列からサンプリングする（ticks）
-	 *  @param _keys キー配列
-	 *  @param _tickTicks 現在時刻（ticks）
-	 *  @param _fallback キーが無い場合に返す値
-	 *  @return サンプリング結果
-	 */
-	static aiVector3D SampleVec3(
-		const std::vector<Graphics::Import::AnimKeyVec3>& _keys,
-		double _tickTicks,
-		const aiVector3D& _fallback)
+	static float DotQuat(const DX::Quaternion& _a, const DX::Quaternion& _b)
 	{
-		if (_keys.empty())
-		{
-			return _fallback;
-		}
-		if (_keys.size() == 1)
-		{
-			return _keys[0].value;
-		}
-
-		const int left = FindLeftKeyIndexByTime(_keys, _tickTicks);
-		const int right = left + 1;
-
-		const double t0 = _keys[left].time;
-		const double t1 = _keys[right].time;
-
-		const double denom = (t1 - t0);
-		float alpha = 0.0f;
-		if (denom > 0.0)
-		{
-			alpha = static_cast<float>((_tickTicks - t0) / denom);
-			alpha = static_cast<float>(ClampDouble(alpha, 0.0, 1.0));
-		}
-
-		return LerpVec3(_keys[left].value, _keys[right].value, alpha);
+		return (_a.x * _b.x) + (_a.y * _b.y) + (_a.z * _b.z) + (_a.w * _b.w);
 	}
 
-	/** @brief 回転（Quat）をキー配列からサンプリングする（ticks）
-	 *  @param _keys キー配列
-	 *  @param _tickTicks 現在時刻（ticks）
-	 *  @param _fallback キーが無い場合に返す値
-	 *  @return サンプリング結果
-	 */
-	static aiQuaternion SampleQuat(
-		const std::vector<Graphics::Import::AnimKeyQuat>& _keys,
-		double _tickTicks,
-		const aiQuaternion& _fallback)
+	static DX::Quaternion NormalizeQuatSafe(const DX::Quaternion& _q)
 	{
-		if (_keys.empty())
-		{
-			return _fallback;
-		}
-		if (_keys.size() == 1)
-		{
-			return _keys[0].value;
-		}
+		DX::Quaternion q = _q;
 
-		const int left = FindLeftKeyIndexByTime(_keys, _tickTicks);
-		const int right = left + 1;
-
-		const double t0 = _keys[left].time;
-		const double t1 = _keys[right].time;
-
-		const double denom = (t1 - t0);
-		float alpha = 0.0f;
-		if (denom > 0.0)
+		const float lenSq = (q.x * q.x) + (q.y * q.y) + (q.z * q.z) + (q.w * q.w);
+		if (!std::isfinite(lenSq) || lenSq <= 1.0e-12f)
 		{
-			alpha = static_cast<float>((_tickTicks - t0) / denom);
-			alpha = static_cast<float>(ClampDouble(alpha, 0.0, 1.0));
+			return DX::Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
 		}
 
-		aiQuaternion out{};
-		aiQuaternion::Interpolate(out, _keys[left].value, _keys[right].value, alpha);
-		out.Normalize();
+		const float invLen = 1.0f / std::sqrt(lenSq);
+		q.x *= invLen;
+		q.y *= invLen;
+		q.z *= invLen;
+		q.w *= invLen;
+		return q;
+	}
+
+	static DX::Quaternion NegateQuat(const DX::Quaternion& _q)
+	{
+		return DX::Quaternion(-_q.x, -_q.y, -_q.z, -_q.w);
+	}
+
+	static DX::Quaternion LerpQuat(const DX::Quaternion& _a, const DX::Quaternion& _b, float _t)
+	{
+		return DX::Quaternion(
+			_a.x + (_b.x - _a.x) * _t,
+			_a.y + (_b.y - _a.y) * _t,
+			_a.z + (_b.z - _a.z) * _t,
+			_a.w + (_b.w - _a.w) * _t);
+	}
+
+	/** @brief DX::Quaternion の球面補間（分かりやすさ優先）
+	 *  @param _q0 始点
+	 *  @param _q1 終点
+	 *  @param _t 0～1
+	 *  @return 補間結果（正規化済み）
+	 */
+	static DX::Quaternion SlerpQuatSimple(const DX::Quaternion& _q0, const DX::Quaternion& _q1, float _t)
+	{
+		DX::Quaternion q0 = NormalizeQuatSafe(_q0);
+		DX::Quaternion q1 = NormalizeQuatSafe(_q1);
+
+		float dot = DotQuat(q0, q1);
+
+		if (dot < 0.0f)
+		{
+			q1 = NegateQuat(q1);
+			dot = -dot;
+		}
+
+		if (dot > 0.9995f)
+		{
+			return NormalizeQuatSafe(LerpQuat(q0, q1, _t));
+		}
+
+		dot = std::clamp(dot, -1.0f, 1.0f);
+
+		const float theta = std::acos(dot);
+		const float sinTheta = std::sin(theta);
+
+		if (std::abs(sinTheta) <= 1.0e-6f)
+		{
+			return NormalizeQuatSafe(LerpQuat(q0, q1, _t));
+		}
+
+		const float w0 = std::sin((1.0f - _t) * theta) / sinTheta;
+		const float w1 = std::sin(_t * theta) / sinTheta;
+
+		DX::Quaternion out(
+			(q0.x * w0) + (q1.x * w1),
+			(q0.y * w0) + (q1.y * w1),
+			(q0.z * w0) + (q1.z * w1),
+			(q0.w * w0) + (q1.w * w1));
+
+		return NormalizeQuatSafe(out);
+	}
+
+	static DX::Matrix4x4 TransposeDxMatrix(const DX::Matrix4x4& _m)
+	{
+		XMFLOAT4X4 f{};
+		static_assert(sizeof(DX::Matrix4x4) == sizeof(XMFLOAT4X4), "DX::Matrix4x4 と XMFLOAT4X4 のサイズが不一致です。");
+		std::memcpy(&f, &_m, sizeof(XMFLOAT4X4));
+
+		const XMMATRIX xm = XMLoadFloat4x4(&f);
+		const XMMATRIX t = XMMatrixTranspose(xm);
+
+		XMFLOAT4X4 outF{};
+		XMStoreFloat4x4(&outF, t);
+
+		DX::Matrix4x4 out{};
+		std::memcpy(&out, &outF, sizeof(XMFLOAT4X4));
 		return out;
 	}
 
-	/** @brief アニメーション時刻（ticks）を 0..durationTicks に収める（ループ）
-	 *  @param _tickTicks		現在時刻（ticks）
-	 *  @param _durationTicks	クリップ長（ticks）
-	 *  @return 正規化後の ticks
+	/** @brief TRS 行列を作成する（行ベクトル版）
+	 *  @param _t 平行移動成分
+	 *  @param _r 回転成分
+	 *  @param _s スケーリング成分
+	 *  @return 作成した行列
 	 */
-	static double WrapTick(double _tickTicks, double _durationTicks)
+	static DX::Matrix4x4 MakeTRS_RowVector(const DX::Vector3& _t, const DX::Quaternion& _r, const DX::Vector3& _s)
 	{
-		if (_durationTicks <= 0.0)
-		{
-			// 長さゼロなら常に 0
-			return 0.0;
-		}
+		const XMMATRIX S = XMMatrixScaling(_s.x, _s.y, _s.z);
+		const XMMATRIX R = XMMatrixRotationQuaternion(XMVectorSet(_r.x, _r.y, _r.z, _r.w));
+		const XMMATRIX T = XMMatrixTranslation(_t.x, _t.y, _t.z);
 
-		double t = std::fmod(_tickTicks, _durationTicks);
-		if (t < 0.0)
-		{
-			// 負の場合は一周分足す
-			t += _durationTicks;
-		}
-		return t;
+		const XMMATRIX m = S * R * T;
+
+		XMFLOAT4X4 f{};
+		XMStoreFloat4x4(&f, m);
+
+		DX::Matrix4x4 out{};
+		std::memcpy(&out, &f, sizeof(XMFLOAT4X4));
+		return out;
 	}
 
-	/** @brief キー配列から「区間の左側キー index」を探す
-	 *  @param _times 単調増加のキー時刻列（ticks）
-	 *  @param _t 現在時刻（ticks）
-	 *  @return 左側キー index（最後区間は size-2 を返す）
+	/** @brief 行列を TRS 成分に分解する（行ベクトル版）
+	 *  @param _bindLocal 分解対象の行列
+	 *  @param _outT 平行移動成分の出力先
+	 *  @param _outR 回転成分の出力先
+	 *  @param _outS スケーリング成分の出力先
+	 *  @return 分解に成功した場合は true、失敗した場合は false を返す
 	 */
-	static int FindLeftKeyIndex(const std::vector<double>& _times, double _t)
+	static bool DecomposeBindLocalTRS(
+		const DX::Matrix4x4& _bindLocal,
+		DX::Vector3& _outT,
+		DX::Quaternion& _outR,
+		DX::Vector3& _outS)
 	{
-		if (_times.size() < 2)
+		XMFLOAT4X4 f{};
+		static_assert(sizeof(DX::Matrix4x4) == sizeof(XMFLOAT4X4), "DX::Matrix4x4 と XMFLOAT4X4 のサイズが不一致です。");
+		std::memcpy(&f, &_bindLocal, sizeof(XMFLOAT4X4));
+
+		const XMMATRIX m = XMLoadFloat4x4(&f);
+
+		XMVECTOR s{};
+		XMVECTOR r{};
+		XMVECTOR t{};
+		const bool ok = (XMMatrixDecompose(&s, &r, &t, m) != 0);
+		if (!ok)
 		{
-			return 0;
+			_outT = DX::Vector3(0, 0, 0);
+			_outR = DX::Quaternion(0, 0, 0, 1);
+			_outS = DX::Vector3(1, 1, 1);
+			return false;
 		}
 
-		if (_t <= _times.front())
-		{
-			return 0;
-		}
-		if (_t >= _times.back())
-		{
-			return static_cast<int>(_times.size()) - 2;
-		}
+		XMFLOAT3 tf{};
+		XMStoreFloat3(&tf, t);
+		_outT = DX::Vector3(tf.x, tf.y, tf.z);
 
-		auto it = std::upper_bound(_times.begin(), _times.end(), _t);
-		const int idx = static_cast<int>(std::distance(_times.begin(), it)) - 1;
-		return std::max(0, std::min(idx, static_cast<int>(_times.size()) - 2));
+		XMFLOAT3 sf{};
+		XMStoreFloat3(&sf, s);
+		_outS = DX::Vector3(sf.x, sf.y, sf.z);
+
+		XMFLOAT4 qf{};
+		XMStoreFloat4(&qf, r);
+		_outR = NormalizeQuatSafe(DX::Quaternion(qf.x, qf.y, qf.z, qf.w));
+
+		return true;
 	}
 
-	/** @brief AnimKeyVec3 の時刻配列を作る
-	 *  @param _keys キー配列
-	 *  @return 時刻配列
-	 */
-	static std::vector<double> BuildTimesVec3(const std::vector<Graphics::Import::AnimKeyVec3>& _keys)
+	static DX::Matrix4x4 InverseDxMatrix(const DX::Matrix4x4& _m)
 	{
-		std::vector<double> t;
-		t.reserve(_keys.size());
-		for (const auto& k : _keys)
-		{
-			t.push_back(k.time);
-		}
-		return t;
+		XMFLOAT4X4 f{};
+		std::memcpy(&f, &_m, sizeof(XMFLOAT4X4));
+
+		const XMMATRIX xm = XMLoadFloat4x4(&f);
+		const XMMATRIX inv = XMMatrixInverse(nullptr, xm);
+
+		XMFLOAT4X4 outF{};
+		XMStoreFloat4x4(&outF, inv);
+
+		DX::Matrix4x4 out{};
+		std::memcpy(&out, &outF, sizeof(XMFLOAT4X4));
+		return out;
 	}
 
-	/** @brief AnimKeyQuat の時刻配列を作る
-	 *  @param _keys キー配列
-	 *  @return 時刻配列
-	 */
-	static std::vector<double> BuildTimesQuat(const std::vector<Graphics::Import::AnimKeyQuat>& _keys)
+	static void DumpMatrix4x4_RowCol(
+		std::ofstream& _ofs,
+		const char* _label,
+		const DX::Matrix4x4& _m)
 	{
-		std::vector<double> t;
-		t.reserve(_keys.size());
-		for (const auto& k : _keys)
-		{
-			t.push_back(k.time);
-		}
-		return t;
+		_ofs << _label << "\n";
+
+		_ofs << "  [r0] " << _m._11 << ", " << _m._12 << ", " << _m._13 << ", " << _m._14 << "\n";
+		_ofs << "  [r1] " << _m._21 << ", " << _m._22 << ", " << _m._23 << ", " << _m._24 << "\n";
+		_ofs << "  [r2] " << _m._31 << ", " << _m._32 << ", " << _m._33 << ", " << _m._34 << "\n";
+		_ofs << "  [r3] " << _m._41 << ", " << _m._42 << ", " << _m._43 << ", " << _m._44 << "\n";
+
+		_ofs << "  col4(translation) = (" << _m._14 << ", " << _m._24 << ", " << _m._34 << ")\n";
 	}
 
-	/** @brief Assimp の TRS から DirectX のローカル行列を作る
-	 *  @details 行ベクトル（mul(v, M)）で運用する想定
-	 *  @param _t 位置
-	 *  @param _r 回転
-	 *  @param _s スケール
-	 *  @return ローカル行列
-	 */
-	static DX::Matrix4x4 BuildLocalMatrixFromTrs(const aiVector3D& _t, const aiQuaternion& _r, const aiVector3D& _s)
+	static double GetTrackEndTickVec3(const std::vector<Graphics::Import::AnimKeyVec3>& _keys)
 	{
-		const DX::Vector3 scale(_s.x, _s.y, _s.z);
-		const DX::Vector3 trans(_t.x, _t.y, _t.z);
-		const DX::Quaternion rot(_r.x, _r.y, _r.z, _r.w);
-
-		DX::Matrix4x4 mS = DX::Matrix4x4::CreateScale(scale);
-		DX::Matrix4x4 mR = DX::Matrix4x4::CreateFromQuaternion(rot);
-		DX::Matrix4x4 mT = DX::Matrix4x4::CreateTranslation(trans);
-
-		return mS * mR * mT;
+		if (_keys.empty()) { return 0.0; }
+		return _keys.back().ticksTime;
 	}
 
-	/** @brief Assimpの行列をDirectXの行列に変換する（転置なし）
-	 *  @param _aiMtx Assimp行列
-	 *  @return DirectX行列
-	 */
-	DX::Matrix4x4 aiMtxToDxMtx(const aiMatrix4x4& _aiMtx)
+	static double GetTrackEndTickQuat(const std::vector<Graphics::Import::AnimKeyQuat>& _keys)
 	{
-		return DX::Matrix4x4(
-			_aiMtx.a1, _aiMtx.a2, _aiMtx.a3, _aiMtx.a4,
-			_aiMtx.b1, _aiMtx.b2, _aiMtx.b3, _aiMtx.b4,
-			_aiMtx.c1, _aiMtx.c2, _aiMtx.c3, _aiMtx.c4,
-			_aiMtx.d1, _aiMtx.d2, _aiMtx.d3, _aiMtx.d4
-		);
+		if (_keys.empty()) { return 0.0; }
+		return _keys.back().ticksTime;
 	}
 
-	///** @brief ノード名からノードindexを引ける辞書を作る
-	// *  @param _nodes ノード配列
-	// *  @return name -> index の辞書
-	// */
-	//static std::unordered_map<std::string, int> BuildNodeIndexMap(const std::vector<Graphics::Import::SkeletonNodeCache>& _nodes)
-	//{
-	//	std::unordered_map<std::string, int> map;
-	//	map.reserve(_nodes.size());
-
-	//	for (int i = 0; i < static_cast<int>(_nodes.size()); i++)
-	//	{
-	//		map.emplace(_nodes[i].name, i);
-	//	}
-
-	//	return map;
-	//}
-
-	/** @brief TreeNode を親→子順に走査して nodes を構築する
-	 *  @param _node 現在のノード
-	 *  @param _parentIndex 親ノードの index（親なしは -1）
-	 *  @param _boneDict ボーン辞書（name -> Bone）
-	 *  @param _outNodes 出力先 nodes
-	 */
-	static void BuildNodesDfsPreOrder(
-		const Utils::TreeNode<Graphics::Import::BoneNode>* _node,
-		int _parentIndex,
-		const std::unordered_map<std::string, Graphics::Import::Bone>& _boneDict,
-		std::vector<Graphics::Import::SkeletonNodeCache>& _outNodes)
+	static double ComputeClipEndTicksFromKeys(const Graphics::Import::AnimationClip& _clip)
 	{
-		if (!_node){ return; }
-		Graphics::Import::SkeletonNodeCache cache{};
-		cache.name = _node->nodedata.name;
-		cache.parentIndex = _parentIndex;
+		double maxTick = 0.0;
 
-		// bindLocalMatrix は「ノードツリーのローカル姿勢」を必ず入れる
-		// アニメが無いノードも親子合成に必要なので、ここは常に確定させる
-		cache.bindLocalMatrix = aiMtxToDxMtx(_node->nodedata.localBind);
-
-		// アニメは後で差し替えるので最初は nullptr
-		cache.nodeTrackRef = nullptr;
-
-		// boneIndex は「ノード名が boneDictionary に存在する場合のみ」入れる
-		auto it = _boneDict.find(cache.name);
-		if (it != _boneDict.end())
+		for (const auto& tr : _clip.tracks)
 		{
-			cache.boneIndex = it->second.index;
+			const double tp = GetTrackEndTickVec3(tr.positionKeys);
+			const double trt = GetTrackEndTickQuat(tr.rotationKeys);
+			const double ts = GetTrackEndTickVec3(tr.scaleKeys);
+
+			maxTick = std::max(maxTick, tp);
+			maxTick = std::max(maxTick, trt);
+			maxTick = std::max(maxTick, ts);
 		}
-		else
-		{
-			// ボーンでない場合
-			cache.boneIndex = -1;
-		}
-		const int myIndex = static_cast<int>(_outNodes.size());
-		_outNodes.push_back(cache);
 
-		// 子へ再帰（親→子順）
-		for (const auto& child : _node->children)
+		return maxTick;
+	}
+
+	static double SafeClipEndTicks(const Graphics::Import::AnimationClip* _clip)
+	{
+		if (!_clip) { return 0.0; }
+
+		const double keyEnd = ComputeClipEndTicksFromKeys(*_clip);
+		if (keyEnd > 0.0) { return keyEnd; }
+
+		return _clip->durationTicks;
+	}
+
+	static void BuildBindGlobalMatrices(
+		std::vector<DX::Matrix4x4>& _outBindGlobal,
+		const Graphics::Import::SkeletonCache& _cache)
+	{
+		const size_t nodeCount = _cache.nodes.size();
+		_outBindGlobal.assign(nodeCount, DX::Matrix4x4::Identity); // 全ノード分確保
+
+		// cache.order は親→子の順序が保証されている前提
+		for (int nodeIndex : _cache.order)
 		{
-			BuildNodesDfsPreOrder(child.get(), myIndex, _boneDict, _outNodes);
+			const auto& node = _cache.nodes[nodeIndex];
+			if (node.parentIndex < 0) {
+				_outBindGlobal[nodeIndex] = node.bindLocalMatrix;
+			}
+			else {
+				// 行ベクトル形式: 子 = 子Local * 親Global
+				_outBindGlobal[nodeIndex] = node.bindLocalMatrix * _outBindGlobal[node.parentIndex];
+			}
 		}
 	}
 
-	/** @brief 親が必ず先になる計算順 order を作る（nodes を前提）
-	 *  @details DFSのpre-orderで nodes を作るなら、order は 0..N-1 で成立する
-	 *  @param _nodeCount ノード数
-	 *  @param _outOrder 出力先
-	 */
-	static void BuildOrderDefault(int _nodeCount, std::vector<int>& _outOrder)
+	static void DumpTrackBakeStatus(
+		const char* _filePath,
+		const Graphics::Import::AnimationClip* _clip,
+		const Graphics::Import::SkeletonCache* _skeletonCache,
+		const char* _tag)
 	{
-		_outOrder.clear();
-		_outOrder.reserve(_nodeCount);
+		if (!_filePath) { return; }
+		if (!_clip) { return; }
 
-		for (int i = 0; i < _nodeCount; i++)
+		std::ofstream ofs(_filePath, std::ios::app);
+		if (!ofs.is_open()) { return; }
+
+		ofs << "\n============================================================\n";
+		ofs << "[TrackBakeStatus] " << (_tag ? _tag : "") << "\n";
+		ofs << "clipName=\"" << _clip->name << "\"\n";
+		ofs << "isBaked=" << (_clip->IsBaked() ? "true" : "false") << "\n";
+		ofs << "trackCount=" << _clip->tracks.size() << "\n";
+
+		if (_skeletonCache)
 		{
-			_outOrder.push_back(i);
+			ofs << "nodeCount=" << _skeletonCache->nodes.size() << "\n";
 		}
+
+		int unresolvedCount = 0;
+
+		for (size_t ti = 0; ti < _clip->tracks.size(); ++ti)
+		{
+			const auto& tr = _clip->tracks[ti];
+
+			ofs << "track[" << ti << "] ";
+			ofs << "name=\"" << tr.nodeName << "\" ";
+			ofs << "nodeIndex=" << tr.nodeIndex;
+
+			if (_skeletonCache && tr.nodeIndex >= 0 && tr.nodeIndex < static_cast<int>(_skeletonCache->nodes.size()))
+			{
+				const auto& node = _skeletonCache->nodes[static_cast<size_t>(tr.nodeIndex)];
+				ofs << " resolvedNodeName=\"" << node.name << "\"";
+			}
+			else
+			{
+				ofs << " resolvedNodeName=\"\"";
+			}
+
+			ofs << " posKeys=" << tr.positionKeys.size();
+			ofs << " rotKeys=" << tr.rotationKeys.size();
+			ofs << " sclKeys=" << tr.scaleKeys.size();
+
+			if (tr.nodeIndex < 0)
+			{
+				unresolvedCount++;
+				ofs << " [UNRESOLVED]";
+			}
+
+			ofs << "\n";
+		}
+
+		ofs << "unresolvedCount=" << unresolvedCount << "\n";
+		ofs << "============================================================\n";
 	}
 
-	/** @brief boneOffset（boneIndex -> OffsetMatrix）を作る
-	 *  @param _boneDict ボーン辞書
-	 *  @param _outBoneOffset 出力先
-	 */
-	static void BuildBoneOffsetArray(
-		const std::unordered_map<std::string, Graphics::Import::Bone>& _boneDict,
-		std::vector<DX::Matrix4x4>& _outBoneOffset)
+	static void DumpBakeValidationOnce(
+		const char* _filePath,
+		const Graphics::Import::AnimationClip* _clip,
+		const Graphics::Import::SkeletonCache* _skeletonCache,
+		const char* _tag)
 	{
-		int maxIndex = -1;
-		for (const auto& p : _boneDict)
+		if (!EnableBakeValidationDumpOnce) { return; }
+		if (BakeValidationDumped) { return; }
+
+		if (!_filePath) { return; }
+		if (!_clip) { return; }
+		if (!_skeletonCache) { return; }
+
+		std::ofstream ofs(_filePath, std::ios::app);
+		if (!ofs.is_open()) { return; }
+
+		ofs << "\n============================================================\n";
+		ofs << "[BakeValidationOnce] " << (_tag ? _tag : "") << "\n";
+		ofs << "clipName=\"" << _clip->name << "\"\n";
+		ofs << "isBaked=" << (_clip->IsBaked() ? "true" : "false") << "\n";
+		ofs << "trackCount=" << _clip->tracks.size() << "\n";
+		ofs << "nodeCount=" << _skeletonCache->nodes.size() << "\n";
+
+		std::unordered_map<std::string, std::vector<int>> nodeNameToIndices{};
+		nodeNameToIndices.reserve(_skeletonCache->nodes.size());
+
+		for (int i = 0; i < static_cast<int>(_skeletonCache->nodes.size()); ++i)
 		{
-			// ボーンが配列の何番目かを格納
-			maxIndex = std::max(maxIndex, p.second.index);
+			nodeNameToIndices[_skeletonCache->nodes[static_cast<size_t>(i)].name].push_back(i);
 		}
 
-		// ボーンのオフセット行列を格納
-		_outBoneOffset.clear();
-		_outBoneOffset.resize(static_cast<size_t>(maxIndex + 1), DX::Matrix4x4::Identity);
-		for (const auto& p : _boneDict)
-		{
-			const int idx = p.second.index;
-			if (idx < 0) { continue; }
+		int duplicateNameCount = 0;
+		size_t duplicateNodesTotal = 0;
 
-			// この段階では転置せずコピーのみ
-			_outBoneOffset[static_cast<size_t>(idx)] = aiMtxToDxMtx(p.second.offsetMatrix);
+		for (const auto& kv : nodeNameToIndices)
+		{
+			if (kv.second.size() >= 2)
+			{
+				duplicateNameCount++;
+				duplicateNodesTotal += kv.second.size();
+			}
 		}
+
+		ofs << "duplicateNameCount=" << duplicateNameCount << "\n";
+		ofs << "duplicateNodesTotal=" << duplicateNodesTotal << "\n";
+		ofs << "============================================================\n";
+
+		BakeValidationDumped = true;
 	}
 
-	// Add logging helpers for debugging bone buffer
-	static void PrintMatrixDebug(const DX::Matrix4x4& m)
+	static void DumpBoneMatrixCpuGpuPairOnce(
+		const char* _filePath,
+		int _boneIndex,
+		const DX::Matrix4x4& _skinCpu,
+		const DX::Matrix4x4& _skinUploaded)
 	{
-		std::cout << "[Matrix] ";
-		std::cout << m._11 << "," << m._12 << "," << m._13 << "," << m._14 << " | ";
-		std::cout << m._21 << "," << m._22 << "," << m._23 << "," << m._24 << " | ";
-		std::cout << m._31 << "," << m._32 << "," << m._33 << "," << m._34 << " | ";
-		std::cout << m._41 << "," << m._42 << "," << m._43 << "," << m._44 << std::endl;
+		std::ofstream ofs(_filePath, std::ios::app);
+		if (!ofs.is_open()) { return; }
+
+		ofs << "\n============================================================\n";
+		ofs << "[BoneMatrixCpuGpuPairOnce]\n";
+		ofs << "boneIndex=" << _boneIndex << "\n";
+
+		DumpMatrix4x4_RowCol(ofs, "CPU skin (no transpose):", _skinCpu);
+		ofs << "CPU translation(row4) = (" << _skinCpu._41 << ", " << _skinCpu._42 << ", " << _skinCpu._43 << ")\n";
+
+		DumpMatrix4x4_RowCol(ofs, "Uploaded (transposed):", _skinUploaded);
+		ofs << "Uploaded translation(col4) = (" << _skinUploaded._14 << ", " << _skinUploaded._24 << ", " << _skinUploaded._34 << ")\n";
+
+		ofs << "============================================================\n";
 	}
 
-	// Print a single matrix in a compact form including translation
-	static void PrintMatrixCompact(const DX::Matrix4x4& m)
-	{
-		// print rows and translation component separately for easier reading
-		std::cout << "  [r0] " << m._11 << ", " << m._12 << ", " << m._13 << ", " << m._14 << "\n";
-		std::cout << "  [r1] " << m._21 << ", " << m._22 << ", " << m._23 << ", " << m._24 << "\n";
-		std::cout << "  [r2] " << m._31 << ", " << m._32 << ", " << m._33 << ", " << m._34 << "\n";
-		std::cout << "  [tr] " << m._41 << ", " << m._42 << ", " << m._43 << "\n";
-	}
+	static void DumpNodeCalculation(std::ofstream& _ofs, int _idx, const std::string& _name,
+		const DX::Matrix4x4& _bind, const DX::Matrix4x4& _anim, const char* _type) {
 
-	// Unified bone buffer logger: compatible with previous call sites that pass (buf, true)
-	static void LogBoneBufferContent(const class AnimationComponent::BoneBuffer& buf, bool force = false, size_t maxBonesToShow = SIZE_MAX)
-	{
-		// Print basic info
-		const uint32_t count = buf.boneCount;
-		std::cout << "[AnimationComponent] BoneBuffer.boneCount = " << count << std::endl;
+		_ofs << "--- Node[" << _idx << "]: " << _name << " (" << _type << ") ---\n";
+		_ofs << "  Bind: " << _bind._41 << ", " << _bind._42 << ", " << _bind._43 << " (Trans)\n";
+		_ofs << "  Anim: " << _anim._41 << ", " << _anim._42 << ", " << _anim._43 << " (Trans)\n";
 
-		if (count == 0)
-		{
-			return;
-		}
+		// Bind の分解
+		DX::Matrix4x4 tempAnim = _anim;
+		DX::Vector3 s, t;
+		DX::Quaternion r;
+		tempAnim.Decompose(s, r, t);
 
-		// Determine how many bones to actually print
-		size_t toShow = count;
-		if (maxBonesToShow != SIZE_MAX)
-		{
-			toShow = std::min<size_t>(toShow, maxBonesToShow);
-		}
-
-		// Safety clamp to array size
-		toShow = std::min<size_t>(toShow, buf.boneMatrices.size());
-
-		for (size_t i = 0; i < toShow; ++i)
-		{
-			std::cout << "[AnimationComponent] boneMatrices[" << i << "] =" << std::endl;
-			PrintMatrixCompact(buf.boneMatrices[i]);
-		}
-
-		if (toShow < count)
-		{
-			std::cout << "[AnimationComponent] (skipped printing " << (count - toShow) << " bones)" << std::endl;
-		}
+		_ofs << "  AnimScale: " << s.x << ", " << s.y << ", " << s.z << "\n\n";
 	}
 }
 
 //-----------------------------------------------------------------------------
-// AnimationComponent
+// AnimationComponent Methods
 //-----------------------------------------------------------------------------
-AnimationComponent::AnimationComponent(GameObject* _owner, bool _isActive) :
-	Component(_owner, _isActive),
-	currentClip(nullptr),
-	meshComponent(nullptr),
-	modelData(nullptr),
-	isPlaying(false),
-	currentTime(0.0),
-	playbackSpeed(1.0f),
-	isSkeletonCached(false),
-	boneBuffer{},
-	boneCB(nullptr),
-	enableBoneDebugLog(true),
-	debugLogFrameCounter(0),
-	debugLogBurstSize(4),
-	debugLogPeriod(120) // temporarily set to 1 for immediate visible bursts
-{}
+AnimationComponent::AnimationComponent(GameObject* _owner, bool _isActive)
+	: Component(_owner, _isActive)
+{
+}
 
 void AnimationComponent::Initialize()
 {
-	//----------------------------------------------
-	// コンポーネントの取得
-	//----------------------------------------------
-	this->meshComponent = this->Owner()->GetComponent<MeshComponent>();
-
-	//----------------------------------------------
-	// 定数バッファの作成
-	//----------------------------------------------
-	auto& d3d = SystemLocator::Get<D3D11System>();
-	this->boneCB = std::make_unique<DynamicConstantBuffer<BoneBuffer>>();
-	this->boneCB->Create(d3d.GetDevice());
-	this->boneBuffer.boneCount = 0;
-
-	// Debug: print initial bone buffer before first upload
-	LogBoneBufferContent(this->boneBuffer);
-
-	this->boneCB->Update(d3d.GetContext(), this->boneBuffer);
-
-	this->isSkeletonCached = false;
-
-	if (this->modelData)
+	if (!this->boneCB)
 	{
-		// モデルデータが既にセットされている場合はスケルトンキャッシュを構築する
-		this->RebuildSkeletonCache();
+		auto& d3d = SystemLocator::Get<D3D11System>();
+		this->boneCB = std::make_unique<DynamicConstantBuffer<BoneBuffer>>();
+		this->boneCB->Create(d3d.GetDevice());
 	}
 
-	////----------------------------------------------
-	//// 時間関連の初期化
-	////----------------------------------------------
-	this->isPlaying = false;
+	this->meshComponent = this->Owner()->GetComponent<MeshComponent>();
+	if (!this->meshComponent)
+	{
+		this->meshComponent = this->Owner()->AddComponent<MeshComponent>();
+	}
+
+	this->isPlaying = true;
+	this->isLoop = true;
+
 	this->currentTime = 0.0;
-	this->playbackSpeed = 100.0f;
+	this->playbackSpeed = 1.0f;
+
+	this->clipEndTicks = 0.0;
+
+	this->bindGlobalMatrices.clear();
 }
 
 void AnimationComponent::Dispose()
 {
 	this->currentClip = nullptr;
 	this->meshComponent = nullptr;
-	this->modelData = nullptr;
-
-	this->isPlaying = false;
-	this->currentTime = 0.0;
 
 	this->isSkeletonCached = false;
-	this->skeletonCache.nodes.clear();
-	this->skeletonCache.order.clear();
-	this->skeletonCache.boneOffset.clear();
+	this->trackToNodeIndex.clear();
 
-	this->currentPose.localMatrices.clear();
-	this->currentPose.globalMatrices.clear();
-	this->currentPose.skinMatrices.clear();
-
-	if (this->boneCB)
-	{
-		this->boneCB.reset();
-	}
+	this->boneCB.reset();
 }
 
-void AnimationComponent::BindBoneCBVS(ID3D11DeviceContext* _context, UINT _slot) const
+void AnimationComponent::SetSkeletonCache(const Graphics::Import::SkeletonCache* _cache)
 {
-	if (!this->boneCB || !_context) { return; }
-	this->boneCB->BindVS(_context, _slot);
+	this->skeletonCache = _cache;
+
+	if (!this->skeletonCache)
+	{
+		this->isSkeletonCached = false;
+		return;
+	}
+	// SetSkeletonCache 内に追記
+	if (_cache) {
+		std::ofstream ofs("Import_Skeleton_Dump.txt");
+		ofs << "=== Skeleton Import Check ===\n";
+		ofs << "Node Count: " << _cache->nodes.size() << "\n";
+
+		// 1. Rootの逆行列（これに巨大なスケールが入っていないか）
+		ofs << "\n[Global Inverse Root Matrix]\n";
+		DumpMatrix4x4_RowCol(ofs, "globalInverse", _cache->globalInverse);
+
+		// 2. Hipsのボーンオフセット（これがバインドポーズと一致するか）
+		if (!_cache->boneOffset.empty()) {
+			ofs << "\n[Bone Offset (First Bone)]\n";
+			DumpMatrix4x4_RowCol(ofs, "boneOffset[0]", _cache->boneOffset[0]);
+		}
+
+		// 3. 最初の数ノードの Raw Bind Matrix
+		for (size_t i = 0; i < std::min<size_t>(5, _cache->nodes.size()); ++i) {
+			ofs << "\nNode[" << i << "]: " << _cache->nodes[i].name << "\n";
+			DumpMatrix4x4_RowCol(ofs, "  bindLocalMatrix", _cache->nodes[i].bindLocalMatrix);
+		}
+		ofs.close();
+	}
+
+
+	// --- ここからチェック用ログ ---
+	std::ofstream ofs("SkeletonOrderCheck.txt");
+	ofs << "Node Count: " << this->skeletonCache->nodes.size() << "\n";
+	ofs << "Order Size: " << this->skeletonCache->order.size() << "\n\n";
+
+	std::unordered_set<int> processedIndices;
+	bool isOrderValid = true;
+
+	for (size_t i = 0; i < this->skeletonCache->order.size(); ++i) {
+		int idx = this->skeletonCache->order[i];
+		const auto& node = this->skeletonCache->nodes[idx];
+
+		// 親が自分より先に処理されているかチェック
+		if (node.parentIndex >= 0) {
+			if (processedIndices.find(node.parentIndex) == processedIndices.end()) {
+				ofs << "[ERROR] Node '" << node.name << "' (idx:" << idx
+					<< ") has parent (idx:" << node.parentIndex
+					<< ") that appears LATER in order.\n";
+				isOrderValid = false;
+			}
+		}
+		processedIndices.insert(idx);
+		ofs << "Order[" << i << "]: Index " << idx << " (Name: " << node.name << ")\n";
+	}
+
+	if (isOrderValid) {
+		ofs << "\nRESULT: Skeleton order is VALID (Parents before children).\n";
+	}
+	else {
+		ofs << "\nRESULT: Skeleton order is INVALID!\n";
+	}
+
+	this->isSkeletonCached = true;
+	this->currentPose.Reset(*this->skeletonCache);
+
+	this->bindGlobalMatrices.clear();
+	BuildBindGlobalMatrices(this->bindGlobalMatrices, *this->skeletonCache);
+
+	if (this->currentClip && !this->currentClip->IsBaked())
+	{
+		this->currentClip->BakeNodeIndices(*this->skeletonCache);
+		DumpTrackBakeStatus(PoseDumpFilePath, this->currentClip, this->skeletonCache, "after BakeNodeIndices in SetSkeletonCache");
+		DumpBakeValidationOnce(PoseDumpFilePath, this->currentClip, this->skeletonCache, "after BakeNodeIndices in SetSkeletonCache");
+	}
+	else
+	{
+		DumpTrackBakeStatus(PoseDumpFilePath, this->currentClip, this->skeletonCache, "SetSkeletonCache (no bake)");
+		DumpBakeValidationOnce(PoseDumpFilePath, this->currentClip, this->skeletonCache, "SetSkeletonCache (no bake)");
+	}
+
+	this->clipEndTicks = SafeClipEndTicks(this->currentClip);
 }
 
 void AnimationComponent::SetAnimationClip(Graphics::Import::AnimationClip* _clip)
 {
 	this->currentClip = _clip;
-	this->currentTime = 0.0;
 
-	if (!this->isSkeletonCached)
+	if (this->currentClip && this->isSkeletonCached && this->skeletonCache && !this->currentClip->IsBaked())
 	{
-		return;
+		this->currentClip->BakeNodeIndices(*this->skeletonCache);
+		DumpTrackBakeStatus(PoseDumpFilePath, this->currentClip, this->skeletonCache, "after BakeNodeIndices in SetAnimationClip");
+		DumpBakeValidationOnce(PoseDumpFilePath, this->currentClip, this->skeletonCache, "after BakeNodeIndices in SetAnimationClip");
+	}
+	else
+	{
+		DumpTrackBakeStatus(PoseDumpFilePath, this->currentClip, this->skeletonCache, "SetAnimationClip (no bake)");
+		DumpBakeValidationOnce(PoseDumpFilePath, this->currentClip, this->skeletonCache, "SetAnimationClip (no bake)");
 	}
 
-	for (auto& n : this->skeletonCache.nodes)
-	{
-		n.nodeTrackRef = nullptr;
-	}
+	this->clipEndTicks = SafeClipEndTicks(this->currentClip);
 
-	if (!this->currentClip)
-	{
-		return;
-	}
+	// SetAnimationClip 内、または読み込み完了直後に一度だけ実行
+	if (_clip) {
+		std::ofstream ofs("Anim_Import_Detail_Check.txt");
+		ofs << "=== Animation Clip Detail Check ===\n";
+		ofs << "Clip Name: " << _clip->name << "\n";
+		ofs << "Duration: " << _clip->durationTicks << " TicksPerSecond: " << _clip->ticksPerSecond << "\n";
+		ofs << "Track Count: " << _clip->tracks.size() << "\n\n";
 
-	for (auto& n : this->skeletonCache.nodes)
-	{
-		auto it = this->currentClip->tracks.find(n.name);
-		if (it != this->currentClip->tracks.end())
-		{
-			n.nodeTrackRef = &it->second;
+		for (const auto& track : _clip->tracks) {
+			// Hips または 最初の数個のトラックをダンプ
+			if (track.nodeName.find("Hips") != std::string::npos || track.nodeIndex < 5) {
+				ofs << "Track: " << track.nodeName << " (NodeIndex: " << track.nodeIndex << ")\n";
+
+				if (!track.positionKeys.empty()) {
+					const auto& pk = track.positionKeys[0];
+					ofs << "  [First PosKey] Time: " << pk.ticksTime
+						<< " Val: (" << pk.value.x << ", " << pk.value.y << ", " << pk.value.z << ")\n";
+				}
+				else {
+					ofs << "  [No PosKeys]\n";
+				}
+
+				if (!track.rotationKeys.empty()) {
+					const auto& rk = track.rotationKeys[0];
+					ofs << "  [First RotKey] Time: " << rk.ticksTime
+						<< " Val: (" << rk.value.x << ", " << rk.value.y << ", " << rk.value.z << ", " << rk.value.w << ")\n";
+				}
+
+				if (!track.scaleKeys.empty()) {
+					const auto& sk = track.scaleKeys[0];
+					ofs << "  [First SclKey] Time: " << sk.ticksTime
+						<< " Val: (" << sk.value.x << ", " << sk.value.y << ", " << sk.value.z << ")\n";
+				}
+				ofs << "\n";
+			}
 		}
+		ofs.close();
 	}
-}
-
-//-----------------------------------------------------------------------------
-// AnimationComponent::SampleLocalFromTrack
-//-----------------------------------------------------------------------------
-DX::Matrix4x4 AnimationComponent::SampleLocalFromTrack(
-	const Graphics::Import::NodeTrack& _track,
-	double _tickTicks,
-	double _ticksPerSecond,
-	double _durationTicks)
-{
-	// 未使用パラメータ抑制
-	(void)_ticksPerSecond;
-	(void)_durationTicks;
-
-	// キーが無い場合の既定値
-	const aiVector3D fallbackT(0.0f, 0.0f, 0.0f);
-	const aiQuaternion fallbackR(1.0f, 0.0f, 0.0f, 0.0f); // Assimp は (w,x,y,z)
-	const aiVector3D fallbackS(1.0f, 1.0f, 1.0f);
-
-	// ticks でサンプリングする（time は Assimp 由来の ticks）
-	const aiVector3D t = SampleVec3(_track.positionKeys, _tickTicks, fallbackT);
-	const aiQuaternion r = SampleQuat(_track.rotationKeys, _tickTicks, fallbackR);
-	const aiVector3D s = SampleVec3(_track.scaleKeys, _tickTicks, fallbackS);
-
-	return BuildLocalMatrixFromTrs(t, r, s);
-}
-
-
-const std::string& AnimationComponent::GetCurrentAnimationName() const
-{
-	static const std::string empty = "";
-
-	if (!this->currentClip)
-	{
-		return empty;
-	}
-
-	return this->currentClip->name;
 }
 
 void AnimationComponent::Play()
 {
+	if (!this->currentClip) { return; }
+	if (!this->isSkeletonCached) { return; }
+
 	this->isPlaying = true;
 }
 
@@ -611,271 +719,327 @@ void AnimationComponent::Stop()
 	this->isPlaying = false;
 }
 
-void AnimationComponent::SetModelData(Graphics::Import::ModelData* _modelData)
+const std::string& AnimationComponent::GetCurrentAnimationName() const
 {
-	this->modelData = _modelData;
-	this->isSkeletonCached = false;
-
-	if (this->boneCB && this->modelData)
+	static const std::string empty{};
+	if (!this->currentClip)
 	{
-		// モデルデータが変わったのでスケルトンキャッシュを再構築する
-		this->RebuildSkeletonCache();
+		return empty;
 	}
-}
-
-//-----------------------------------------------------------------------------
-// AnimationComponent::RebuildSkeletonCache
-//-----------------------------------------------------------------------------
-void AnimationComponent::RebuildSkeletonCache()
-{
-	if(!this->modelData)
-	{
-		std::cerr << "[AnimationComponent] モデルデータが設定されていないため、スケルトンキャッシュを構築できません。" << std::endl;
-		return;
-	}
-	if (this->modelData->boneDictionary.empty())
-	{
-		std::cerr << "[AnimationComponent] モデルデータにボーン情報が存在しないため、スケルトンキャッシュを構築できません。" << std::endl;
-		return;
-	}
-	//----------------------------------------------
-	// スケルトンキャッシュの構築
-	//----------------------------------------------
-	this->isSkeletonCached = false;
-	BuildSkeletonCache(
-		this->modelData->nodeTree,
-		this->modelData->boneDictionary,
-		this->skeletonCache
-	);
-	this->isSkeletonCached = true;
-
-	//----------------------------------------------
-	// 現在のポーズの初期化（バインド姿勢）
-	//----------------------------------------------
-	this->currentPose.Reset(this->skeletonCache);
-
-	//----------------------------------------------
-	// ボーン行列用定数バッファの更新
-	//----------------------------------------------
-	this->boneBuffer.boneMatrices = this->currentPose.gpuBoneMatrices;
-
-	// ボーン数は最大値までクリップ
-	const size_t boneCount = std::min<size_t>(this->skeletonCache.boneOffset.size(), ShaderCommon::MaxBones);
-	this->boneBuffer.boneCount = static_cast<uint32_t>(boneCount);
-
-	// Debug: print bone buffer before uploading to GPU
-	if (this->enableBoneDebugLog)
-	{
-		// Force logging during rebuild
-		::LogBoneBufferContent(this->boneBuffer, true);
-	}
-
-	this->boneCB->Update(SystemLocator::Get<D3D11System>().GetContext(), this->boneBuffer);
+	return this->currentClip->name;
 }
 
 void AnimationComponent::FixedUpdate(float _deltaTime)
 {
-	// Debug: indicate FixedUpdate is executing
-	std::cout << "[AnimationComponent] FixedUpdate called, frameCounter=" << this->debugLogFrameCounter << std::endl;
-
-	if (!this->modelData) { return; }
-	if (!this->currentClip) { return; }
-	if (!this->meshComponent) { return; }
 	if (!this->isPlaying) { return; }
+	if (!this->currentClip) { return; }
 	if (!this->isSkeletonCached) { return; }
-	
-	//----------------------------------------------
-	// アニメーションのサンプリング
-	//----------------------------------------------
-	const double tps = (this->currentClip->ticksPerSecond > 0.0f) ? this->currentClip->ticksPerSecond : 25.0f;
-	const double durationTicks = this->currentClip->durationTicks;
+	if (!this->skeletonCache) { return; }
+	if (this->skeletonCache->nodes.empty()) { return; }
 
-	// 現在時刻を進める
-	this->currentTime += static_cast<double>(_deltaTime) * static_cast<double>(this->playbackSpeed);
-	if (this->currentTime < 0.0)
+	const double dt = static_cast<double>(_deltaTime) * static_cast<double>(this->playbackSpeed);
+	const double tps = this->currentClip->ticksPerSecond;
+	if (tps <= 0.0) { return; }
+
+	const double endTicksRaw = (this->clipEndTicks > 0.0) ? this->clipEndTicks : this->currentClip->durationTicks;
+	const double endTicks = (ForceEndTicks > 0.0) ? std::min(endTicksRaw, ForceEndTicks) : endTicksRaw;
+	const double endSec = (endTicks > 0.0) ? (endTicks / tps) : 0.0;
+
+	double nextTime = this->currentTime + dt;
+	if (endSec > 0.0)
 	{
-		// ループさせる
-		this->currentTime = 0.0;
-	}
-
-	// 現在の tick を計算してラップさせる
-	double tick = this->currentTime * tps;
-	tick = WrapTick(tick, durationTicks);
-
-	//----------------------------------------------
-	// ポーズの更新
-	//----------------------------------------------
-	const size_t nodeCount = this->skeletonCache.nodes.size();
-	if (nodeCount == 0){ return; }
-
-	if (this->currentPose.localMatrices.size() != nodeCount)
-	{
-		// ポーズの配列サイズが合っていない場合はリセット
-		this->currentPose.Reset(this->skeletonCache);
-	}
-
-	//--------------------------------------------------------------
-	// localMatrices を更新（トラックがあるノードはサンプリング、無いノードは bindLocal）
-	//--------------------------------------------------------------
-	for (size_t i = 0; i < nodeCount; i++)
-	{
-		const Graphics::Import::SkeletonNodeCache& node = this->skeletonCache.nodes[i];
-
-		if (node.nodeTrackRef)
+		if (this->isLoop)
 		{
-			// トラックがある場合はサンプリングする
-			this->currentPose.localMatrices[i] = SampleLocalFromTrack(*node.nodeTrackRef, tick, tps, durationTicks);
+			nextTime = std::fmod(nextTime, endSec);
+			if (nextTime < 0.0) { nextTime += endSec; }
 		}
 		else
 		{
-			// トラックが無い場合はバインド姿勢を使う
-			this->currentPose.localMatrices[i] = node.bindLocalMatrix;
+			if (nextTime >= endSec)
+			{
+				nextTime = endSec;
+				this->isPlaying = false;
+			}
+			if (nextTime < 0.0)
+			{
+				nextTime = 0.0;
+			}
 		}
 	}
+	this->currentTime = nextTime;
 
 	//-----------------------------------------------------------------------------
-	// globalMatrices を更新（親が必ず先に来る order を使用）
+	// ポーズ更新
 	//-----------------------------------------------------------------------------
-	for (size_t oi = 0; oi < this->skeletonCache.order.size(); oi++)
+	this->UpdatePoseFromClip(this->currentTime);
+
+	//-----------------------------------------------------------------------------
+	// ボーン行列更新
+	//-----------------------------------------------------------------------------
+	boneBuffer.boneCount = static_cast<uint32_t>(skeletonCache->boneIndexToNodeIndex.size());
+	// ↑ ここで ShaderCommon::MaxBones (512) を超えない限り、 boneMatrices 配列はリサイズされない
+
+	const size_t count = static_cast<size_t>(this->boneBuffer.boneCount);
+
+	for (size_t i = 0; i < ShaderCommon::MaxBones; ++i)
 	{
-		const int nodeIndex = this->skeletonCache.order[oi];
-		if (nodeIndex < 0 || static_cast<size_t>(nodeIndex) >= nodeCount)
-		{
-			// 不正な index はスキップ
-			continue;
-		}
-
-		// 親 index を取得する
-		const int parentIndex = this->skeletonCache.nodes[nodeIndex].parentIndex;
-		if (parentIndex < 0)
-		{
-			// 親なし
-			this->currentPose.globalMatrices[nodeIndex] = this->currentPose.localMatrices[nodeIndex];
-		}
-		else
-		{
-			// 親あり（子 * 親）
-			this->currentPose.globalMatrices[nodeIndex] = this->currentPose.localMatrices[nodeIndex] * this->currentPose.globalMatrices[parentIndex];
-		}
+		this->boneBuffer.boneMatrices[i] = DX::Matrix4x4::Identity;
 	}
 
-	//-----------------------------------------------------------------------------
-	// gpuBoneMatrices を更新（ボーンだけ）
-	//-----------------------------------------------------------------------------
-	for (size_t i = 0; i < ShaderCommon::MaxBones; i++)
+	for (size_t i = 0; i < count; ++i)
 	{
-		this->currentPose.gpuBoneMatrices[i] = DX::Matrix4x4::Identity;
-	}
+		const DX::Matrix4x4& m = this->currentPose.cpuBoneMatrices[i];
 
-	for (size_t i = 0; i < nodeCount; i++)
-	{
-		const int boneIndex = this->skeletonCache.nodes[i].boneIndex;
-		if (boneIndex < 0)
+		// GPU へは最終だけ転置して送る（mul(v, M) 前提）
+		this->boneBuffer.boneMatrices[i] = TransposeDxMatrix(m);
+
+		static bool dumped = false;
+		if (!dumped && count > 0)
 		{
-			// ボーンが存在しない
-			continue;
-		}
-
-		if (static_cast<size_t>(boneIndex) >= this->skeletonCache.boneOffset.size())
-		{
-			// boneOffset が存在しないボーンはスキップ
-			continue;
-		}
-
-		// スキニング行列を計算（ボーンのローカル行列 * バインドポーズ行列）
-		const DX::Matrix4x4 skin =
-			this->skeletonCache.boneOffset[boneIndex] *
-			this->currentPose.globalMatrices[i] *
-			this->skeletonCache.globalInverse;
-
-		this->currentPose.skinMatrices[i] = skin;
-
-		if (boneIndex < static_cast<int>(ShaderCommon::MaxBones))
-		{
-			// GPU用行列は転置して格納
-			this->currentPose.gpuBoneMatrices[static_cast<size_t>(boneIndex)] = skin.Transpose();
+			const int boneIndex = 0;
+			const DX::Matrix4x4 skinCpu = this->currentPose.cpuBoneMatrices[static_cast<size_t>(boneIndex)];
+			const DX::Matrix4x4 uploaded = this->boneBuffer.boneMatrices[static_cast<size_t>(boneIndex)];
+			DumpBoneMatrixCpuGpuPairOnce(PoseDumpFilePath, boneIndex, skinCpu, uploaded);
+			dumped = true;
 		}
 	}
+
+	//// 306行目付近：boneCB を GPU に送る直前
+	//for (int b = 0; b < static_cast<int>(this->skeletonCache->boneOffset.size()); ++b)
+	//{
+	//	// HLSL側の mul(v, M) に合わせるために転置する
+	//	this->boneBuffer.boneMatrices[b] = XMMatrixTranspose(this->boneBuffer.boneMatrices[b]);
+	//}
 
 	//-----------------------------------------------------------------------------
 	// 定数バッファ更新
 	//-----------------------------------------------------------------------------
-	this->boneBuffer.boneMatrices = this->currentPose.gpuBoneMatrices;
-
-	const size_t boneCount = std::min<size_t>(this->skeletonCache.boneOffset.size(), ShaderCommon::MaxBones);
-	this->boneBuffer.boneCount = static_cast<uint32_t>(boneCount);
-
-	//-------------------------------------------------------------
-	// Debug: print bone buffer before uploading to GPU -- controlled burst logging
-	//-------------------------------------------------------------
-	if (this->enableBoneDebugLog)
+	if (this->boneCB)
 	{
-		// Increment frame counter each FixedUpdate
-		this->debugLogFrameCounter++;
-
-		// Determine position within period
-		int frameInPeriod = this->debugLogFrameCounter % this->debugLogPeriod;
-
-		if (frameInPeriod < this->debugLogBurstSize)
-		{
-			// Within burst -> print
-			::LogBoneBufferContent(this->boneBuffer, true);
-		}
+		auto& d3d = SystemLocator::Get<D3D11System>();
+		this->boneCB->Update(d3d.GetContext(), this->boneBuffer);
 	}
-
-	this->boneCB->Update(SystemLocator::Get<D3D11System>().GetContext(), this->boneBuffer);
 }
 
-void AnimationComponent::BuildSkeletonCache(
-	const Utils::TreeNode<Graphics::Import::BoneNode>& _nodeTree,
-	const std::unordered_map<std::string, Graphics::Import::Bone>& _boneDict,
-	Graphics::Import::SkeletonCache& _outCache)
+//-----------------------------------------------------------------------------
+// AnimationComponent::UpdatePoseFromClip
+//-----------------------------------------------------------------------------
+void AnimationComponent::UpdatePoseFromClip(double _timeSeconds)
 {
-	_outCache.nodes.clear();
-	_outCache.order.clear();
-	_outCache.boneOffset.clear();
+	if (!currentClip || !skeletonCache) return;
 
-	// nodes を作る（親→子順）
-	BuildNodesDfsPreOrder(&_nodeTree, -1, _boneDict, _outCache.nodes);
+	// 1. Ticks換算
+	double ticks = _timeSeconds * currentClip->ticksPerSecond;
+	if (isLoop) {
+		ticks = std::fmod(ticks, currentClip->durationTicks);
+	}
+	else {
+		ticks = std::min(ticks, currentClip->durationTicks);
+	}
 
-	// order を作る（0..N-1）
-	BuildOrderDefault(static_cast<int>(_outCache.nodes.size()), _outCache.order);
+	const size_t nodeCount = skeletonCache->nodes.size();
 
-	// boneOffset（boneIndex -> OffsetMatrix）を作る
-	BuildBoneOffsetArray(_boneDict, _outCache.boneOffset);
+	// 2. Local行列の決定 (全ノードを走査)
+	for (size_t i = 0; i < nodeCount; ++i) {
+		const auto& nodeInfo = skeletonCache->nodes[i];
 
-	// globalInverse を計算する
-	if (!_outCache.nodes.empty())
-	{
-		const size_t nodeCount = _outCache.nodes.size();
-		std::vector<DX::Matrix4x4> bindGlobal;
-		bindGlobal.resize(nodeCount, DX::Matrix4x4::Identity);
-
-		for (size_t oi = 0; oi < _outCache.order.size(); oi++)
-		{
-			const int nodeIndex = _outCache.order[oi];
-			if (nodeIndex < 0 || static_cast<size_t>(nodeIndex) >= nodeCount)
-			{
-				continue;
-			}
-
-			const int parentIndex = _outCache.nodes[nodeIndex].parentIndex;
-			if (parentIndex < 0)
-			{
-				bindGlobal[nodeIndex] = _outCache.nodes[nodeIndex].bindLocalMatrix;
-			}
-			else
-			{
-				// 親あり（子 * 親）
-				bindGlobal[nodeIndex] = _outCache.nodes[nodeIndex].bindLocalMatrix * bindGlobal[parentIndex];
+		// このノードに対するアニメーション（Track）があるか探す
+		const Graphics::Import::NodeTrack* track = nullptr;
+		// 本来は map 等で引くのが理想ですが、現状の構成に合わせて検索
+		for (const auto& t : currentClip->tracks) {
+			if (t.nodeIndex == (int)i) {
+				track = &t;
+				break;
 			}
 		}
 
-		// parentIndex < 0 のノードが複数あるケースは基本想定しない（Assimp の root）
-		// まず 0 番をルートとして扱う（DFS pre-order なので通常は root）
-		DX::Matrix4x4 root = bindGlobal[0];
-
-		// 逆行列を計算（失敗したら Identity のまま）
-		_outCache.globalInverse = root.Invert();
+		if (track) {
+			// アニメーションが存在するノード (Hipsや関節など)
+			UpdateLocalMatrixFromKeys(i, ticks);
+		}
+		else {
+			// アニメーションが存在しないノード ($AssimpFbx$ やその他中間ノード)
+			// FBX本来のトランスフォーム（Bind姿勢）を代入
+			currentPose.localMatrices[i] = nodeInfo.bindLocalMatrix;
+		}
 	}
+
+	// 3. Global行列の更新 (全ノードを親子順に合成)
+	// skeletonCache->order には Root から Leaf までの全インデックスが親子順で入っているため、
+	// これを回すだけで全ノードの CombinedTransform が正しく計算されます。
+	for (int nodeIndex : skeletonCache->order) {
+		const int parentIndex = skeletonCache->nodes[nodeIndex].parentIndex;
+		if (parentIndex < 0) {
+			// 親がいない（RootNode）
+			currentPose.globalMatrices[nodeIndex] = currentPose.localMatrices[nodeIndex];
+		}
+		else {
+			// 行ベクトル形式: Global = Local(自分) * Global(親)
+			currentPose.globalMatrices[nodeIndex] =
+				currentPose.localMatrices[nodeIndex] * currentPose.globalMatrices[parentIndex];
+		}
+	}
+
+	// 4. スキニング行列（Shaderへ送る boneMatrices / cpuBoneMatrices）の計算
+	// ここは Mesh に紐づいているボーンのみを処理
+	for (size_t boneIdx = 0; boneIdx < skeletonCache->boneIndexToNodeIndex.size(); ++boneIdx) {
+		if (boneIdx >= ShaderCommon::MaxBones) break;
+
+		int nodeIdx = skeletonCache->boneIndexToNodeIndex[boneIdx];
+		const auto& offset = skeletonCache->boneOffset[boneIdx];
+
+		// Skin = Offset * Global * GlobalInverse (Root基準に戻す)
+		currentPose.cpuBoneMatrices[boneIdx] = offset * currentPose.globalMatrices[nodeIdx] * skeletonCache->globalInverse;
+	}
+
+	// デバッグ出力や GPU 転送は現状のままでOK
+}
+
+DX::Vector3 AnimationComponent::InterpolateTranslation(const Graphics::Import::NodeTrack* _track, float _ticks, const DX::Vector3& _fallback)
+{
+	if (!_track) { return _fallback; }
+
+	const auto& keys = _track->positionKeys;
+	if (keys.empty()) { return _fallback; }
+	if (keys.size() == 1) { return keys[0].value; }
+
+	size_t rightIdx = 0;
+	for (; rightIdx < keys.size(); ++rightIdx)
+	{
+		if (static_cast<float>(keys[rightIdx].ticksTime) > _ticks) { break; }
+	}
+
+	if (rightIdx == keys.size()) { return keys.back().value; }
+	if (rightIdx == 0) { return keys.front().value; }
+
+	const auto& leftKey = keys[rightIdx - 1];
+	const auto& rightKey = keys[rightIdx];
+
+	const float denom = static_cast<float>(rightKey.ticksTime - leftKey.ticksTime);
+	if (denom <= 1.0e-6f) { return leftKey.value; }
+
+	const float t = (_ticks - static_cast<float>(leftKey.ticksTime)) / denom;
+	return DX::Vector3::Lerp(leftKey.value, rightKey.value, t);
+}
+
+DX::Quaternion AnimationComponent::InterpolateRotation(const Graphics::Import::NodeTrack* _track, float _ticks, const DX::Quaternion& _fallback)
+{
+	if (!_track) { return _fallback; }
+
+	const auto& keys = _track->rotationKeys;
+	if (keys.empty()) { return _fallback; }
+	if (keys.size() == 1) { return keys[0].value; }
+
+	size_t rightIdx = 0;
+	for (; rightIdx < keys.size(); ++rightIdx)
+	{
+		if (static_cast<float>(keys[rightIdx].ticksTime) > _ticks) { break; }
+	}
+
+	if (rightIdx == keys.size()) { return keys.back().value; }
+	if (rightIdx == 0) { return keys.front().value; }
+
+	const auto& leftKey = keys[rightIdx - 1];
+	const auto& rightKey = keys[rightIdx];
+
+	const float denom = static_cast<float>(rightKey.ticksTime - leftKey.ticksTime);
+	if (denom <= 1.0e-6f) { return leftKey.value; }
+
+	const float t = (_ticks - static_cast<float>(leftKey.ticksTime)) / denom;
+	return SlerpQuatSimple(leftKey.value, rightKey.value, t);
+}
+
+DX::Vector3 AnimationComponent::InterpolateScale(const Graphics::Import::NodeTrack* _track, float _ticks, const DX::Vector3& _fallback)
+{
+	if (!_track) { return _fallback; }
+
+	const auto& keys = _track->scaleKeys;
+	if (keys.empty()) { return _fallback; }
+	if (keys.size() == 1) { return keys[0].value; }
+
+	size_t rightIdx = 0;
+	for (; rightIdx < keys.size(); ++rightIdx)
+	{
+		if (static_cast<float>(keys[rightIdx].ticksTime) > _ticks) { break; }
+	}
+
+	if (rightIdx == keys.size()) { return keys.back().value; }
+	if (rightIdx == 0) { return keys.front().value; }
+
+	const auto& leftKey = keys[rightIdx - 1];
+	const auto& rightKey = keys[rightIdx];
+
+	const float denom = static_cast<float>(rightKey.ticksTime - leftKey.ticksTime);
+	if (denom <= 1.0e-6f) { return leftKey.value; }
+
+	const float t = (_ticks - static_cast<float>(leftKey.ticksTime)) / denom;
+	return DX::Vector3::Lerp(leftKey.value, rightKey.value, t);
+}
+
+void AnimationComponent::BindBoneCBVS(ID3D11DeviceContext* _context, UINT _slot) const
+{
+	if (!_context) { return; }
+	if (!this->boneCB) { return; }
+
+	ID3D11Buffer* buf = this->boneCB->GetBuffer();
+	if (!buf) { return; }
+
+	_context->VSSetConstantBuffers(_slot, 1, &buf);
+}
+
+void AnimationComponent::UpdateLocalMatrixFromKeys(size_t _nodeIdx, double _ticks)
+{
+	auto& nodeInfo = this->skeletonCache->nodes[_nodeIdx];
+
+	// 1. デフォルト値として Bind姿勢を分解して持っておく
+	// (アニメーションにキーがない成分は、この値を維持することでボーンの長さを守る)
+	XMMATRIX bindM = XMLoadFloat4x4(reinterpret_cast<const XMFLOAT4X4*>(&nodeInfo.bindLocalMatrix));
+	XMVECTOR bS, bR, bT;
+	XMMatrixDecompose(&bS, &bR, &bT, bindM);
+
+	// 2. このノードに対応するアニメーションがあるか検索
+	const Graphics::Import::NodeTrack* track = nullptr;
+	for (const auto& t : currentClip->tracks) {
+		if (t.nodeIndex == (int)_nodeIdx) {
+			track = &t;
+			break;
+		}
+	}
+
+	// 3. トラックがない、または $AssimpFbx$ 中間ノードの場合は Bind姿勢をそのまま使う
+	// ($AssimpFbx$系のノードには基本的にアニメーションキーは存在しません)
+	if (!track) {
+		currentPose.localMatrices[_nodeIdx] = nodeInfo.bindLocalMatrix;
+		return;
+	}
+
+	// 4. アニメーションキーがある成分だけ上書き、ない成分は Bind姿勢を維持
+	DX::Vector3 finalPos, finalScale;
+	DX::Quaternion finalRot;
+
+	XMStoreFloat3(reinterpret_cast<XMFLOAT3*>(&finalPos), bT);
+	XMStoreFloat4(reinterpret_cast<XMFLOAT4*>(&finalRot), bR);
+	XMStoreFloat3(reinterpret_cast<XMFLOAT3*>(&finalScale), bS);
+
+	if (track->hasPosition) {
+		// キーがある場合のみ上書き（主にHipsのみ）
+		// ※ここで変なスケール(0.189fなど)は掛けないでください
+		finalPos = InterpolateTranslation(track, (float)_ticks, finalPos);
+	}
+
+	if (track->hasRotation) {
+		// ほとんどの関節はここを通る
+		finalRot = InterpolateRotation(track, (float)_ticks, finalRot);
+	}
+
+	if (track->hasScale) {
+		finalScale = InterpolateScale(track, (float)_ticks, finalScale);
+	}
+
+	// 5. 行列再構成
+	XMMATRIX m = XMMatrixScalingFromVector(XMLoadFloat3(reinterpret_cast<XMFLOAT3*>(&finalScale))) *
+		XMMatrixRotationQuaternion(XMLoadFloat4(reinterpret_cast<XMFLOAT4*>(&finalRot))) *
+		XMMatrixTranslationFromVector(XMLoadFloat3(reinterpret_cast<XMFLOAT3*>(&finalPos)));
+
+	XMStoreFloat4x4(reinterpret_cast<XMFLOAT4X4*>(&currentPose.localMatrices[_nodeIdx]), m);
 }

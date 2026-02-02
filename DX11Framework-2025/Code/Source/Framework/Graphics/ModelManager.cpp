@@ -31,8 +31,12 @@ ModelManager::ModelManager() : modelImporter()
 	// モデル情報登録
 	 this->modelInfoTable.emplace(
 	     "Player",
-		 Graphics::ModelInfo{ "Assets/Models/Stickman/source/Idle.fbx", "Assets/Models/Stickman/textures" }
+		 Graphics::ModelInfo{ "Assets/Models/Stickman/source/stickman.fbx", "Assets/Models/Stickman/textures" }
 	 );
+	 //this->modelInfoTable.emplace(
+	 //    "Player",
+		// Graphics::ModelInfo{ "Assets/Models/Stickman/source/Head Hit.fbx", "Assets/Models/Stickman/textures" }
+	 //);
 
 	 this->modelInfoTable.emplace(
 		 "Woman",
@@ -70,7 +74,8 @@ Graphics::ModelEntry* ModelManager::Register(const std::string& _key)
 
 	// Import して ModelData を作る
 	auto modelData = std::make_unique<Graphics::Import::ModelData>();
-	if (!this->modelImporter.Load(info.filename, info.textureDir, *modelData))
+	auto skeletonCache = std::make_unique<Graphics::Import::SkeletonCache>();
+	if (!this->modelImporter.Load(info.filename, info.textureDir, *modelData, *skeletonCache))
 	{
 		std::cerr << "[Error] ModelManager::Register: Import failed: " << _key << std::endl;
 		return nullptr;
@@ -110,6 +115,7 @@ Graphics::ModelEntry* ModelManager::Register(const std::string& _key)
 	entry->mesh = meshRaw;
 	entry->material = matRaw;
 	entry->SetModelData(std::move(modelData));
+	entry->SetSkeletonCache(std::move(skeletonCache));
 
 	Graphics::ModelEntry* entryRaw = entry.get();
 	this->modelTable.emplace(_key, std::move(entry));

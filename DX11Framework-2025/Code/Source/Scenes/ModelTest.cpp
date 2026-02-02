@@ -89,28 +89,67 @@ void ModelTest::SetupObjects()
 	//--------------------------------------------------------------
 	// オブジェクトの生成
 	//--------------------------------------------------------------
+
+	// 時間制御グループオブジェクトを生成する
+	auto timeScaleGroup = this->gameObjectManager.Instantiate("TimeScaleGroup");
+	auto timeGroup = timeScaleGroup->AddComponent<TimeScaleGroup>();
 	
 	// モデルデータの取得テスト
 	modelManager.Register("Player");
 	auto modelData = modelManager.Get("Player");
 
 	auto player = this->gameObjectManager.Instantiate("Player", GameTags::Tag::Player);
-	player->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 0.0f));
+	player->transform->SetLocalPosition(DX::Vector3(0.0f, -10.0f, 0.0f));
 	player->transform->SetLocalScale(DX::Vector3(0.1f, 0.1f, 0.1f));
+
+	auto timeScale = player->AddComponent<TimeScaleTestComponent>();
+	timeScale->SetTimeScaleGroup(timeGroup);
+	timeGroup->AddGroup("PlayerGroup", player->GetComponent<TimeScaleComponent>());
+
 	auto meshComp = player->AddComponent<MeshComponent>();
 	meshComp->SetMesh(modelData->mesh);
 	auto materialComp = player->AddComponent<MaterialComponent>();
 	materialComp->SetMaterial(modelData->material);
 	//player->AddComponent<MeshRenderer>();
 	auto animComp = player->AddComponent<AnimationComponent>();
-	animComp->SetModelData(modelData->GetModelData());
+
+	if (modelData->GetSkeletonCache() != nullptr)
+	{
+		std::cout << "[ModelTest] Skeleton Cache Loaded." << std::endl;
+
+	}
+	else
+	{
+		std::cerr << "[ModelTest] Failed to load Skeleton Cache." << std::endl;
+	}
+	if (modelData->GetSkeletonCache()->nodes.size() > 0)
+	{
+		std::cout << "[ModelTest] Skeleton Nodes Count: " << modelData->GetSkeletonCache()->nodes.size() << std::endl;
+
+	}
+	else
+	{
+		std::cerr << "[ModelTest] Skeleton Nodes are empty." << std::endl;
+	}
+	if (modelData->GetSkeletonCache()->boneOffset.size() > 0)
+	{
+		std::cout << "[ModelTest] Skeleton Bone Offsets Count: " << modelData->GetSkeletonCache()->boneOffset.size() << std::endl;
+
+	}
+	else
+	{
+		std::cerr << "[ModelTest] Skeleton Bone Offsets are empty." << std::endl;
+	}
+
+	animComp->SetSkeletonCache(modelData->GetSkeletonCache());
 
 	// アニメーションデータの取得テスト
 	//animationClipManager.Register("Walk");
 	//animationClipManager.Register("Run");
-	//animationClipManager.Register("Jump");
+	animationClipManager.Register("Jump");
+	animationClipManager.Register("HeadHit");
 	animationClipManager.Register("Idle");
-	auto clip = animationClipManager.Get("Idle");
+	auto clip = animationClipManager.Get("Jump");
 	if (clip)
 	{
 		std::cout << "[ModelTest] Animation Clip Loaded: " << clip->name << std::endl;
@@ -124,8 +163,8 @@ void ModelTest::SetupObjects()
 	}
 
 	animComp->SetAnimationClip(clip);
-	animComp->Play();
-	//animComp->SetPlaybackSpeed(0.1f);
+	//animComp->Play();
+	animComp->SetPlaybackSpeed(0.1f);
 
 	player->AddComponent<SkinnedMeshRenderer>();
 	//player->AddComponent<MeshRenderer>();

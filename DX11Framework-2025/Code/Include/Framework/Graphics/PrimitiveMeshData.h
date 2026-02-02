@@ -3,7 +3,7 @@
  *  @date   2025/11/10
  */
 #pragma once
-#include "Include/Framework/Graphics/Mesh.h"
+#include "Include/Framework/Graphics/VertexTypes.h"
 
 #include <vector>
 #include <cmath>

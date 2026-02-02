@@ -20,7 +20,6 @@
 #include <array>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 //-----------------------------------------------------------------------------
@@ -38,12 +37,9 @@ public:
 	/// @brief ボーン行列用定数バッファ
 	struct BoneBuffer
 	{
-		std::array<DX::Matrix4x4, ShaderCommon::MaxBones> boneMatrices{};
-		uint32_t boneCount = 0;
-		DX::Vector3 _pad0{ 0,0,0 };
-		DX::Vector4 _pad1{ 0,0,0,0 };
-		DX::Vector4 _pad2{ 0,0,0,0 };
-		DX::Vector4 _pad3{ 0,0,0,0 };
+		uint32_t boneCount;
+		float pad[3]; // アライメント
+		DirectX::XMMATRIX boneMatrices[128];
 	};
 
 	/** @brief コンストラクタ
@@ -66,32 +62,25 @@ public:
 	 */
 	void FixedUpdate(float _deltaTime) override;
 
-	/** @brief nodeTree と boneDictionary から SkeletonCache を構築する
-	 *  @param _nodeTree モデルのノードツリー
-	 *  @param _boneDict モデルのボーン辞書
-	 *  @param _outCache 出力先キャッシュ
-	 */
-	void BuildSkeletonCache(
-		const Utils::TreeNode<Graphics::Import::BoneNode>& _nodeTree, 
-		const std::unordered_map<std::string, Graphics::Import::Bone>& _boneDict, 
-		Graphics::Import::SkeletonCache& _outCache
-	);
-
-	/** @brief スケルトンキャッシュを再構築する
-	 *  @details モデルデータ変更時に呼び出すこと
-	 */
-	void RebuildSkeletonCache();
-
 	/** @brief ボーン行列用定数バッファをバインドする
 	 *  @param _context デバイスコンテキスト
 	 *  @param _slot バインドスロット
 	 */
 	void BindBoneCBVS(ID3D11DeviceContext* _context, UINT _slot) const;
 
-	/** @brief アニメーションクリップを設定する
+	/** @brief アニメーションクリップを設定する（トラック解決もここで行う）
 	 *  @param _clip 設定するアニメーションクリップ
 	 */
 	void SetAnimationClip(Graphics::Import::AnimationClip* _clip);
+
+	/** @brief トラックからノードインデックスへの解決を行う
+	 */
+	void ResolveTracksToNodes();
+
+	/** @brief スケルトンキャッシュを設定する（モデル読み込み側で生成したものを渡す）
+	 *  @param _cache スケルトンキャッシュ
+	 */
+	void SetSkeletonCache(const Graphics::Import::SkeletonCache* _cache);
 
 	/** @brief 再生中か
 	 *  @return 再生中なら true
@@ -119,39 +108,42 @@ public:
 	 */
 	void SetCurrentTime(double _time) { this->currentTime = _time; }
 
-	/** @brief モデルデータを設定する
-	 *  @param _modelData モデルデータ
-	 */
-	void SetModelData(Graphics::Import::ModelData* _modelData);
+	/** @brief ループ再生を設定する
+	* @param _isLoop ループするなら true
+	*/
+	void SetLoop(bool _isLoop) { this->isLoop = _isLoop; }
+
+	/** @brief ループ再生か
+	* @return ループするなら true
+	*/
+	bool IsLoop() const { return this->isLoop; }
 
 private:
-	DX::Matrix4x4 SampleLocalFromTrack(
-		const Graphics::Import::NodeTrack& track,
-		double tickTicks,
-		double ticksPerSecond,
-		double durationTicks);
+	void UpdatePoseFromClip(double _timeSeconds);
+	void UpdateLocalMatrixFromKeys(size_t _nodeIdx, double _ticks);
+	DX::Vector3 InterpolateTranslation(const Graphics::Import::NodeTrack* _track, float _ticks, const DX::Vector3& _fallback);
+	DX::Quaternion InterpolateRotation(const Graphics::Import::NodeTrack* _track, float _ticks, const DX::Quaternion& _fallback);
+	DX::Vector3 InterpolateScale(const Graphics::Import::NodeTrack* _track, float _ticks, const DX::Vector3& _fallback);
 
 private:
+	std::vector<DX::Matrix4x4> bindGlobalMatrices{}; ///< バインド姿勢の global（ノード数分、SetSkeletonCache時に作る）
 
 	Graphics::Import::AnimationClip* currentClip = nullptr; ///< 現在のアニメーションクリップ
-	MeshComponent* meshComponent = nullptr;                    ///< メッシュコンポーネント
-	Graphics::Import::ModelData* modelData = nullptr;        ///< 対象モデルデータ
+	MeshComponent* meshComponent = nullptr;                 ///< メッシュコンポーネント
+
+	double clipEndTicks = 0.0;	///< 実キー終端（tracksの最後キー時刻の最大値）
 
 	bool isPlaying = false;     ///< 再生中フラグ
 	double currentTime = 0.0;   ///< 現在の再生時間（秒）
 	float playbackSpeed = 1.0f; ///< 再生速度
+	bool isLoop = false;		///< ループ再生
 
-	Graphics::Import::SkeletonCache skeletonCache{};	///< スケルトンキャッシュ
-	Graphics::Import::Pose currentPose{};				///< 現在のポーズ
-	bool isSkeletonCached = false;                        ///< スケルトンキャッシュ生成済みか
+	const Graphics::Import::SkeletonCache* skeletonCache = nullptr;	///< スケルトンキャッシュ
+	Graphics::Import::Pose currentPose{};							///< 現在のポーズ
+	bool isSkeletonCached = false;									///< スケルトンキャッシュ設定済みか
 
-	// ボーン行列用定数バッファ
+	std::vector<int> trackToNodeIndex{};							///< trackIndex -> nodeIndex（解決結果）
+
 	BoneBuffer boneBuffer{};
 	std::unique_ptr<DynamicConstantBuffer<BoneBuffer>> boneCB;
-
-	// Debug logging control: print bursts of frames instead of every frame
-	bool enableBoneDebugLog = true;        ///< enable/disable bone debug logging
-	int debugLogFrameCounter = 0;         ///< incremented each FixedUpdate
-	int debugLogBurstSize = 4;            ///< number of consecutive frames to log
-	int debugLogPeriod = 60;              ///< period (frames) between bursts
 };

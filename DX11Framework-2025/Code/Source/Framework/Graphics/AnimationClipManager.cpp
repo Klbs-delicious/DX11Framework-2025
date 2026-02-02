@@ -25,6 +25,7 @@ AnimationClipManager::AnimationClipManager()
 	this->AddClipInfo("Fight", "Assets/Animations/Fighting.fbx");
 	this->AddClipInfo("Dance", "Assets/Animations/dance.fbx");
 	this->AddClipInfo("Idle", "Assets/Animations/Idle.fbx");
+	this->AddClipInfo("HeadHit", "Assets/Animations/Head Hit.fbx");
 }
 
 AnimationClipManager::~AnimationClipManager()

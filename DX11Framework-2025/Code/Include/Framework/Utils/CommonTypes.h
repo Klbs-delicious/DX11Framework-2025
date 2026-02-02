@@ -5,6 +5,8 @@
 #include	<wrl/client.h>
 #include	<cstdint>
 #include	<numbers>
+#include	<cmath>
+#include	<algorithm>
 #include	"SimpleMath.h"
 
  /**@namespace	DX
@@ -65,5 +67,122 @@ namespace DX
 		result._44 = 1.0f;
 
 		return result;
+	}
+}
+
+//-----------------------------------------------------------------------------
+// DX::Quaternion 補間（分かりやすさ優先）
+//-----------------------------------------------------------------------------
+namespace DX
+{
+	/** @brief クォータニオンの内積
+	 *  @param _a クォータニオンA
+	 *  @param _b クォータニオンB
+	 *  @return 内積
+	 */
+	static float DotQuat(const DX::Quaternion& _a, const DX::Quaternion& _b)
+	{
+		return (_a.x * _b.x) + (_a.y * _b.y) + (_a.z * _b.z) + (_a.w * _b.w);
+	}
+
+	/** @brief クォータニオンの正規化（安全版）
+	 *  @param _q 入力クォータニオン
+	 *  @return 正規化されたクォータニオン（長さ0の場合は単位クォータニオンを返す）
+	 */
+	static DX::Quaternion NormalizeQuatSafe(const DX::Quaternion& _q)
+	{
+		DX::Quaternion q = _q;
+
+		const float lenSq = (q.x * q.x) + (q.y * q.y) + (q.z * q.z) + (q.w * q.w);
+		if (!std::isfinite(lenSq) || lenSq <= 1.0e-12f)
+		{
+			return DX::Quaternion(0.0f, 0.0f, 0.0f, 1.0f);
+		}
+
+		const float invLen = 1.0f / std::sqrt(lenSq);
+		q.x *= invLen;
+		q.y *= invLen;
+		q.z *= invLen;
+		q.w *= invLen;
+		return q;
+	}
+
+	/** @brief クォータニオンの符号反転
+	 *  @param _q 入力クォータニオン
+	 *  @return 符号反転したクォータニオン
+	 */
+	static DX::Quaternion NegateQuat(const DX::Quaternion& _q)
+	{
+		return DX::Quaternion(-_q.x, -_q.y, -_q.z, -_q.w);
+	}
+
+	/** @brief 直線補間
+	 *  @param _a 開始回転
+	 *  @param _b 終了回転
+	 *  @param _t 0～1
+	 *  @return 補間された回転
+	 */
+	static DX::Quaternion LerpQuat(const DX::Quaternion& _a, const DX::Quaternion& _b, float _t)
+	{
+		return DX::Quaternion(
+			_a.x + (_b.x - _a.x) * _t,
+			_a.y + (_b.y - _a.y) * _t,
+			_a.z + (_b.z - _a.z) * _t,
+			_a.w + (_b.w - _a.w) * _t);
+	}
+
+	/** @brief 球面補間
+	 *  @param _q0 開始回転
+	 *  @param _q1 終了回転
+	 *  @param _t  0～1
+	 *  @return 補間された回転（正規化済み）
+	 */
+	static DX::Quaternion SlerpQuatSimple(const DX::Quaternion& _q0, const DX::Quaternion& _q1, float _t)
+	{
+		// 正規化を行う
+		DX::Quaternion q0 = NormalizeQuatSafe(_q0);
+		DX::Quaternion q1 = NormalizeQuatSafe(_q1);
+
+		// 内積を計算する
+		float dot = DotQuat(q0, q1);
+
+		// 符号反転が混ざると補間がゼロ付近を通って潰れやすいので、
+		// 同じ半球に揃える
+		if (dot < 0.0f)
+		{
+			q1 = NegateQuat(q1);
+			dot = -dot;
+		}
+
+		// ほぼ同じ回転なら直線補間で十分とみなす
+		if (dot > 0.9995f)
+		{
+			return NormalizeQuatSafe(LerpQuat(q0, q1, _t));
+		}
+
+		// 球面補間を行う
+		dot = std::clamp(dot, -1.0f, 1.0f);
+
+		const float theta = std::acos(dot);	
+		const float sinTheta = std::sin(theta);
+
+		if (std::abs(sinTheta) <= 1.0e-6f)
+		{
+			// sinTheta が0に近い場合は直線補間で代替する
+			return NormalizeQuatSafe(LerpQuat(q0, q1, _t));
+		}
+
+		// 補間係数を計算する
+		const float w0 = std::sin((1.0f - _t) * theta) / sinTheta;
+		const float w1 = std::sin(_t * theta) / sinTheta;
+
+		DX::Quaternion out(
+			(q0.x * w0) + (q1.x * w1),
+			(q0.y * w0) + (q1.y * w1),
+			(q0.z * w0) + (q1.z * w1),
+			(q0.w * w0) + (q1.w * w1));
+
+		// 正規化して返す
+		return NormalizeQuatSafe(out);
 	}
 }

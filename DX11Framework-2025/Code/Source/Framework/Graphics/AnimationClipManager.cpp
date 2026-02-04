@@ -19,11 +19,14 @@ AnimationClipManager::AnimationClipManager()
 {
 	// クリップ情報の事前登録（必要に応じて追加する）
 	this->AddClipInfo("Walk", "Assets/Animations/Wheelbarrow Walk Turn.fbx");
-	this->AddClipInfo("Punch", "Assets/Animations/Punching.fbx");
+	this->AddClipInfo("Punch", "Assets/Animations/Zombie Punching.fbx");
 	this->AddClipInfo("Run", "Assets/Animations/Fast Run.fbx");
 	this->AddClipInfo("Jump", "Assets/Animations/Jumping.fbx");
 	this->AddClipInfo("Fight", "Assets/Animations/Fighting.fbx");
 	this->AddClipInfo("Dance", "Assets/Animations/dance.fbx");
+	this->AddClipInfo("Idle", "Assets/Animations/Idle.fbx");
+	this->AddClipInfo("HeadHit", "Assets/Animations/Head Hit.fbx");
+	this->AddClipInfo("Dodge", "Assets/Animations/Dodging Right.fbx");
 }
 
 AnimationClipManager::~AnimationClipManager()
@@ -60,7 +63,7 @@ Graphics::Import::AnimationClip* AnimationClipManager::Register(const std::strin
 	auto clip = std::make_unique<Graphics::Import::AnimationClip>();
 
 	Graphics::Import::AnimationImporter importer;
-	if (!importer.Load(filename, *clip))
+	if (!importer.LoadSingleClip(filename, *clip))
 	{
 		std::cerr << "[Error] AnimationClipManager::Register: Import failed: " << _key
 			<< " (" << filename << ")" << std::endl;

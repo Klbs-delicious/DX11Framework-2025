@@ -13,6 +13,7 @@
 #include "Include/Framework/Core/SystemLocator.h"
 #include "Include/Framework/Core/D3D11System.h"
 #include "Include/Framework/Shaders/ShaderManager.h"
+#include "Include/Framework/Graphics/VertexTypes.h"
 
 #include "Include/Framework/Utils/CommonTypes.h"
 
@@ -122,10 +123,29 @@ void SkinnedMeshRenderer::Draw()
 {
 	if (!this->meshComponent || !this->camera) { return; }
 
+	// -------------------------------------------------------------
+	// デバッグ情報の出力
+	// -------------------------------------------------------------
+	const DirectX::SimpleMath::Vector3 camPos = this->camera->Owner()->GetComponent<Transform>()
+		? this->camera->Owner()->GetComponent<Transform>()->GetWorldPosition()
+		: DirectX::SimpleMath::Vector3::Zero;
+
+	const DirectX::SimpleMath::Vector3 objPos = this->transform
+		? this->transform->GetWorldPosition()
+		: DirectX::SimpleMath::Vector3::Zero;
+
+	const float dist = (objPos - camPos).Length();
+
+	//std::cout << "[SkinnedMeshRenderer][Debug] camPos=(" << camPos.x << "," << camPos.y << "," << camPos.z << ") "
+	//	<< "objPos=(" << objPos.x << "," << objPos.y << "," << objPos.z << ") "
+	//	<< "dist=" << dist
+	//	<< std::endl;
+
+
 	auto& d3d = SystemLocator::Get<D3D11System>();
 	auto& render = SystemLocator::Get<RenderSystem>();
 	auto ctx = d3d.GetContext();
-	auto dev = d3d.GetDevice();
+
 
 	//-------------------------------------------------------------
 	// 変換行列を送る
@@ -134,30 +154,35 @@ void SkinnedMeshRenderer::Draw()
 	Matrix view = camera->GetViewMatrix();
 	Matrix proj = camera->GetProjectionMatrix();
 
+
 	render.SetWorldMatrix(&world);
 	render.SetViewMatrix(&view);
 	render.SetProjectionMatrix(&proj);
 
-	//-------------------------------------------------------------
-	// スキニング用の定数バッファを更新
-	//-------------------------------------------------------------
-	if (!this->animationComponent) { return; }
-	this->animationComponent->BindBoneCBVS(ctx, 7);
 
 	//-------------------------------------------------------------
 	// ライト用定数バッファを更新
 	//-------------------------------------------------------------
-	this->lightBuffer->Update(ctx, this->light);
-	this->lightBuffer->BindPS(ctx, 4);
+	if (this->lightBuffer)
+	{
+		this->lightBuffer->Update(ctx, this->light);
+		this->lightBuffer->BindPS(ctx, 4);
+	}
+
 
 	//-------------------------------------------------------------
 	// メッシュ情報をバインドする
 	//-------------------------------------------------------------
 	auto mesh = this->meshComponent->GetMesh();
-	if (!mesh){ return; }
+	if (!mesh) { return; }
 
+
+	// 2つ目のログ：IA の stride を取得して出す（Bind 後に見る）
 	mesh->Bind(*ctx);
+
+
 	ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
 
 	//-------------------------------------------------------------
 	// マテリアルを適用する
@@ -165,10 +190,22 @@ void SkinnedMeshRenderer::Draw()
 	this->materialComponent->Apply(ctx, &render);
 
 	//-------------------------------------------------------------
-	// 描画（今は単一マテリアルを使い回す）
+	// スキニング用の定数バッファを更新
 	//-------------------------------------------------------------
-	for (const auto& subset : mesh->GetSubsets())
+	if (!this->animationComponent) { return; }
+	this->animationComponent->BindBoneCBVS(ctx, 7);
+
+
+	//-------------------------------------------------------------
+	// 1つ目のログ：Draw 直前で subset の indexCount/indexStart を出す
+	//-------------------------------------------------------------
+	const auto& subsets = mesh->GetSubsets();
+
+	for (size_t i = 0; i < subsets.size(); i++)
 	{
+		const auto& subset = subsets[i];
+
+		// 描画（今は単一マテリアルを使い回す）
 		ctx->DrawIndexed(subset.indexCount, subset.indexStart, 0);
 	}
 }

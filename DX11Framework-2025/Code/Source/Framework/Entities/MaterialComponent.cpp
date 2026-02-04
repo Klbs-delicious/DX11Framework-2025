@@ -24,7 +24,7 @@ MaterialComponent::MaterialComponent(GameObject* _owner, bool _isActive)
     this->param.Specular = { 0,0,0,1 };
     this->param.Emission = { 0,0,0,1 };
     this->param.Shiness = 32.0f;
-    this->param.TextureEnable = TRUE;
+    this->param.TextureEnable = FALSE;
 }
 
 MaterialComponent::~MaterialComponent()
@@ -48,6 +48,11 @@ void MaterialComponent::Initialize()
 		// デフォルトテクスチャを設定する
         auto& texMgr = this->Owner()->Services()->sprites;
         this->baseMaterial->albedoMap = texMgr->Default();
+    }
+    // テクスチャが存在するなら、描画パラメータのフラグを TRUE にする
+    if (this->baseMaterial->albedoMap || this->overrideTexture)
+    {
+        this->param.TextureEnable = TRUE;
     }
 
     //// GPUに送る

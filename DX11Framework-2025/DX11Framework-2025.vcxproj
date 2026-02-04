@@ -99,7 +99,10 @@
     <ClInclude Include="Code\Include\Scenes\TestScene.h" />
     <ClInclude Include="Code\Include\Scenes\TitleScene.h" />
     <ClInclude Include="Code\Include\Tests\FreeMoveTestComponent.h" />
+    <ClInclude Include="Code\Include\Tests\SkinningDebug.h" />
     <ClInclude Include="Code\Include\Tests\TestCollisionHandler.h" />
+    <ClInclude Include="Code\Include\Tests\TestDodge.h" />
+    <ClInclude Include="Code\Include\Tests\TestEnemy.h" />
     <ClInclude Include="Code\Include\Tests\TestMoveComponent.h" />
     <ClInclude Include="Code\Include\Tests\TimeScaleTestComponent.h" />
   </ItemGroup>
@@ -134,6 +137,7 @@
     <ClCompile Include="Code\Source\Framework\Entities\TimeScaleGroup.cpp" />
     <ClCompile Include="Code\Source\Framework\Entities\Transform.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\AnimationClipManager.cpp" />
+    <ClCompile Include="Code\Source\Framework\Graphics\AnimationData.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\AnimationImporter.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\BufferBase.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\IndexBuffer.cpp" />
@@ -168,7 +172,10 @@
     <ClCompile Include="Code\Source\Scenes\TestScene.cpp" />
     <ClCompile Include="Code\Source\Scenes\TitleScene.cpp" />
     <ClCompile Include="Code\Source\Tests\FreeMoveTestComponent.cpp" />
+    <ClCompile Include="Code\Source\Tests\SkinningDebug.cpp" />
     <ClCompile Include="Code\Source\Tests\TestCollisionHandler.cpp" />
+    <ClCompile Include="Code\Source\Tests\TestDodge.cpp" />
+    <ClCompile Include="Code\Source\Tests\TestEnemy.cpp" />
     <ClCompile Include="Code\Source\Tests\TestMoveComponent.cpp" />
     <ClCompile Include="Code\Source\Tests\TimeScaleTestComponent.cpp" />
   </ItemGroup>
@@ -355,7 +362,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>assimp-vc143-mtd.lib;zlibstaticd.lib;Jolt.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)External\assimp\lib\Debug;$(ProjectDir)External\joltphysics\lib\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\DX11Framework-2025\DX11Framework-2025\External\assimp5.2.5\lib;$(ProjectDir)External\joltphysics\lib\Debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PreBuildEvent>
       <Command>powershell -ExecutionPolicy Bypass -File "$(ProjectDir)SaveAsUTF8.ps1" "$(ProjectDir)"</Command>

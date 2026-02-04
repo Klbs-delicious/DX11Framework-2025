@@ -1,198 +1,383 @@
-﻿/** @file   ModelImporter.cpp
- *  @brief  Assimpを利用したモデルデータ読み込み
+﻿/** @file	ModelImporter.cpp
+ *  @brief	Assimpを利用したモデルデータ読み込み
  */
+
+ //-----------------------------------------------------------------------------
+ // Includes
+ //-----------------------------------------------------------------------------
 #include "Include/Framework/Graphics/ModelImporter.h"
 #include "Include/Framework/Utils/TreeNode.h"
 
-#include <iostream>
+#include <algorithm>
 #include <cassert>
-#include <unordered_map>
-#include <memory>
+#include <cmath>
+#include <cfloat>
+#include <cstring>
+#include <iostream>
 #include <optional>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
- //-----------------------------------------------------------------------------
- // Assimp
- //-----------------------------------------------------------------------------
-#include <assimp/scene.h>
+//-----------------------------------------------------------------------------
+// Assimp
+//-----------------------------------------------------------------------------
 #include <assimp/Importer.hpp>
 #include <assimp/material.h>
 #include <assimp/postprocess.h>
+#include <assimp/scene.h>
+
+//-----------------------------------------------------------------------------
+// DirectXMath
+//-----------------------------------------------------------------------------
+#include <DirectXMath.h>
 
 //-----------------------------------------------------------------------------
 // Local Helpers
 //-----------------------------------------------------------------------------
 namespace
 {
-	/// @brief aiMatrix4x4 を行ベクトル運用向けに転置して返す
-	static aiMatrix4x4 ToRowVectorMatrix(const aiMatrix4x4& _m)
+	//-----------------------------------------------------------------------------
+	// Debug switches (最小ログ用)
+	//-----------------------------------------------------------------------------
+	static constexpr bool EnableSkinningDebugLog = true;
+	static constexpr float BindPoseWarnThreshold = 1.0e-3f;
+	static constexpr int MaxBindPoseWarnBones = 6;   // しきい値超えのボーンを最大何件ログするか
+	static constexpr int MaxProbePrintBones = 6;     // Probe の詳細出力を最大何件にするか
+
+	//-----------------------------------------------------------------------------
+	// Matrix helpers
+	//-----------------------------------------------------------------------------
+	static DX::Matrix4x4 TransposeDxMatrix(const DX::Matrix4x4& _m)
 	{
-		aiMatrix4x4 out = _m;
-		out.Transpose();
+		DirectX::XMFLOAT4X4 f{};
+		static_assert(sizeof(DX::Matrix4x4) == sizeof(DirectX::XMFLOAT4X4), "DX::Matrix4x4 と XMFLOAT4X4 のサイズが不一致です。");
+		std::memcpy(&f, &_m, sizeof(DirectX::XMFLOAT4X4));
+
+		const DirectX::XMMATRIX xm = DirectX::XMLoadFloat4x4(&f);
+		const DirectX::XMMATRIX t = DirectX::XMMatrixTranspose(xm);
+
+		DirectX::XMFLOAT4X4 outF{};
+		DirectX::XMStoreFloat4x4(&outF, t);
+
+		DX::Matrix4x4 out{};
+		std::memcpy(&out, &outF, sizeof(DirectX::XMFLOAT4X4));
 		return out;
 	}
 
-	/** @brief 頂点にボーン影響を追加（上位4本を維持） 
-	 */
-	void AddInfluence(Graphics::Import::Vertex& _v, UINT _boneIndex, float _weight)
+	static DX::Matrix4x4 AiToDxMtx_NoTranspose(const aiMatrix4x4& _m)
 	{
-		if (_weight <= 0.0f) { return; }
+		return DX::Matrix4x4(
+			_m.a1, _m.a2, _m.a3, _m.a4,
+			_m.b1, _m.b2, _m.b3, _m.b4,
+			_m.c1, _m.c2, _m.c3, _m.c4,
+			_m.d1, _m.d2, _m.d3, _m.d4
+		);
+	}
 
-		// 既に同じボーンが入っているなら加算
-		for (int i = 0; i < 4; i++)
+	static DX::Matrix4x4 AiToDxMtx_Transpose(const aiMatrix4x4& _m)
+	{
+		return ::TransposeDxMatrix(::AiToDxMtx_NoTranspose(_m));
+	}
+
+	static DX::Matrix4x4 InverseDxMatrix(const DX::Matrix4x4& _m)
+	{
+		using namespace DirectX;
+
+		XMFLOAT4X4 f{};
+		static_assert(sizeof(DX::Matrix4x4) == sizeof(XMFLOAT4X4), "DX::Matrix4x4 と XMFLOAT4X4 のサイズが不一致です。");
+		std::memcpy(&f, &_m, sizeof(XMFLOAT4X4));
+
+		const XMMATRIX xm = XMLoadFloat4x4(&f);
+		XMVECTOR det{};
+		const XMMATRIX inv = XMMatrixInverse(&det, xm);
+
+		XMFLOAT4X4 outF{};
+		XMStoreFloat4x4(&outF, inv);
+
+		DX::Matrix4x4 out{};
+		std::memcpy(&out, &outF, sizeof(XMFLOAT4X4));
+		return out;
+	}
+
+	static DX::Matrix4x4 MaybeTranspose(const DX::Matrix4x4& _m, bool _doTranspose)
+	{
+		if (!_doTranspose) { return _m; }
+		return ::TransposeDxMatrix(_m);
+	}
+
+	static float MaxAbsDiffIdentity(const DX::Matrix4x4& _m)
+	{
+		const float id[16] =
 		{
-			if (_v.boneWeight[i] > 0.0f && _v.boneIndex[i] == _boneIndex)
+			1,0,0,0,
+			0,1,0,0,
+			0,0,1,0,
+			0,0,0,1
+		};
+
+		const float* p = reinterpret_cast<const float*>(&_m);
+
+		float maxAbs = 0.0f;
+		for (int i = 0; i < 16; i++)
+		{
+			const float d = std::fabs(p[i] - id[i]);
+			if (d > maxAbs)
 			{
-				_v.boneWeight[i] += _weight;
-				return;
+				maxAbs = d;
+			}
+		}
+		return maxAbs;
+	}
+
+	//-----------------------------------------------------------------------------
+	// Logging helpers (最小限)
+	//-----------------------------------------------------------------------------
+	static void LogHeader(const char* _title)
+	{
+		if (!EnableSkinningDebugLog) { return; }
+
+		std::cout << "\n";
+		std::cout << "============================================================\n";
+		std::cout << _title << "\n";
+		std::cout << "============================================================\n";
+	}
+
+	static void PrintMatrix4x4(const char* _label, const DX::Matrix4x4& _m)
+	{
+		if (!EnableSkinningDebugLog) { return; }
+
+		std::cout << _label << std::endl;
+		std::cout
+			<< "  [r0] " << _m.m[0][0] << ", " << _m.m[0][1] << ", " << _m.m[0][2] << ", " << _m.m[0][3] << "\n"
+			<< "  [r1] " << _m.m[1][0] << ", " << _m.m[1][1] << ", " << _m.m[1][2] << ", " << _m.m[1][3] << "\n"
+			<< "  [r2] " << _m.m[2][0] << ", " << _m.m[2][1] << ", " << _m.m[2][2] << ", " << _m.m[2][3] << "\n"
+			<< "  [r3] " << _m.m[3][0] << ", " << _m.m[3][1] << ", " << _m.m[3][2] << ", " << _m.m[3][3] << std::endl;
+	}
+
+	//-----------------------------------------------------------------------------
+	// Minimal debug: bind pose identity の転置パターン総当たり
+	//-----------------------------------------------------------------------------
+	/** @brief bind pose の identity 成否を「転置の有無 8通り」で総当たりして、最小誤差の組み合わせを出す */
+	static void DebugBindPoseIdentityTransposeProbe(
+		int _boneIndex,
+		const std::string& _boneName,
+		const DX::Matrix4x4& _bindGlobalBone,
+		const DX::Matrix4x4& _globalInverseMeshRoot,
+		const DX::Matrix4x4& _boneOffset)
+	{
+		if (!EnableSkinningDebugLog) { return; }
+
+		float best = FLT_MAX;
+		int bestMask = 0;
+		DX::Matrix4x4 bestM = DX::Matrix4x4::Identity;
+
+		for (int mask = 0; mask < 8; ++mask)
+		{
+			const bool tBindGlobal = ((mask & 1) != 0);
+			const bool tGlobalInv = ((mask & 2) != 0);
+			const bool tOffset = ((mask & 4) != 0);
+
+			const DX::Matrix4x4 bg = MaybeTranspose(_bindGlobalBone, tBindGlobal);
+			const DX::Matrix4x4 gi = MaybeTranspose(_globalInverseMeshRoot, tGlobalInv);
+			const DX::Matrix4x4 of = MaybeTranspose(_boneOffset, tOffset);
+
+			// row vector 前提：skin = offset * bindGlobal(bone) * globalInverse(meshRoot)
+			const DX::Matrix4x4 skin = of * bg * gi;
+
+			const float err = MaxAbsDiffIdentity(skin);
+			if (err < best)
+			{
+				best = err;
+				bestMask = mask;
+				bestM = skin;
 			}
 		}
 
-		// 空き（weight==0）へ入れる
-		for (int i = 0; i < 4; i++)
-		{
-			if (_v.boneWeight[i] <= 0.0f)
-			{
-				_v.boneIndex[i] = _boneIndex;
-				_v.boneWeight[i] = _weight;
-				return;
-			}
-		}
+		const bool bestTBindGlobal = ((bestMask & 1) != 0);
+		const bool bestTGlobalInv = ((bestMask & 2) != 0);
+		const bool bestTOffset = ((bestMask & 4) != 0);
 
-		// 空き無し：最小ウェイトより大きい場合だけ差し替え
-		int minSlot = 0;
-		float minW = _v.boneWeight[0];
-		for (int i = 1; i < 4; i++)
-		{
-			if (_v.boneWeight[i] < minW)
-			{
-				minW = _v.boneWeight[i];
-				minSlot = i;
-			}
-		}
+		std::cout
+			<< "[BindPoseTransposeProbe] boneIndex=" << _boneIndex
+			<< " boneName=\"" << _boneName << "\""
+			<< " bestMaxAbs=" << best
+			<< " bestTranspose={ bindGlobal:" << (bestTBindGlobal ? "T" : "N")
+			<< ", globalInv:" << (bestTGlobalInv ? "T" : "N")
+			<< ", offset:" << (bestTOffset ? "T" : "N")
+			<< " }"
+			<< std::endl;
 
-		if (_weight > minW)
+		if (best > 1e-3f)
 		{
-			_v.boneIndex[minSlot] = _boneIndex;
-			_v.boneWeight[minSlot] = _weight;
+			::PrintMatrix4x4("  bestSkin", bestM);
 		}
 	}
 
-	/** @brief ウェイトを正規化し、boneCount を更新 
-	 */
-	void NormalizeInfluences(Graphics::Import::Vertex& _v)
+	//-----------------------------------------------------------------------------
+	// Material helpers
+	//-----------------------------------------------------------------------------
+	static std::string MakeTextureFullPath(const std::string& _textureDir, const std::string& _texPath)
 	{
-		float sum = 0.0f;
-		for (int i = 0; i < 4; i++)
+		if (_texPath.empty())
 		{
-			if (_v.boneWeight[i] > 0.0f)
-			{
-				sum += _v.boneWeight[i];
-			}
+			return "";
 		}
 
-		if (sum > 0.0f)
+		if (_texPath.size() >= 2 && _texPath[1] == ':')
 		{
-			const float inv = 1.0f / sum;
-
-			int count = 0;
-			for (int i = 0; i < 4; i++)
-			{
-				if (_v.boneWeight[i] > 0.0f)
-				{
-					_v.boneWeight[i] *= inv;
-					count++;
-				}
-				else
-				{
-					_v.boneWeight[i] = 0.0f;
-					_v.boneIndex[i] = 0; // 未使用
-				}
-			}
-			_v.boneCount = count;
+			return _texPath;
 		}
-		else
+
+		if (_textureDir.empty())
 		{
-			_v.boneCount = 0;
-			for (int i = 0; i < 4; i++)
-			{
-				_v.boneIndex[i] = 0;
-				_v.boneWeight[i] = 0.0f;
-			}
+			return _texPath;
+		}
+
+		const char last = _textureDir.back();
+		if (last == '/' || last == '\\')
+		{
+			return _textureDir + _texPath;
+		}
+
+		return _textureDir + "/" + _texPath;
+	}
+
+	static std::string GetMaterialName(const aiMaterial* _mat)
+	{
+		if (!_mat)
+		{
+			return "";
+		}
+
+		aiString name;
+		if (_mat->Get(AI_MATKEY_NAME, name) == AI_SUCCESS)
+		{
+			return name.C_Str();
+		}
+
+		return "";
+	}
+
+	static void TryGetColor(
+		const aiMaterial* _mat,
+		const char* _key,
+		unsigned int _type,
+		unsigned int _index,
+		aiColor4D& _ioColor)
+	{
+		if (!_mat) { return; }
+
+		aiColor4D c;
+		if (aiGetMaterialColor(_mat, _key, _type, _index, &c) == AI_SUCCESS)
+		{
+			_ioColor = c;
 		}
 	}
 
-	// ------------------------------------------------------------
-	// Debug helpers
-	// ------------------------------------------------------------
-	static void DebugDumpOneVertexInfluencesOnce(const Graphics::Import::ModelData& _model)
+	static void TryGetColor(const aiMaterial* _mat, const char* _keyColor, aiColor4D& _ioColor)
 	{
-		static bool s_dumped = false;
-		if (s_dumped) { return; }
-		s_dumped = true;
+		::TryGetColor(_mat, _keyColor, 0, 0, _ioColor);
+	}
 
-		// 1頂点だけ（最初に見つかった頂点）を対象にする
-		size_t meshIndex = 0;
-		size_t vertexIndex = 0;
-		const Graphics::Import::Vertex* vtx = nullptr;
+	static void TryGetShininess(const aiMaterial* _mat, float& _ioShininess)
+	{
+		if (!_mat) { return; }
 
-		for (size_t mi = 0; mi < _model.vertices.size(); ++mi)
+		float s = 0.0f;
+		unsigned int max = 1;
+		if (aiGetMaterialFloatArray(_mat, AI_MATKEY_SHININESS, &s, &max) == AI_SUCCESS)
 		{
-			if (!_model.vertices[mi].empty())
-			{
-				meshIndex = mi;
-				vertexIndex = 0;
-				vtx = &_model.vertices[mi][0];
-				break;
-			}
+			_ioShininess = s;
+		}
+	}
+
+	static std::string GetDiffuseTexturePath(const aiMaterial* _mat)
+	{
+		if (!_mat) { return ""; }
+
+		if (_mat->GetTextureCount(aiTextureType_DIFFUSE) == 0)
+		{
+			return "";
 		}
 
-		if (!vtx)
+		aiString path;
+		if (_mat->GetTexture(aiTextureType_DIFFUSE, 0, &path) == AI_SUCCESS)
 		{
-			std::cout << "[ModelImporter][Debug] vertices are empty.\n";
+			return path.C_Str();
+		}
+
+		return "";
+	}
+
+	//-----------------------------------------------------------------------------
+	// Skeleton cache building helpers
+	//-----------------------------------------------------------------------------
+	static void BuildSkeletonNodesRecursive(
+		const aiNode* _node,
+		int _parentIndex,
+		std::vector<Graphics::Import::SkeletonNodeCache>& _outNodes,
+		std::vector<int>& _outOrder,
+		std::unordered_map<std::string, int>& _outNodeNameToIndex)
+	{
+		if (!_node)
+		{
 			return;
 		}
 
-		// index -> boneName を引けるように逆引き辞書を作る
-		std::unordered_map<int, std::string> indexToName;
-		indexToName.reserve(_model.boneDictionary.size());
-		for (const auto& [name, bone] : _model.boneDictionary)
+		const int myIndex = static_cast<int>(_outNodes.size());
+
+		Graphics::Import::SkeletonNodeCache n{};
+		n.name = _node->mName.C_Str();
+		n.parentIndex = _parentIndex;
+		n.bindLocalMatrix = AiToDxMtx_Transpose(_node->mTransformation);
+		n.hasMesh = (_node->mNumMeshes > 0);
+		n.boneIndex = -1;
+
+		_outNodes.push_back(n);
+		_outOrder.push_back(myIndex);
+
+		_outNodeNameToIndex.emplace(n.name, myIndex);
+
+		for (unsigned int i = 0; i < _node->mNumChildren; i++)
 		{
-			if (bone.index >= 0)
-			{
-				// 同じ index が複数名に割り当たっている場合もログで気づけるようにする
-				if (indexToName.find(bone.index) == indexToName.end())
-				{
-					indexToName.emplace(bone.index, name);
-				}
-			}
+			BuildSkeletonNodesRecursive(_node->mChildren[i], myIndex, _outNodes, _outOrder, _outNodeNameToIndex);
 		}
-
-		std::cout << "[ModelImporter][Debug] ---- One Vertex Bone Influence Dump ----\n";
-		std::cout << " meshIndex=" << meshIndex << " meshName='" << vtx->meshName << "' vertexIndex=" << vertexIndex << "\n";
-		std::cout << " boneCount=" << vtx->boneCount << "\n";
-
-		for (int i = 0; i < 4; ++i)
-		{
-			const int idx = static_cast<int>(vtx->boneIndex[i]);
-			const float w = vtx->boneWeight[i];
-
-			std::string resolvedName = "(unknown)";
-			auto it = indexToName.find(idx);
-			if (it != indexToName.end())
-			{
-				resolvedName = it->second;
-			}
-
-			std::cout
-				<< "  slot[" << i << "] index=" << idx
-				<< " weight=" << w
-				<< " resolvedBoneName='" << resolvedName << "'"
-				<< " vertexStoredBoneName='" << vtx->boneName[i] << "'\n";
-		}
-
-		std::cout << "[ModelImporter][Debug] -----------------------------------------\n";
-		std::cout << "[ModelImporter][Debug] Please confirm whether resolvedBoneName matches the intended body part.\n";
 	}
+
+	static int FindMeshRootNodeIndex(const std::vector<Graphics::Import::SkeletonNodeCache>& _nodes)
+	{
+		for (int i = 0; i < static_cast<int>(_nodes.size()); i++)
+		{
+			if (_nodes[i].hasMesh)
+			{
+				return i;
+			}
+		}
+		return 0;
+	}
+
+	static int FindSceneRootNodeIndex(const std::vector<Graphics::Import::SkeletonNodeCache>& _nodes)
+	{
+		for (int i = 0; i < static_cast<int>(_nodes.size()); i++)
+		{
+			if (_nodes[i].parentIndex < 0)
+			{
+				return i;
+			}
+		}
+		return 0;
+	}
+
+	//-----------------------------------------------------------------------------
+	// Vertex influence temp struct
+	//-----------------------------------------------------------------------------
+	struct VertexInfluence
+	{
+		int boneIndex = -1;
+		float weight = 0.0f;
+		std::string boneName = "";
+	};
 }
 
 //-----------------------------------------------------------------------------
@@ -202,348 +387,825 @@ namespace Graphics::Import
 {
 	using Utils::TreeNode;
 
-	/// @brief コンストラクタ
+	//-----------------------------------------------------------------------------
+	// Constructor / Destructor
+	//-----------------------------------------------------------------------------
 	ModelImporter::ModelImporter()
 	{
 		textureLoader = std::make_unique<TextureLoader>();
 	}
 
-	/// @brief デストラクタ
 	ModelImporter::~ModelImporter()
 	{
 		textureLoader.reset();
 	}
 
 	//-----------------------------------------------------------------------------
-	// ModelImporter::CreateNodeTree（この関数だけ置き換え推奨）
+	// BuildMaterials
 	//-----------------------------------------------------------------------------
-
-	void ModelImporter::CreateNodeTree(aiNode* _node, TreeNode_t* _tree)
+	void ModelImporter::BuildMaterials(const aiScene* _scene, ModelData& _modelData, const std::string& _textureDir) const
 	{
-		if (!_node || !_tree) { return; }
+		assert(_scene != nullptr);
+		assert(textureLoader != nullptr);
 
-		BoneNode node{};
-		node.name = (_node->mName.length > 0) ? _node->mName.C_Str() : "(UnnamedNode)";
-		node.localBind = ToRowVectorMatrix(_node->mTransformation);
+		const unsigned int materialCount = _scene->mNumMaterials;
 
-		_tree->nodedata = node;
+		_modelData.materials.clear();
+		_modelData.diffuseTextures.clear();
+		_modelData.materials.resize(materialCount);
+		_modelData.diffuseTextures.resize(materialCount);
 
-		for (unsigned int n = 0; n < _node->mNumChildren; n++)
+		for (unsigned int i = 0; i < materialCount; i++)
 		{
-			aiNode* child = _node->mChildren[n];
-			if (!child) { continue; }
+			const aiMaterial* mat = _scene->mMaterials[i];
 
-			auto childNode = std::make_unique<TreeNode_t>();
-			_tree->Addchild(std::move(childNode));
+			Material out{};
+			out.materialName = ::GetMaterialName(mat);
 
-			TreeNode_t* added = _tree->children.back().get();
-			CreateNodeTree(child, added);
-		}
-	}
+			out.ambient = aiColor4D(0, 0, 0, 1);
+			out.diffuse = aiColor4D(1, 1, 1, 1);
+			out.specular = aiColor4D(1, 1, 1, 1);
+			out.emission = aiColor4D(0, 0, 0, 1);
+			out.shiness = 0.0f;
 
-	//-----------------------------------------------------------------------------
-	// ModelImporter::CreateEmptyBoneDictionary
-	//-----------------------------------------------------------------------------
+			::TryGetColor(mat, AI_MATKEY_COLOR_AMBIENT, out.ambient);
+			::TryGetColor(mat, AI_MATKEY_COLOR_DIFFUSE, out.diffuse);
+			::TryGetColor(mat, AI_MATKEY_COLOR_SPECULAR, out.specular);
+			::TryGetColor(mat, AI_MATKEY_COLOR_EMISSIVE, out.emission);
+			::TryGetShininess(mat, out.shiness);
 
-	void ModelImporter::CreateEmptyBoneDictionary(aiNode* _node, std::unordered_map<std::string, Bone>& _dict)
-	{
-		if (!_node) { return; }
-
-		Bone bone{};
-		bone.boneName = _node->mName.C_Str();
-		bone.localBind = ToRowVectorMatrix(_node->mTransformation);
-
-		bone.offsetMatrix = aiMatrix4x4();
-		bone.globalBind = aiMatrix4x4();
-
-		_dict[bone.boneName] = bone;
-
-		for (unsigned int i = 0; i < _node->mNumChildren; i++)
-		{
-			CreateEmptyBoneDictionary(_node->mChildren[i], _dict);
-		}
-	}
-
-	//-----------------------------------------------------------------------------
-	// ModelImporter::SetBoneDataToVertices
-	//-----------------------------------------------------------------------------
-	void ModelImporter::SetBoneDataToVertices(ModelData& _model)
-	{
-		// メッシュ名 -> meshIndex（_model.vertices の添字）対応表を作る
-		std::unordered_map<std::string, int> meshNameToIndex;
-		meshNameToIndex.reserve(_model.subsets.size());
-		for (size_t i = 0; i < _model.subsets.size(); i++)
-		{
-			meshNameToIndex.emplace(_model.subsets[i].meshName, static_cast<int>(i));
-		}
-
-		// 頂点初期化
-		for (auto& meshVertices : _model.vertices)
-		{
-			for (auto& v : meshVertices)
+			out.diffuseTextureName = ::GetDiffuseTexturePath(mat);
+			if (!out.diffuseTextureName.empty())
 			{
-				v.boneCount = 0;
-				for (int i = 0; i < 4; i++)
+				const std::string fullPath = ::MakeTextureFullPath(_textureDir, out.diffuseTextureName);
+				_modelData.diffuseTextures[i] = textureLoader->FromFile(fullPath);
+			}
+			else
+			{
+				_modelData.diffuseTextures[i] = nullptr;
+			}
+
+			_modelData.materials[i] = std::move(out);
+		}
+	}
+
+	//-----------------------------------------------------------------------------
+	// BuildMeshBuffers（頂点バッファ・インデックスバッファ構築）
+	//-----------------------------------------------------------------------------
+	void ModelImporter::BuildMeshBuffers(const aiScene* _scene, ModelData& _modelData) const
+	{
+		assert(_scene != nullptr);
+
+		const unsigned int meshCount = _scene->mNumMeshes;
+		_modelData.vertices.clear();
+		_modelData.indices.clear();
+		_modelData.vertices.resize(meshCount);
+		_modelData.indices.resize(meshCount);
+
+		for (unsigned int meshIndex = 0; meshIndex < meshCount; meshIndex++)
+		{
+			const aiMesh* mesh = _scene->mMeshes[meshIndex];
+			if (!mesh)
+			{
+				continue;
+			}
+
+			const std::string meshName = mesh->mName.C_Str();
+			const unsigned int vCount = mesh->mNumVertices;
+
+			auto& outVerts = _modelData.vertices[meshIndex];
+			outVerts.clear();
+			outVerts.resize(vCount);
+
+			const bool hasNormals = (mesh->mNormals != nullptr);
+			const bool hasColors0 = (mesh->mColors[0] != nullptr);
+			const bool hasTex0 = (mesh->mTextureCoords[0] != nullptr);
+
+			const int materialIndex = static_cast<int>(mesh->mMaterialIndex);
+			std::string materialName = "";
+			if (materialIndex >= 0 && static_cast<size_t>(materialIndex) < _modelData.materials.size())
+			{
+				materialName = _modelData.materials[materialIndex].materialName;
+			}
+
+			for (unsigned int v = 0; v < vCount; v++)
+			{
+				Vertex vert{};
+				vert.meshName = meshName;
+
+				vert.pos = mesh->mVertices[v];
+
+				if (hasNormals)
 				{
-					v.boneIndex[i] = 0;
-					v.boneWeight[i] = 0.0f;
-					v.boneName[i].clear();
+					vert.normal = mesh->mNormals[v];
+				}
+				else
+				{
+					vert.normal = aiVector3D(0.0f, 1.0f, 0.0f);
+				}
+
+				if (hasColors0)
+				{
+					vert.color = mesh->mColors[0][v];
+				}
+				else
+				{
+					vert.color = aiColor4D(1.0f, 1.0f, 1.0f, 1.0f);
+				}
+
+				if (hasTex0)
+				{
+					const aiVector3D uvw = mesh->mTextureCoords[0][v];
+					vert.texCoord = aiVector3D(uvw.x, uvw.y, 0.0f);
+				}
+				else
+				{
+					vert.texCoord = aiVector3D(0.0f, 0.0f, 0.0f);
+				}
+
+				vert.materialIndex = materialIndex;
+				vert.materialName = materialName;
+
+				outVerts[v] = vert;
+			}
+
+			auto& outIdx = _modelData.indices[meshIndex];
+			outIdx.clear();
+			outIdx.reserve(mesh->mNumFaces * 3);
+
+			for (unsigned int f = 0; f < mesh->mNumFaces; f++)
+			{
+				const aiFace& face = mesh->mFaces[f];
+
+				if (face.mNumIndices < 3)
+				{
+					continue;
+				}
+
+				outIdx.push_back(static_cast<unsigned int>(face.mIndices[0]));
+				outIdx.push_back(static_cast<unsigned int>(face.mIndices[1]));
+				outIdx.push_back(static_cast<unsigned int>(face.mIndices[2]));
+
+				if (face.mNumIndices == 4)
+				{
+					outIdx.push_back(static_cast<unsigned int>(face.mIndices[0]));
+					outIdx.push_back(static_cast<unsigned int>(face.mIndices[2]));
+					outIdx.push_back(static_cast<unsigned int>(face.mIndices[3]));
 				}
 			}
 		}
+	}
 
-		// 影響を一旦入れる（上位4本を維持しながら）
-		for (auto& [boneName, bone] : _model.boneDictionary)
+	//-----------------------------------------------------------------------------
+	// BuildSubsets
+	//-----------------------------------------------------------------------------
+	void ModelImporter::BuildSubsets(const aiScene* _scene, ModelData& _modelData, bool _useUnifiedBuffers) const
+	{
+		assert(_scene != nullptr);
+
+		_modelData.subsets.clear();
+		const unsigned int meshCount = _scene->mNumMeshes;
+		_modelData.subsets.reserve(meshCount);
+
+		unsigned int vertexCursor = 0;
+		unsigned int indexCursor = 0;
+
+		for (unsigned int meshIndex = 0; meshIndex < meshCount; meshIndex++)
 		{
-			if (bone.index < 0) { continue; }
-
-			for (const auto& w : bone.weights)
+			const aiMesh* mesh = _scene->mMeshes[meshIndex];
+			if (!mesh)
 			{
-				auto itMesh = meshNameToIndex.find(w.meshName);
-				if (itMesh == meshNameToIndex.end()) { continue; }
+				continue;
+			}
 
-				const int meshIndex = itMesh->second;
-				if (meshIndex < 0 || meshIndex >= static_cast<int>(_model.vertices.size())) { continue; }
-				if (w.vertexIndex < 0 || w.vertexIndex >= static_cast<int>(_model.vertices[meshIndex].size())) { continue; }
+			Subset subset{};
+			subset.meshName = mesh->mName.C_Str();
+			subset.materialIndex = static_cast<int>(mesh->mMaterialIndex);
 
-				auto& v = _model.vertices[meshIndex][w.vertexIndex];
+			if (subset.materialIndex >= 0 && static_cast<size_t>(subset.materialIndex) < _modelData.materials.size())
+			{
+				subset.materialName = _modelData.materials[subset.materialIndex].materialName;
+			}
+			else
+			{
+				subset.materialName = "";
+			}
 
-				AddInfluence(v, static_cast<UINT>(bone.index), w.weight);
+			if (meshIndex < _modelData.vertices.size())
+			{
+				subset.vertexNum = static_cast<unsigned int>(_modelData.vertices[meshIndex].size());
+			}
+			else
+			{
+				subset.vertexNum = 0;
+			}
 
-				// デバッグ用途として boneName も入れておく（同じスロットに対応付けたい場合）
+			if (meshIndex < _modelData.indices.size())
+			{
+				subset.indexNum = static_cast<unsigned int>(_modelData.indices[meshIndex].size());
+			}
+			else
+			{
+				subset.indexNum = 0;
+			}
+
+			if (_useUnifiedBuffers)
+			{
+				subset.vertexBase = vertexCursor;
+				subset.indexBase = indexCursor;
+
+				vertexCursor += subset.vertexNum;
+				indexCursor += subset.indexNum;
+			}
+			else
+			{
+				subset.vertexBase = 0;
+				subset.indexBase = 0;
+			}
+
+			_modelData.subsets.push_back(subset);
+		}
+	}
+
+	//-----------------------------------------------------------------------------
+	// BuildBonesAndSkinWeights
+	//-----------------------------------------------------------------------------
+	void ModelImporter::BuildBonesAndSkinWeights(const aiScene* _scene, ModelData& _modelData) const
+	{
+		assert(_scene != nullptr);
+
+		const unsigned int meshCount = _scene->mNumMeshes;
+		_modelData.boneDictionary.clear();
+
+		for (unsigned int m = 0; m < meshCount && m < _modelData.vertices.size(); m++)
+		{
+			for (auto& vtx : _modelData.vertices[m])
+			{
 				for (int i = 0; i < 4; i++)
 				{
-					if (v.boneIndex[i] == static_cast<UINT>(bone.index))
-					{
-						v.boneName[i] = boneName;
-					}
+					vtx.boneIndex[i] = 0;
+					vtx.boneWeight[i] = 0.0f;
+					vtx.boneName[i].clear();
 				}
+				vtx.boneCount = 0;
 			}
 		}
 
-		// 正規化して boneCount を確定
-		for (auto& meshVertices : _model.vertices)
-		{
-			for (auto& v : meshVertices)
-			{
-				NormalizeInfluences(v);
-			}
-		}
-	}
-
-	//-----------------------------------------------------------------------------
-	// Bone helper
-	//-----------------------------------------------------------------------------
-
-	void ModelImporter::AssignBoneIndicesFromTree(const Utils::TreeNode<BoneNode>& _node, unsigned int& _idx, std::unordered_map<std::string, Bone>& _dict)
-	{
-		const std::string& name = _node.nodedata.name;
-
-		auto it = _dict.find(name);
-		if (it != _dict.end())
-		{
-			it->second.index = static_cast<int>(_idx);
-			_idx++;
-		}
-
-		for (const auto& child : _node.children)
-		{
-			AssignBoneIndicesFromTree(*child, _idx, _dict);
-		}
-	}
-
-	void ModelImporter::BuildGlobalBindMatrices(const Utils::TreeNode<BoneNode>& _node, const aiMatrix4x4& _parent, std::unordered_map<std::string, Bone>& _dict)
-	{
-		const BoneNode& data = _node.nodedata;
-
-		aiMatrix4x4 global = data.localBind * _parent;
-
-		auto it = _dict.find(data.name);
-		if (it != _dict.end())
-		{
-			it->second.globalBind = global;
-		}
-
-		for (const auto& child : _node.children)
-		{
-			BuildGlobalBindMatrices(*child, global, _dict);
-		}
-	}
-
-	//-----------------------------------------------------------------------------
-	// GetBone
-	//-----------------------------------------------------------------------------
-
-	void ModelImporter::GetBone(const aiScene* _scene, ModelData& _model)
-	{
-		if (!_scene || !_scene->mRootNode) { return; }
-
-		// 辞書とツリーを先に作る（初期ローカル行列を確保する）
-		_model.boneDictionary.clear();
-
-		_model.boneTree = TreeNode_t{};
-		CreateNodeTree(_scene->mRootNode, &_model.boneTree);
-
-		CreateEmptyBoneDictionary(_scene->mRootNode, _model.boneDictionary);
-
-		// メッシュ側の bone 情報を辞書へ
-		for (unsigned int m = 0; m < _scene->mNumMeshes; m++)
+		std::vector<std::vector<std::vector<::VertexInfluence>>> influences;
+		influences.resize(meshCount);
+		for (unsigned int m = 0; m < meshCount; m++)
 		{
 			const aiMesh* mesh = _scene->mMeshes[m];
-			if (!mesh) { continue; }
-
-			const std::string meshName = (mesh->mName.length > 0) ? mesh->mName.C_Str() : "";
-
-			for (unsigned int bidx = 0; bidx < mesh->mNumBones; bidx++)
+			if (!mesh)
 			{
-				const aiBone* aiBonePtr = mesh->mBones[bidx];
-				if (!aiBonePtr) { continue; }
+				continue;
+			}
+
+			const size_t vCount = (m < _modelData.vertices.size()) ? _modelData.vertices[m].size() : 0;
+			influences[m].resize(vCount);
+		}
+
+		int nextBoneIndex = 0;
+
+		for (unsigned int m = 0; m < meshCount; m++)
+		{
+			const aiMesh* mesh = _scene->mMeshes[m];
+			if (!mesh)
+			{
+				continue;
+			}
+
+			const std::string meshName = mesh->mName.C_Str();
+
+			if (m >= _modelData.vertices.size())
+			{
+				continue;
+			}
+
+			for (unsigned int b = 0; b < mesh->mNumBones; b++)
+			{
+				const aiBone* aiBonePtr = mesh->mBones[b];
+				if (!aiBonePtr)
+				{
+					continue;
+				}
 
 				const std::string boneName = aiBonePtr->mName.C_Str();
 
-				auto it = _model.boneDictionary.find(boneName);
-				if (it == _model.boneDictionary.end())
+				auto it = _modelData.boneDictionary.find(boneName);
+				if (it == _modelData.boneDictionary.end())
 				{
-					Bone newBone{};
-					newBone.boneName = boneName;
-					_model.boneDictionary.emplace(boneName, newBone);
-					it = _model.boneDictionary.find(boneName);
-				}
-				Bone& dst = it->second;
+					Bone bone{};
+					bone.boneName = boneName;
+					bone.meshName = meshName;
+					bone.armatureName = "";
 
-				dst.boneName = boneName;
+					bone.localBind = aiMatrix4x4();
+					bone.globalBind = aiMatrix4x4();
 
-				// オフセット行列（inverse bind）は Assimp の値をそのまま保持する。
-				// ここで転置すると、AnimationComponent 側の合成と食い違いスケール/せん断（引き伸ばし）が発生しやすい。
-				dst.offsetMatrix = aiBonePtr->mOffsetMatrix;
-				// dst.offsetMatrix.Transpose();
+					bone.animationLocal = aiMatrix4x4();
+					bone.offsetMatrix = aiBonePtr->mOffsetMatrix;
 
-				// 頂点反映は Weight::meshName を使う+
-				dst.meshName = meshName;
+					bone.index = nextBoneIndex;
+					nextBoneIndex++;
 
-				if (aiBonePtr->mArmature)
-				{
-					dst.armatureName = aiBonePtr->mArmature->mName.C_Str();
+					auto inserted = _modelData.boneDictionary.emplace(boneName, std::move(bone));
+					it = inserted.first;
 				}
 
-				for (unsigned int widx = 0; widx < aiBonePtr->mNumWeights; widx++)
+				Bone& bone = it->second;
+
+				for (unsigned int w = 0; w < aiBonePtr->mNumWeights; w++)
 				{
-					Weight w{};
-					w.meshName = meshName;
-					w.boneName = dst.boneName;
-					w.weight = aiBonePtr->mWeights[widx].mWeight;
-					w.vertexIndex = aiBonePtr->mWeights[widx].mVertexId;
-					dst.weights.emplace_back(w);
+					const aiVertexWeight& vw = aiBonePtr->mWeights[w];
+
+					const int vertexIndex = static_cast<int>(vw.mVertexId);
+					const float weight = static_cast<float>(vw.mWeight);
+
+					if (weight <= 0.0f)
+					{
+						continue;
+					}
+					if (vertexIndex < 0 || static_cast<size_t>(vertexIndex) >= _modelData.vertices[m].size())
+					{
+						continue;
+					}
+
+					Weight outW{};
+					outW.boneName = boneName;
+					outW.meshName = meshName;
+					outW.weight = weight;
+					outW.vertexIndex = vertexIndex;
+					outW.meshIndex = static_cast<int>(m);
+					bone.weights.push_back(outW);
+
+					::VertexInfluence inf{};
+					inf.boneIndex = bone.index;
+					inf.weight = weight;
+					inf.boneName = boneName;
+
+					influences[m][static_cast<size_t>(vertexIndex)].push_back(std::move(inf));
 				}
 			}
 		}
 
-		// boneTree を走査して index を安定順で振る
-		unsigned int idx = 0;
-		AssignBoneIndicesFromTree(_model.boneTree, idx, _model.boneDictionary);
-
-		// 頂点へ index/weight を反映（index が確定してから）
-		SetBoneDataToVertices(_model);
-
-		// デバッグ: 1頂点分だけ boneIndex/boneWeight と対応ボーン名を出す（1回だけ）
-		DebugDumpOneVertexInfluencesOnce(_model);
-
-		// 初期グローバル行列（Bind姿勢の global）を計算
-		aiMatrix4x4 identity;
-		identity = aiMatrix4x4();
-		BuildGlobalBindMatrices(_model.boneTree, identity, _model.boneDictionary);
-	}
-
-	/** @brief マテリアルとテクスチャを取得
-	 *  @param const aiScene* _scene Assimpシーン
-	 *  @param const std::string& _textureDir テクスチャディレクトリ
-	 *  @param ModelData& _model モデルデータ
-	 */
-	void ModelImporter::GetMaterialData(const aiScene* _scene, const std::string& _textureDir, ModelData& _model)
-	{
-		if (!_scene) return;
-
-		// マテリアルとテクスチャの初期化
-		_model.materials.clear();
-		_model.diffuseTextures.resize(_scene->mNumMaterials);
-
-		// マテリアルごとに情報を取得
-		for (unsigned int m = 0; m < _scene->mNumMaterials; m++)
+		for (unsigned int m = 0; m < meshCount && m < _modelData.vertices.size(); m++)
 		{
-			aiMaterial* material = _scene->mMaterials[m];
-
-			Material mat{};
-			mat.materialName = material->GetName().C_Str();
-
-			aiColor4D ambient{}, diffuse{}, specular{}, emission{};
-			float shiness = 0.0f;
-
-			aiGetMaterialColor(material, AI_MATKEY_COLOR_AMBIENT, &ambient);
-			aiGetMaterialColor(material, AI_MATKEY_COLOR_DIFFUSE, &diffuse);
-			aiGetMaterialColor(material, AI_MATKEY_COLOR_SPECULAR, &specular);
-			aiGetMaterialColor(material, AI_MATKEY_COLOR_EMISSIVE, &emission);
-			aiGetMaterialFloat(material, AI_MATKEY_SHININESS, &shiness);
-
-			mat.ambient = ambient;
-			mat.diffuse = diffuse;
-			mat.specular = specular;
-			mat.emission = emission;
-			mat.shiness = shiness;
-
-			std::vector<std::string> texPaths{};
-
-			// ディフューズテクスチャの取得
-			for (unsigned int t = 0; t < material->GetTextureCount(aiTextureType_DIFFUSE); t++)
+			auto& meshVerts = _modelData.vertices[m];
+			for (size_t v = 0; v < meshVerts.size(); v++)
 			{
-				aiString path;
-				if (AI_SUCCESS == material->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, t), path))
+				auto& list = influences[m][v];
+				if (list.empty())
 				{
-					std::string texPath = path.C_Str();
-					texPaths.push_back(texPath);
-
-					// テクスチャの読み込み
-					if (auto tex = _scene->GetEmbeddedTexture(path.C_Str()))
-					{
-						auto texture = textureLoader->FromMemory(
-							(unsigned char*)tex->pcData,
-							tex->mWidth
-						);
-						if (texture) _model.diffuseTextures[m] = std::move(texture);
-					}
-					// ファイルから読み込み
-					else
-					{
-						std::string fullPath = _textureDir + "/" + texPath;
-						std::cout << fullPath.c_str() << "\n";
-
-						auto texture = textureLoader->FromFile(fullPath);
-						if (texture)
-							_model.diffuseTextures[m] = std::move(texture);
-					}
+					continue;
 				}
-			}
 
-			// マテリアルにテクスチャ名を設定する
-			mat.diffuseTextureName = texPaths.empty() ? "" : texPaths[0];
-			_model.materials.push_back(mat);
+				std::sort(
+					list.begin(),
+					list.end(),
+					[](const ::VertexInfluence& a, const ::VertexInfluence& b)
+					{
+						return a.weight > b.weight;
+					});
+
+				const size_t count = std::min<size_t>(4, list.size());
+
+				float sum = 0.0f;
+				for (size_t i = 0; i < count; i++)
+				{
+					sum += list[i].weight;
+				}
+
+				if (sum <= 0.0f)
+				{
+					continue;
+				}
+
+				Vertex& outV = meshVerts[v];
+				for (size_t i = 0; i < count; i++)
+				{
+					outV.boneIndex[i] = static_cast<UINT>(list[i].boneIndex);
+					outV.boneWeight[i] = list[i].weight / sum;
+					outV.boneName[i] = list[i].boneName;
+				}
+
+				outV.boneCount = static_cast<int>(count);
+			}
 		}
 	}
 
-	/** @brief モデルファイルを読み込み ModelData に変換
-	 *  @param const std::string& _filename モデルファイルパス
-	 *  @param const std::string& _textureDir テクスチャディレクトリ
-	 *  @param ModelData& _model 出力先モデルデータ
-	 *  @return 成功時 true
-	 */
-	bool ModelImporter::Load(const std::string& _filename, const std::string& _textureDir, ModelData& _model)
+	//-----------------------------------------------------------------------------
+	// Debug: Stick_Body(meshRoot) と mixamorig:Hips の関係を出力
+	// BuildSkeletonCache の nodeNameToIndex を作った後、nodeCount を確認した後に呼ぶ
+	//-----------------------------------------------------------------------------
+	static void PrintNodeLineage(
+		const std::vector<Graphics::Import::SkeletonNodeCache>& _nodes,
+		int _nodeIndex,
+		const char* _label)
 	{
-		// モデルファイルの読み込み
+		if (_nodeIndex < 0 || _nodeIndex >= static_cast<int>(_nodes.size()))
+		{
+			std::cout << _label << " : nodeIndex invalid = " << _nodeIndex << "\n";
+			return;
+		}
+
+		std::cout << _label << " : index=" << _nodeIndex
+			<< " name=\"" << _nodes[_nodeIndex].name << "\"\n";
+
+		int cur = _nodeIndex;
+		int step = 0;
+		while (cur >= 0 && cur < static_cast<int>(_nodes.size()) && step < 64)
+		{
+			const int parent = _nodes[cur].parentIndex;
+			std::cout << "  -> [" << cur << "] \"" << _nodes[cur].name << "\"";
+			if (parent >= 0)
+			{
+				std::cout << "  parent=[" << parent << "] \"" << _nodes[parent].name << "\"";
+			}
+			else
+			{
+				std::cout << "  parent=[-1]";
+			}
+			std::cout << "\n";
+
+			cur = parent;
+			step++;
+		}
+	}
+
+	static bool IsAncestor(
+		const std::vector<Graphics::Import::SkeletonNodeCache>& _nodes,
+		int _ancestor,
+		int _child)
+	{
+		if (_ancestor < 0 || _child < 0) { return false; }
+		if (_ancestor >= static_cast<int>(_nodes.size())) { return false; }
+		if (_child >= static_cast<int>(_nodes.size())) { return false; }
+
+		int cur = _child;
+		int step = 0;
+		while (cur >= 0 && cur < static_cast<int>(_nodes.size()) && step < 256)
+		{
+			if (cur == _ancestor) { return true; }
+			cur = _nodes[cur].parentIndex;
+			step++;
+		}
+		return false;
+	}
+
+	static void PrintRelationship(
+		const std::vector<Graphics::Import::SkeletonNodeCache>& _nodes,
+		int _a,
+		const char* _aName,
+		int _b,
+		const char* _bName)
+	{
+		const bool aIsParentOfB = (_nodes[_b].parentIndex == _a);
+		const bool bIsParentOfA = (_nodes[_a].parentIndex == _b);
+
+		if (aIsParentOfB)
+		{
+			std::cout << "[Relation] \"" << _aName << "\" is PARENT of \"" << _bName << "\"\n";
+			return;
+		}
+		if (bIsParentOfA)
+		{
+			std::cout << "[Relation] \"" << _bName << "\" is PARENT of \"" << _aName << "\"\n";
+			return;
+		}
+
+		const int aParent = _nodes[_a].parentIndex;
+		const int bParent = _nodes[_b].parentIndex;
+
+		if (aParent >= 0 && aParent == bParent)
+		{
+			std::cout << "[Relation] \"" << _aName << "\" and \"" << _bName << "\" are SIBLINGS"
+				<< " (same parent=\"" << _nodes[aParent].name << "\")\n";
+			return;
+		}
+
+		if (IsAncestor(_nodes, _a, _b))
+		{
+			std::cout << "[Relation] \"" << _aName << "\" is ANCESTOR of \"" << _bName << "\" (not direct parent)\n";
+			return;
+		}
+		if (IsAncestor(_nodes, _b, _a))
+		{
+			std::cout << "[Relation] \"" << _bName << "\" is ANCESTOR of \"" << _aName << "\" (not direct parent)\n";
+			return;
+		}
+
+		std::cout << "[Relation] \"" << _aName << "\" and \"" << _bName << "\" are NOT parent/child/siblings (likely different branches)\n";
+	}
+
+	//-----------------------------------------------------------------------------
+	// BuildNodeTree
+	//-----------------------------------------------------------------------------
+	static void BuildNodeTreeRecursive(const aiNode* _aiNode, TreeNode<BoneNode>& _outNode)
+	{
+		assert(_aiNode != nullptr);
+
+		_outNode.nodedata.name = _aiNode->mName.C_Str();
+		_outNode.nodedata.localBind = _aiNode->mTransformation;
+
+		_outNode.children.clear();
+
+		for (unsigned int i = 0; i < _aiNode->mNumChildren; i++)
+		{
+			const aiNode* child = _aiNode->mChildren[i];
+			if (!child)
+			{
+				continue;
+			}
+
+			auto childNode = std::make_unique<TreeNode<BoneNode>>();
+			BuildNodeTreeRecursive(child, *childNode);
+			_outNode.Addchild(std::move(childNode));
+		}
+	}
+
+	void ModelImporter::BuildNodeTree(const aiScene* _scene, ModelData& _modelData) const
+	{
+		assert(_scene != nullptr);
+		assert(_scene->mRootNode != nullptr);
+
+		_modelData.nodeTree = TreeNode<BoneNode>();
+		BuildNodeTreeRecursive(_scene->mRootNode, _modelData.nodeTree);
+	}
+
+	//-----------------------------------------------------------------------------
+	// BuildSkeletonCache
+	//-----------------------------------------------------------------------------
+	void ModelImporter::BuildSkeletonCache(const aiScene* _scene, const ModelData& _modelData, SkeletonCache& _outSkeletonCache) const
+	{
+		assert(_scene != nullptr);
+		assert(_scene->mRootNode != nullptr);
+
+
+		_outSkeletonCache.nodes.clear();
+		_outSkeletonCache.order.clear();
+		_outSkeletonCache.boneOffset.clear();
+		_outSkeletonCache.boneIndexToNodeIndex.clear();
+		_outSkeletonCache.meshRootNodeIndex = -1;
+		_outSkeletonCache.globalInverse = DX::Matrix4x4::Identity;
+
+
+		std::unordered_map<std::string, int> nodeNameToIndex{};
+		::BuildSkeletonNodesRecursive(_scene->mRootNode, -1, _outSkeletonCache.nodes, _outSkeletonCache.order, nodeNameToIndex);
+
+
+		const int nodeCount = static_cast<int>(_outSkeletonCache.nodes.size());
+		if (nodeCount <= 0)
+		{
+			return;
+		}
+
+
+		// ここに入れる（nodeNameToIndex が完成していて、nodeCount も有効な段階）
+		if (EnableSkinningDebugLog)
+		{
+			auto itMeshRoot = nodeNameToIndex.find("Stick_Body");
+			auto itHips = nodeNameToIndex.find("mixamorig:Hips");
+
+
+			const int stickBodyIndex = (itMeshRoot != nodeNameToIndex.end()) ? itMeshRoot->second : -1;
+			const int hipsIndex = (itHips != nodeNameToIndex.end()) ? itHips->second : -1;
+
+
+			LogHeader("[ModelImporter] Node Relationship Probe (Stick_Body vs mixamorig:Hips)");
+			PrintNodeLineage(_outSkeletonCache.nodes, stickBodyIndex, "[Lineage] Stick_Body");
+			PrintNodeLineage(_outSkeletonCache.nodes, hipsIndex, "[Lineage] mixamorig:Hips");
+
+
+			if (stickBodyIndex >= 0 && hipsIndex >= 0)
+			{
+				PrintRelationship(_outSkeletonCache.nodes, stickBodyIndex, "Stick_Body", hipsIndex, "mixamorig:Hips");
+			}
+			else
+			{
+				std::cout << "[Relation] missing: Stick_BodyIndex=" << stickBodyIndex << " hipsIndex=" << hipsIndex << "\n";
+			}
+		}
+
+		_outSkeletonCache.meshRootNodeIndex = ::FindMeshRootNodeIndex(_outSkeletonCache.nodes);
+		std::vector<DX::Matrix4x4> bindGlobal{};
+		bindGlobal.resize(static_cast<size_t>(nodeCount), DX::Matrix4x4::Identity);
+
+		for (int oi = 0; oi < static_cast<int>(_outSkeletonCache.order.size()); oi++)
+		{
+			const int nodeIndex = _outSkeletonCache.order[oi];
+			if (nodeIndex < 0 || nodeIndex >= nodeCount)
+			{
+				continue;
+			}
+
+			const int parentIndex = _outSkeletonCache.nodes[nodeIndex].parentIndex;
+
+			if (parentIndex < 0)
+			{
+				bindGlobal[nodeIndex] = _outSkeletonCache.nodes[nodeIndex].bindLocalMatrix;
+			}
+			else
+			{
+				// row vector 前提：global = local * parentGlobal
+				bindGlobal[nodeIndex] =
+					_outSkeletonCache.nodes[nodeIndex].bindLocalMatrix *
+					bindGlobal[parentIndex];
+			}
+		}
+
+		{
+			const int root = _outSkeletonCache.meshRootNodeIndex;
+			if (root >= 0 && root < nodeCount)
+			{
+				_outSkeletonCache.globalInverse = ::InverseDxMatrix(bindGlobal[root]);
+			}
+		}
+
+		int maxBoneIndex = -1;
+		for (const auto& kv : _modelData.boneDictionary)
+		{
+			maxBoneIndex = std::max(maxBoneIndex, kv.second.index);
+		}
+
+		const int boneCount = maxBoneIndex + 1;
+		if (boneCount <= 0)
+		{
+			return;
+		}
+
+		_outSkeletonCache.boneOffset.resize(static_cast<size_t>(boneCount), DX::Matrix4x4::Identity);
+		_outSkeletonCache.boneIndexToNodeIndex.resize(static_cast<size_t>(boneCount), -1);
+
+		for (const auto& kv : _modelData.boneDictionary)
+		{
+			const Bone& b = kv.second;
+			if (b.index < 0 || b.index >= boneCount)
+			{
+				continue;
+			}
+
+			_outSkeletonCache.boneOffset[static_cast<size_t>(b.index)] = ::AiToDxMtx_Transpose(b.offsetMatrix);
+		}
+
+		//-----------------------------------------------------------------------------
+		// Minimal Log: 基準行列（meshRoot / globalInverse）
+		//-----------------------------------------------------------------------------
+		if (EnableSkinningDebugLog)
+		{
+			::LogHeader("[ModelImporter] Skin Debug Base Matrices (meshRoot/globalInverse)");
+
+			const int meshRootIndex = _outSkeletonCache.meshRootNodeIndex;
+			std::cout << "[SkinBase] nodeCount=" << nodeCount
+				<< " boneCount=" << boneCount
+				<< " meshRootNodeIndex=" << meshRootIndex;
+
+			if (meshRootIndex >= 0 && meshRootIndex < nodeCount)
+			{
+				std::cout << " meshRootName=\"" << _outSkeletonCache.nodes[meshRootIndex].name << "\"";
+			}
+			std::cout << "\n";
+
+			if (meshRootIndex >= 0 && meshRootIndex < nodeCount)
+			{
+				::PrintMatrix4x4("[SkinBase] bindGlobal(meshRoot)", bindGlobal[static_cast<size_t>(meshRootIndex)]);
+			}
+			::PrintMatrix4x4("[SkinBase] globalInverse(inverse(bindGlobal(meshRoot)))", _outSkeletonCache.globalInverse);
+		}
+
+		//-----------------------------------------------------------------------------
+		// boneIndexToNodeIndex 解決 + 最小ログ（しきい値超えだけ）
+		//-----------------------------------------------------------------------------
+		int warned = 0;
+		int probed = 0;
+
+		for (const auto& kv : _modelData.boneDictionary)
+		{
+			const Bone& b = kv.second;
+			const int boneIndex = b.index;
+
+			if (boneIndex < 0 || boneIndex >= boneCount)
+			{
+				continue;
+			}
+
+			const std::string baseName = b.boneName;
+			const std::string rotName = baseName + "_$AssimpFbx$_Rotation";
+
+			int baseNodeIndex = -1;
+			int rotNodeIndex = -1;
+
+			auto itBase = nodeNameToIndex.find(baseName);
+			if (itBase != nodeNameToIndex.end())
+			{
+				baseNodeIndex = itBase->second;
+			}
+
+			auto itRot = nodeNameToIndex.find(rotName);
+			if (itRot != nodeNameToIndex.end())
+			{
+				rotNodeIndex = itRot->second;
+			}
+
+			struct Candidate
+			{
+				int nodeIndex = -1;
+				float error = FLT_MAX;
+			};
+
+			Candidate c0{};
+			Candidate c1{};
+
+			if (baseNodeIndex >= 0 && baseNodeIndex < nodeCount)
+			{
+				const DX::Matrix4x4 skin =
+					_outSkeletonCache.boneOffset[static_cast<size_t>(boneIndex)] *
+					bindGlobal[static_cast<size_t>(baseNodeIndex)] *
+					_outSkeletonCache.globalInverse;
+
+				c0.nodeIndex = baseNodeIndex;
+				c0.error = ::MaxAbsDiffIdentity(skin);
+			}
+
+			if (rotNodeIndex >= 0 && rotNodeIndex < nodeCount)
+			{
+				const DX::Matrix4x4 skin =
+					_outSkeletonCache.boneOffset[static_cast<size_t>(boneIndex)] *
+					bindGlobal[static_cast<size_t>(rotNodeIndex)] *
+					_outSkeletonCache.globalInverse;
+
+				c1.nodeIndex = rotNodeIndex;
+				c1.error = ::MaxAbsDiffIdentity(skin);
+			}
+
+			Candidate best = c0;
+			if (c1.error < best.error)
+			{
+				best = c1;
+			}
+
+			if (best.nodeIndex < 0)
+			{
+				if (EnableSkinningDebugLog && warned < MaxBindPoseWarnBones)
+				{
+					std::cout << "[ModelImporter][Warn] boneIndexToNodeIndex unresolved: boneName=\"" << baseName << "\"\n";
+					warned++;
+				}
+				continue;
+			}
+
+			_outSkeletonCache.boneIndexToNodeIndex[static_cast<size_t>(boneIndex)] = best.nodeIndex;
+
+			if (_outSkeletonCache.nodes[best.nodeIndex].boneIndex < 0)
+			{
+				_outSkeletonCache.nodes[best.nodeIndex].boneIndex = boneIndex;
+			}
+
+			if (EnableSkinningDebugLog && best.error > BindPoseWarnThreshold)
+			{
+				if (warned < MaxBindPoseWarnBones)
+				{
+					std::cout
+						<< "[ModelImporter][Warn] BindPose identity check failed: boneIndex=" << boneIndex
+						<< " boneName=\"" << baseName
+						<< "\" chosenNode=\"" << _outSkeletonCache.nodes[best.nodeIndex].name
+						<< "\" maxAbs=" << best.error << "\n";
+					warned++;
+				}
+
+				if (probed < MaxProbePrintBones)
+				{
+					const DX::Matrix4x4& bindGlobalBone = bindGlobal[static_cast<size_t>(best.nodeIndex)];
+					const DX::Matrix4x4& globalInv = _outSkeletonCache.globalInverse;
+					const DX::Matrix4x4& offset = _outSkeletonCache.boneOffset[static_cast<size_t>(boneIndex)];
+
+					::DebugBindPoseIdentityTransposeProbe(boneIndex, baseName, bindGlobalBone, globalInv, offset);
+					probed++;
+				}
+			}
+		}
+	}
+
+	//-----------------------------------------------------------------------------
+	// Load
+	//-----------------------------------------------------------------------------
+	bool ModelImporter::Load(const std::string& _filename, const std::string& _textureDir, ModelData& _outModel, SkeletonCache& _outSkeletonCache)
+	{
 		Assimp::Importer importer;
-		const aiScene* scene = importer.ReadFile(
-			_filename,
-			aiProcessPreset_TargetRealtime_MaxQuality |
+
+		// 1. FBXの面倒なピボットをAssimpに正規化させる
+		importer.SetPropertyBool(AI_CONFIG_IMPORT_FBX_PRESERVE_PIVOTS, false);
+
+		// 2. 単位変換を有効にする (アニメーションも一緒にリサイズされるようになります)
+		importer.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, 100.0f);
+
+		// 3. 読み込みフラグに aiProcess_GlobalScale を追加
+		const aiScene* scene = importer.ReadFile(_filename,
+			aiProcess_Triangulate |
 			aiProcess_ConvertToLeftHanded |
-			aiProcess_PopulateArmatureData 
+			aiProcess_GlobalScale |      // ← これを追加！
+			aiProcess_LimitBoneWeights |
+			aiProcess_PopulateArmatureData // 骨の構造を整理
 		);
 
 		if (!scene)
@@ -552,94 +1214,63 @@ namespace Graphics::Import
 			return false;
 		}
 
-		// モデルデータの初期化
-		_model.vertices.clear();
-		_model.indices.clear();
-		_model.materials.clear();
-		_model.diffuseTextures.clear();
-		_model.subsets.clear();
-		_model.boneDictionary.clear();
+		_outModel.vertices.clear();
+		_outModel.indices.clear();
+		_outModel.materials.clear();
+		_outModel.diffuseTextures.clear();
+		_outModel.subsets.clear();
+		_outModel.boneDictionary.clear();
 
-		// マテリアルとテクスチャの取得
-		GetMaterialData(scene, _textureDir, _model);
+		BuildMaterials(scene, _outModel, _textureDir);
+		BuildMeshBuffers(scene, _outModel);
+		BuildSubsets(scene, _outModel, false);
+		BuildBonesAndSkinWeights(scene, _outModel);
+		BuildNodeTree(scene, _outModel);
 
-		// メッシュデータの取得
-		_model.vertices.resize(scene->mNumMeshes);
-		_model.indices.resize(scene->mNumMeshes);
-		_model.subsets.resize(scene->mNumMeshes);
+		BuildSkeletonCache(scene, _outModel, _outSkeletonCache);
 
-		unsigned int globalVertexBase = 0;
-		unsigned int globalIndexBase = 0;
+		// --- ModelImporter.cpp BuildSkeletonCache 関数の最後に貼り付け ---
 
-		// メッシュごとに頂点・インデックス・サブセット情報を取得する
-		for (unsigned int m = 0; m < scene->mNumMeshes; m++)
-		{
-			aiMesh* mesh = scene->mMeshes[m];
-			std::string meshName = mesh->mName.C_Str();
+		if (EnableSkinningDebugLog) {
+			::LogHeader("[Structure Analysis] Full Node Tree & Bone Info");
 
-			for (unsigned int v = 0; v < mesh->mNumVertices; v++)
-			{
-				Vertex vert{};
-				vert.meshName = meshName;
-				vert.pos = mesh->mVertices[v];
-				vert.normal = mesh->HasNormals() ? mesh->mNormals[v] : aiVector3D(0, 0, 0);
-				vert.color = mesh->HasVertexColors(0) ? mesh->mColors[0][v] : aiColor4D(1, 1, 1, 1);
-				vert.texCoord = mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][v] : aiVector3D(0, 0, 0);
-				vert.materialIndex = mesh->mMaterialIndex;
-				vert.materialName = _model.materials[vert.materialIndex].materialName;
-				_model.vertices[m].push_back(vert);
-			}
+			for (int i = 0; i < static_cast<int>(_outSkeletonCache.nodes.size()); ++i) {
+				const auto& node = _outSkeletonCache.nodes[i];
 
-			// インデックス情報の取得
-			for (unsigned int f = 0; f < mesh->mNumFaces; f++)
-			{
-				const aiFace& face = mesh->mFaces[f];
-				for (unsigned int i = 0; i < face.mNumIndices; i++)
-				{
-					_model.indices[m].push_back(face.mIndices[i]);
+				// インデントで階層を表現
+				std::string indent = "";
+				int parent = node.parentIndex;
+				while (parent >= 0) {
+					indent += "  ";
+					parent = _outSkeletonCache.nodes[parent].parentIndex;
+				}
+
+				// 行列から平行移動成分(T)を抽出
+				const auto& m = node.bindLocalMatrix;
+				float tx = m.m[3][0];
+				float ty = m.m[3][1];
+				float tz = m.m[3][2];
+
+				// ボーン情報があるか確認
+				std::string boneInfo = "";
+				if (node.boneIndex >= 0) {
+					boneInfo = " [BONE IDX: " + std::to_string(node.boneIndex) + "]";
+
+					// Offset行列のTも確認
+					const auto& off = _outSkeletonCache.boneOffset[node.boneIndex];
+					boneInfo += " (Offset T: " + std::to_string(off.m[3][0]) + ", "
+						+ std::to_string(off.m[3][1]) + ", "
+						+ std::to_string(off.m[3][2]) + ")";
+				}
+
+				printf("%sNode[%d]: %s %s\n", indent.c_str(), i, node.name.c_str(), boneInfo.c_str());
+				printf("%s  Bind Local T: (%.4f, %.4f, %.4f)\n", indent.c_str(), tx, ty, tz);
+
+				if (node.hasMesh) {
+					printf("%s  *** HAS MESH ***\n", indent.c_str());
 				}
 			}
-
-			// サブセット情報の取得
-			Subset subset{};
-			subset.meshName = meshName;
-			subset.materialIndex = mesh->mMaterialIndex;
-			subset.materialName = _model.materials[subset.materialIndex].materialName;
-			subset.vertexNum = static_cast<unsigned int>(_model.vertices[m].size());
-			subset.indexNum = static_cast<unsigned int>(_model.indices[m].size());
-			subset.vertexBase = globalVertexBase;
-			subset.indexBase = globalIndexBase;
-
-			globalVertexBase += subset.vertexNum;
-			globalIndexBase += subset.indexNum;
-
-			_model.subsets[m] = subset;
-		}
-
-		// ボーン情報の取得
-		GetBone(scene, _model);
-
-		for (unsigned int m = 0; m < scene->mNumMeshes; m++)
-		{
-			aiMesh* mesh = scene->mMeshes[m];
-			unsigned int maxIndex = 0;
-
-			for (unsigned int f = 0; f < mesh->mNumFaces; f++)
-			{
-				const aiFace& face = mesh->mFaces[f];
-				for (unsigned int i = 0; i < face.mNumIndices; i++)
-				{
-					if (face.mIndices[i] > maxIndex)
-					{
-						maxIndex = face.mIndices[i];
-					}
-				}
-			}
-
-			std::cout << "[Mesh " << m << "] " << mesh->mName.C_Str()
-				<< " | Vertices: " << mesh->mNumVertices
-				<< " | MaxIndex: " << maxIndex
-				<< " | Faces: " << mesh->mNumFaces << std::endl;
+			::LogHeader("End of Structure Analysis");
 		}
 
 		return true;

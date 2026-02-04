@@ -309,20 +309,8 @@
     <ClInclude Include="Code\Include\Game\Entities\DebugFreeMoveComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Physics\StagedTransform.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Physics\StagedTransform.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="Code\Include\Framework\Entities\ColliderDebugRenderer.h">
       <Filter>ソース ファイル\Framework\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Physics\StagedTransform.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Physics\StagedTransform.h">
-      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
     <ClInclude Include="Code\Include\Scenes\PhysicsTest.h">
       <Filter>ヘッダー ファイル</Filter>
@@ -362,6 +350,15 @@
     </ClInclude>
     <ClInclude Include="Code\Include\Scenes\ModelTest.h">
       <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Tests\SkinningDebug.h">
+      <Filter>ソース ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Tests\TestDodge.h">
+      <Filter>ソース ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Tests\TestEnemy.h">
+      <Filter>ソース ファイル</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -565,6 +562,18 @@
     </ClCompile>
     <ClCompile Include="Code\Source\Scenes\ModelTest.cpp">
       <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\AnimationData.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Tests\SkinningDebug.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Tests\TestDodge.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Tests\TestEnemy.cpp">
+      <Filter>ヘッダー ファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -6,14 +6,12 @@
  //-----------------------------------------------------------------------------
  // Includes
  //-----------------------------------------------------------------------------
-#include "Include/Framework/Utils/TreeNode.h"
 #include "Include/Framework/Graphics/ModelData.h"
 #include "Include/Framework/Graphics/TextureLoader.h"
 
 #include <assimp/scene.h>
+
 #include <memory>
-#include <unordered_map>
-#include <vector>
 #include <string>
 
 //-----------------------------------------------------------------------------
@@ -22,72 +20,70 @@
 namespace Graphics::Import
 {
 	/** @class ModelImporter
-	 *  @brief モデルデータをAssimpで読み込み ModelData に変換するクラス
+	 *  @brief モデルデータをAssimpで読み込み ModelData と SkeletonCache に変換するクラス
 	 */
 	class ModelImporter
 	{
 	public:
-		using TreeNode_t = Utils::TreeNode<BoneNode>;
-
 		/// @brief コンストラクタ
 		ModelImporter();
 
 		/// @brief デストラクタ
 		~ModelImporter();
 
-		/** @brief モデルを読み込み ModelData に変換
-		 *  @param const std::string& _filename モデルファイルパス
-		 *  @param const std::string& _textureDir テクスチャディレクトリ
-		 *  @param ModelData& _outModel 出力先モデルデータ
+		/** @brief モデルを読み込み ModelData と SkeletonCache（実行時用）を構築する
+		 *  @param _filename モデルファイルパス
+		 *  @param _textureDir テクスチャディレクトリ
+		 *  @param _outModel 出力先モデルデータ
+		 *  @param _outSkeletonCache 出力先スケルトンキャッシュ（実行時用・番号のみ）
 		 *  @return 成功時 true
 		 */
-		bool Load(const std::string& _filename, const std::string& _textureDir, ModelData& _outModel);
+		bool Load(const std::string& _filename, const std::string& _textureDir, ModelData& _outModel, SkeletonCache& _outSkeletonCache);
 
 	private:
-		/** @brief ノードツリーを作成
-		 *  @param aiNode* _node Assimpノード
-		 *  @param TreeNode_t* _tree 生成先ツリーノード
+		/** @brief Assimp シーンから Material / DiffuseTexture を構築する
+		 *  @param _scene Assimp シーン
+		 *  @param _modelData 出力先
+		 *  @param _textureDir テクスチャディレクトリ
 		 */
-		void CreateNodeTree(aiNode* _node, TreeNode_t* _tree);
+		void BuildMaterials(const aiScene* _scene, ModelData& _modelData, const std::string& _textureDir) const;
 
-		/** @brief 空のボーン辞書を作成
-		 *  @param aiNode* _node Assimpノード
-		 *  @param std::unordered_map<std::string, Bone>& _boneDict ボーン辞書
+		/** @brief Assimp のメッシュ群から頂点配列とインデックス配列を構築する
+		 *  @param _scene Assimp シーン
+		 *  @param _modelData 出力先モデルデータ
 		 */
-		void CreateEmptyBoneDictionary(aiNode* _node, std::unordered_map<std::string, Bone>& _boneDict);
+		void BuildMeshBuffers(const aiScene* _scene, ModelData& _modelData) const;
 
-		/** @brief 頂点にボーンデータを設定
-		 *  @param ModelData& _model 対象モデル
+		/** @brief メッシュ単位の Subset 情報を構築する
+		 *  @param _scene Assimp シーン
+		 *  @param _modelData 出力先モデルデータ
+		 *  @param _useUnifiedBuffers 1本のVB/IBにまとめる前提で base を詰めるか
 		 */
-		void SetBoneDataToVertices(ModelData& _model);
+		void BuildSubsets(const aiScene* _scene, ModelData& _modelData, bool _useUnifiedBuffers = false) const;
 
-		/** @brief シーンからボーン情報を取得
-		 *  @param const aiScene* _scene シーンデータ
-		 *  @param ModelData& _model モデルデータ
+		/** @brief ボーン辞書（boneDictionary）と頂点の boneIndex/boneWeight を構築する
+		 *  @param _scene Assimp シーン
+		 *  @param _modelData 出力先モデルデータ
 		 */
-		void GetBone(const aiScene* _scene, ModelData& _model);
+		void BuildBonesAndSkinWeights(const aiScene* _scene, ModelData& _modelData) const;
 
-		/** @brief マテリアルとテクスチャを取得
-		 *  @param const aiScene* _scene Assimpシーン
-		 *  @param const std::string& _textureDir テクスチャディレクトリ
-		 *  @param ModelData& _model モデルデータ
+		/** @brief Assimp シーンからノードツリーを構築して ModelData に格納する
+		 *  @param _scene Assimp シーン
+		 *  @param _modelData 出力先モデルデータ
 		 */
-		void GetMaterialData(const aiScene* _scene, const std::string& _textureDir, ModelData& _model);
+		void BuildNodeTree(const aiScene* _scene, ModelData& _modelData) const;
 
-		/** @brief グローバルバインド行列を構築
-		 *  @param const Utils::TreeNode<BoneNode>& _node ボーンノード
-		 *  @param const aiMatrix4x4& _parent 親のグローバル行列
-		 *  @param std::unordered_map<std::string, Bone>& _dict ボーン辞書
+		/** @brief SkeletonCache（実行時用）を構築する
+		 *  @details nodeNameToIndex は内部で一時生成して捨てる
+		 *  @param _scene Assimp シーン
+		 *  @param _modelData 入力モデルデータ（boneDictionary を参照）
+		 *  @param _outSkeletonCache 出力先スケルトンキャッシュ
 		 */
-		void BuildGlobalBindMatrices(const Utils::TreeNode<BoneNode>& _node, const aiMatrix4x4& _parent, std::unordered_map<std::string, Bone>& _dict);
+		void BuildSkeletonCache(const aiScene* _scene, const ModelData& _modelData, SkeletonCache& _outSkeletonCache) const;
 
-		/** @brief ボーンインデックスをツリーから割り当て
-		 *  @param const Utils::TreeNode<BoneNode>& _node ボーンノード
-		 *  @param unsigned int& _idx インデックスカウンタ
-		 *  @param std::unordered_map<std::string, Bone>& _dict ボーン辞書
-		 */
-		void AssignBoneIndicesFromTree(const Utils::TreeNode<BoneNode>& _node, unsigned int& _idx, std::unordered_map<std::string, Bone>& _dict);
+
+
 	private:
 		std::unique_ptr<TextureLoader> textureLoader;	///< テクスチャ読み込み
 	};
-}// namespace Graphics::Import
+} // namespace Graphics::Import

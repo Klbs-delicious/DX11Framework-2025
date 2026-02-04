@@ -21,8 +21,8 @@ float4 main(PS_IN_MODEL input) : SV_TARGET
 {
     // 法線・ライト方向を正規化
     float3 N = normalize(input.normal);
-    float3 L = normalize(-lightDir); // 負方向にして「光が当たる方向」
-    float3 V = normalize(-input.worldPos);
+    float3 L = normalize(-lightDir);        // 負方向にして「光が当たる方向」
+    float3 V = normalize(-input.worldPos);  // カメラ位置は原点(0,0,0)前提
     float3 R = reflect(-L, N);
 
     // ハーフランバートによる柔らかい拡散反射

@@ -211,7 +211,7 @@ void RenderSystem::Finalize()
 /// @brief  描画開始時の処理
 void RenderSystem::BeginRender()
 {
-    float clearColor[4] = { 0.0f, 0.0f, 1.0f, 1.0f };
+    float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     auto context = this->d3d11->GetContext();
     context->OMSetRenderTargets(1, this->renderTargetView.GetAddressOf(), this->depthStencilView.Get());
     context->ClearRenderTargetView(this->renderTargetView.Get(), clearColor);

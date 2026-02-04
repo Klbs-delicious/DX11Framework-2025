@@ -38,6 +38,8 @@
 #include"Include/Tests/TimeScaleTestComponent.h"
 #include"Include/Tests/FreeMoveTestComponent.h"
 #include"Include/Tests/TestCollisionHandler.h"
+#include"Include/Tests/TestDodge.h"
+#include"Include/Tests/TestEnemy.h"
 //#include"Include/Framework/Entities/TestRenderer.h"
 
 #include<iostream>
@@ -69,6 +71,16 @@ void ModelTest::SetupObjects()
 	auto& animationClipManager = ResourceHub::Get<AnimationClipManager>();
 
 	//--------------------------------------------------------------
+	// アニメーションクリップの登録
+	//--------------------------------------------------------------
+	//animationClipManager.Register("Walk");
+	//animationClipManager.Register("Run");
+	animationClipManager.Register("Jump");
+	animationClipManager.Register("HeadHit");
+	animationClipManager.Register("Idle");
+	animationClipManager.Register("Dodge");
+	animationClipManager.Register("Punch");
+	//--------------------------------------------------------------
 	// カメラの生成
 	//--------------------------------------------------------------
 
@@ -89,48 +101,88 @@ void ModelTest::SetupObjects()
 	//--------------------------------------------------------------
 	// オブジェクトの生成
 	//--------------------------------------------------------------
+
+	// 時間制御グループオブジェクトを生成する
+	auto timeScaleGroup = this->gameObjectManager.Instantiate("TimeScaleGroup");
+	auto timeGroup = timeScaleGroup->AddComponent<TimeScaleGroup>();
 	
-	// モデルデータの取得テスト
-	modelManager.Register("Woman");
-	auto modelData = modelManager.Get("Woman");
+	// モデルデータの取得
+	modelManager.Register("Player");
+	auto modelData = modelManager.Get("Player");
 
 	auto player = this->gameObjectManager.Instantiate("Player", GameTags::Tag::Player);
-	player->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 0.0f));
-	player->transform->SetLocalScale(DX::Vector3(0.1, 0.1f, 0.1f));
+	player->transform->SetLocalPosition(DX::Vector3(0.0f, -10.0f, 0.0f));
+	player->transform->SetLocalScale(DX::Vector3(0.1f, 0.1f, 0.1f));
+
+	auto timeScale = player->AddComponent<TimeScaleTestComponent>();
+	timeScale->SetTimeScaleGroup(timeGroup);
+	timeGroup->AddGroup("PlayerGroup", player->GetComponent<TimeScaleComponent>());
+
 	auto meshComp = player->AddComponent<MeshComponent>();
 	meshComp->SetMesh(modelData->mesh);
 	auto materialComp = player->AddComponent<MaterialComponent>();
 	materialComp->SetMaterial(modelData->material);
-	//player->AddComponent<MeshRenderer>();
 	auto animComp = player->AddComponent<AnimationComponent>();
-	animComp->SetModelData(modelData->GetModelData());
-
-	// デバッグ: ボーン行列の row/column-major 不一致切り分け
-	// true で改善する場合は「GPUへ送る直前に転置が必要」な可能性が高い
-	animComp->SetTransposeBoneMatricesOnUpload(true);
-
-	// アニメーションデータの取得テスト
-	animationClipManager.Register("Walk");
-	animationClipManager.Register("Run");
-	animationClipManager.Register("Jump");
-	animationClipManager.Register("Dance");
-	auto clip = animationClipManager.Get("Dance");
-	if (clip)
-	{
-		std::cout << "[ModelTest] Animation Clip Loaded: " << clip->name << std::endl;
-		std::cout << " Duration (ticks): " << clip->durationTicks << std::endl;
-		std::cout << " Ticks Per Second: " << clip->ticksPerSecond << std::endl;
-		std::cout << " Number of Tracks: " << clip->tracks.size() << std::endl;
-	}
-	else
-	{
-		std::cerr << "[ModelTest] Failed to load animation clip." << std::endl;
-	}
-
+	animComp->SetSkeletonCache(modelData->GetSkeletonCache());
+	auto clip = animationClipManager.Get("Dodge");
 	animComp->SetAnimationClip(clip);
-	animComp->Play();
-	//animComp->SetTransposeBoneMatricesOnUpload(true);
-	//animComp->SetPlaybackSpeed(0.1f);
-
+	animComp->SetLoop(false);
 	player->AddComponent<SkinnedMeshRenderer>();
+	player->AddComponent<TestDodge>();
+
+	// キャラクターコントローラーを追加する
+	auto charaController = player->AddComponent<CharacterController>();
+	auto coll3D = player->AddComponent<Framework::Physics::Collider3DComponent>();
+	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
+	auto rigidbody3D = player->AddComponent<Framework::Physics::Rigidbody3D>();
+
+	// カメラピボットオブジェクトを生成する
+	auto pivotObj = gameObjectManager.Instantiate("CameraPivot");
+	meshComp = pivotObj->AddComponent<MeshComponent>();
+	meshComp->SetMesh(meshManager.Get("Box"));
+
+	//// カメラ注視コンポーネントを追加する
+	//auto cameraLook = pivotObj->AddComponent<CameraLookComponent>();
+	//cameraLook->SetTarget(player->transform);
+	//cameraLook->SetOffset(DX::Vector3(12.0f, 6.0f, -10.0f)); // 少し右上にオフセット
+
+	//// カメラ追従コンポーネントを追加する
+	//auto followCamera = camera3D->AddComponent<FollowCamera>();
+	//followCamera->SetTarget(player->transform);
+	//followCamera->SetPivot(pivotObj->transform);
+	//followCamera->SetSmoothSpeed(5.0f);
+
+	//敵
+	auto enemy = this->gameObjectManager.Instantiate("Enemy", GameTags::Tag::Enemy);
+	enemy->transform->SetLocalPosition(DX::Vector3(10.0f, -10.0f, 0.0f));
+	enemy->transform->SetLocalScale(DX::Vector3(0.1f, 0.1f, 0.1f));
+	meshComp = enemy->AddComponent<MeshComponent>();
+	meshComp->SetMesh(modelData->mesh);
+	materialComp = enemy->AddComponent<MaterialComponent>();
+	materialComp->SetMaterial(modelData->material);
+	animComp = enemy->AddComponent<AnimationComponent>();
+	animComp->SetSkeletonCache(modelData->GetSkeletonCache());
+	clip = animationClipManager.Get("Punch");
+	animComp->SetAnimationClip(clip);
+	animComp->SetLoop(true);
+	enemy->AddComponent<SkinnedMeshRenderer>();
+
+	// 敵のコライダー・リジッドボディ
+	coll3D = enemy->AddComponent<Framework::Physics::Collider3DComponent>();
+	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
+	rigidbody3D = enemy->AddComponent<Framework::Physics::Rigidbody3D>();
+
+	enemy->AddComponent<TestEnemy>();
+
+	// 平面オブジェクト
+	auto obj_4 = this->gameObjectManager.Instantiate("obj_4");
+	obj_4->transform->SetLocalPosition(DX::Vector3(0.0f, -20.0f, 0.0f));
+	obj_4->transform->SetLocalScale(DX::Vector3(500.0f, 1.0f, 500.0f));
+	meshComp = obj_4->AddComponent<MeshComponent>();
+	meshComp->SetMesh(meshManager.Get("Plane"));
+	obj_4->AddComponent<MeshRenderer>();
+	coll3D = obj_4->AddComponent<Framework::Physics::Collider3DComponent>();
+	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
+	rigidbody3D = obj_4->AddComponent<Framework::Physics::Rigidbody3D>();
+	rigidbody3D->SetMotionTypeStatic();
 }

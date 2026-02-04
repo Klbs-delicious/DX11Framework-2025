@@ -520,7 +520,14 @@ namespace
 // AnimationComponent Methods
 //-----------------------------------------------------------------------------
 AnimationComponent::AnimationComponent(GameObject* _owner, bool _isActive)
-	: Component(_owner, _isActive)
+	: Component(_owner, _isActive),
+	isLoop(false),
+	isPlaying(false),
+	currentClip(nullptr),
+	currentTime(0.0),
+	playbackSpeed(1.0f),
+	clipEndTicks(0.0),
+	isSkeletonCached(false)
 {
 }
 
@@ -539,8 +546,8 @@ void AnimationComponent::Initialize()
 		this->meshComponent = this->Owner()->AddComponent<MeshComponent>();
 	}
 
-	this->isPlaying = true;
-	this->isLoop = true;
+	//this->isPlaying = true;
+	//this->isLoop = true;
 
 	this->currentTime = 0.0;
 	this->playbackSpeed = 1.0f;
@@ -731,53 +738,87 @@ const std::string& AnimationComponent::GetCurrentAnimationName() const
 
 void AnimationComponent::FixedUpdate(float _deltaTime)
 {
-	if (!this->isPlaying) { return; }
-	if (!this->currentClip) { return; }
+	// 必要条件チェック（スケルトンがキャッシュされていることが前提）
 	if (!this->isSkeletonCached) { return; }
 	if (!this->skeletonCache) { return; }
 	if (this->skeletonCache->nodes.empty()) { return; }
 
-	const double dt = static_cast<double>(_deltaTime) * static_cast<double>(this->playbackSpeed);
-	const double tps = this->currentClip->ticksPerSecond;
-	if (tps <= 0.0) { return; }
-
-	const double endTicksRaw = (this->clipEndTicks > 0.0) ? this->clipEndTicks : this->currentClip->durationTicks;
-	const double endTicks = (ForceEndTicks > 0.0) ? std::min(endTicksRaw, ForceEndTicks) : endTicksRaw;
-	const double endSec = (endTicks > 0.0) ? (endTicks / tps) : 0.0;
-
-	double nextTime = this->currentTime + dt;
-	if (endSec > 0.0)
+	// --- 再生中かつクリップがある場合のみ時間を進める ---
+	if (this->isPlaying && this->currentClip)
 	{
-		if (this->isLoop)
+		const double dt = static_cast<double>(_deltaTime) * static_cast<double>(this->playbackSpeed);
+		const double tps = this->currentClip->ticksPerSecond;
+		if (tps > 0.0)
 		{
-			nextTime = std::fmod(nextTime, endSec);
-			if (nextTime < 0.0) { nextTime += endSec; }
+			double nextTime = this->currentTime + dt;
+
+			const double endTicksRaw = (this->clipEndTicks > 0.0) ? this->clipEndTicks : this->currentClip->durationTicks;
+			const double endTicks = (ForceEndTicks > 0.0) ? std::min(endTicksRaw, ForceEndTicks) : endTicksRaw;
+			const double endSec = (endTicks > 0.0) ? (endTicks / tps) : 0.0;
+
+			if (endSec > 0.0)
+			{
+				if (this->isLoop)
+				{
+					nextTime = std::fmod(nextTime, endSec);
+					if (nextTime < 0.0) { nextTime += endSec; }
+				}
+				else
+				{
+					if (nextTime >= endSec)
+					{
+						nextTime = endSec;
+						this->isPlaying = false; // 到達で自動停止
+					}
+					if (nextTime < 0.0) { nextTime = 0.0; }
+				}
+			}
+
+			this->currentTime = nextTime;
+		}
+	}
+	else
+	{
+		// 再生していない場合は時間を進めない。
+		// クリップが未設定なら currentTime を 0 にリセットしておく（バインド姿勢を表示するため）
+		if (!this->currentClip)
+		{
+			this->currentTime = 0.0;
 		}
 		else
 		{
-			if (nextTime >= endSec)
+			// クリップはあるが再生していない場合は currentTime をクリップ範囲内にクランプしておく
+			const double tps = this->currentClip->ticksPerSecond;
+			if (tps > 0.0)
 			{
-				nextTime = endSec;
-				this->isPlaying = false;
-			}
-			if (nextTime < 0.0)
-			{
-				nextTime = 0.0;
+				const double endTicksRaw = (this->clipEndTicks > 0.0) ? this->clipEndTicks : this->currentClip->durationTicks;
+				const double endTicks = (ForceEndTicks > 0.0) ? std::min(endTicksRaw, ForceEndTicks) : endTicksRaw;
+				const double endSec = (endTicks > 0.0) ? (endTicks / tps) : 0.0;
+				if (!this->isLoop && endSec > 0.0 && this->currentTime > endSec)
+				{
+					this->currentTime = endSec;
+				}
 			}
 		}
 	}
-	this->currentTime = nextTime;
 
 	//-----------------------------------------------------------------------------
-	// ポーズ更新
-	//-----------------------------------------------------------------------------
-	this->UpdatePoseFromClip(this->currentTime);
+	// ポーズ更新（クリップがあればその時刻で、無ければ bind（Reset））
+	//----------------------------------------------------------------------------- 
+	if (this->currentClip)
+	{
+		this->UpdatePoseFromClip(this->currentTime);
+	}
+	else
+	{
+		// クリップ未設定時は bind pose を currentPose に復元して描画可能にする
+		this->currentPose.Reset(*this->skeletonCache);
+	}
 
 	//-----------------------------------------------------------------------------
-	// ボーン行列更新
-	//-----------------------------------------------------------------------------
+	// ボーン行列更新（描画用に常に送る）
+	//----------------------------------------------------------------------------- 
 	boneBuffer.boneCount = static_cast<uint32_t>(skeletonCache->boneIndexToNodeIndex.size());
-	// ↑ ここで ShaderCommon::MaxBones (512) を超えない限り、 boneMatrices 配列はリサイズされない
 
 	const size_t count = static_cast<size_t>(this->boneBuffer.boneCount);
 
@@ -789,8 +830,6 @@ void AnimationComponent::FixedUpdate(float _deltaTime)
 	for (size_t i = 0; i < count; ++i)
 	{
 		const DX::Matrix4x4& m = this->currentPose.cpuBoneMatrices[i];
-
-		// GPU へは最終だけ転置して送る（mul(v, M) 前提）
 		this->boneBuffer.boneMatrices[i] = TransposeDxMatrix(m);
 
 		static bool dumped = false;
@@ -803,13 +842,6 @@ void AnimationComponent::FixedUpdate(float _deltaTime)
 			dumped = true;
 		}
 	}
-
-	//// 306行目付近：boneCB を GPU に送る直前
-	//for (int b = 0; b < static_cast<int>(this->skeletonCache->boneOffset.size()); ++b)
-	//{
-	//	// HLSL側の mul(v, M) に合わせるために転置する
-	//	this->boneBuffer.boneMatrices[b] = XMMatrixTranspose(this->boneBuffer.boneMatrices[b]);
-	//}
 
 	//-----------------------------------------------------------------------------
 	// 定数バッファ更新

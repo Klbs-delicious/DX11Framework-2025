@@ -101,6 +101,8 @@
     <ClInclude Include="Code\Include\Tests\FreeMoveTestComponent.h" />
     <ClInclude Include="Code\Include\Tests\SkinningDebug.h" />
     <ClInclude Include="Code\Include\Tests\TestCollisionHandler.h" />
+    <ClInclude Include="Code\Include\Tests\TestDodge.h" />
+    <ClInclude Include="Code\Include\Tests\TestEnemy.h" />
     <ClInclude Include="Code\Include\Tests\TestMoveComponent.h" />
     <ClInclude Include="Code\Include\Tests\TimeScaleTestComponent.h" />
   </ItemGroup>
@@ -172,6 +174,8 @@
     <ClCompile Include="Code\Source\Tests\FreeMoveTestComponent.cpp" />
     <ClCompile Include="Code\Source\Tests\SkinningDebug.cpp" />
     <ClCompile Include="Code\Source\Tests\TestCollisionHandler.cpp" />
+    <ClCompile Include="Code\Source\Tests\TestDodge.cpp" />
+    <ClCompile Include="Code\Source\Tests\TestEnemy.cpp" />
     <ClCompile Include="Code\Source\Tests\TestMoveComponent.cpp" />
     <ClCompile Include="Code\Source\Tests\TimeScaleTestComponent.cpp" />
   </ItemGroup>

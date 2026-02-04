@@ -13,12 +13,17 @@
 #include"Include/Framework/Graphics/MeshManager.h"
 #include"Include/Framework/Shaders/ShaderManager.h"
 #include"Include/Framework/Graphics/MaterialManager.h"
+#include"Include/Framework/Graphics/ModelManager.h"
+#include"Include/Framework/Graphics/AnimationClipManager.h"
 
 // 描画
 #include"Include/Framework/Entities/SpriteRenderer.h"
 #include"Include/Framework/Entities/SpriteComponent.h"
 #include"Include/Framework/Entities/MeshComponent.h"	
 #include"Include/Framework/Entities/MeshRenderer.h"
+#include"Include/Framework/Entities/MaterialComponent.h"
+#include"Include/Framework/Entities/AnimationComponent.h"
+#include"Include/Framework/Entities/SkinnedMeshRenderer.h"
 
 // カメラ
 #include"Include/Framework/Entities/Camera2D.h"
@@ -26,6 +31,7 @@
 
 // ゲームコンポーネント
 #include"Include/Game/Entities/FogComponent.h"
+#include"Include/Game/Entities/CharacterController.h"
 
 #include<iostream>
 
@@ -49,6 +55,11 @@ void TitleScene::SetupObjects()
 	//--------------------------------------------------------------
 	auto& spriteManager = ResourceHub::Get<SpriteManager>();
 	auto& meshManager = ResourceHub::Get<MeshManager>();
+	auto& modelManager = ResourceHub::Get<ModelManager>();
+	auto& animationClipManager = ResourceHub::Get<AnimationClipManager>();
+
+	modelManager.Register("Player");
+	animationClipManager.Register("Idle");
 
 	//--------------------------------------------------------------
 	// カメラの生成
@@ -81,6 +92,30 @@ void TitleScene::SetupObjects()
 	meshComp->SetMesh(meshManager.Get("Plane"));
 	fogPlane->AddComponent<MeshRenderer>();
 	fogPlane->AddComponent<FogComponent>();
+
+	//// モデル、アニメーションの設定
+	//auto modelData = modelManager.Get("Player");
+	//auto clip = animationClipManager.Get("Idle");
+
+	//auto player = this->gameObjectManager.Instantiate("Player", GameTags::Tag::Player);
+	//player->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 0.0f));
+	//player->transform->SetLocalScale(DX::Vector3(0.1f, 0.1f, 0.1f));
+
+	//meshComp = player->AddComponent<MeshComponent>();
+	//meshComp->SetMesh(modelData->mesh);
+	//auto materialComp = player->AddComponent<MaterialComponent>();
+	//materialComp->SetMaterial(modelData->material);
+	//auto animComp = player->AddComponent<AnimationComponent>();
+	//animComp->SetSkeletonCache(modelData->GetSkeletonCache());
+	//animComp->SetAnimationClip(clip);
+	//animComp->SetLoop(true);
+	//animComp->Play();
+	//player->AddComponent<SkinnedMeshRenderer>();
+	//// キャラクターコントローラーを追加する
+	//auto charaController = player->AddComponent<CharacterController>();
+	//auto coll3D = player->AddComponent<Framework::Physics::Collider3DComponent>();
+	//coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
+	//auto rigidbody3D = player->AddComponent<Framework::Physics::Rigidbody3D>();
 
 	// 床
 	auto plane = this->gameObjectManager.Instantiate("Plane");

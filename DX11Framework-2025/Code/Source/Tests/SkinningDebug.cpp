@@ -262,17 +262,17 @@ namespace Graphics::Debug::Output
 
 		const float err = MaxAbsDiffIdentity(check);
 
-		std::cout << "[SkinningDebug] BindPose Global Check\n";
-		std::cout << "  meshRootIndex = " << root << "\n";
-		std::cout << "  meshRootName  = \"" << _skeletonCache.nodes[root].name << "\"\n";
-		std::cout << "  maxAbsError   = " << std::fixed << std::setprecision(6) << err << "\n";
+		//std::cout << "[SkinningDebug] BindPose Global Check\n";
+		//std::cout << "  meshRootIndex = " << root << "\n";
+		//std::cout << "  meshRootName  = \"" << _skeletonCache.nodes[root].name << "\"\n";
+		//std::cout << "  maxAbsError   = " << std::fixed << std::setprecision(6) << err << "\n";
 	}
 
 	void DumpBindPoseSkinCheckOnce(
 		const Graphics::Import::SkeletonCache& _skeletonCache,
 		const Graphics::Import::Pose& _pose)
 	{
-		std::cout << "[SkinningDebug] BindPose Skin Check\n";
+		//std::cout << "[SkinningDebug] BindPose Skin Check\n";
 
 		const size_t nodeCount = _pose.globalMatrices.size();
 		const size_t boneCount = _skeletonCache.boneOffset.size();

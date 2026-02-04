@@ -135,7 +135,7 @@ void GameLoop::Initialize()
     this->inputSystem->RegisterKeyBinding("GameExit", static_cast<int>(DirectInputDevice::KeyboardKey::Escape));
 
     // シーンの変更
-    this->sceneManager->RequestSceneChange(SceneType::ModelTest);
+    this->sceneManager->RequestSceneChange(SceneType::Test);
 }
 
 /// @brief		更新処理を行う

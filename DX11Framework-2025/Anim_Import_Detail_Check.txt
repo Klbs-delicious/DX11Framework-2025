@@ -1,0 +1,17 @@
+=== Animation Clip Detail Check ===
+Clip Name: mixamo.com
+Duration: 115 TicksPerSecond: 30
+Track Count: 40
+
+Track: mixamorig:Hips (NodeIndex: 2)
+  [First PosKey] Time: 0 Val: (0.030064, 0.276254, 0.0152342)
+  [First RotKey] Time: 0 Val: (-0.151358, 0.146309, -0.00540227, 0.977576)
+
+Track: mixamorig:Spine (NodeIndex: 3)
+  [No PosKeys]
+  [First RotKey] Time: 0 Val: (-0.106447, 0.0332361, -0.00707408, 0.993738)
+
+Track: mixamorig:Spine1 (NodeIndex: 4)
+  [No PosKeys]
+  [First RotKey] Time: 0 Val: (-0.0801632, 0.0234565, 0.00193352, 0.996504)
+

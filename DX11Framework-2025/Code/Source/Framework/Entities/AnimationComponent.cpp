@@ -444,21 +444,28 @@ void AnimationComponent::FixedUpdate(float _deltaTime)
 		this->currentPose.Reset(*this->skeletonCache);
 	}
 
+	//-----------------------------------------------------------------------------
 	// ボーン行列更新
-	this->boneBuffer.boneCount = static_cast<uint32_t>(this->skeletonCache->boneIndexToNodeIndex.size());
+	//-----------------------------------------------------------------------------
 
+	// アップロードするボーン数を決定する
+	const uint32_t actualBoneCount = static_cast<uint32_t>(this->skeletonCache->boneIndexToNodeIndex.size());
+	const uint32_t uploadBoneCount = std::min<uint32_t>(actualBoneCount, static_cast<uint32_t>(ShaderCommon::MaxBones));
+	this->boneBuffer.boneCount = uploadBoneCount;
+
+	// 初期化
 	for (size_t i = 0; i < ShaderCommon::MaxBones; ++i)
 	{
 		this->boneBuffer.boneMatrices[i] = DX::Matrix4x4::Identity;
 	}
 
-	const size_t count = static_cast<size_t>(this->boneBuffer.boneCount);
-	for (size_t i = 0; i < count && i < ShaderCommon::MaxBones; ++i)
+	// ボーン行列を更新
+	for (uint32_t i = 0; i < uploadBoneCount; ++i)
 	{
-		this->boneBuffer.boneMatrices[i] = DX::TransposeMatrix(this->currentPose.cpuBoneMatrices[i]);
+		this->boneBuffer.boneMatrices[i] = DX::TransposeMatrix(this->currentPose.cpuBoneMatrices[static_cast<size_t>(i)]);
 	}
 
-	// 定数バッファ更新
+	// 定数バッファを更新
 	if (this->boneCB)
 	{
 		auto& d3d = SystemLocator::Get<D3D11System>();
@@ -474,11 +481,19 @@ void AnimationComponent::UpdatePoseFromClip(double _timeSeconds)
 	if (!this->currentClip) { return; }
 	if (!this->skeletonCache) { return; }
 
+	const double ticksPerSecond = this->currentClip->ticksPerSecond;
+
 	// 秒を ticks に換算
-	double ticks = _timeSeconds * this->currentClip->ticksPerSecond;
+	// ticksPerSecond が 0 の場合は ticks=0 として扱う（挙動は既存に近い）
+	double ticks = 0.0;
+	if (ticksPerSecond > 0.0)
+	{
+		ticks = _timeSeconds * ticksPerSecond;
+	}
 
 	// トラックから算出した終端で回す
-	const double endTicks = (this->clipEndTicks > ForceEndTicksEps) ? this->clipEndTicks : this->currentClip->durationTicks;
+	const double endTicks =
+		(this->clipEndTicks > ForceEndTicksEps) ? this->clipEndTicks : this->currentClip->durationTicks;
 
 	if (this->isLoop)
 	{
@@ -495,62 +510,68 @@ void AnimationComponent::UpdatePoseFromClip(double _timeSeconds)
 
 	const size_t nodeCount = this->skeletonCache->nodes.size();
 
-	// Local 行列の決定
-	// トラックがあるノードだけキーで上書きし それ以外は bindLocal を維持
+	//-----------------------------------------------------------------------------
+	// キーから Local 行列を更新
+	//-----------------------------------------------------------------------------
+
+	// 初期化
 	for (size_t i = 0; i < nodeCount; ++i)
 	{
-		const Graphics::Import::NodeTrack* track = nullptr;
-
-		for (const auto& clipTrack : this->currentClip->tracks)
-		{
-			if (clipTrack.nodeIndex == static_cast<int>(i))
-			{
-				track = &clipTrack;
-				break;
-			}
-		}
-
-		if (track)
-		{
-			this->UpdateLocalMatrixFromKeys(i, ticks);
-		}
-		else
-		{
-			this->currentPose.localMatrices[i] = this->skeletonCache->nodes[i].bindLocalMatrix;
-		}
+		this->currentPose.localMatrices[i] = this->skeletonCache->nodes[i].bindLocalMatrix;
 	}
 
+	// トラックごとに Local 行列を更新
+	// nodeIndex が同じ場合は最後に処理したものが優先される
+	for (const auto& track : this->currentClip->tracks)
+	{
+		const int nodeIndex = track.nodeIndex;
+		if (nodeIndex < 0) { continue; }
+		if (nodeIndex >= static_cast<int>(nodeCount)) { continue; }
+
+		const size_t nodeIdx = static_cast<size_t>(nodeIndex);
+		this->UpdateLocalMatrixFromKeys(nodeIdx, ticks, track);
+	}
+
+	//-----------------------------------------------------------------------------
 	// Global 行列の更新
+	//-----------------------------------------------------------------------------
+
 	// order は親子順が前提なのでこの順に合成する
 	for (int nodeIndex : this->skeletonCache->order)
 	{
-		const int parentIndex = this->skeletonCache->nodes[static_cast<size_t>(nodeIndex)].parentIndex;
+		const size_t nodeIdx = static_cast<size_t>(nodeIndex);
+		const int parentIndex = this->skeletonCache->nodes[nodeIdx].parentIndex;
 
 		if (parentIndex < 0)
 		{
-			this->currentPose.globalMatrices[static_cast<size_t>(nodeIndex)] =
-				this->currentPose.localMatrices[static_cast<size_t>(nodeIndex)];
+			this->currentPose.globalMatrices[nodeIdx] =
+				this->currentPose.localMatrices[nodeIdx];
 		}
 		else
 		{
-			this->currentPose.globalMatrices[static_cast<size_t>(nodeIndex)] =
-				this->currentPose.localMatrices[static_cast<size_t>(nodeIndex)] *
-				this->currentPose.globalMatrices[static_cast<size_t>(parentIndex)];
+			const size_t parentIdx = static_cast<size_t>(parentIndex);
+
+			this->currentPose.globalMatrices[nodeIdx] =
+				this->currentPose.localMatrices[nodeIdx] *
+				this->currentPose.globalMatrices[parentIdx];
 		}
 	}
 
+	//-----------------------------------------------------------------------------
 	// スキニング行列計算
+	//-----------------------------------------------------------------------------
+
 	// 原則 offset * global[node] * rootInv
 	for (size_t boneIdx = 0; boneIdx < this->skeletonCache->boneIndexToNodeIndex.size(); ++boneIdx)
 	{
 		if (boneIdx >= ShaderCommon::MaxBones) { break; }
 
-		const int nodeIdx = this->skeletonCache->boneIndexToNodeIndex[boneIdx];
+		const int nodeIndex = this->skeletonCache->boneIndexToNodeIndex[boneIdx];
 		const DX::Matrix4x4& offset = this->skeletonCache->boneOffset[boneIdx];
 
 		this->currentPose.cpuBoneMatrices[boneIdx] =
 			offset *
-			this->currentPose.globalMatrices[static_cast<size_t>(nodeIdx)] *
+			this->currentPose.globalMatrices[static_cast<size_t>(nodeIndex)] *
 			this->skeletonCache->globalInverse;
 	}
 }
@@ -656,7 +677,7 @@ void AnimationComponent::BindBoneCBVS(ID3D11DeviceContext* _context, UINT _slot)
 //-----------------------------------------------------------------------------
 // Local matrix update from keys
 //-----------------------------------------------------------------------------
-void AnimationComponent::UpdateLocalMatrixFromKeys(size_t _nodeIdx, double _ticks)
+void AnimationComponent::UpdateLocalMatrixFromKeys(size_t _nodeIdx, double _ticks, const Graphics::Import::NodeTrack& _track)
 {
 	auto& nodeInfo = this->skeletonCache->nodes[_nodeIdx];
 
@@ -666,23 +687,7 @@ void AnimationComponent::UpdateLocalMatrixFromKeys(size_t _nodeIdx, double _tick
 	XMVECTOR bindLocalScale{}, bindLocalRotation{}, bindLocalTranslation{};
 	XMMatrixDecompose(&bindLocalScale, &bindLocalRotation, &bindLocalTranslation, bindLocalMatrix);
 
-	// このノードに対応するトラックを探す
-	const Graphics::Import::NodeTrack* track = nullptr;
-	for (const auto& clipTrack : this->currentClip->tracks)
-	{
-		if (clipTrack.nodeIndex == static_cast<int>(_nodeIdx))
-		{
-			track = &clipTrack;
-			break;
-		}
-	}
 
-	// トラックがない場合は Bind をそのまま使う
-	if (!track)
-	{
-		this->currentPose.localMatrices[_nodeIdx] = nodeInfo.bindLocalMatrix;
-		return;
-	}
 
 	DX::Vector3 finalPos{};
 	DX::Vector3 finalScale{};
@@ -704,19 +709,19 @@ void AnimationComponent::UpdateLocalMatrixFromKeys(size_t _nodeIdx, double _tick
 	}
 
 	// キーがある成分だけ上書きし ない成分は Bind を維持する
-	if (track->hasPosition)
+	if (_track.hasPosition)
 	{
-		finalPos = this->InterpolateTranslation(track, static_cast<float>(_ticks), finalPos);
+		finalPos = this->InterpolateTranslation(&_track, static_cast<float>(_ticks), finalPos);
 	}
 
-	if (track->hasRotation)
+	if (_track.hasRotation)
 	{
-		finalRot = this->InterpolateRotation(track, static_cast<float>(_ticks), finalRot);
+		finalRot = this->InterpolateRotation(&_track, static_cast<float>(_ticks), finalRot);
 	}
 
-	if (track->hasScale)
+	if (_track.hasScale)
 	{
-		finalScale = this->InterpolateScale(track, static_cast<float>(_ticks), finalScale);
+		finalScale = this->InterpolateScale(&_track, static_cast<float>(_ticks), finalScale);
 	}
 
 	{

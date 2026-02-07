@@ -116,7 +116,7 @@ public:
 
 private:
 	void UpdatePoseFromClip(double _timeSeconds);
-	void UpdateLocalMatrixFromKeys(size_t _nodeIdx, double _ticks);
+	void UpdateLocalMatrixFromKeys(size_t _nodeIdx, double _ticks, const Graphics::Import::NodeTrack& _track);
 	DX::Vector3 InterpolateTranslation(const Graphics::Import::NodeTrack* _track, float _ticks, const DX::Vector3& _fallback);
 	DX::Quaternion InterpolateRotation(const Graphics::Import::NodeTrack* _track, float _ticks, const DX::Quaternion& _fallback);
 	DX::Vector3 InterpolateScale(const Graphics::Import::NodeTrack* _track, float _ticks, const DX::Vector3& _fallback);

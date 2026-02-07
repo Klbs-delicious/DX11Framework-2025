@@ -37,9 +37,9 @@ public:
 	/// @brief ボーン行列用定数バッファ
 	struct BoneBuffer
 	{
-		uint32_t boneCount;
-		float pad[3]; // アライメント
-		DirectX::XMMATRIX boneMatrices[128];
+		uint32_t boneCount;						///< ボーン数
+		float pad[3]; 							///< パディング
+		DX::Matrix4x4 boneMatrices[128];		///< ボーン行列（最大128本）
 	};
 
 	/** @brief コンストラクタ
@@ -72,10 +72,6 @@ public:
 	 *  @param _clip 設定するアニメーションクリップ
 	 */
 	void SetAnimationClip(Graphics::Import::AnimationClip* _clip);
-
-	/** @brief トラックからノードインデックスへの解決を行う
-	 */
-	void ResolveTracksToNodes();
 
 	/** @brief スケルトンキャッシュを設定する（モデル読み込み側で生成したものを渡す）
 	 *  @param _cache スケルトンキャッシュ

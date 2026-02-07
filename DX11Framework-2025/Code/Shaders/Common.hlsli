@@ -67,9 +67,9 @@ cbuffer NormalMatrixBuffer : register(b6)
 // スキニング用定数バッファ
 cbuffer BoneBuffer : register(b7)
 {
-    uint boneCount;
-    float3 pad; // 16バイト境界に合わせる
-    float4x4 boneMatrices[128];
+    uint boneCount;                 ///< ボーン数
+    float3 pad;                     ///< 16バイト境界に合わせる
+    float4x4 boneMatrices[128]; ///< ボーン変換行列配列（最大128本）
 }
 
 //-----------------------------------------------------------------------------

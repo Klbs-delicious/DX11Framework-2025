@@ -8,6 +8,7 @@
  //-----------------------------------------------------------------------------
 #include "Include/Tests/SkinningDebug.h"
 #include "Include/Framework/Graphics/ModelData.h" 
+#include "Include/Framework/Graphics/AnimationData.h" 
 
 #include <DirectXMath.h>
 
@@ -17,6 +18,10 @@
 #include <fstream>
 #include <iomanip>
 #include <string>
+#include <algorithm>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 //-----------------------------------------------------------------------------
 // Local Helpers
@@ -180,6 +185,29 @@ namespace
 			_ofs << "  ... (truncated)\n";
 		}
 	}
+
+	static bool OpenAppend(std::ofstream& _ofs, const char* _filePath)
+	{
+		if (!_filePath) { return false; }
+
+		_ofs.open(_filePath, std::ios::app);
+		return _ofs.is_open();
+	}
+
+	static void DumpMatrix4x4_RowCol(
+		std::ofstream& _ofs,
+		const char* _label,
+		const DX::Matrix4x4& _m)
+	{
+		_ofs << _label << "\n";
+		_ofs << "  [r0] " << _m._11 << ", " << _m._12 << ", " << _m._13 << ", " << _m._14 << "\n";
+		_ofs << "  [r1] " << _m._21 << ", " << _m._22 << ", " << _m._23 << ", " << _m._24 << "\n";
+		_ofs << "  [r2] " << _m._31 << ", " << _m._32 << ", " << _m._33 << ", " << _m._34 << "\n";
+		_ofs << "  [r3] " << _m._41 << ", " << _m._42 << ", " << _m._43 << ", " << _m._44 << "\n";
+
+		// 行列の見方を間違えやすいので translation を併記する
+		_ofs << "  col4(translation) = (" << _m._14 << ", " << _m._24 << ", " << _m._34 << ")\n";
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -305,4 +333,204 @@ namespace Graphics::Debug::Output
 		}
 	}
 
+	void DumpSkeletonImportCheck(
+		const char* _filePath,
+		const Graphics::Import::SkeletonCache& _cache,
+		size_t _maxNodeDumpCount)
+	{
+		std::ofstream ofs{};
+		if (!OpenAppend(ofs, _filePath)) { return; }
+
+		ofs << "=== Skeleton Import Check ===\n";
+		ofs << "Node Count: " << _cache.nodes.size() << "\n";
+
+		ofs << "\n[Global Inverse Root Matrix]\n";
+		DumpMatrix4x4_RowCol(ofs, "globalInverse", _cache.globalInverse);
+
+		if (!_cache.boneOffset.empty())
+		{
+			ofs << "\n[Bone Offset (First Bone)]\n";
+			DumpMatrix4x4_RowCol(ofs, "boneOffset[0]", _cache.boneOffset[0]);
+		}
+
+		const size_t dumpCount = std::min(_maxNodeDumpCount, _cache.nodes.size());
+		for (size_t i = 0; i < dumpCount; ++i)
+		{
+			ofs << "\nNode[" << i << "]: " << _cache.nodes[i].name << "\n";
+			DumpMatrix4x4_RowCol(ofs, "  bindLocalMatrix", _cache.nodes[i].bindLocalMatrix);
+		}
+	}
+
+	void DumpSkeletonOrderCheck(
+		const char* _filePath,
+		const Graphics::Import::SkeletonCache& _cache)
+	{
+		std::ofstream ofs{};
+		if (!OpenAppend(ofs, _filePath)) { return; }
+
+		ofs << "Node Count: " << _cache.nodes.size() << "\n";
+		ofs << "Order Size: " << _cache.order.size() << "\n\n";
+
+		std::unordered_set<int> processed{};
+		bool isValid = true;
+
+		for (size_t i = 0; i < _cache.order.size(); ++i)
+		{
+			const int idx = _cache.order[i];
+			const auto& node = _cache.nodes[static_cast<size_t>(idx)];
+
+			// 親が先に出ていないなら order が崩れている
+			if (node.parentIndex >= 0)
+			{
+				if (processed.find(node.parentIndex) == processed.end())
+				{
+					ofs << "[ERROR] Node '" << node.name << "' idx=" << idx
+						<< " parentIndex=" << node.parentIndex << "\n";
+					isValid = false;
+				}
+			}
+
+			processed.insert(idx);
+			ofs << "Order[" << i << "]: Index " << idx << " Name: " << node.name << "\n";
+		}
+
+		if (isValid)
+		{
+			ofs << "\nRESULT: VALID\n";
+		}
+		else
+		{
+			ofs << "\nRESULT: INVALID\n";
+		}
+	}
+
+	void DumpTrackBakeStatus(
+		const char* _filePath,
+		const Graphics::Import::AnimationClip& _clip,
+		const Graphics::Import::SkeletonCache* _skeletonCache,
+		const char* _tag)
+	{
+		std::ofstream ofs{};
+		if (!OpenAppend(ofs, _filePath)) { return; }
+
+		ofs << "\n============================================================\n";
+		ofs << "[TrackBakeStatus] " << (_tag ? _tag : "") << "\n";
+		ofs << "clipName=\"" << _clip.name << "\"\n";
+		ofs << "isBaked=" << (_clip.IsBaked() ? "true" : "false") << "\n";
+		ofs << "trackCount=" << _clip.tracks.size() << "\n";
+
+		if (_skeletonCache)
+		{
+			ofs << "nodeCount=" << _skeletonCache->nodes.size() << "\n";
+		}
+
+		int unresolvedCount = 0;
+
+		for (size_t ti = 0; ti < _clip.tracks.size(); ++ti)
+		{
+			const auto& tr = _clip.tracks[ti];
+
+			ofs << "track[" << ti << "] ";
+			ofs << "name=\"" << tr.nodeName << "\" ";
+			ofs << "nodeIndex=" << tr.nodeIndex;
+
+			if (_skeletonCache && tr.nodeIndex >= 0 && tr.nodeIndex < static_cast<int>(_skeletonCache->nodes.size()))
+			{
+				const auto& node = _skeletonCache->nodes[static_cast<size_t>(tr.nodeIndex)];
+				ofs << " resolvedNodeName=\"" << node.name << "\"";
+			}
+			else
+			{
+				ofs << " resolvedNodeName=\"\"";
+			}
+
+			ofs << " posKeys=" << tr.positionKeys.size();
+			ofs << " rotKeys=" << tr.rotationKeys.size();
+			ofs << " sclKeys=" << tr.scaleKeys.size();
+
+			if (tr.nodeIndex < 0)
+			{
+				unresolvedCount++;
+				ofs << " UNRESOLVED";
+			}
+
+			ofs << "\n";
+		}
+
+		ofs << "unresolvedCount=" << unresolvedCount << "\n";
+		ofs << "============================================================\n";
+	}
+
+	void DumpBakeValidationOnce(
+		const char* _filePath,
+		const Graphics::Import::AnimationClip& _clip,
+		const Graphics::Import::SkeletonCache& _skeletonCache,
+		const char* _tag)
+	{
+		static bool dumped = false;
+		if (dumped) { return; }
+
+		std::ofstream ofs{};
+		if (!OpenAppend(ofs, _filePath)) { return; }
+
+		ofs << "\n============================================================\n";
+		ofs << "[BakeValidationOnce] " << (_tag ? _tag : "") << "\n";
+		ofs << "clipName=\"" << _clip.name << "\"\n";
+		ofs << "isBaked=" << (_clip.IsBaked() ? "true" : "false") << "\n";
+		ofs << "trackCount=" << _clip.tracks.size() << "\n";
+		ofs << "nodeCount=" << _skeletonCache.nodes.size() << "\n";
+
+		std::unordered_map<std::string, std::vector<int>> nameToIndices{};
+		nameToIndices.reserve(_skeletonCache.nodes.size());
+
+		for (int i = 0; i < static_cast<int>(_skeletonCache.nodes.size()); ++i)
+		{
+			nameToIndices[_skeletonCache.nodes[static_cast<size_t>(i)].name].push_back(i);
+		}
+
+		int duplicateNameCount = 0;
+		size_t duplicateNodesTotal = 0;
+
+		for (const auto& kv : nameToIndices)
+		{
+			if (kv.second.size() >= 2)
+			{
+				duplicateNameCount++;
+				duplicateNodesTotal += kv.second.size();
+			}
+		}
+
+		ofs << "duplicateNameCount=" << duplicateNameCount << "\n";
+		ofs << "duplicateNodesTotal=" << duplicateNodesTotal << "\n";
+		ofs << "============================================================\n";
+
+		dumped = true;
+	}
+
+	void DumpBoneMatrixCpuGpuPairOnce(
+		const char* _filePath,
+		int _boneIndex,
+		const DX::Matrix4x4& _skinCpu,
+		const DX::Matrix4x4& _skinUploaded)
+	{
+		static bool dumped = false;
+		if (dumped) { return; }
+
+		std::ofstream ofs{};
+		if (!OpenAppend(ofs, _filePath)) { return; }
+
+		ofs << "\n============================================================\n";
+		ofs << "[BoneMatrixCpuGpuPairOnce]\n";
+		ofs << "boneIndex=" << _boneIndex << "\n";
+
+		DumpMatrix4x4_RowCol(ofs, "CPU skin (no transpose):", _skinCpu);
+		ofs << "CPU translation(row4) = (" << _skinCpu._41 << ", " << _skinCpu._42 << ", " << _skinCpu._43 << ")\n";
+
+		DumpMatrix4x4_RowCol(ofs, "Uploaded (transposed):", _skinUploaded);
+		ofs << "Uploaded translation(col4) = (" << _skinUploaded._14 << ", " << _skinUploaded._24 << ", " << _skinUploaded._34 << ")\n";
+
+		ofs << "============================================================\n";
+
+		dumped = true;
+	}
 }

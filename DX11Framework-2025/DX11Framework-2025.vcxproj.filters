@@ -569,6 +569,9 @@
     <ClCompile Include="Code\Source\Tests\TestEnemy.cpp">
       <Filter>ヘッダー ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Utils\CommonTypes.cpp">
+      <Filter>ソース ファイル\Framework\Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Code\Shaders\Common.hlsli">

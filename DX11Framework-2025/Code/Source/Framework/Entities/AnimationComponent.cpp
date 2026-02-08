@@ -201,8 +201,8 @@ void AnimationComponent::SetSkeletonCache(const Graphics::Import::SkeletonCache*
 	this->bindGlobalMatrices.clear();
 	BuildBindGlobalMatrices(this->bindGlobalMatrices, *this->skeletonCache);
 
-	// clip が存在して未焼き込みならここで焼く
-	if (this->currentClip && !this->currentClip->IsBaked())
+	// クリップがあればノードインデックスを焼き込む
+	if (this->currentClip)
 	{
 		this->currentClip->BakeNodeIndices(*this->skeletonCache);
 
@@ -247,7 +247,8 @@ void AnimationComponent::SetAnimationClip(Graphics::Import::AnimationClip* _clip
 {
 	this->currentClip = _clip;
 
-	if (this->currentClip && this->isSkeletonCached && this->skeletonCache && !this->currentClip->IsBaked())
+	// ノードインデックスを焼き込む
+	if (this->currentClip && this->isSkeletonCached && this->skeletonCache)
 	{
 		this->currentClip->BakeNodeIndices(*this->skeletonCache);
 
@@ -268,6 +269,7 @@ void AnimationComponent::SetAnimationClip(Graphics::Import::AnimationClip* _clip
 	}
 	else
 	{
+		// クリップまたはスケルトンキャッシュが無い場合
 		if (Graphics::Debug::Config::IsImportDumpEnabled() && this->currentClip && this->skeletonCache)
 		{
 			Graphics::Debug::Output::DumpTrackBakeStatus(
@@ -478,6 +480,11 @@ void AnimationComponent::FixedUpdate(float _deltaTime)
 //-----------------------------------------------------------------------------
 void AnimationComponent::UpdatePoseFromClip(double _timeSeconds)
 {
+	//-----------------------------------------------------------------------------
+	// tracks は事前に BakeNodeIndices() 済みであることを前提とする
+	// Bake 側では「_$AssimpFbx$_ を含む補助ノードには紐付けない」方針で統一する
+	//-----------------------------------------------------------------------------
+
 	if (!this->currentClip) { return; }
 	if (!this->skeletonCache) { return; }
 

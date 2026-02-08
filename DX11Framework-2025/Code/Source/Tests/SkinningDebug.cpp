@@ -416,7 +416,6 @@ namespace Graphics::Debug::Output
 		ofs << "\n============================================================\n";
 		ofs << "[TrackBakeStatus] " << (_tag ? _tag : "") << "\n";
 		ofs << "clipName=\"" << _clip.name << "\"\n";
-		ofs << "isBaked=" << (_clip.IsBaked() ? "true" : "false") << "\n";
 		ofs << "trackCount=" << _clip.tracks.size() << "\n";
 
 		if (_skeletonCache)
@@ -476,7 +475,6 @@ namespace Graphics::Debug::Output
 		ofs << "\n============================================================\n";
 		ofs << "[BakeValidationOnce] " << (_tag ? _tag : "") << "\n";
 		ofs << "clipName=\"" << _clip.name << "\"\n";
-		ofs << "isBaked=" << (_clip.IsBaked() ? "true" : "false") << "\n";
 		ofs << "trackCount=" << _clip.tracks.size() << "\n";
 		ofs << "nodeCount=" << _skeletonCache.nodes.size() << "\n";
 

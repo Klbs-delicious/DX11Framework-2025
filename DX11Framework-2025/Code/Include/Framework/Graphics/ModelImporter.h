@@ -81,8 +81,6 @@ namespace Graphics::Import
 		 */
 		void BuildSkeletonCache(const aiScene* _scene, const ModelData& _modelData, SkeletonCache& _outSkeletonCache) const;
 
-
-
 	private:
 		std::unique_ptr<TextureLoader> textureLoader;	///< テクスチャ読み込み
 	};

@@ -188,46 +188,43 @@ namespace
 		return maxTick;
 	}
 
-	namespace
+	static int ResolveNodeIndexFromName(const std::string& _name, const std::unordered_map<std::string, int>& _nodeNameToIndex)
 	{
-		static int ResolveNodeIndexFromName(const std::string& _name, const std::unordered_map<std::string, int>& _nodeNameToIndex)
+		// 1. 完全一致
+		auto it = _nodeNameToIndex.find(_name);
+		if (it != _nodeNameToIndex.end())
 		{
-			// 1. 完全一致
-			auto it = _nodeNameToIndex.find(_name);
-			if (it != _nodeNameToIndex.end())
-			{
-				return it->second;
-			}
+			return it->second;
+		}
 
-			// 2. FBX特有のサフィックスを除去して試行
-			static const std::vector<std::string> suffixes = {
-				"_$AssimpFbx$_Translation",
-				"_$AssimpFbx$_Rotation",
-				"_$AssimpFbx$_Scaling",
-				"_$AssimpFbx$_PreRotation"
-			};
+		// 2. FBX特有のサフィックスを除去して試行
+		static const std::vector<std::string> suffixes = {
+			"_$AssimpFbx$_Translation",
+			"_$AssimpFbx$_Rotation",
+			"_$AssimpFbx$_Scaling",
+			"_$AssimpFbx$_PreRotation"
+		};
 
-			for (const auto& s : suffixes)
+		for (const auto& s : suffixes)
+		{
+			size_t pos = _name.find(s);
+			if (pos != std::string::npos)
 			{
-				size_t pos = _name.find(s);
-				if (pos != std::string::npos)
+				std::string baseName = _name.substr(0, pos);
+				auto itBase = _nodeNameToIndex.find(baseName);
+				if (itBase != _nodeNameToIndex.end())
 				{
-					std::string baseName = _name.substr(0, pos);
-					auto itBase = _nodeNameToIndex.find(baseName);
-					if (itBase != _nodeNameToIndex.end())
-					{
-						return itBase->second;
-					}
+					return itBase->second;
 				}
 			}
-
-			// 名前解決に失敗した場合のみログを出力
-			char buf[512];
-			sprintf_s(buf, "[AnimationImporter] Failed to resolve node index for name: %s\n", _name.c_str());
-			OutputDebugStringA(buf);
-
-			return -1;
 		}
+
+		// 名前解決に失敗した場合のみログを出力
+		char buf[512];
+		sprintf_s(buf, "[AnimationImporter] Failed to resolve node index for name: %s\n", _name.c_str());
+		OutputDebugStringA(buf);
+
+		return -1;
 	}
 }
 
@@ -238,34 +235,53 @@ namespace Graphics::Import
 {
 	void AnimationClip::BakeNodeIndices(const SkeletonCache& _skeletonCache)
 	{
-		if (this->isBaked) { return; }
+		// 既に同じスケルトンで焼き込み済みならスキップ
+		if (this->bakesSkeletonID == _skeletonCache.skeletonID){ return; }		
 		if (_skeletonCache.nodes.empty()) { return; }
 
-		// スケルトン側の全ノードをスキャン
-		for (int i = 0; i < (int)_skeletonCache.nodes.size(); ++i) {
-			const std::string& nodeName = _skeletonCache.nodes[i].name;
-
-			for (auto& tr : this->tracks) {
-				// スケルトン側の全ノードをスキャン
-				for (int i = 0; i < (int)_skeletonCache.nodes.size(); ++i) {
-					const std::string& nodeName = _skeletonCache.nodes[i].name;
-
-					// 【重要】_$AssimpFbx$_ を含む中間ノードには絶対に関連付けない
-					if (nodeName.find("_$AssimpFbx$_") != std::string::npos) {
-						continue;
-					}
-
-					// 本体のボーン名と完全一致する場合のみ紐付ける
-					if (tr.nodeName == nodeName) {
-						tr.nodeIndex = i;
-						tr.hasPosition = (tr.positionKeys.size() > 0);
-						tr.hasRotation = (tr.rotationKeys.size() > 0);
-						tr.hasScale = (tr.scaleKeys.size() > 0);
-						break;
-					}
-				}
-			}
+		// tracks 側の状態を初期化（前回の焼き込み結果を残さない）
+		for (auto& tr : this->tracks)
+		{
+			tr.nodeIndex = -1;
+			tr.hasPosition = false;
+			tr.hasRotation = false;
+			tr.hasScale = false;
 		}
-		this->isBaked = true;
+
+		// ノード名 -> ノードIndex の辞書を作る（補助ノードは登録しない）
+		std::unordered_map<std::string, int> nodeNameToIndex;
+		nodeNameToIndex.reserve(_skeletonCache.nodes.size());
+
+		for (int nodeIndex = 0; nodeIndex < static_cast<int>(_skeletonCache.nodes.size()); ++nodeIndex)
+		{
+			const std::string& nodeName = _skeletonCache.nodes[nodeIndex].name;
+
+			// 【重要】補助ノードは絶対に紐付けない（辞書にも入れない）
+			if (nodeName.find("_$AssimpFbx$_") != std::string::npos)
+			{
+				continue;
+			}
+
+			// 同名が来たら後勝ちになる（同名が存在する構造は基本的に異常）
+			nodeNameToIndex[nodeName] = nodeIndex;
+		}
+
+		// トラックごとにノード index を解決して焼き込む
+		for (auto& tr : this->tracks)
+		{
+			auto it = nodeNameToIndex.find(tr.nodeName);
+			if (it == nodeNameToIndex.end())
+			{
+				continue;
+			}
+
+			tr.nodeIndex = it->second;
+			tr.hasPosition = (!tr.positionKeys.empty());
+			tr.hasRotation = (!tr.rotationKeys.empty());
+			tr.hasScale = (!tr.scaleKeys.empty());
+		}
+
+		// 焼き込み済み
+		this->bakesSkeletonID = _skeletonCache.skeletonID;
 	}
 } // namespace Graphics::Import

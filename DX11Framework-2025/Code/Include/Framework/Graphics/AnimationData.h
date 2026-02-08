@@ -73,13 +73,13 @@ namespace Graphics::Import
 		 */
 		void BakeNodeIndices(const SkeletonCache& _skeletonCache);
 
-		/** @brief 焼き込み済みか取得
-		 *  @return 焼き込み済みの場合 true
+		/** @brief 焼き込み時の SkeletonCache ID を取得する
+		 *  @return SkeletonCache ID
 		 */
-		bool IsBaked() const { return this->isBaked; }
+		uint64_t GetBakedSkeletonID() const { return bakesSkeletonID; }
 
 	private:
-		bool isBaked = false;
+		uint64_t bakesSkeletonID = 0;	///< 焼き込み時の SkeletonCache ID
 	};
 } // namespace Graphics::Import
 

@@ -1078,6 +1078,159 @@ namespace Graphics::Import
 	}
 
 	//-----------------------------------------------------------------------------
+// SkeletonID helpers
+//-----------------------------------------------------------------------------
+/** @brief ノード名と親子関係から SkeletonID を作成する（決定的な 64bit）
+ *  @details
+ *  - Assimp が自動生成する補助ノード（"_$AssimpFbx$_" を含むもの）は無視する
+ *  - 既存の BakeNodeIndices の「本体ノードのみを扱う」方針と揃える
+ *  - ノード名＋親子関係だけを材料にし、行列やボーン情報は使わない
+ *  - ノード順に依存しないよう、親->子の文字列表現をソートしてからハッシュ化する
+ *
+ *  @param _nodes SkeletonCache の nodes
+ *  @return SkeletonID（同一構造なら必ず同じ値になる）
+ */
+	static uint64_t BuildSkeletonIdFromNodes(const std::vector<Graphics::Import::SkeletonNodeCache>& _nodes)
+	{
+		//-------------------------------------------------------------------------
+		// FNV-1a 64bit ハッシュの定数
+		//-------------------------------------------------------------------------
+		constexpr uint64_t FnvOffsetBasis = 14695981039346656037ull; // 初期値
+		constexpr uint64_t FnvPrime = 1099511628211ull;        // 乗数
+
+		//-------------------------------------------------------------------------
+		// 任意のバイト列をハッシュに混ぜる関数
+		//-------------------------------------------------------------------------
+		auto fnv1aAppend = [](uint64_t& _hash, const void* _data, size_t _size)
+			{
+				const uint8_t* bytes = static_cast<const uint8_t*>(_data);
+				for (size_t i = 0; i < _size; ++i)
+				{
+					_hash ^= static_cast<uint64_t>(bytes[i]);
+					_hash *= FnvPrime;
+				}
+			};
+
+		//-------------------------------------------------------------------------
+		// 文字列をハッシュに混ぜる関数
+		// ヌル終端を入れることで "ab"+"c" と "a"+"bc" が衝突しないようにする
+		//-------------------------------------------------------------------------
+		auto fnv1aAppendString = [&](uint64_t& _hash, const std::string& _s)
+			{
+				fnv1aAppend(_hash, _s.data(), _s.size());
+				const char zero = '\0';
+				fnv1aAppend(_hash, &zero, 1);
+			};
+
+		//-------------------------------------------------------------------------
+		// Assimp が生成する補助ノードかどうか判定
+		//-------------------------------------------------------------------------
+		auto isHelperNode = [](const std::string& _name)
+			{
+				return (_name.find("_$AssimpFbx$_") != std::string::npos);
+			};
+
+		//-------------------------------------------------------------------------
+		// 補助ノードを飛ばして「本体ノードの親」を探す
+		//-------------------------------------------------------------------------
+		auto findVisibleParentIndex = [&](int _nodeIndex)
+			{
+				int cur = _nodeIndex;
+				int step = 0;
+
+				while (cur >= 0 && cur < static_cast<int>(_nodes.size()) && step < 512)
+				{
+					const int parent = _nodes[cur].parentIndex;
+					if (parent < 0)
+					{
+						// ルート扱い
+						return -1;
+					}
+
+					// 親が補助ノードでなければそれを採用
+					if (!isHelperNode(_nodes[parent].name))
+					{
+						return parent;
+					}
+
+					// 補助ノードならさらに上へ
+					cur = parent;
+					++step;
+				}
+
+				return -1;
+			};
+
+		//-------------------------------------------------------------------------
+		// ノードが無い場合は 0 固定
+		//-------------------------------------------------------------------------
+		if (_nodes.empty())
+		{
+			return 0ull;
+		}
+
+		//-------------------------------------------------------------------------
+		// 「親名->子名」のエッジ文字列を集める
+		//-------------------------------------------------------------------------
+		std::vector<std::string> edges;
+		edges.reserve(_nodes.size());
+
+		uint64_t visibleNodeCount = 0;
+
+		for (size_t i = 0; i < _nodes.size(); ++i)
+		{
+			const auto& node = _nodes[i];
+
+			// 補助ノードは SkeletonID の計算から除外
+			if (isHelperNode(node.name))
+			{
+				continue;
+			}
+
+			++visibleNodeCount;
+
+			const int parentIndex = findVisibleParentIndex(static_cast<int>(i));
+
+			// 親ノード名（見つからなければ ROOT）
+			std::string parentName = "<ROOT>";
+			if (parentIndex >= 0)
+			{
+				parentName = _nodes[parentIndex].name;
+			}
+
+			// 親->子 形式の文字列を作成
+			std::string edge;
+			edge.reserve(parentName.size() + 2 + node.name.size());
+			edge += parentName;
+			edge += "->";
+			edge += node.name;
+
+			edges.push_back(std::move(edge));
+		}
+
+		//-------------------------------------------------------------------------
+		// ノード順に依存しないよう、エッジ文字列をソート
+		//-------------------------------------------------------------------------
+		std::sort(edges.begin(), edges.end());
+
+		//-------------------------------------------------------------------------
+		// ハッシュ計算開始
+		//-------------------------------------------------------------------------
+		uint64_t hash = FnvOffsetBasis;
+
+		// ノード数も混ぜる（構造差の検出用）
+		fnv1aAppend(hash, &visibleNodeCount, sizeof(visibleNodeCount));
+
+		// 親子関係をすべて混ぜる
+		for (const auto& e : edges)
+		{
+			fnv1aAppendString(hash, e);
+		}
+
+		return hash;
+	}
+
+	//-----------------------------------------------------------------------------
 	// BuildSkeletonCache
 	//-----------------------------------------------------------------------------
 	/** @brief SkeletonCache（実行時用）を構築する
@@ -1106,6 +1259,9 @@ namespace Graphics::Import
 		{
 			return;
 		}
+
+		// SkeletonID を構築して設定する
+		_outSkeletonCache.skeletonID = BuildSkeletonIdFromNodes(_outSkeletonCache.nodes);
 
 		// nodeNameToIndex が完成していて、nodeCount も有効な段階で関係を確認する（デバッグ）
 		if (EnableSkinningDebugLog)

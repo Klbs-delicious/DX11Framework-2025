@@ -161,14 +161,16 @@ namespace Graphics::Import
      */
     struct SkeletonCache
     {
-        std::vector<SkeletonNodeCache> nodes{}; ///< ノード配列（不変）
-        std::vector<int> order{}; ///< 親が先に来る順序（不変）
+		uint64_t skeletonID = 0;                    ///< スケルトンキャッシュID（不変）
 
-        std::vector<DX::Matrix4x4> boneOffset{}; ///< boneIndex -> offset（不変）
-        std::vector<int> boneIndexToNodeIndex{}; ///< boneIndex -> nodeIndex（不変）
+        std::vector<SkeletonNodeCache> nodes{};     ///< ノード配列（不変）
+        std::vector<int> order{};                   ///< 親が先に来る順序（不変）
 
-        int meshRootNodeIndex = -1; ///< メッシュ基準ノード（不変）
-        DX::Matrix4x4 globalInverse = DX::Matrix4x4::Identity; ///< inverse(bindGlobal(meshRoot))（不変）
+        std::vector<DX::Matrix4x4> boneOffset{};    ///< boneIndex -> offset（不変）
+        std::vector<int> boneIndexToNodeIndex{};    ///< boneIndex -> nodeIndex（不変）
+
+        int meshRootNodeIndex = -1;                             ///< メッシュ基準ノード（不変）
+        DX::Matrix4x4 globalInverse = DX::Matrix4x4::Identity;  ///< inverse(bindGlobal(meshRoot))（不変）
     };
 
     /** @struct Pose

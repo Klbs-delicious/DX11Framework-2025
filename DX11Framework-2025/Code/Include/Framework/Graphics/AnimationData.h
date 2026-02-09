@@ -81,7 +81,117 @@ namespace Graphics::Import
 	private:
 		uint64_t bakesSkeletonID = 0;	///< 焼き込み時の SkeletonCache ID
 	};
+
 } // namespace Graphics::Import
+
+namespace Graphics::Animation
+{
+	struct Graphics::Import::SkeletonCache;
+	using AnimationClip = Graphics::Import::AnimationClip;
+
+	/** @struct LocalPose
+	 *  @brief ローカルポーズ情報（バインド姿勢）
+	 */
+	struct LocalPose
+	{
+		std::vector<DX::Matrix4x4> localMatrices{}; ///< ローカル行列（ノード数分）
+
+		/** @brief バインドローカルからリセットする
+		 *  @param _skeletonCache スケルトンキャッシュ
+		 */
+		void ResetFromBindLocal(const Graphics::Import::SkeletonCache& _skeletonCache);
+	};
+
+	template<typename StateId>
+	/** @struct CrossFadeData
+	 *  @brief クロスフェード中の状態情報
+	 */
+	struct CrossFadeData
+	{
+		bool isActive = false;		///< クロスフェード中か
+
+		float elapsed = 0.0f;		///< 経過時間（秒）
+		float duration = 0.0f;		///< 遷移時間（秒）
+
+		// 遷移元／先の状態
+		StateId fromState{};
+		StateId toState{};
+
+		// 各クリップの再生時間
+		float fromTime = 0.0f;		///< 遷移元の再生時間
+		float toTime = 0.0f;		///< 遷移先の再生時間（必ず0開始）
+	};
+
+	/** @struct StateDef
+	 *  @brief 状態に紐づく設定
+	 */
+	struct StateDef
+	{
+		AnimationClip* clip = nullptr;			///< 使用するアニメーションクリップ
+		float playbackSpeed = 1.0f;				///< 再生速度
+		bool isLoop = true;						///< ループするか
+		float recommendedCrossFadeSec = 0.1f;	///< 推奨クロスフェード秒
+	};
+
+	//-----------------------------------------------------------------------------
+	// StateTable
+	//-----------------------------------------------------------------------------
+	namespace Detail
+	{
+		/** @struct EnumHash
+		 *  @brief enum class を unordered_map で扱うためのハッシュ
+		 */
+		template<typename T>
+		struct EnumHash
+		{
+			size_t operator()(T _value) const noexcept
+			{
+				return static_cast<size_t>(_value);
+			}
+		};
+	}
+
+	/** @class StateTable
+	 *  @brief 状態IDから状態定義を引くためのテーブル
+	 */
+	template<typename StateId>
+	class StateTable
+	{
+	public:
+		using Table_t = std::unordered_map<StateId, StateDef, Detail::EnumHash<StateId>>;	///< 状態定義テーブル
+
+	public:
+		StateTable() = default;
+		~StateTable() = default;
+
+		/** @brief 状態定義を登録する（上書き）
+		 *  @param _id 状態ID
+		 *  @param _def 状態定義
+		 */
+		void Set(StateId _id, const StateDef& _def)
+		{
+			this->table[_id] = _def;
+		}
+
+		/** @brief 状態定義を検索する
+		 *  @param _id 状態ID
+		 *  @return 見つかった場合は状態定義へのポインタ。見つからなければ nullptr
+		 */
+		const StateDef* Find(StateId _id) const
+		{
+			const auto it = this->table.find(_id);
+			if (it == this->table.end())
+			{
+				return nullptr;
+			}
+
+			return &it->second;
+		}
+
+	private:
+		Table_t table{};	///< 状態定義テーブル
+	};
+}
 
 //-----------------------------------------------------------------------------
 // Namespace : Graphics::Debug::Output

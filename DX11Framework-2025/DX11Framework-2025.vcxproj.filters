@@ -354,6 +354,12 @@
     <ClInclude Include="Code\Include\Tests\TestEnemy.h">
       <Filter>ソース ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\Animator.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\IAnimator.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Code\Source\Framework\main.cpp">
@@ -571,6 +577,12 @@
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Utils\CommonTypes.cpp">
       <Filter>ソース ファイル\Framework\Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\Animator.cpp">
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Include\Framework\Graphics\ModelData.cpp">
+      <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

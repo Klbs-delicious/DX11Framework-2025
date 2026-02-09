@@ -235,6 +235,18 @@ namespace Graphics::Import
 {
 	void AnimationClip::BakeNodeIndices(const SkeletonCache& _skeletonCache)
 	{
+
+		{
+			char buf[256];
+			sprintf_s(buf, "[BakeNodeIndices] clip=%s baked=%llu new=%llu tracks=%zu nodes=%zu\n",
+				this->name.c_str(),
+				(unsigned long long)this->bakesSkeletonID,
+				(unsigned long long)_skeletonCache.skeletonID,
+				this->tracks.size(),
+				_skeletonCache.nodes.size());
+			OutputDebugStringA(buf);
+		}
+
 		// 既に同じスケルトンで焼き込み済みならスキップ
 		if (this->bakesSkeletonID == _skeletonCache.skeletonID){ return; }		
 		if (_skeletonCache.nodes.empty()) { return; }
@@ -285,3 +297,14 @@ namespace Graphics::Import
 		this->bakesSkeletonID = _skeletonCache.skeletonID;
 	}
 } // namespace Graphics::Import
+
+void Graphics::Animation::LocalPose::ResetFromBindLocal(const Graphics::Import::SkeletonCache& _skeletonCache)
+{
+	const size_t nodeCount = _skeletonCache.nodes.size();
+	this->localMatrices.assign(nodeCount, DX::Matrix4x4::Identity);
+
+	for (size_t i = 0; i < nodeCount; i++)
+	{
+		this->localMatrices[i] = _skeletonCache.nodes[i].bindLocalMatrix;
+	}
+}

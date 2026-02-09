@@ -33,6 +33,7 @@
 #include"Include/Framework/Graphics/TextureFactory.h"
 #include"Include/Framework/Graphics/ModelManager.h"
 #include"Include/Framework/Graphics/AnimationClipManager.h"
+#include"Include/Framework/Graphics/Animator.h"
 
 #include"Include/Tests/TestMoveComponent.h"
 #include"Include/Tests/TimeScaleTestComponent.h"
@@ -80,6 +81,25 @@ void ModelTest::SetupObjects()
 	animationClipManager.Register("Idle");
 	animationClipManager.Register("Dodge");
 	animationClipManager.Register("Punch");
+
+	//---------------------------------------------------------------
+	// 状態テーブルの設定（テスト的にシーン側で生成しっぱなしにする）
+	//---------------------------------------------------------------
+	Graphics::Animation::StateTable<TestEnemy::EnemyAnimState>* enemyStateTable = new Graphics::Animation::StateTable<TestEnemy::EnemyAnimState>();
+	Graphics::Animation::StateTable<TestDodge::TestPlayerAnimState>* playerStateTable = new Graphics::Animation::StateTable<TestDodge::TestPlayerAnimState>();
+
+	auto clip = animationClipManager.Get("Punch");
+	enemyStateTable->Set(TestEnemy::EnemyAnimState::Idle, { clip,1.0f, true, 0.2f });
+
+	clip = animationClipManager.Get("Idle");
+	playerStateTable->Set(TestDodge::TestPlayerAnimState::Idle, { clip,1.0f, true, 0.2f });
+
+	clip = animationClipManager.Get("Dodge");
+	playerStateTable->Set(TestDodge::TestPlayerAnimState::Dodging, { clip,1.0f, true, 0.2f });
+
+	clip = animationClipManager.Get("Jump");
+	playerStateTable->Set(TestDodge::TestPlayerAnimState::Jumping, { clip,1.0f, true, 0.2f });
+
 	//--------------------------------------------------------------
 	// カメラの生成
 	//--------------------------------------------------------------
@@ -124,9 +144,15 @@ void ModelTest::SetupObjects()
 	materialComp->SetMaterial(modelData->material);
 	auto animComp = player->AddComponent<AnimationComponent>();
 	animComp->SetSkeletonCache(modelData->GetSkeletonCache());
-	auto clip = animationClipManager.Get("Dodge");
-	animComp->SetAnimationClip(clip);
-	animComp->SetLoop(false);
+	// アニメーターの設定
+	std::unique_ptr<Animator<TestDodge::TestPlayerAnimState>> playerAnimator = std::make_unique<Animator<TestDodge::TestPlayerAnimState>>();
+	playerAnimator->Initialize(
+		modelData->GetSkeletonCache(),
+		playerStateTable,
+		TestDodge::TestPlayerAnimState::Idle);
+	animComp->SetAnimator(std::move(playerAnimator));
+
+	clip = animationClipManager.Get("Dodge");
 	player->AddComponent<SkinnedMeshRenderer>();
 	player->AddComponent<TestDodge>();
 
@@ -162,9 +188,15 @@ void ModelTest::SetupObjects()
 	materialComp->SetMaterial(modelData->material);
 	animComp = enemy->AddComponent<AnimationComponent>();
 	animComp->SetSkeletonCache(modelData->GetSkeletonCache());
-	clip = animationClipManager.Get("Punch");
-	animComp->SetAnimationClip(clip);
-	animComp->SetLoop(true);
+
+	// アニメーターの設定
+	std::unique_ptr<Animator<TestEnemy::EnemyAnimState>> enemyAnimator = std::make_unique<Animator<TestEnemy::EnemyAnimState>>();
+	enemyAnimator->Initialize(
+		modelData->GetSkeletonCache(),
+		enemyStateTable,
+		TestEnemy::EnemyAnimState::Idle);
+	animComp->SetAnimator(std::move(enemyAnimator));
+
 	enemy->AddComponent<SkinnedMeshRenderer>();
 
 	// 敵のコライダー・リジッドボディ

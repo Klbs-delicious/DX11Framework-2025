@@ -14,21 +14,23 @@
 #include "Include/Framework/Graphics/ModelData.h"
 #include "Include/Framework/Graphics/AnimationData.h"
 #include "Include/Framework/Graphics/DynamicConstantBuffer.h"
+#include "Include/Framework/Graphics/Animator.h"
 
 #include "Include/Framework/Utils/CommonTypes.h"
 
 #include <array>
+#include <cstdint>
 #include <memory>
-#include <string>
 #include <vector>
 
 //-----------------------------------------------------------------------------
 // Forward Declarations
 //-----------------------------------------------------------------------------
 class GameObject;
+class IAnimator;
 
 /** @class AnimationComponent
- *  @brief 固定更新フェーズでアニメーションを進めるコンポーネント
+ *  @brief 固定更新フェーズでボーン行列を更新し、GPUへ送るコンポーネント
  *  @details 行ベクトル（mul(v, M)）で計算し、GPUへ送る直前に転置してVSに合わせる
  */
 class AnimationComponent : public Component, public IFixedUpdatable
@@ -38,7 +40,7 @@ public:
 	struct BoneBuffer
 	{
 		uint32_t boneCount;						///< ボーン数
-		float pad[3]; 							///< パディング
+		float pad[3];							///< パディング
 		DX::Matrix4x4 boneMatrices[128];		///< ボーン行列（最大128本）
 	};
 
@@ -68,78 +70,50 @@ public:
 	 */
 	void BindBoneCBVS(ID3D11DeviceContext* _context, UINT _slot) const;
 
-	/** @brief アニメーションクリップを設定する（トラック解決もここで行う）
-	 *  @param _clip 設定するアニメーションクリップ
-	 */
-	void SetAnimationClip(Graphics::Import::AnimationClip* _clip);
-
 	/** @brief スケルトンキャッシュを設定する（モデル読み込み側で生成したものを渡す）
 	 *  @param _cache スケルトンキャッシュ
 	 */
 	void SetSkeletonCache(const Graphics::Import::SkeletonCache* _cache);
 
-	/** @brief 再生中か
-	 *  @return 再生中なら true
+	/** @brief アニメーターを設定する（所有する）
+	 *  @param _animator アニメーター
 	 */
-	bool IsPlaying() const { return this->isPlaying; }
+	void SetAnimator(std::unique_ptr<IAnimator> _animator);
+	
+	/** @brief アニメーションの再生を開始する
+	 *  @note ループ設定はアニメーター側で行うこと
+	 */
+	template<typename StateId>
+	void RequestState(StateId _next, float _fadeSec = -1.0f)
+	{
+		// アニメーターが設定されていなければ無視
+		auto* animator = dynamic_cast<Animator<StateId>*>(this->animator.get());
+		if (!animator) { return; }
 
-	/// @brief 再生開始
+		animator->RequestState(_next, _fadeSec);
+	}
+
+	/// @brief 再生を開始する
 	void Play();
 
-	/// @brief 停止
+	/// @brief 停止する
 	void Stop();
 
-	/** @brief 現在のアニメーションクリップ名を取得する
-	 *  @return アニメーションクリップ名（読み取り専用）
-	 */
-	const std::string& GetCurrentAnimationName() const;
-
-	/** @brief 再生速度を設定する
-	 *  @param _speed 再生速度（1.0f が通常速度）
-	 */
-	void SetPlaybackSpeed(float _speed) { this->playbackSpeed = _speed; }
-
-	/** @brief 現在のアニメーション時間を設定する
-	 *  @param _time 現在のアニメーション時間（秒）
-	 */
-	void SetCurrentTime(double _time) { this->currentTime = _time; }
-
-	/** @brief ループ再生を設定する
-	* @param _isLoop ループするなら true
-	*/
-	void SetLoop(bool _isLoop) { this->isLoop = _isLoop; }
-
-	/** @brief ループ再生か
-	* @return ループするなら true
-	*/
-	bool IsLoop() const { return this->isLoop; }
+	/// @brief 最初から再生する
+	void Restart();
 
 private:
-	void UpdatePoseFromClip(double _timeSeconds);
-	void UpdateLocalMatrixFromKeys(size_t _nodeIdx, double _ticks, const Graphics::Import::NodeTrack& _track);
-	DX::Vector3 InterpolateTranslation(const Graphics::Import::NodeTrack* _track, float _ticks, const DX::Vector3& _fallback);
-	DX::Quaternion InterpolateRotation(const Graphics::Import::NodeTrack* _track, float _ticks, const DX::Quaternion& _fallback);
-	DX::Vector3 InterpolateScale(const Graphics::Import::NodeTrack* _track, float _ticks, const DX::Vector3& _fallback);
+	/// @brief ボーン用定数バッファを更新する（Pose -> BoneBuffer）
+	void UpdateBoneBufferFromPose();
 
 private:
-	std::vector<DX::Matrix4x4> bindGlobalMatrices{}; ///< バインド姿勢の global（ノード数分、SetSkeletonCache時に作る）
+	std::unique_ptr<IAnimator> animator;					///< アニメーター（LocalPose生成）
+	MeshComponent* meshComponent = nullptr;					///< メッシュコンポーネント
 
-	Graphics::Import::AnimationClip* currentClip = nullptr; ///< 現在のアニメーションクリップ
-	MeshComponent* meshComponent = nullptr;                 ///< メッシュコンポーネント
+	BoneBuffer boneBuffer{};									///< GPUへ送るデータ
+	std::unique_ptr<DynamicConstantBuffer<BoneBuffer>> boneCB;	///< 定数バッファ
 
-	double clipEndTicks = 0.0;	///< 実キー終端（tracksの最後キー時刻の最大値）
-
-	bool isPlaying = false;     ///< 再生中フラグ
-	double currentTime = 0.0;   ///< 現在の再生時間（秒）
-	float playbackSpeed = 1.0f; ///< 再生速度
-	bool isLoop = false;		///< ループ再生
-
-	const Graphics::Import::SkeletonCache* skeletonCache = nullptr;	///< スケルトンキャッシュ
-	Graphics::Import::Pose currentPose{};							///< 現在のポーズ
+	const Graphics::Import::SkeletonCache* skeletonCache = nullptr; ///< スケルトンキャッシュ
+	Graphics::Import::Pose currentPose{};							///< 現在のポーズ（global/skin/cpuBoneMatrices）
 	bool isSkeletonCached = false;									///< スケルトンキャッシュ設定済みか
-
-	std::vector<int> trackToNodeIndex{};							///< trackIndex -> nodeIndex（解決結果）
-
-	BoneBuffer boneBuffer{};
-	std::unique_ptr<DynamicConstantBuffer<BoneBuffer>> boneCB;
 };

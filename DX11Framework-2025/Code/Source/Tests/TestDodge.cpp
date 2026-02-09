@@ -38,13 +38,12 @@ void TestDodge::Initialize()
 	this->timeScaleGroup = this->Owner()->GetComponent<TimeScaleGroup>();
 	this->rigidbody = this->Owner()->GetComponent<Framework::Physics::Rigidbody3D>();
 
-	// アニメーションの設定
-	this->animComponent->SetLoop(true);
-
 	// ------------------------------------------------------
 	// キーバインドの登録
 	// ------------------------------------------------------
-	this->inputSystem.RegisterKeyBinding("Dodge", static_cast<int>(DirectInputDevice::KeyboardKey::Enter));	// 左クリックで回避
+	this->inputSystem.RegisterKeyBinding("Dodge", static_cast<int>(DirectInputDevice::KeyboardKey::B));	// 左クリックで回避
+	this->inputSystem.RegisterKeyBinding("Idle", static_cast<int>(DirectInputDevice::KeyboardKey::V));	// 左クリックで回避
+	this->inputSystem.RegisterKeyBinding("Jump", static_cast<int>(DirectInputDevice::KeyboardKey::C));	// 左クリックで回避
 }
 
 void TestDodge::Dispose()
@@ -99,7 +98,7 @@ void TestDodge::Update(float _deltaTime)
 		// 回避アニメーションを再生する
 		if (this->animComponent)
 		{
-			this->animComponent->Play();
+			this->animComponent->RequestState(TestPlayerAnimState::Dodging, 0.5f);
 		}
 
 		// Rigidbody を使って左へステップする（ワールドではなくローカルの左)
@@ -121,4 +120,19 @@ void TestDodge::Update(float _deltaTime)
 		}
 	}
 
+	if (this->inputSystem.IsActionTriggered("Idle"))
+	{
+		if (this->animComponent)
+		{
+			this->animComponent->RequestState(TestPlayerAnimState::Idle, 0.5f);
+		}
+	}
+
+	if (this->inputSystem.IsActionTriggered("Jump"))
+	{
+		if (this->animComponent)
+		{
+			this->animComponent->RequestState(TestPlayerAnimState::Jumping, 0.5f);
+		}
+	}
 }

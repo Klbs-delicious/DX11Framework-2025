@@ -224,15 +224,15 @@ namespace
 		const bool bestTransposeGlobalInv = ((bestMask & 2) != 0);
 		const bool bestTransposeOffset = ((bestMask & 4) != 0);
 
-		std::cout
-			<< "[BindPoseTransposeProbe] boneIndex=" << _boneIndex
-			<< " boneName=\"" << _boneName << "\""
-			<< " bestMaxAbs=" << bestError
-			<< " bestTranspose={ bindGlobal:" << (bestTransposeBindGlobal ? "T" : "N")
-			<< ", globalInv:" << (bestTransposeGlobalInv ? "T" : "N")
-			<< ", offset:" << (bestTransposeOffset ? "T" : "N")
-			<< " }"
-			<< std::endl;
+		//std::cout
+		//	<< "[BindPoseTransposeProbe] boneIndex=" << _boneIndex
+		//	<< " boneName=\"" << _boneName << "\""
+		//	<< " bestMaxAbs=" << bestError
+		//	<< " bestTranspose={ bindGlobal:" << (bestTransposeBindGlobal ? "T" : "N")
+		//	<< ", globalInv:" << (bestTransposeGlobalInv ? "T" : "N")
+		//	<< ", offset:" << (bestTransposeOffset ? "T" : "N")
+		//	<< " }"
+		//	<< std::endl;
 
 		if (bestError > 1e-3f)
 		{
@@ -1556,57 +1556,57 @@ namespace Graphics::Import
 		// 読み込んだデータからスケルトンキャッシュを構築
 		BuildSkeletonCache(scene, _outModel, _outSkeletonCache);
 
-		//-----------------------------------------------------------------------------
-		// Debug: ノード構造＋ボーン対応表
-		//-----------------------------------------------------------------------------
-		if (EnableSkinningDebugLog)
-		{
-			::LogHeader("[Structure Analysis] Debug: Node Structure & Bone Mapping");
+		////-----------------------------------------------------------------------------
+		//// Debug: ノード構造＋ボーン対応表
+		////-----------------------------------------------------------------------------
+		//if (EnableSkinningDebugLog)
+		//{
+		//	::LogHeader("[Structure Analysis] Debug: Node Structure & Bone Mapping");
 
-			for (int nodeIndex = 0; nodeIndex < static_cast<int>(_outSkeletonCache.nodes.size()); nodeIndex++)
-			{
-				const auto& node = _outSkeletonCache.nodes[nodeIndex];
+		//	for (int nodeIndex = 0; nodeIndex < static_cast<int>(_outSkeletonCache.nodes.size()); nodeIndex++)
+		//	{
+		//		const auto& node = _outSkeletonCache.nodes[nodeIndex];
 
-				// インデントで階層を表現
-				std::string indent;
-				int parentIndex = node.parentIndex;
+		//		// インデントで階層を表現
+		//		std::string indent;
+		//		int parentIndex = node.parentIndex;
 
-				while (parentIndex >= 0)
-				{
-					indent += "  ";
-					parentIndex = _outSkeletonCache.nodes[parentIndex].parentIndex;
-				}
+		//		while (parentIndex >= 0)
+		//		{
+		//			indent += "  ";
+		//			parentIndex = _outSkeletonCache.nodes[parentIndex].parentIndex;
+		//		}
 
-				// bind local から平行移動成分(T)を抽出
-				const auto& localBind = node.bindLocalMatrix;
-				const float translateX = localBind.m[3][0];
-				const float translateY = localBind.m[3][1];
-				const float translateZ = localBind.m[3][2];
+		//		// bind local から平行移動成分(T)を抽出
+		//		const auto& localBind = node.bindLocalMatrix;
+		//		const float translateX = localBind.m[3][0];
+		//		const float translateY = localBind.m[3][1];
+		//		const float translateZ = localBind.m[3][2];
 
-				// ボーン情報があれば併記する
-				std::string boneInfo;
-				if (node.boneIndex >= 0)
-				{
-					boneInfo = " [BONE IDX: " + std::to_string(node.boneIndex) + "]";
+		//		// ボーン情報があれば併記する
+		//		std::string boneInfo;
+		//		if (node.boneIndex >= 0)
+		//		{
+		//			boneInfo = " [BONE IDX: " + std::to_string(node.boneIndex) + "]";
 
-					// offset の平行移動も併記（向き確認に使う）
-					const auto& boneOffset = _outSkeletonCache.boneOffset[static_cast<size_t>(node.boneIndex)];
-					boneInfo += " (Offset T: " + std::to_string(boneOffset.m[3][0]) + ", "
-						+ std::to_string(boneOffset.m[3][1]) + ", "
-						+ std::to_string(boneOffset.m[3][2]) + ")";
-				}
+		//			// offset の平行移動も併記（向き確認に使う）
+		//			const auto& boneOffset = _outSkeletonCache.boneOffset[static_cast<size_t>(node.boneIndex)];
+		//			boneInfo += " (Offset T: " + std::to_string(boneOffset.m[3][0]) + ", "
+		//				+ std::to_string(boneOffset.m[3][1]) + ", "
+		//				+ std::to_string(boneOffset.m[3][2]) + ")";
+		//		}
 
-				printf("%sNode[%d]: %s %s\n", indent.c_str(), nodeIndex, node.name.c_str(), boneInfo.c_str());
-				printf("%s  Bind Local T: (%.4f, %.4f, %.4f)\n", indent.c_str(), translateX, translateY, translateZ);
+		//		printf("%sNode[%d]: %s %s\n", indent.c_str(), nodeIndex, node.name.c_str(), boneInfo.c_str());
+		//		printf("%s  Bind Local T: (%.4f, %.4f, %.4f)\n", indent.c_str(), translateX, translateY, translateZ);
 
-				if (node.hasMesh)
-				{
-					printf("%s  *** HAS MESH ***\n", indent.c_str());
-				}
-			}
+		//		if (node.hasMesh)
+		//		{
+		//			printf("%s  *** HAS MESH ***\n", indent.c_str());
+		//		}
+		//	}
 
-			::LogHeader("End of Structure Analysis");
-		}
+		//	::LogHeader("End of Structure Analysis");
+		//}
 
 		return true;
 	}

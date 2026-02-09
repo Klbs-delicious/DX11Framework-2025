@@ -25,7 +25,7 @@
 //-----------------------------------------------------------------------------
 struct Material;
 namespace Graphics { class Mesh; }
-namespace Graphics::Import { struct NodeTrack; }
+namespace Graphics::Animation { struct LocalPose; }
 
 //-----------------------------------------------------------------------------
 // Namespace : Graphics::Import
@@ -174,104 +174,25 @@ namespace Graphics::Import
     };
 
     /** @struct Pose
-     *  @brief ポーズ情報（毎フレーム更新）
+     *  @brief ポーズ情報（毎フレーム更新：スキニング結果）
      */
     struct Pose
     {
-        std::vector<DX::Matrix4x4> localMatrices{};           ///< ローカル行列（ノード数分）
-        std::vector<DX::Matrix4x4> globalMatrices{};          ///< グローバル行列（ノード数分）
-        std::vector<DX::Matrix4x4> skinMatrices{};            ///< スキニング行列（ノード数分）
+        std::vector<DX::Matrix4x4> globalMatrices{};	///< グローバル行列（ノード数分）
+        std::vector<DX::Matrix4x4> skinMatrices{};	    ///< スキニング行列（ノード数分）
 
-        std::array<DX::Matrix4x4, ShaderCommon::MaxBones> cpuBoneMatrices{};  ///< GPUへ詰める最終配列
+        std::array<DX::Matrix4x4, ShaderCommon::MaxBones> cpuBoneMatrices{};	///< GPUへ詰める最終配列
 
-        /** @brief ポーズ情報をリセットする
+        /** @brief スケルトンに合わせてバッファを初期化する
          *  @param _skeletonCache スケルトンキャッシュ
          */
-        void Reset(const SkeletonCache& _skeletonCache)
-        {
-            this->localMatrices.clear();
-            this->globalMatrices.clear();
-            this->skinMatrices.clear();
+        void ResetForSkeleton(const SkeletonCache& _skeletonCache);
 
-            const size_t nodeCount = _skeletonCache.nodes.size();
-            this->localMatrices.resize(nodeCount, DX::Matrix4x4::Identity);
-            this->globalMatrices.resize(nodeCount, DX::Matrix4x4::Identity);
-            this->skinMatrices.resize(nodeCount, DX::Matrix4x4::Identity);
-
-            // GPU用配列もリセット
-            for (size_t i = 0; i < ShaderCommon::MaxBones; i++)
-            {
-                this->cpuBoneMatrices[i] = DX::Matrix4x4::Identity;
-            }
-
-            // local を bindLocal で埋める
-            for (size_t i = 0; i < nodeCount; i++)
-            {
-                this->localMatrices[i] = _skeletonCache.nodes[i].bindLocalMatrix;
-            }
-
-            // global を親子合成で埋める（order は親が必ず先）
-            // 行ベクトル（mul(v, M)）運用：global = local * parentGlobal
-            for (size_t oi = 0; oi < _skeletonCache.order.size(); oi++)
-            {
-                const int nodeIndex = _skeletonCache.order[oi];
-                if (nodeIndex < 0 || static_cast<size_t>(nodeIndex) >= nodeCount)
-                {
-                    continue;
-                }
-
-                const int parentIndex = _skeletonCache.nodes[nodeIndex].parentIndex;
-
-                if (parentIndex < 0)
-                {
-                    this->globalMatrices[nodeIndex] = this->localMatrices[nodeIndex];
-                }
-                else
-                {
-                    this->globalMatrices[nodeIndex] =
-                        this->localMatrices[nodeIndex] *
-                        this->globalMatrices[parentIndex];
-                }
-            }
-
-            //----------------------------------------------
-            // スキン行列＆GPU配列初期化
-            //----------------------------------------------
-            // boneIndex を持つノードだけ skinMatrices と gpuBoneMatrices を埋める
-            // ここでは「バインド姿勢」のスキンを作るため animationLocal は使わない
-            for (size_t i = 0; i < nodeCount; i++)
-            {
-                const int boneIndex = _skeletonCache.nodes[i].boneIndex;
-                if (boneIndex < 0)
-                {
-                    continue;
-                }
-
-                if (static_cast<size_t>(boneIndex) >= _skeletonCache.boneOffset.size())
-                {
-                    continue;
-                }
-
-                // 行ベクトル運用：
-                const DX::Matrix4x4 skin =
-                    _skeletonCache.boneOffset[static_cast<size_t>(boneIndex)] *
-                    this->globalMatrices[i] *
-                    _skeletonCache.globalInverse;
-
-                this->skinMatrices[i] = skin;
-
-                // cpuBoneMatrices は「転置なしのCPU行列」を入れる
-                if (boneIndex < static_cast<int>(ShaderCommon::MaxBones))
-                {
-                    this->cpuBoneMatrices[static_cast<size_t>(boneIndex)] = skin;
-                    //this->cpuBoneMatrices[static_cast<size_t>(boneIndex)] = DX::Matrix4x4::Identity;
-                }
-            }
-
-			// デバッグ出力
-            Graphics::Debug::Output::DumpBindPoseGlobalCheckOnce(_skeletonCache, *this);
-            Graphics::Debug::Output::DumpBindPoseSkinCheckOnce(_skeletonCache, *this);
-        }
+        /** @brief ローカルポーズからグローバル/スキン/GPU配列を構築する
+         *  @param _skeletonCache スケルトンキャッシュ
+         *  @param _localPose ローカルポーズ
+         */
+        void BuildFromLocalPose(const SkeletonCache& _skeletonCache, const Graphics::Animation::LocalPose& _localPose);
     };
 
     /** @struct BindTRS

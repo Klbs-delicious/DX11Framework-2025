@@ -29,6 +29,13 @@ class GameObject;
 class TestDodge : public Component, public IFixedUpdatable,public IUpdatable
 {
 public:
+	enum class TestPlayerAnimState
+	{
+		Idle,		///< 待機
+		Dodging,	///< 回避
+		Jumping		///< ジャンプ
+	};
+
 	/** @brief コンストラクタ
 	 *  @param _owner このコンポーネントがアタッチされるオブジェクト
 	 *  @param _isActive コンポーネントの有効/無効

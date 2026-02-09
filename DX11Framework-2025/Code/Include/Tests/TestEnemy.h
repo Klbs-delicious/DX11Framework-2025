@@ -19,10 +19,18 @@ class GameObject;
  *  @brief 固定更新で簡易的な敵挙動を行うテスト用コンポーネント
  *  @details 攻撃タイミングや状態遷移のみを扱い、演出やダメージ処理は別責務とする
  */
-class TestEnemy : public Component,
-	public IFixedUpdatable
+class TestEnemy : public Component, public IFixedUpdatable
 {
 public:
+	/// @brief エネミーのアニメーション状態
+	enum class EnemyAnimState
+	{
+		Idle = 0,
+		Attack,
+		Hit,
+		Dead
+	};
+
 	/** @brief コンストラクタ
 	 *  @param _owner このコンポーネントがアタッチされるオブジェクト
 	 *  @param _isActive コンポーネントの有効/無効

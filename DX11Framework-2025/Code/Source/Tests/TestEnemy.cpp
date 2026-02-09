@@ -10,6 +10,7 @@
 
 #include "Include/Framework/Entities/GameObject.h"
 #include "Include/Framework/Entities/AnimationComponent.h"
+#include "Include/Framework/Graphics/Animator.h"
 
 //-----------------------------------------------------------------------------
 // TestEnemy class
@@ -31,7 +32,6 @@ void TestEnemy::Initialize()
 	auto anim = this->Owner()->GetComponent<AnimationComponent>();
 	if (anim)
 	{
-		anim->SetLoop(true);
 		anim->Play();
 	}
 }

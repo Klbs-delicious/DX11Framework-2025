@@ -321,6 +321,7 @@ namespace Graphics::Debug::Output
 
 			const float err = MaxAbsDiffIdentity(skin);
 
+			// 大きな誤差のみ表示
 			if (err > 1.0e-3f && printed < maxPrint)
 			{
 				std::cout

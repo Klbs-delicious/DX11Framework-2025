@@ -26,6 +26,7 @@
 #include"Include/Game/Entities/DebugFreeMoveComponent.h"
 #include"Include/Game/Entities/CharacterController.h"
 #include"Include/Game/Entities/CameraLookComponent.h"
+#include"Include/Game/Entities/DodgeComponent.h"
 
 //#include"Include/Framework/Graphics/Mesh.h"
 #include"Include/Framework/Graphics/SpriteManager.h"
@@ -161,6 +162,7 @@ void ModelTest::SetupObjects()
 	auto coll3D = player->AddComponent<Framework::Physics::Collider3DComponent>();
 	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
 	auto rigidbody3D = player->AddComponent<Framework::Physics::Rigidbody3D>();
+	auto dodgeComp = player->AddComponent<DodgeComponent>();
 
 	// カメラピボットオブジェクトを生成する
 	auto pivotObj = gameObjectManager.Instantiate("CameraPivot");

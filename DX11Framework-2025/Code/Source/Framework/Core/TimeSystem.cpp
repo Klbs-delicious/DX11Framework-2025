@@ -18,7 +18,6 @@
 TimeSystem::TimeSystem(uint32_t _fixedFps)
 	: lastTime(std::chrono::steady_clock::now())
 	, rawDeltaSec(0.0f)
-	, scaledDeltaSec(0.0f)
 	, fixedDeltaSec(1.0f / static_cast<float>(_fixedFps))
 	, accumulator(0.0f)
 {
@@ -48,14 +47,6 @@ void TimeSystem::TickRawDelta()
 	{
 		this->accumulator = maxAcc;
 	}
-}
-
-/** @brief TimeScale を適用する
- *  @param float _timeScale TimeScale 値
- */
-void TimeSystem::ApplyTimeScale(float _timeScale)
-{
-	this->scaledDeltaSec = this->rawDeltaSec * _timeScale;
 }
 
 /// @brief rawDeltaTime（秒）

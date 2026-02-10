@@ -24,7 +24,7 @@
 //-----------------------------------------------------------------------------
 
 /// @brief	コンストラクタ
-GameLoop::GameLoop() :isRunning(true), gameState(GameState::Play), timeSystem(60) {}
+GameLoop::GameLoop() :isRunning(true), gameState(GameState::Play) {}
 /// @brief	デストラクタ
 GameLoop::~GameLoop() { this->Dispose(); }
 
@@ -71,8 +71,13 @@ void GameLoop::Initialize()
 
     //--------------------------------------------------------------------------    
     // SystemLocatorに登録・管理する
-    //--------------------------------------------------------------------------  
-        
+    //--------------------------------------------------------------------------
+    
+	// 時間管理システムの作成
+    // ITimeProviderとして登録することで、時間情報のみを提供可能にする
+    this->timeSystem = std::make_unique<TimeSystem>(60);
+	SystemLocator::Register<ITimeProvider>(this->timeSystem.get()); 
+
     // 物理システムの管理
     this->physicsSystem = std::make_unique<Framework::Physics::PhysicsSystem>();
     if (!this->physicsSystem->Initialize())
@@ -144,9 +149,9 @@ void GameLoop::Update()
     if (!this->isRunning) { return; }
 
     // デルタタイムの計算
-    this->timeSystem.TickRawDelta();
-    float delta = this->timeSystem.RawDelta();
-    float fixedDelta = this->timeSystem.FixedDelta();
+    this->timeSystem->TickRawDelta();
+    float delta = this->timeSystem->RawDelta();
+    float fixedDelta = this->timeSystem->FixedDelta();
 
 //#ifdef _DEBUG
 //    // 瞬間FPS
@@ -163,7 +168,7 @@ void GameLoop::Update()
     //-------------------------------------------------------------
     // 固定ステップ更新
     //-------------------------------------------------------------
-    while (this->timeSystem.ShouldRunFixedStep())
+    while (this->timeSystem->ShouldRunFixedStep())
     {
         // 物理とTransformがそろった状態でゲームロジックのFixedUpdateを実行する
         this->gameObjectManager->FixedUpdateAll(fixedDelta);
@@ -181,7 +186,7 @@ void GameLoop::Update()
         this->physicsSystem->ProcessContactEvents();
 
 		// 固定ステップを1回分消費する
-        this->timeSystem.ConsumeFixedStep();
+        this->timeSystem->ConsumeFixedStep();
     }
 
 	// 全Transformのワールド行列を更新する
@@ -216,6 +221,9 @@ void GameLoop::Dispose()
 
     SystemLocator::Unregister<Framework::Physics::PhysicsSystem>();
     this->physicsSystem.reset();
+
+	SystemLocator::Unregister<ITimeProvider>();
+	this->timeSystem.reset();
 
 	ResourceHub::Unregister<AnimationClipManager>();
 	this->animationClipManager.reset();

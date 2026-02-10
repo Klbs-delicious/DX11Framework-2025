@@ -16,6 +16,7 @@
 
 #include "Include/Framework/Core/InputSystem.h"
 
+#include "Include/Game/Entities/DodgeComponent.h"
 
 //-----------------------------------------------------------------------------
 // Forward Declarations
@@ -26,7 +27,7 @@ class GameObject;
  *  @brief 固定更新で回避判定を行うテスト用コンポーネント
  *  @details 入力とタイミング判定のみを行い、演出や時間操作は別責務とする
  */
-class TestDodge : public Component, public IFixedUpdatable,public IUpdatable
+class TestDodge : public Component,public IUpdatable
 {
 public:
 	enum class TestPlayerAnimState
@@ -51,23 +52,20 @@ public:
 	/// @brief 終了処理
 	void Dispose() override;
 
-	/** @brief 固定更新処理
-	 *  @param _deltaTime 前フレームからの経過時間（秒）
-	 */
-	void FixedUpdate(float _deltaTime) override;
-
 	/** @brief 更新処理
 	 *  @param _deltaTime 前フレームからの経過時間（秒）
 	 */
 	void Update(float _deltaTime) override;
 
 private:
-	bool isDodging;		///< 回避中か
-	float dodgeTimer;	///< 回避受付時間
-
 	InputSystem& inputSystem;			///< 入力処理を管理している
 	AnimationComponent* animComponent;	///< アニメーションコンポーネント
 	TimeScaleGroup* timeScaleGroup;		///< タイムスケールグループ
 	Framework::Physics::Rigidbody3D* rigidbody;		///< 自身のRigidbody3Dコンポーネント
+
+	DodgeComponent* dodgeComponent;	///< 回避コンポーネント
+
+	bool prevIsDodging;			///< 前フレームの回避中
+	bool prevTimingValid;		///< 前フレームの判定猶予有効
 
 };

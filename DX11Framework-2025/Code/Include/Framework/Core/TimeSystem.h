@@ -6,6 +6,8 @@
 #include <chrono>
 #include<cstdint>
 
+#include "Include/Framework/Core/ITimeProvider.h"
+
  /** @class  TimeSystem
   *  @brief  ゲームループ用の時間管理クラス
   *  @details
@@ -14,7 +16,7 @@
   *          - 固定ステップ方式の accumulator で FixedUpdate を制御
   *          - PhysicsSystem は fixedDeltaTime で TimeScale 非適用
   */
-class TimeSystem
+class TimeSystem : public ITimeProvider
 {
 public:
 	/** @brief コンストラクタ
@@ -25,16 +27,11 @@ public:
 	/// @brief 毎フレームの rawDeltaTime を計算する
 	void TickRawDelta();
 
-	/** @brief TimeScale を適用し scaledDeltaTime を生成する
-	 *  @param float _timeScale TimeScale 値
-	 */
-	void ApplyTimeScale(float _timeScale);
-
 	/// @brief rawDeltaTime（秒）を返す
-	[[nodiscard]] float RawDelta() const;
+	[[nodiscard]] float RawDelta() const override;
 
 	/// @brief 固定ステップ幅（秒）を返す
-	[[nodiscard]] float FixedDelta() const;
+	[[nodiscard]] float FixedDelta() const override;
 
 	/// @brief FixedUpdate を実行すべきか判定する
 	bool ShouldRunFixedStep() const;
@@ -46,10 +43,9 @@ public:
 	void Reset();
 
 private:
-	std::chrono::steady_clock::time_point lastTime; ///< 前フレーム時刻
-	float rawDeltaSec;                              ///< TimeScale非適用Δ時間
-	float scaledDeltaSec;                           ///< TimeScale適用Δ時間
-	float fixedDeltaSec;                             ///< 固定ステップΔ時間
+	std::chrono::steady_clock::time_point lastTime;		///< 前フレーム時刻
+	float rawDeltaSec;									///< TimeScale非適用Δ時間
+	float fixedDeltaSec;								///< 固定ステップΔ時間
 
-	float accumulator;                               ///< 固定ステップ累積
+	float accumulator;									///< 固定ステップ累積
 };

@@ -3,9 +3,11 @@
  *  @date   2026/01/18
  */
 
- //-----------------------------------------------------------------------------
- // Includes
- //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// Includes
+//-----------------------------------------------------------------------------
+#include<iostream>
+
 #include "Include/Tests/TestDodge.h"
 
 #include "Include/Framework/Entities/GameObject.h"
@@ -19,24 +21,25 @@
 
 TestDodge::TestDodge(GameObject* _owner, bool _isActive)
 	: Component(_owner, _isActive),
-	isDodging(false),
-	dodgeTimer(0.0f),
+	dodgeComponent(nullptr),
 	animComponent(nullptr),
 	timeScaleGroup(nullptr),
 	inputSystem(SystemLocator::Get<InputSystem>()),
-	rigidbody(nullptr)
+	rigidbody(nullptr),
+	prevIsDodging(false),
+	prevTimingValid(false)
 {
 }
 
 void TestDodge::Initialize()
 {
-	this->isDodging = false;
-	this->dodgeTimer = 0.0f;
-
+	//------------------------------------------------------
 	// 必要なコンポーネントの取得
+	//------------------------------------------------------
 	this->animComponent = this->Owner()->GetComponent<AnimationComponent>();
 	this->timeScaleGroup = this->Owner()->GetComponent<TimeScaleGroup>();
 	this->rigidbody = this->Owner()->GetComponent<Framework::Physics::Rigidbody3D>();
+	this->dodgeComponent = this->Owner()->GetComponent<DodgeComponent>();
 
 	// ------------------------------------------------------
 	// キーバインドの登録
@@ -44,75 +47,51 @@ void TestDodge::Initialize()
 	this->inputSystem.RegisterKeyBinding("Dodge", static_cast<int>(DirectInputDevice::KeyboardKey::B));	// 左クリックで回避
 	this->inputSystem.RegisterKeyBinding("Idle", static_cast<int>(DirectInputDevice::KeyboardKey::V));	// 左クリックで回避
 	this->inputSystem.RegisterKeyBinding("Jump", static_cast<int>(DirectInputDevice::KeyboardKey::C));	// 左クリックで回避
+
+	//------------------------------------------------------
+	// 状態初期化
+	//------------------------------------------------------
+	this->prevIsDodging = false;
+	this->prevTimingValid = false;
 }
 
 void TestDodge::Dispose()
 {
 }
 
-
-
-#include<iostream>
-void TestDodge::FixedUpdate(float _deltaTime)
-{
-	if (!this->IsActive()) { return; }
-
-	// 回避中の継続処理
-	if (this->isDodging)
-	{
-		// タイマーを減らす（FixedUpdate は既に時間スケールが考慮されている想定)
-		this->dodgeTimer -= _deltaTime;
-
-		if (this->dodgeTimer <= 0.0f)
-		{
-			this->isDodging = false;
-
-			//// アニメーションを停止（必要なら)
-			//if (this->animComponent)
-			//{
-			//	this->animComponent->Stop();
-			//}
-
-			// 回避終了後は水平速度をゼロにする（垂直速度は維持)
-			if (this->rigidbody)
-			{
-				DX::Vector3 curVel = this->rigidbody->GetLinearVelocity();
-				this->rigidbody->SetLinearVelocity(DX::Vector3(0.0f, curVel.y, 0.0f));
-			}
-		}
-	}
-}
-
 void TestDodge::Update(float _deltaTime)
 {
-	// 回避開始のトリガー（押した瞬間のみ)
-	if (!this->isDodging && this->inputSystem.IsActionTriggered("Dodge"))
+	// 回避開始（押した瞬間）
+	if (this->inputSystem.IsActionTriggered("Dodge"))
 	{
-		std::cout << "[TestDodge]←ボタン押したマウス" << std::endl;
+		if (this->dodgeComponent)
+		{
+			// 回避の持続（例：0.35秒）
+			this->dodgeComponent->StartDodge(0.35f);
 
-		// 回避行動を開始する
-		this->isDodging = true;
-		// 回避時間（秒）
-		this->dodgeTimer = 0.35f; // 短いステップ
+			std::cout
+				<< "[TestDodge] Dodge Triggered"
+				<< " IsDodging=" << (this->dodgeComponent->IsDodging() ? "true" : "false")
+				<< " TimingValid=" << (this->dodgeComponent->IsDodgeTimingValid() ? "true" : "false")
+				<< std::endl;
+		}
 
-		// 回避アニメーションを再生する
+		// アニメは今のままでOK（見た目確認用）
 		if (this->animComponent)
 		{
 			this->animComponent->RequestState(TestPlayerAnimState::Dodging, 0.5f);
 		}
 
-		// Rigidbody を使って左へステップする（ワールドではなくローカルの左)
+		// 移動（速度付与）も今のままでOK（挙動確認用）
 		if (this->rigidbody)
 		{
-			// 現在の垂直速度を維持
 			DX::Vector3 curVel = this->rigidbody->GetLinearVelocity();
 
-			// キャラクターのローカル右ベクトルを取得して左向きにする
 			DX::Quaternion rot = this->rigidbody->GetLogicalRotation();
 			DX::Vector3 right = DX::Vector3::Transform(DX::Vector3::Right, rot);
 			DX::Vector3 left = -right;
 
-			const float dodgeSpeed = 8.0f; // 回避の横方向速度
+			const float dodgeSpeed = 8.0f;
 			DX::Vector3 dodgeVel = left * dodgeSpeed;
 			dodgeVel.y = curVel.y;
 
@@ -134,5 +113,35 @@ void TestDodge::Update(float _deltaTime)
 		{
 			this->animComponent->RequestState(TestPlayerAnimState::Jumping, 0.5f);
 		}
+	}
+
+	// 状態変化の観測（DodgeComponentのテスト）
+	if (this->dodgeComponent)
+	{
+		const bool nowIsDodging = this->dodgeComponent->IsDodging();
+		const bool nowTimingValid = this->dodgeComponent->IsDodgeTimingValid();
+
+		if (nowIsDodging != this->prevIsDodging)
+		{
+			std::cout
+				<< "[TestDodge] IsDodging changed: "
+				<< (this->prevIsDodging ? "true" : "false")
+				<< " -> "
+				<< (nowIsDodging ? "true" : "false")
+				<< std::endl;
+		}
+
+		if (nowTimingValid != this->prevTimingValid)
+		{
+			std::cout
+				<< "[TestDodge] TimingValid changed: "
+				<< (this->prevTimingValid ? "true" : "false")
+				<< " -> "
+				<< (nowTimingValid ? "true" : "false")
+				<< std::endl;
+		}
+
+		this->prevIsDodging = nowIsDodging;
+		this->prevTimingValid = nowTimingValid;
 	}
 }

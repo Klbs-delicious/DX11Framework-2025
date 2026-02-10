@@ -67,7 +67,7 @@ private:
 	};
 	GameState gameState;	///< ゲームの状態
 
-	TimeSystem timeSystem;									///< 時間管理システム
+	std::unique_ptr < TimeSystem >timeSystem;				///< 時間管理システム
 	std::unique_ptr<TimeScaleSystem> timeScaleSystem;		///< 時間スケールの管理
 	std::unique_ptr<SceneManager> sceneManager;				///< シーン管理
 	std::unique_ptr<InputSystem> inputSystem;				///< 入力の管理

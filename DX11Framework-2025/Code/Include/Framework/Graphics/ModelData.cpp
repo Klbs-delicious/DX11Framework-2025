@@ -66,7 +66,7 @@ void Graphics::Import::Pose::BuildFromLocalPose(const SkeletonCache& _skeletonCa
             continue;
         }
 
-        // 行ベクトル運用：
+        // 行ベクトル運用
         const DX::Matrix4x4 skin =
             _skeletonCache.boneOffset[static_cast<size_t>(boneIndex)] *
             this->globalMatrices[i] *

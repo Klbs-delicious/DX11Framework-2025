@@ -300,7 +300,7 @@ namespace Graphics::Debug::Output
 		const Graphics::Import::SkeletonCache& _skeletonCache,
 		const Graphics::Import::Pose& _pose)
 	{
-		//std::cout << "[SkinningDebug] BindPose Skin Check\n";
+		std::cout << "[SkinningDebug] BindPose Skin Check\n";
 
 		const size_t nodeCount = _pose.globalMatrices.size();
 		const size_t boneCount = _skeletonCache.boneOffset.size();

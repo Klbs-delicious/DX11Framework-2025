@@ -44,7 +44,7 @@ namespace DX
 	constexpr float TWO_PI = std::numbers::pi_v<float> *2.0f;
 
 	//-------------------------------------------------------------------------
-	// 角度変換関数（軽いのでヘッダ inline）
+	// 角度変換関数
 	//-------------------------------------------------------------------------
 	/// @brief 度数をラジアンに変換
 	constexpr float ToRadians(float _degrees)
@@ -59,7 +59,7 @@ namespace DX
 	}
 
 	//-------------------------------------------------------------------------
-	// 行列作成関数（DirectXMath の計算が入るので cpp 実装）
+	// 行列作成関数
 	//-------------------------------------------------------------------------
 	/** @brief 左手座標系用のワールド行列を作成
 	 *  @param _position 平行移動
@@ -133,7 +133,7 @@ namespace DX
 	}
 
 	//-------------------------------------------------------------------------
-	// XMMATRIX ロード／ストア（DirectXMath の関数呼び出しが入るので cpp 実装）
+	// XMMATRIX ロード／ストア
 	//-------------------------------------------------------------------------
 	/** @brief DX::Matrix4x4 を XMMATRIX に読み込む
 	 *  @param _m 入力
@@ -148,8 +148,59 @@ namespace DX
 	DX::Matrix4x4 StoreDXMatrix(const DirectX::XMMATRIX& _m);
 
 	//-------------------------------------------------------------------------
-	// クォータニオン補助関数（軽いのでヘッダ inline）
+	// クォータニオン補助関数
 	//-------------------------------------------------------------------------
+	/** @brief 四元数が有限値（NaN / Inf を含まない）かどうかを判定する
+	 *  @param _q 判定対象の四元数
+	 *  @return 全成分が有限値であれば true、そうでなければ false
+	 */
+	inline bool IsFiniteQuaternion(const DirectX::SimpleMath::Quaternion& _q)
+	{
+		return
+			std::isfinite(_q.x) &&
+			std::isfinite(_q.y) &&
+			std::isfinite(_q.z) &&
+			std::isfinite(_q.w);
+	}
+
+	/** @brief 四元数が正規化されているかどうかを判定する
+	 *  @details 有限値であることが前提。NaN / Inf を含む場合は false となる
+	 *  @param _q 判定対象の四元数
+	 *  @param _epsilon |length^2 - 1| の許容誤差
+	 *  @return 正規化されていれば true、そうでなければ false
+	 */
+	inline bool IsNormalizedQuaternion(const DirectX::SimpleMath::Quaternion& _q, float _epsilon = 1.0e-3f)
+	{
+		float lenSq = _q.LengthSquared();
+		return std::fabs(lenSq - 1.0f) <= _epsilon;
+	}
+
+	/** @brief 四元数を安全に正規化する
+	 *  @details
+	 *  - NaN / Inf を含む場合は Identity を返す
+	 *  - 長さが極端に小さい場合も Identity を返す
+	 *  @param _q 正規化対象の四元数
+	 *  @param _epsilon 長さ判定用の下限値
+	 *  @return 正規化済み四元数、または安全な Identity
+	 */
+	inline DirectX::SimpleMath::Quaternion SafeNormalizeQuaternion(const DirectX::SimpleMath::Quaternion& _q, float _epsilon = 1.0e-6f)
+	{
+		if (!IsFiniteQuaternion(_q))
+		{
+			return DirectX::SimpleMath::Quaternion::Identity;
+		}
+
+		float lenSq = _q.LengthSquared();
+		if (lenSq <= _epsilon)
+		{
+			return DirectX::SimpleMath::Quaternion::Identity;
+		}
+
+		DirectX::SimpleMath::Quaternion out = _q;
+		out.Normalize();
+		return out;
+	}
+
 	/** @brief 四元数の内積
 	 *  @param _a 四元数A
 	 *  @param _b 四元数B
@@ -214,8 +265,50 @@ namespace DX
 	 */
 	DX::Quaternion SlerpQuaternionSimple(const DX::Quaternion& _from, const DX::Quaternion& _to, float _t);
 
+	//-----------------------------------------------------------------------------
+	// Vector3 utilities
+	//-----------------------------------------------------------------------------
+
+	/** @brief ベクトルが有限値（NaN / Inf を含まない）かどうかを判定する
+	 *  @param _v 判定対象のベクトル
+	 *  @return 全成分が有限値であれば true、そうでなければ false
+	 */
+	inline bool IsFiniteVector3(const DirectX::SimpleMath::Vector3& _v)
+	{
+		return
+			std::isfinite(_v.x) &&
+			std::isfinite(_v.y) &&
+			std::isfinite(_v.z);
+	}
+
+	/** @brief ベクトルを安全に正規化する
+	 *  @details
+	 *  - NaN / Inf を含む場合は Zero を返す
+	 *  - 長さが極端に小さい場合も Zero を返す
+	 *  @param _v 正規化対象のベクトル
+	 *  @param _epsilon 長さ判定用の下限値
+	 *  @return 正規化済みベクトル、または安全な Zero
+	 */
+	inline DirectX::SimpleMath::Vector3 SafeNormalizeVector3(const DirectX::SimpleMath::Vector3& _v, float _epsilon = 1.0e-6f)
+	{
+		if (!IsFiniteVector3(_v))
+		{
+			return DirectX::SimpleMath::Vector3::Zero;
+		}
+
+		float lenSq = _v.LengthSquared();
+		if (lenSq <= _epsilon)
+		{
+			return DirectX::SimpleMath::Vector3::Zero;
+		}
+
+		DirectX::SimpleMath::Vector3 out = _v;
+		out.Normalize();
+		return out;
+	}
+
 	//-------------------------------------------------------------------------
-	// 行列補助関数（DirectXMath 呼び出しが入るので cpp 実装）
+	// 行列補助関数
 	//-------------------------------------------------------------------------
 	/** @brief DX::Matrix4x4 の転置
 	 *  @param _m 入力行列

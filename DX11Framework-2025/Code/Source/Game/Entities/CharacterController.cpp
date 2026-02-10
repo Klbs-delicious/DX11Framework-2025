@@ -99,37 +99,67 @@ void CharacterController::Update(float _deltaTime)
     // ------------------------------------------------------
     DX::Vector3 camForward = this->cameraTransform->Forward();
     camForward.y = 0.0f;
-    camForward.Normalize();
+    if (camForward.LengthSquared() > 1.0e-6f)
+    {
+        camForward.Normalize();
+    }
+    else
+    {
+        this->rigidbody->SetLinearVelocity(DX::Vector3(0.0f, currentVel.y, 0.0f));
+        return;
+    }
 
     DX::Vector3 camRight = this->cameraTransform->Right();
     camRight.y = 0.0f;
-    camRight.Normalize();
+    if (camRight.LengthSquared() > 1.0e-6f)
+    {
+        camRight.Normalize();
+    }
+    else
+    {
+        this->rigidbody->SetLinearVelocity(DX::Vector3(0.0f, currentVel.y, 0.0f));
+        return;
+    }
 
     // ------------------------------------------------------
     // 入力方向をワールドベクトルへ変換
     // ------------------------------------------------------
     DX::Vector3 moveDir = camForward * inputZ + camRight * inputX;
 
-    if (moveDir.LengthSquared() > 0.0f)
+    if (moveDir.LengthSquared() <= 1.0e-6f)
     {
-        moveDir.Normalize();
-    }
-    else {
-        // 安全のため水平速度のみゼロに（重力は維持）
+		// NaNになりそうな場合は向きが定義できないので回転更新しない
         this->rigidbody->SetLinearVelocity(DX::Vector3(0.0f, currentVel.y, 0.0f));
         return;
     }
+
+    moveDir.Normalize();
 
     // ------------------------------------------------------
     // 回転の更新（キャラクターを進行方向へ向ける）
     // → Rigidbody の論理回転に反映
     // ------------------------------------------------------
     DX::Quaternion currentRot = this->rigidbody->GetLogicalRotation();
+
     DX::Quaternion targetRot = DX::Quaternion::CreateFromRotationMatrix(
         DX::CreateWorldLH(DX::Vector3::Zero, moveDir, DX::Vector3::UnitY)
     );
 
-    DX::Quaternion newRot = DX::Quaternion::Slerp(currentRot, targetRot, this->turnSpeed * _deltaTime);
+    if (!DX::IsFiniteQuaternion(targetRot))
+    {
+        this->rigidbody->SetLinearVelocity(DX::Vector3(0.0f, currentVel.y, 0.0f));
+        return;
+    }
+
+    DX::Quaternion newRot =
+        DX::Quaternion::Slerp(currentRot, targetRot, this->turnSpeed * _deltaTime);
+
+    if (!DX::IsFiniteQuaternion(newRot) || fabsf(newRot.LengthSquared() - 1.0f) > 1.0e-3f)
+    {
+        newRot = targetRot;
+    }
+
+    newRot.Normalize();
     this->rigidbody->SetLogicalRotation(newRot);
 
     // ------------------------------------------------------

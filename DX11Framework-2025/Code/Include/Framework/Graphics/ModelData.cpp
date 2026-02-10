@@ -81,7 +81,7 @@ void Graphics::Import::Pose::BuildFromLocalPose(const SkeletonCache& _skeletonCa
         }
     }
 
-    // デバッグ出力
-    Graphics::Debug::Output::DumpBindPoseGlobalCheckOnce(_skeletonCache, *this);
-    Graphics::Debug::Output::DumpBindPoseSkinCheckOnce(_skeletonCache, *this);
+    //// デバッグ出力
+    //Graphics::Debug::Output::DumpBindPoseGlobalCheckOnce(_skeletonCache, *this);
+    //Graphics::Debug::Output::DumpBindPoseSkinCheckOnce(_skeletonCache, *this);
 }

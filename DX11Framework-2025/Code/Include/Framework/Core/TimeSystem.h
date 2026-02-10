@@ -4,6 +4,7 @@
  */
 #pragma once
 #include <chrono>
+#include<cstdint>
 
  /** @class  TimeSystem
   *  @brief  ゲームループ用の時間管理クラス

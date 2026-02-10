@@ -70,9 +70,6 @@
     <Filter Include="ヘッダー ファイル\Framework\Graphics">
       <UniqueIdentifier>{41e2de51-6b78-4dc4-8267-27c30d39d46f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ヘッダー ファイル\Framework\Scenes">
-      <UniqueIdentifier>{d45f5e43-634d-40c5-9fe4-3c13e58637db}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ヘッダー ファイル\Test">
       <UniqueIdentifier>{d73fd882-447d-46e6-a032-e0502ac3223c}</UniqueIdentifier>
     </Filter>
@@ -93,6 +90,12 @@
     </Filter>
     <Filter Include="ヘッダー ファイル\Framework\Physics">
       <UniqueIdentifier>{4d50212a-6fcb-43d2-af7b-45ac98bd1ef1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Scenes">
+      <UniqueIdentifier>{1de2db5a-6718-493b-8f4b-2d2f2cbd154f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Framework\Scenes">
+      <UniqueIdentifier>{d45f5e43-634d-40c5-9fe4-3c13e58637db}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -162,9 +165,6 @@
     <ClInclude Include="Code\Include\Scenes\SceneManager.h">
       <Filter>ヘッダー ファイル\Framework\Scenes</Filter>
     </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Shaders\ShaderBase.h">
-      <Filter>ヘッダー ファイル\Framework\Scenes</Filter>
-    </ClInclude>
     <ClInclude Include="Code\Include\Framework\Shaders\ShaderCommon.h">
       <Filter>ヘッダー ファイル\Framework\Shader</Filter>
     </ClInclude>
@@ -188,9 +188,6 @@
     </ClInclude>
     <ClInclude Include="Code\Include\Scenes\TestScene.h">
       <Filter>ヘッダー ファイル\Test</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Scenes\TitleScene.h">
-      <Filter>ヘッダー ファイル\Framework\Scenes</Filter>
     </ClInclude>
     <ClInclude Include="Code\Include\Framework\Entities\Transform.h">
       <Filter>ヘッダー ファイル\Framework\Entities</Filter>
@@ -291,14 +288,8 @@
     <ClInclude Include="Code\Include\Framework\Entities\TimeScaleGroup.h">
       <Filter>ヘッダー ファイル\Framework\Entities</Filter>
     </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Graphics\TextureFactory.h">
-      <Filter>ソース ファイル\Framework\Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="Code\Include\Framework\Core\PhysicsSystem.h">
       <Filter>ヘッダー ファイル\Framework\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Physics\PhysicsLayers.h">
-      <Filter>ソース ファイル\Framework\Physics</Filter>
     </ClInclude>
     <ClInclude Include="Code\Include\Framework\Entities\Collider3DComponent.h">
       <Filter>ヘッダー ファイル\Framework\Entities</Filter>
@@ -306,59 +297,71 @@
     <ClInclude Include="Code\Include\Framework\Entities\Rigidbody3D.h">
       <Filter>ヘッダー ファイル\Framework\Entities</Filter>
     </ClInclude>
-    <ClInclude Include="Code\Include\Game\Entities\DebugFreeMoveComponent.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Entities\ColliderDebugRenderer.h">
-      <Filter>ソース ファイル\Framework\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Scenes\PhysicsTest.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Physics\PhysicsContactListener.h">
-      <Filter>ソース ファイル\Framework\Physics</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Tests\TestCollisionHandler.h">
-      <Filter>ソース ファイル\Test</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Entities\AnimationComponent.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Entities\SkinnedMeshRenderer.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Graphics\AnimationClipManager.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Graphics\AnimationData.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Graphics\AnimationImporter.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Graphics\ModelManager.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Game\Entities\FogComponent.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Scenes\ModelTest.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Tests\SkinningDebug.h">
-      <Filter>ソース ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Tests\TestDodge.h">
-      <Filter>ソース ファイル</Filter>
-    </ClInclude>
-    <ClInclude Include="Code\Include\Tests\TestEnemy.h">
-      <Filter>ソース ファイル</Filter>
-    </ClInclude>
     <ClInclude Include="Code\Include\Framework\Graphics\Animator.h">
       <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Code\Include\Framework\Graphics\IAnimator.h">
       <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\AnimationImporter.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\AnimationClipManager.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\AnimationComponent.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\AnimationData.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\ColliderDebugRenderer.h">
+      <Filter>ヘッダー ファイル\Framework\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Game\Entities\DebugFreeMoveComponent.h">
+      <Filter>ヘッダー ファイル\Framework\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Game\Entities\FogComponent.h">
+      <Filter>ヘッダー ファイル\Game\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\TextureFactory.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Tests\SkinningDebug.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Entities\SkinnedMeshRenderer.h">
+      <Filter>ヘッダー ファイル\Framework\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\ModelManager.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Tests\TestCollisionHandler.h">
+      <Filter>ヘッダー ファイル\Test</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Tests\TestDodge.h">
+      <Filter>ヘッダー ファイル\Test</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Tests\TestEnemy.h">
+      <Filter>ヘッダー ファイル\Test</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Physics\PhysicsLayers.h">
+      <Filter>ヘッダー ファイル\Framework\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Physics\PhysicsContactListener.h">
+      <Filter>ヘッダー ファイル\Framework\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Shaders\ShaderBase.h">
+      <Filter>ヘッダー ファイル\Framework\Shader</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Scenes\TitleScene.h">
+      <Filter>ヘッダー ファイル\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Scenes\PhysicsTest.h">
+      <Filter>ヘッダー ファイル\Scenes</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Scenes\ModelTest.h">
+      <Filter>ヘッダー ファイル\Scenes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -423,9 +426,6 @@
       <Filter>ソース ファイル\Framework\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Tests\TestMoveComponent.cpp">
-      <Filter>ソース ファイル\Test</Filter>
-    </ClCompile>
-    <ClCompile Include="Code\Source\Scenes\TestScene.cpp">
       <Filter>ソース ファイル\Test</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Entities\TestRenderer.cpp">
@@ -518,23 +518,14 @@
     <ClCompile Include="Code\Source\Framework\Core\PhysicsSystem.cpp">
       <Filter>ソース ファイル\Framework\Core</Filter>
     </ClCompile>
-    <ClCompile Include="Code\Source\Framework\Physics\PhysicsLayers.cpp">
-      <Filter>ヘッダー ファイル\Framework\Physics</Filter>
-    </ClCompile>
     <ClCompile Include="Code\Source\Framework\Entities\Collider3DComponent.cpp">
       <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Entities\Rigidbody3D.cpp">
       <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="Code\Source\Game\Entities\DebugFreeMoveComponent.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="Code\Source\Framework\Entities\ColliderDebugRenderer.cpp">
       <Filter>ソース ファイル\Framework\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Code\Source\Scenes\PhysicsTest.cpp">
-      <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Physics\PhysicsContactListener.cpp">
       <Filter>ソース ファイル\Framework\Physics</Filter>
@@ -542,47 +533,56 @@
     <ClCompile Include="Code\Source\Tests\TestCollisionHandler.cpp">
       <Filter>ソース ファイル\Test</Filter>
     </ClCompile>
-    <ClCompile Include="Code\Source\Framework\Entities\AnimationComponent.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Code\Source\Framework\Entities\SkinnedMeshRenderer.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Code\Source\Framework\Graphics\AnimationClipManager.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Code\Source\Framework\Graphics\AnimationImporter.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Code\Source\Framework\Graphics\ModelManager.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Code\Source\Game\Entities\FogComponent.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Code\Source\Scenes\ModelTest.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Code\Source\Framework\Graphics\AnimationData.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Code\Source\Tests\SkinningDebug.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Code\Source\Tests\TestDodge.cpp">
-      <Filter>ソース ファイル</Filter>
-    </ClCompile>
-    <ClCompile Include="Code\Source\Tests\TestEnemy.cpp">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClCompile>
     <ClCompile Include="Code\Source\Framework\Utils\CommonTypes.cpp">
       <Filter>ソース ファイル\Framework\Utils</Filter>
     </ClCompile>
-    <ClCompile Include="Code\Source\Framework\Graphics\Animator.cpp">
+    <ClCompile Include="Code\Source\Framework\Graphics\AnimationClipManager.cpp">
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Entities\AnimationComponent.cpp">
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\AnimationData.cpp">
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\AnimationImporter.cpp">
       <Filter>ソース ファイル\Framework\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="Code\Include\Framework\Graphics\ModelData.cpp">
-      <Filter>ソース ファイル</Filter>
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\ModelManager.cpp">
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Scenes\PhysicsTest.cpp">
+      <Filter>ソース ファイル\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Scenes\ModelTest.cpp">
+      <Filter>ソース ファイル\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Tests\TestDodge.cpp">
+      <Filter>ソース ファイル\Test</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Entities\SkinnedMeshRenderer.cpp">
+      <Filter>ソース ファイル\Framework\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Game\Entities\FogComponent.cpp">
+      <Filter>ソース ファイル\Framework\Game\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Tests\SkinningDebug.cpp">
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Scenes\TestScene.cpp">
+      <Filter>ソース ファイル\Scenes</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Game\Entities\DebugFreeMoveComponent.cpp">
+      <Filter>ソース ファイル\Framework\Game\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Tests\TestEnemy.cpp">
+      <Filter>ソース ファイル\Test</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Physics\PhysicsLayers.cpp">
+      <Filter>ソース ファイル\Framework\Physics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

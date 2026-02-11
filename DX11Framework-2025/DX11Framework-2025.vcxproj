@@ -62,6 +62,7 @@
     <ClInclude Include="Code\Include\Framework\Graphics\AnimationImporter.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\Animator.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\BufferBase.h" />
+    <ClInclude Include="Code\Include\Framework\Graphics\ClipEventWatcher.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\ConstantBuffer.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\DynamicConstantBuffer.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\IAnimator.h" />
@@ -145,6 +146,7 @@
     <ClCompile Include="Code\Source\Framework\Graphics\AnimationData.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\AnimationImporter.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\BufferBase.cpp" />
+    <ClCompile Include="Code\Source\Framework\Graphics\ClipEventWatcher.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\IndexBuffer.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\MaterialManager.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\Mesh.cpp" />

@@ -183,6 +183,11 @@ public:
 	 */
 	bool IsFinished() const override { return this->isFinished; }
 
+	/** @brief 現在のアニメーションクリップを取得する
+	 *  @return アニメーションクリップ（無ければ nullptr）
+	 */
+	Graphics::Import::AnimationClip* GetCurrentClip() const override;
+
 private:
 	/// @brief バインドローカル姿勢を基準として適用する
 	void ApplyBindLocalAsBase();
@@ -694,6 +699,18 @@ template<typename StateId>
 float Animator<StateId>::GetNormalizedTime() const
 {
 	return this->normalizedTime;
+}
+
+template<typename StateId>
+inline Graphics::Import::AnimationClip* Animator<StateId>::GetCurrentClip() const
+{
+	if(!this->stateTable){ return nullptr; }
+
+	// 現在の状態定義を取得
+	const auto* curDef = this->stateTable->Find(this->currentState);
+	if (!curDef) { return nullptr; }
+
+	return curDef->clip;
 }
 
 //-----------------------------------------------------------------------------

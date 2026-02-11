@@ -36,7 +36,7 @@ AnimationClipManager::AnimationClipManager()
 	//---------------------------------------------------------
 	this->eventDefMap.emplace(
 		"Punch",
-		std::vector<Graphics::Import::ClipEventDef>
+		std::vector<Graphics::Import::ClipEvent>
 	{
 		{ 0.32f, Graphics::Import::ClipEventId::HitOn },
 		{ 0.36f, Graphics::Import::ClipEventId::HitOff }
@@ -83,6 +83,7 @@ Graphics::Import::AnimationClip* AnimationClipManager::Register(const std::strin
 			<< " (" << filename << ")" << std::endl;
 		return nullptr;
 	}
+	clip->keyName = _key;
 
 	// ロード直後にイベントテーブルを適用（定義があれば）
 	{
@@ -96,9 +97,9 @@ Graphics::Import::AnimationClip* AnimationClipManager::Register(const std::strin
 	Graphics::Import::AnimationClip* clipRaw = clip.get();
 	this->clipMap.emplace(_key, std::move(clip));
 
-	// デフォルトが無ければ最初に登録できたものをデフォルトにする
 	if (this->defaultClip == nullptr)
 	{
+		// デフォルトが無ければ最初に登録できたものをデフォルトにする
 		this->defaultClip = clipRaw;
 	}
 
@@ -166,7 +167,7 @@ void AnimationClipManager::Clear()
 
 void AnimationClipManager::BuildEventTable(
 	Graphics::Import::AnimationClip& _clip,
-	const std::vector<Graphics::Import::ClipEventDef>& _defs)
+	const std::vector<Graphics::Import::ClipEvent>& _clipEvents)
 {
 	auto table = std::make_unique<Graphics::Import::ClipEventTable>();
 
@@ -174,13 +175,9 @@ void AnimationClipManager::BuildEventTable(
 	const double tps = (_clip.ticksPerSecond > 0.0) ? _clip.ticksPerSecond : 1.0;
 	const float durationSec = static_cast<float>(_clip.durationTicks / tps);
 
-	for (const auto& def : _defs)
+	for (const auto& event : _clipEvents)
 	{
-		const float normalizedTime =
-			std::clamp(def.normalizedTime, 0.0f, 1.0f);
-
-		const float timeSec = normalizedTime * durationSec;
-		table->AddEvent(timeSec, def.eventId);
+		table->AddEvent(event.normalizedTime, event.eventId);
 	}
 
 	_clip.SetEventTable(std::move(table));

@@ -65,14 +65,14 @@ public:
 	 *  @param _key クリップキー
 	 *  @param _events イベント定義配列
 	 */
-	void BuildEventTable(Graphics::Import::AnimationClip& _clip, const std::vector<Graphics::Import::ClipEventDef>& _defs);
+	void BuildEventTable(Graphics::Import::AnimationClip& _clip, const std::vector<Graphics::Import::ClipEvent>& _defs);
 
 private:
 	Graphics::Import::AnimationImporter importer;
 
 	std::unordered_map<std::string, std::unique_ptr<Graphics::Import::AnimationClip>> clipMap;	///< クリップ本体
 	std::unordered_map<std::string, std::string> clipInfoMap;									///< key -> filename
-	std::unordered_map<std::string, std::vector<Graphics::Import::ClipEventDef>> eventDefMap;	///< key -> events
+	std::unordered_map<std::string, std::vector<Graphics::Import::ClipEvent>> eventDefMap;		///< key -> events
 
 	Graphics::Import::AnimationClip* defaultClip = nullptr;                                     ///< デフォルト
 };

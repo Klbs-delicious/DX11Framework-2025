@@ -38,4 +38,9 @@ public:
 
 	/// @brief アニメーションを最初から再生する
 	virtual void Restart() = 0;
+
+	/** @brief 現在のアニメーションクリップを取得する
+	 *  @return アニメーションクリップ（無ければ nullptr）
+	 */
+	virtual Graphics::Import::AnimationClip* GetCurrentClip() const = 0;
 };

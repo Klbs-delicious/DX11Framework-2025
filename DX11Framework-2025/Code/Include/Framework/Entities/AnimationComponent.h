@@ -102,6 +102,16 @@ public:
 	/// @brief 最初から再生する
 	void Restart();
 
+	/** @brief 現在のローカルポーズを取得する
+	 *  @return ローカルポーズ参照
+	 */
+	float GetNormalizedTime() const;
+
+	/** @brief 現在のアニメーションクリップを取得する
+	 *  @return アニメーションクリップ（無ければ nullptr）
+	 */
+	Graphics::Import::AnimationClip* GetCurrentClip() const;
+
 private:
 	/// @brief ボーン用定数バッファを更新する（Pose -> BoneBuffer）
 	void UpdateBoneBufferFromPose();

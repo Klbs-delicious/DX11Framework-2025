@@ -72,22 +72,22 @@ namespace Graphics::Import
 		HitOff,
 	};
 
-	/** @struct ClipEvent
-	 *  @brief アニメーションクリップのイベント情報
-	 */
-	struct ClipEventDef
-	{
-		float normalizedTime = 0.0f;	///< イベント発生位置（0.0〜1.0）
-		ClipEventId eventId{};			///< イベントID
-	};
+	///** @struct ClipEvent
+	// *  @brief アニメーションクリップのイベント情報
+	// */
+	//struct ClipEventDef
+	//{
+	//	float normalizedTime = 0.0f;	///< イベント発生位置（0.0〜1.0）
+	//	ClipEventId eventId{};			///< イベントID
+	//};
 
 	/** @struct ClipEvent
 	 *  @brief アニメーションクリップのイベント情報
 	 */
 	struct ClipEvent
 	{
-		float timeSec = 0.0f;         ///< イベント発生時間（秒）
-		ClipEventId eventId{};        ///< イベントID
+		float normalizedTime = 0.0f;	///< イベント発生位置（0.0〜1.0）
+		ClipEventId eventId{};			///< イベントID
 	};
 
 	/** @class ClipEventTable
@@ -97,7 +97,7 @@ namespace Graphics::Import
 	{
 	public:
 		/** @brief イベントを登録する
-		 *  @param _time イベント発生時間（秒）
+		 *  @param _time イベント発生位置（0.0〜1.0）
 		 *  @param _id 登録するイベントID
 		 */
 		void AddEvent(float _time, ClipEventId _id)
@@ -131,6 +131,8 @@ namespace Graphics::Import
 	struct AnimationClip
 	{
 		std::string name{};							///< クリップ名（デバッグ用）
+		std::string keyName{};						///< クリップキー名
+
 		double durationTicks = 0.0;					///< Bake時に「全キー最大時刻」で確定
 		double ticksPerSecond = 0.0;				///< 0にならないようインポータで補正
 		std::vector<NodeTrack> tracks{};			///< ノードトラック配列

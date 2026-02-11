@@ -369,10 +369,10 @@
     <ClInclude Include="Code\Include\Framework\Core\ITimeProvider.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="Code\Include\Game\Entities\AttackComponent.h">
-      <Filter>ヘッダー ファイル\Game\Entities</Filter>
+    <ClInclude Include="Code\Include\Framework\Graphics\ClipEventWatcher.h">
+      <Filter>ヘッダー ファイル\Framework</Filter>
     </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Event\ClipEventReader.h">
+    <ClInclude Include="Code\Include\Game\Entities\AttackComponent.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
@@ -599,10 +599,10 @@
     <ClCompile Include="Code\Source\Game\Entities\DodgeComponent.cpp">
       <Filter>ソース ファイル\Game\Entities</Filter>
     </ClCompile>
-    <ClCompile Include="Code\Source\Game\Entities\AttackComponent.cpp">
-      <Filter>ソース ファイル\Game\Entities</Filter>
+    <ClCompile Include="Code\Source\Framework\Graphics\ClipEventWatcher.cpp">
+      <Filter>ソース ファイル\Framework\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Code\Source\Framework\Event\ClipEventReader.cpp">
+    <ClCompile Include="Code\Source\Game\Entities\AttackComponent.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

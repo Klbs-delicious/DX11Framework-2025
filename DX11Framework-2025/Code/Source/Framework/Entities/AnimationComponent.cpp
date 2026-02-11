@@ -193,6 +193,24 @@ void AnimationComponent::Restart()
 	}
 }
 
+float AnimationComponent::GetNormalizedTime() const
+{
+	if (this->animator)
+	{
+		return this->animator->GetNormalizedTime();
+	}
+	return 0.0f;
+}
+
+Graphics::Import::AnimationClip* AnimationComponent::GetCurrentClip() const
+{
+	if (this->animator)
+	{
+		return this->animator->GetCurrentClip();
+	}
+	return nullptr;
+}
+
 void AnimationComponent::UpdateBoneBufferFromPose()
 {
 	if (!this->skeletonCache)

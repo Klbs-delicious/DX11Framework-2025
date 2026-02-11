@@ -73,6 +73,12 @@ void ModelTest::SetupObjects()
 	auto& animationClipManager = ResourceHub::Get<AnimationClipManager>();
 
 	//--------------------------------------------------------------
+	// モデルデータの取得
+	//--------------------------------------------------------------
+	modelManager.Register("Player");
+	auto modelData = modelManager.Get("Player");
+
+	//--------------------------------------------------------------
 	// アニメーションクリップの登録
 	//--------------------------------------------------------------
 	//animationClipManager.Register("Walk");
@@ -126,10 +132,6 @@ void ModelTest::SetupObjects()
 	// 時間制御グループオブジェクトを生成する
 	auto timeScaleGroup = this->gameObjectManager.Instantiate("TimeScaleGroup");
 	auto timeGroup = timeScaleGroup->AddComponent<TimeScaleGroup>();
-	
-	// モデルデータの取得
-	modelManager.Register("Player");
-	auto modelData = modelManager.Get("Player");
 
 	auto player = this->gameObjectManager.Instantiate("Player", GameTags::Tag::Player);
 	player->transform->SetLocalPosition(DX::Vector3(0.0f, -10.0f, 0.0f));
@@ -153,7 +155,6 @@ void ModelTest::SetupObjects()
 		TestDodge::TestPlayerAnimState::Idle);
 	animComp->SetAnimator(std::move(playerAnimator));
 
-	clip = animationClipManager.Get("Dodge");
 	player->AddComponent<SkinnedMeshRenderer>();
 	player->AddComponent<TestDodge>();
 

@@ -58,15 +58,21 @@ public:
 	 */
 	void AddClipInfo(const std::string& _key, const std::string& _filename);
 
-	/** @brief すべて破棄する
-	 */
+	/// @brief 全クリップをクリアする
 	void Clear();
+
+	/** @brief クリップにイベントテーブルを構築する
+	 *  @param _key クリップキー
+	 *  @param _events イベント定義配列
+	 */
+	void BuildEventTable(Graphics::Import::AnimationClip& _clip, const std::vector<Graphics::Import::ClipEventDef>& _defs);
 
 private:
 	Graphics::Import::AnimationImporter importer;
 
-	std::unordered_map<std::string, std::unique_ptr<Graphics::Import::AnimationClip>> clipMap; ///< クリップ本体
-	std::unordered_map<std::string, std::string> clipInfoMap;                                  ///< key -> filename
+	std::unordered_map<std::string, std::unique_ptr<Graphics::Import::AnimationClip>> clipMap;	///< クリップ本体
+	std::unordered_map<std::string, std::string> clipInfoMap;									///< key -> filename
+	std::unordered_map<std::string, std::vector<Graphics::Import::ClipEventDef>> eventDefMap;	///< key -> events
 
 	Graphics::Import::AnimationClip* defaultClip = nullptr;                                     ///< デフォルト
 };

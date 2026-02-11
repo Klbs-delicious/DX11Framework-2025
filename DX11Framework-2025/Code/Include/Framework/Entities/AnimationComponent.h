@@ -33,7 +33,7 @@ class IAnimator;
  *  @brief 固定更新フェーズでボーン行列を更新し、GPUへ送るコンポーネント
  *  @details 行ベクトル（mul(v, M)）で計算し、GPUへ送る直前に転置してVSに合わせる
  */
-class AnimationComponent : public Component, public IFixedUpdatable
+class AnimationComponent : public Component, public IUpdatable
 {
 public:
 	/// @brief ボーン行列用定数バッファ
@@ -59,10 +59,10 @@ public:
 	/// @brief 終了処理
 	void Dispose() override;
 
-	/** @brief 固定更新処理
+	/** @brief 更新処理
 	 *  @param _deltaTime 前フレームからの経過時間（秒）
 	 */
-	void FixedUpdate(float _deltaTime) override;
+	void Update(float _deltaTime) override;
 
 	/** @brief ボーン行列用定数バッファをバインドする
 	 *  @param _context デバイスコンテキスト

@@ -9,6 +9,7 @@
 #include "Include/Framework/Graphics/AnimationClipManager.h"
 
 #include <iostream>
+#include <algorithm>
 
 //-----------------------------------------------------------------------------
 // AnimationClipManager class
@@ -17,7 +18,9 @@
 AnimationClipManager::AnimationClipManager()
 	: defaultClip(nullptr)
 {
-	// クリップ情報の事前登録（必要に応じて追加する）
+	//---------------------------------------------------------
+	// クリップ情報の事前登録
+	//---------------------------------------------------------
 	this->AddClipInfo("Walk", "Assets/Animations/Wheelbarrow Walk Turn.fbx");
 	this->AddClipInfo("Punch", "Assets/Animations/Zombie Punching.fbx");
 	this->AddClipInfo("Run", "Assets/Animations/Fast Run.fbx");
@@ -27,6 +30,17 @@ AnimationClipManager::AnimationClipManager()
 	this->AddClipInfo("Idle", "Assets/Animations/Idle.fbx");
 	this->AddClipInfo("HeadHit", "Assets/Animations/Head Hit.fbx");
 	this->AddClipInfo("Dodge", "Assets/Animations/Dodging Right.fbx");
+
+	//---------------------------------------------------------
+	// イベントテーブル構築
+	//---------------------------------------------------------
+	this->eventDefMap.emplace(
+		"Punch",
+		std::vector<Graphics::Import::ClipEventDef>
+	{
+		{ 0.32f, Graphics::Import::ClipEventId::HitOn },
+		{ 0.36f, Graphics::Import::ClipEventId::HitOff }
+	});
 }
 
 AnimationClipManager::~AnimationClipManager()
@@ -62,12 +76,21 @@ Graphics::Import::AnimationClip* AnimationClipManager::Register(const std::strin
 	// 読み込み
 	auto clip = std::make_unique<Graphics::Import::AnimationClip>();
 
-	Graphics::Import::AnimationImporter importer;
-	if (!importer.LoadSingleClip(filename, *clip))
+	// メンバ importer を使う（ローカル生成はしない）
+	if (!this->importer.LoadSingleClip(filename, *clip))
 	{
 		std::cerr << "[Error] AnimationClipManager::Register: Import failed: " << _key
 			<< " (" << filename << ")" << std::endl;
 		return nullptr;
+	}
+
+	// ロード直後にイベントテーブルを適用（定義があれば）
+	{
+		auto defIt = this->eventDefMap.find(_key);
+		if (defIt != this->eventDefMap.end())
+		{
+			this->BuildEventTable(*clip, defIt->second);
+		}
 	}
 
 	Graphics::Import::AnimationClip* clipRaw = clip.get();
@@ -135,4 +158,30 @@ void AnimationClipManager::Clear()
 {
 	this->clipMap.clear();
 	this->defaultClip = nullptr;
+}
+
+//-----------------------------------------------------------------------------
+// AnimationClipManager : BuildEventTable
+//-----------------------------------------------------------------------------
+
+void AnimationClipManager::BuildEventTable(
+	Graphics::Import::AnimationClip& _clip,
+	const std::vector<Graphics::Import::ClipEventDef>& _defs)
+{
+	auto table = std::make_unique<Graphics::Import::ClipEventTable>();
+
+	// クリップの長さを秒に変換する
+	const double tps = (_clip.ticksPerSecond > 0.0) ? _clip.ticksPerSecond : 1.0;
+	const float durationSec = static_cast<float>(_clip.durationTicks / tps);
+
+	for (const auto& def : _defs)
+	{
+		const float normalizedTime =
+			std::clamp(def.normalizedTime, 0.0f, 1.0f);
+
+		const float timeSec = normalizedTime * durationSec;
+		table->AddEvent(timeSec, def.eventId);
+	}
+
+	_clip.SetEventTable(std::move(table));
 }

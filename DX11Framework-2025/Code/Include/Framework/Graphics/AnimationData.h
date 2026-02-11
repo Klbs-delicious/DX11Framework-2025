@@ -10,6 +10,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
 //-----------------------------------------------------------------------------
 // Namespace : Graphics::Import
@@ -57,16 +58,82 @@ namespace Graphics::Import
 		bool hasScale = false;       ///< Bake時に確定
 	};
 
+	/** @enum ClipEventId
+	 *  @brief アニメーションクリップのイベントID
+	 */
+	enum class ClipEventId
+	{
+		// 基本イベント
+		Start,
+		End,
+
+		// ヒットイベント
+		HitOn,
+		HitOff,
+	};
+
+	/** @struct ClipEvent
+	 *  @brief アニメーションクリップのイベント情報
+	 */
+	struct ClipEventDef
+	{
+		float normalizedTime = 0.0f;	///< イベント発生位置（0.0〜1.0）
+		ClipEventId eventId{};			///< イベントID
+	};
+
+	/** @struct ClipEvent
+	 *  @brief アニメーションクリップのイベント情報
+	 */
+	struct ClipEvent
+	{
+		float timeSec = 0.0f;         ///< イベント発生時間（秒）
+		ClipEventId eventId{};        ///< イベントID
+	};
+
+	/** @class ClipEventTable
+	 *  @brief アニメーションクリップのイベントテーブル
+	 */
+	class ClipEventTable
+	{
+	public:
+		/** @brief イベントを登録する
+		 *  @param _time イベント発生時間（秒）
+		 *  @param _id 登録するイベントID
+		 */
+		void AddEvent(float _time, ClipEventId _id)
+		{
+			this->events.push_back({ _time, _id });
+		}
+
+		/** @brief イベントを登録する
+		 *  @param _event 登録するイベント
+		 */
+		void AddEvent(const ClipEvent& _event)
+		{
+			this->events.push_back(_event);
+		}
+
+		/** @brief 登録されているイベント配列を取得する
+		 *  @return イベント配列への参照
+		 */
+		const std::vector<ClipEvent>& GetEvents() const
+		{
+			return this->events;
+		}
+
+	private:
+		std::vector<ClipEvent> events{};	///< イベント配列
+	};
+
 	/** @struct AnimationClip
 	 *  @brief アニメーションクリップデータ
 	 */
 	struct AnimationClip
 	{
-		std::string name{};
-		double durationTicks = 0.0;     ///< Bake時に「全キー最大時刻」で確定
-		double ticksPerSecond = 0.0;    ///< 0にならないようインポータで補正
-
-		std::vector<NodeTrack> tracks{};
+		std::string name{};							///< クリップ名（デバッグ用）
+		double durationTicks = 0.0;					///< Bake時に「全キー最大時刻」で確定
+		double ticksPerSecond = 0.0;				///< 0にならないようインポータで補正
+		std::vector<NodeTrack> tracks{};			///< ノードトラック配列
 
 		/** @brief ノード index を焼き込む
 		 *  @param _skeletonCache
@@ -76,10 +143,21 @@ namespace Graphics::Import
 		/** @brief 焼き込み時の SkeletonCache ID を取得する
 		 *  @return SkeletonCache ID
 		 */
-		uint64_t GetBakedSkeletonID() const { return bakesSkeletonID; }
+		uint64_t GetBakedSkeletonID() const { return this->bakesSkeletonID; }
+
+		/** @brief クリップのイベントテーブルを取得する
+		 *  @return クリップのイベントテーブル（無ければ nullptr）
+		 */
+		const ClipEventTable* GetEventTable() const { return this->eventTable.get(); }
+
+		/** @brief クリップのイベントテーブルを設定する
+		 *  @param _table クリップのイベントテーブル
+		 */
+		void SetEventTable(std::unique_ptr<ClipEventTable> _table) { this->eventTable = std::move(_table); }
 
 	private:
-		uint64_t bakesSkeletonID = 0;	///< 焼き込み時の SkeletonCache ID
+		uint64_t bakesSkeletonID = 0;				///< 焼き込み時の SkeletonCache ID
+		std::unique_ptr<ClipEventTable> eventTable;	///< クリップのイベントテーブル
 	};
 
 } // namespace Graphics::Import

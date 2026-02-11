@@ -96,25 +96,25 @@ void AnimationComponent::SetAnimator(std::unique_ptr<IAnimator> _animator)
 {
 	this->animator = std::move(_animator);
 
-	// Animatorがある場合、Poseの更新は FixedUpdate で行う
+	// Animatorがある場合、Poseの更新は Update で行う
 	// ここでは何もしない（SetSkeletonCache が先/後 どちらでも安全にしたい）
 }
 
-void AnimationComponent::FixedUpdate(float _deltaTime)
+void AnimationComponent::Update(float _deltaTime)
 {
 	if (!this->isSkeletonCached)
 	{
-		OutputDebugStringA("[AnimComp] FixedUpdate skip: isSkeletonCached=false\n");
+		OutputDebugStringA("[AnimComp] Update skip: isSkeletonCached=false\n");
 		return;
 	}
 	if (!this->skeletonCache)
 	{
-		OutputDebugStringA("[AnimComp] FixedUpdate skip: skeletonCache=null\n");
+		OutputDebugStringA("[AnimComp] Update skip: skeletonCache=null\n");
 		return;
 	}
 	if (this->skeletonCache->nodes.empty())
 	{
-		OutputDebugStringA("[AnimComp] FixedUpdate skip: nodes empty\n");
+		OutputDebugStringA("[AnimComp] Update skip: nodes empty\n");
 		return;
 	}
 

@@ -91,10 +91,10 @@
     <Filter Include="ヘッダー ファイル\Framework\Scenes">
       <UniqueIdentifier>{d45f5e43-634d-40c5-9fe4-3c13e58637db}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ソース ファイル\Framework\Physics\Game">
+    <Filter Include="ソース ファイル\Game">
       <UniqueIdentifier>{0b868e0f-2d9f-4c4c-8316-31eb8151495f}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ソース ファイル\Framework\Physics\Game\Entities">
+    <Filter Include="ソース ファイル\Game\Entities">
       <UniqueIdentifier>{41ffed4d-7ec4-497c-82c0-17396bc8f31e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -369,6 +369,12 @@
     <ClInclude Include="Code\Include\Framework\Core\ITimeProvider.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Include\Game\Entities\AttackComponent.h">
+      <Filter>ヘッダー ファイル\Game\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Event\ClipEventReader.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Code\Source\Framework\main.cpp">
@@ -492,13 +498,13 @@
       <Filter>ソース ファイル\Framework\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Game\Entities\CharacterController.cpp">
-      <Filter>ソース ファイル\Framework\Physics\Game\Entities</Filter>
+      <Filter>ソース ファイル\Game\Entities</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Game\Entities\FollowCamera.cpp">
-      <Filter>ソース ファイル\Framework\Physics\Game\Entities</Filter>
+      <Filter>ソース ファイル\Game\Entities</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Game\Entities\CameraLookComponent.cpp">
-      <Filter>ソース ファイル\Framework\Physics\Game\Entities</Filter>
+      <Filter>ソース ファイル\Game\Entities</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Core\TimeSystem.cpp">
       <Filter>ソース ファイル\Framework\Core</Filter>
@@ -573,7 +579,7 @@
       <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Game\Entities\FogComponent.cpp">
-      <Filter>ソース ファイル\Framework\Physics\Game\Entities</Filter>
+      <Filter>ソース ファイル\Game\Entities</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Tests\SkinningDebug.cpp">
       <Filter>ソース ファイル\Framework\Graphics</Filter>
@@ -582,7 +588,7 @@
       <Filter>ソース ファイル\Scenes</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Game\Entities\DebugFreeMoveComponent.cpp">
-      <Filter>ソース ファイル\Framework\Physics\Game\Entities</Filter>
+      <Filter>ソース ファイル\Game\Entities</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Tests\TestEnemy.cpp">
       <Filter>ソース ファイル\Test</Filter>
@@ -591,6 +597,12 @@
       <Filter>ソース ファイル\Framework\Physics</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Game\Entities\DodgeComponent.cpp">
+      <Filter>ソース ファイル\Game\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Game\Entities\AttackComponent.cpp">
+      <Filter>ソース ファイル\Game\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Event\ClipEventReader.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

@@ -23,9 +23,10 @@ DodgeComponent::DodgeComponent(GameObject* _owner, bool _isActive) :
 	Component(_owner, _isActive),
 	isDodging(false),
 	dodgeTimer(0.0f),
-	dodgeDuration(0.35f),
 	dodgeTimingRemaining(0.0f),
-	dodgeTimingDuration(0.15f),
+	defaultDodgeDuration(0.35f),
+	currentDodgeDuration(0.35f),
+	justDodgeWindowDuration(0.15f),
 	timeSystem(SystemLocator::Get<ITimeProvider>())
 {
 }
@@ -36,6 +37,8 @@ void DodgeComponent::Initialize()
 	this->isDodging = false;
 	this->dodgeTimer = 0.0f;
 	this->dodgeTimingRemaining = 0.0f;
+
+	this->currentDodgeDuration = this->defaultDodgeDuration;
 }
 
 /// @brief 解放処理
@@ -44,6 +47,8 @@ void DodgeComponent::Dispose()
 	this->isDodging = false;
 	this->dodgeTimer = 0.0f;
 	this->dodgeTimingRemaining = 0.0f;
+
+	this->currentDodgeDuration = this->defaultDodgeDuration;
 }
 
 /** @brief 更新処理
@@ -53,12 +58,15 @@ void DodgeComponent::Update(float _deltaTime)
 {
 	(void)_deltaTime;
 
-	if (!this->isDodging){ return; }
+	if (!this->isDodging)
+	{
+		return;
+	}
 
 	const float rawDelta = this->timeSystem.RawDelta();
 
 	//--------------------------------------------------------------------------
-	// 判定猶予ウィンドウの更新
+	// ジャスト回避判定猶予ウィンドウの更新（rawDelta で減算）
 	//--------------------------------------------------------------------------
 	if (this->dodgeTimingRemaining > 0.0f)
 	{
@@ -70,10 +78,10 @@ void DodgeComponent::Update(float _deltaTime)
 	}
 
 	//--------------------------------------------------------------------------
-	// 回避タイマーの更新
+	// 回避タイマーの更新（rawDelta で進行）
 	//--------------------------------------------------------------------------
 	this->dodgeTimer += rawDelta;
-	if (this->dodgeTimer >= this->dodgeDuration)
+	if (this->dodgeTimer >= this->currentDodgeDuration)
 	{
 		this->EndDodge();
 	}
@@ -84,13 +92,19 @@ void DodgeComponent::Update(float _deltaTime)
  */
 void DodgeComponent::StartDodge(float _duration)
 {
-	const float duration = (_duration > 0.0f) ? _duration : this->dodgeDuration;
-
 	this->isDodging = true;
 	this->dodgeTimer = 0.0f;
-	this->dodgeDuration = duration;
 
-	this->dodgeTimingRemaining = this->dodgeTimingDuration;
+	if (_duration > 0.0f)
+	{
+		this->currentDodgeDuration = _duration;
+	}
+	else
+	{
+		this->currentDodgeDuration = this->defaultDodgeDuration;
+	}
+
+	this->dodgeTimingRemaining = this->justDodgeWindowDuration;
 }
 
 /// @brief 回避状態を終了する
@@ -99,4 +113,6 @@ void DodgeComponent::EndDodge()
 	this->isDodging = false;
 	this->dodgeTimer = 0.0f;
 	this->dodgeTimingRemaining = 0.0f;
+
+	this->currentDodgeDuration = this->defaultDodgeDuration;
 }

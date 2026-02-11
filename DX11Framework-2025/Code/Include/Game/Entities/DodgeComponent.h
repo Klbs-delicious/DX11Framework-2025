@@ -4,9 +4,9 @@
  */
 #pragma once
 
-//-----------------------------------------------------------------------------
-// Includes
-//-----------------------------------------------------------------------------
+ //-----------------------------------------------------------------------------
+ // Includes
+ //-----------------------------------------------------------------------------
 #include "Include/Framework/Entities/Component.h"
 #include "Include/Framework/Entities/PhaseInterfaces.h"
 
@@ -47,15 +47,15 @@ public:
 	 */
 	void StartDodge(float _duration = 0.0f);
 
-	///** @brief 回避状態を終了する
+	/// @brief 回避状態を終了する
 	void EndDodge();
 
 	/** @brief 回避中かどうかを取得する
 	 *  @return bool 回避中なら true
 	 */
 	bool IsDodging() const { return this->isDodging; }
-	
-	/** @brief 判定猶予ウィンドウが有効かどうかを取得する
+
+	/** @brief ジャスト回避判定猶予が有効かどうかを取得する
 	 *  @return bool 有効なら true
 	 */
 	bool IsDodgeTimingValid() const { return this->dodgeTimingRemaining > 0.0f; }
@@ -63,10 +63,12 @@ public:
 private:
 	bool isDodging;					///< 回避中か
 	float dodgeTimer;				///< 回避経過時間
-	float dodgeDuration;			///< 回避持続時間
 
-	float dodgeTimingRemaining;		///< 判定猶予の残り時間
-	float dodgeTimingDuration;		///< 判定猶予の長さ（0.15）
+	float dodgeTimingRemaining;		///< ジャスト回避判定猶予の残り時間
+
+	float defaultDodgeDuration;		///< 回避全体の標準持続時間
+	float currentDodgeDuration;		///< 今回の回避に使用する持続時間
+	float justDodgeWindowDuration;	///< ジャスト回避判定猶予の持続時間（0.15）
 
 	ITimeProvider& timeSystem;		///< 時間情報提供システム
 };

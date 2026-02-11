@@ -69,11 +69,11 @@ void TestDodge::Update(float _deltaTime)
 			// 回避の持続（例：0.35秒）
 			this->dodgeComponent->StartDodge(0.35f);
 
-			std::cout
-				<< "[TestDodge] Dodge Triggered"
-				<< " IsDodging=" << (this->dodgeComponent->IsDodging() ? "true" : "false")
-				<< " TimingValid=" << (this->dodgeComponent->IsDodgeTimingValid() ? "true" : "false")
-				<< std::endl;
+			//std::cout
+			//	<< "[TestDodge] Dodge Triggered"
+			//	<< " IsDodging=" << (this->dodgeComponent->IsDodging() ? "true" : "false")
+			//	<< " TimingValid=" << (this->dodgeComponent->IsDodgeTimingValid() ? "true" : "false")
+			//	<< std::endl;
 		}
 
 		// アニメは今のままでOK（見た目確認用）

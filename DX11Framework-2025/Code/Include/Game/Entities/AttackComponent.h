@@ -10,9 +10,16 @@
 #include "Include/Framework/Entities/Component.h"
 #include "Include/Framework/Entities/PhaseInterfaces.h"
 #include "Include/Framework/Entities/AnimationComponent.h"
+#include "Include/Framework/Entities/Collider3DComponent.h"
+#include "Include/Framework/Entities/TimeScaleGroup.h"
 
 #include "Include/Framework/Graphics/AnimationClipManager.h"
 #include "Include/Framework/Graphics/ClipEventWatcher.h"
+
+#include "Include/Game/Entities/DodgeComponent.h"
+
+#include "Include/Framework/Core/ITimeProvider.h"
+#include "Include/Framework/Core/SystemLocator.h"
 
 #include <string>
 #include <vector>
@@ -43,7 +50,7 @@ struct AttackDef
 /** @class  AttackComponent
  *  @brief  攻撃中かどうかの状態と簡易的な攻撃時間管理を行う
  */
-class AttackComponent : public Component, public IUpdatable
+class AttackComponent : public Component, public IUpdatable, public BaseColliderDispatcher3D
 {
 public:
 	/** @brief コンストラクタ
@@ -77,6 +84,10 @@ public:
 	/// @brief 現在攻撃中か
 	bool IsAttacking() const { return isAttacking; }
 
+	void OnTriggerEnter(Framework::Physics::Collider3DComponent* _self, Framework::Physics::Collider3DComponent* _other)override;
+
+	void OnTriggerExit(Framework::Physics::Collider3DComponent* _self, Framework::Physics::Collider3DComponent* _other)override;
+
 private:
 	AnimationClipManager* animClipManager;		///< アニメーションクリップ管理参照
 	AnimationComponent* animationComponent;		///< アニメーションコンポーネント参照
@@ -85,4 +96,15 @@ private:
 	AttackDef currentAttackDef;								 ///< 現在の攻撃定義
 	Graphics::Import::ClipEventWatcher clipEventWatcher;	 ///< 攻撃のクリップイベント監視を行う
 	std::vector<Graphics::Import::ClipEventId> passedEvents; ///< 通過したイベントID一時保管用
+
+	GameObject* attackObj;			///< 攻撃を受けるオブジェクト
+	DodgeComponent* dodgeComponent;	///< 攻撃対象の回避コンポーネント参照
+
+	TimeScaleGroup* timeScaleGroup = nullptr;	///< 時間スケールグループ参照
+
+	float slowDuration = 1.0f;					///< スロー持続（秒・raw）
+	float slowRemainingRawSec = 0.0f;			///< スロー残り時間（秒・raw）
+	bool isSlowing = false;						///< 現在スロー中か
+
+	ITimeProvider* timeProvider = nullptr;		///< rawDelta取得元（Initializeで取得）
 };

@@ -93,19 +93,19 @@ void ModelTest::SetupObjects()
 	// 状態テーブルの設定（テスト的にシーン側で生成しっぱなしにする）
 	//---------------------------------------------------------------
 	Graphics::Animation::StateTable<TestEnemy::EnemyAnimState>* enemyStateTable = new Graphics::Animation::StateTable<TestEnemy::EnemyAnimState>();
-	Graphics::Animation::StateTable<TestDodge::TestPlayerAnimState>* playerStateTable = new Graphics::Animation::StateTable<TestDodge::TestPlayerAnimState>();
+	Graphics::Animation::StateTable<CharacterController::PlayerAnimState>* playerStateTable = new Graphics::Animation::StateTable<CharacterController::PlayerAnimState>();
 
 	auto clip = animationClipManager.Get("Punch");
 	enemyStateTable->Set(TestEnemy::EnemyAnimState::Idle, { clip,1.0f, true, 0.2f });
 
 	clip = animationClipManager.Get("Idle");
-	playerStateTable->Set(TestDodge::TestPlayerAnimState::Idle, { clip,1.0f, true, 0.2f });
+	playerStateTable->Set(CharacterController::PlayerAnimState::Idle, { clip,1.0f, true, 0.2f });
 
 	clip = animationClipManager.Get("Dodge");
-	playerStateTable->Set(TestDodge::TestPlayerAnimState::Dodging, { clip,1.0f, true, 0.2f });
+	playerStateTable->Set(CharacterController::PlayerAnimState::Dodging, { clip,1.0f, true, 0.2f });
 
 	clip = animationClipManager.Get("Jump");
-	playerStateTable->Set(TestDodge::TestPlayerAnimState::Jumping, { clip,1.0f, true, 0.2f });
+	playerStateTable->Set(CharacterController::PlayerAnimState::Jumping, { clip,1.0f, true, 0.2f });
 
 	//--------------------------------------------------------------
 	// カメラの生成
@@ -130,67 +130,85 @@ void ModelTest::SetupObjects()
 	//--------------------------------------------------------------
 
 	// 時間制御グループオブジェクトを生成する
-	auto timeScaleGroup = this->gameObjectManager.Instantiate("TimeScaleGroup");
-	auto timeGroup = timeScaleGroup->AddComponent<TimeScaleGroup>();
+	//auto timeScaleGroupObject = this->gameObjectManager.Instantiate("TimeScaleGroup");
+	//auto timeGroup = timeScaleGroupObject->AddComponent<TimeScaleGroup>();
 
+	// プレイヤーと敵のオブジェクトを生成する
 	auto player = this->gameObjectManager.Instantiate("Player", GameTags::Tag::Player);
+	auto enemy = this->gameObjectManager.Instantiate("Enemy", GameTags::Tag::Enemy);
+	auto timeGroup = enemy->AddComponent<TimeScaleGroup>();
+
+	// プレイヤー
 	player->transform->SetLocalPosition(DX::Vector3(0.0f, -10.0f, 0.0f));
 	player->transform->SetLocalScale(DX::Vector3(0.1f, 0.1f, 0.1f));
 
 	auto timeScale = player->AddComponent<TimeScaleTestComponent>();
 	timeScale->SetTimeScaleGroup(timeGroup);
-	timeGroup->AddGroup("PlayerGroup", player->GetComponent<TimeScaleComponent>());
+	timeGroup->AddGroup("DodgeSlow", player->GetComponent<TimeScaleComponent>());
 
-	auto meshComp = player->AddComponent<MeshComponent>();
-	meshComp->SetMesh(modelData->mesh);
-	auto materialComp = player->AddComponent<MaterialComponent>();
-	materialComp->SetMaterial(modelData->material);
-	auto animComp = player->AddComponent<AnimationComponent>();
-	animComp->SetSkeletonCache(modelData->GetSkeletonCache());
+	auto meshComponent = player->AddComponent<MeshComponent>();
+	meshComponent->SetMesh(modelData->mesh);
+	auto materialComponent = player->AddComponent<MaterialComponent>();
+	materialComponent->SetMaterial(modelData->material);
+	auto animationComponent = player->AddComponent<AnimationComponent>();
+	animationComponent->SetSkeletonCache(modelData->GetSkeletonCache());
 	// アニメーターの設定
-	std::unique_ptr<Animator<TestDodge::TestPlayerAnimState>> playerAnimator = std::make_unique<Animator<TestDodge::TestPlayerAnimState>>();
+	std::unique_ptr<Animator<CharacterController::PlayerAnimState>> playerAnimator = std::make_unique<Animator<CharacterController::PlayerAnimState>>();
 	playerAnimator->Initialize(
 		modelData->GetSkeletonCache(),
 		playerStateTable,
-		TestDodge::TestPlayerAnimState::Idle);
-	animComp->SetAnimator(std::move(playerAnimator));
+		CharacterController::PlayerAnimState::Idle);
+	animationComponent->SetAnimator(std::move(playerAnimator));
 
 	player->AddComponent<SkinnedMeshRenderer>();
 	player->AddComponent<TestDodge>();
 
 	// キャラクターコントローラーを追加する
-	auto charaController = player->AddComponent<CharacterController>();
-	auto coll3D = player->AddComponent<Framework::Physics::Collider3DComponent>();
-	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
-	auto rigidbody3D = player->AddComponent<Framework::Physics::Rigidbody3D>();
-	auto dodgeComp = player->AddComponent<DodgeComponent>();
+	auto characterController = player->AddComponent<CharacterController>();
+	player->AddComponent<DodgeComponent>();
+
+	auto collider = player->AddComponent<Framework::Physics::Collider3DComponent>();
+	collider->SetShape(Framework::Physics::ColliderShapeType::Capsule);
+	collider->SetCapsule(10.0f, 16.0f);
+	collider->SetisTrigger(true);
+
+	collider = player->AddComponent<Framework::Physics::Collider3DComponent>();
+	collider->SetShape(Framework::Physics::ColliderShapeType::Capsule);
+	collider->SetCapsule(10.0f, 16.0f);
+
+	auto rigidbody = player->AddComponent<Framework::Physics::Rigidbody3D>();
+	rigidbody->SetObjectLayer(Framework::Physics::PhysicsLayer::Enemy);
+	rigidbody->SetMotionTypeKinematic();
+	rigidbody->SetUseGravity(true);
+
+	auto colliderDebugRenderer = player->AddComponent<ColliderDebugRenderer>();
 
 	// カメラピボットオブジェクトを生成する
-	auto pivotObj = gameObjectManager.Instantiate("CameraPivot");
-	meshComp = pivotObj->AddComponent<MeshComponent>();
-	meshComp->SetMesh(meshManager.Get("Box"));
+	auto cameraPivot = gameObjectManager.Instantiate("CameraPivot");
+	meshComponent = cameraPivot->AddComponent<MeshComponent>();
+	meshComponent->SetMesh(meshManager.Get("Box"));
 
 	//// カメラ注視コンポーネントを追加する
-	//auto cameraLook = pivotObj->AddComponent<CameraLookComponent>();
+	//auto cameraLook = cameraPivot->AddComponent<CameraLookComponent>();
 	//cameraLook->SetTarget(player->transform);
 	//cameraLook->SetOffset(DX::Vector3(12.0f, 6.0f, -10.0f)); // 少し右上にオフセット
 
 	//// カメラ追従コンポーネントを追加する
 	//auto followCamera = camera3D->AddComponent<FollowCamera>();
 	//followCamera->SetTarget(player->transform);
-	//followCamera->SetPivot(pivotObj->transform);
+	//followCamera->SetPivot(cameraPivot->transform);
 	//followCamera->SetSmoothSpeed(5.0f);
 
 	//敵
-	auto enemy = this->gameObjectManager.Instantiate("Enemy", GameTags::Tag::Enemy);
 	enemy->transform->SetLocalPosition(DX::Vector3(10.0f, -10.0f, 0.0f));
 	enemy->transform->SetLocalScale(DX::Vector3(0.1f, 0.1f, 0.1f));
-	meshComp = enemy->AddComponent<MeshComponent>();
-	meshComp->SetMesh(modelData->mesh);
-	materialComp = enemy->AddComponent<MaterialComponent>();
-	materialComp->SetMaterial(modelData->material);
-	animComp = enemy->AddComponent<AnimationComponent>();
-	animComp->SetSkeletonCache(modelData->GetSkeletonCache());
+	meshComponent = enemy->AddComponent<MeshComponent>();
+	meshComponent->SetMesh(modelData->mesh);
+	materialComponent = enemy->AddComponent<MaterialComponent>();
+	materialComponent->SetMaterial(modelData->material);
+	animationComponent = enemy->AddComponent<AnimationComponent>();
+	animationComponent->SetSkeletonCache(modelData->GetSkeletonCache());
+	timeGroup->AddGroup("DodgeSlow", enemy->GetComponent<TimeScaleComponent>());
 
 	// アニメーターの設定
 	std::unique_ptr<Animator<TestEnemy::EnemyAnimState>> enemyAnimator = std::make_unique<Animator<TestEnemy::EnemyAnimState>>();
@@ -198,26 +216,83 @@ void ModelTest::SetupObjects()
 		modelData->GetSkeletonCache(),
 		enemyStateTable,
 		TestEnemy::EnemyAnimState::Idle);
-	animComp->SetAnimator(std::move(enemyAnimator));
+	animationComponent->SetAnimator(std::move(enemyAnimator));
 
 	enemy->AddComponent<SkinnedMeshRenderer>();
 
 	// 敵のコライダー・リジッドボディ
-	coll3D = enemy->AddComponent<Framework::Physics::Collider3DComponent>();
-	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
-	rigidbody3D = enemy->AddComponent<Framework::Physics::Rigidbody3D>();
+	auto enemyTriggerCollider = enemy->AddComponent<Framework::Physics::Collider3DComponent>();
+	enemyTriggerCollider->SetShape(Framework::Physics::ColliderShapeType::Box);
+	enemyTriggerCollider->SetCenterOffset(DX::Vector3(0.0f, 0.0f, -5.0f));
+	enemyTriggerCollider->SetisTrigger(true);
+	enemyTriggerCollider->SetBoxHalfExtent(DX::Vector3(20.0f, 20.0f, 20.0f));
+
+	collider = enemy->AddComponent<Framework::Physics::Collider3DComponent>();
+	collider->SetShape(Framework::Physics::ColliderShapeType::Capsule);
+	collider->SetCapsule(10.0f, 16.0f);
+	colliderDebugRenderer = enemy->AddComponent<ColliderDebugRenderer>();
+
+	rigidbody = enemy->AddComponent<Framework::Physics::Rigidbody3D>();
+	rigidbody->SetMotionTypeKinematic();
+	rigidbody->SetObjectLayer(Framework::Physics::PhysicsLayer::Enemy);
+	rigidbody->SetUseGravity(true);
 
 	enemy->AddComponent<TestEnemy>();
+	enemy->AddComponent<AttackComponent>();
+
+	// 球体オブジェクト
+	auto sphere = this->gameObjectManager.Instantiate("Sphere");
+	sphere->transform->SetLocalPosition(DX::Vector3(0.0f, -10.0f, 10.0f));
+	sphere->transform->SetLocalScale(DX::Vector3(2.0f, 2.0f, 2.0f));
+	meshComponent = sphere->AddComponent<MeshComponent>();
+	meshComponent->SetMesh(meshManager.Get("Sphere"));
+	sphere->AddComponent<MeshRenderer>();
+
+	collider = sphere->AddComponent<Framework::Physics::Collider3DComponent>();
+	collider->SetShape(Framework::Physics::ColliderShapeType::Sphere);
+
+	collider = sphere->AddComponent<Framework::Physics::Collider3DComponent>();
+	collider->SetShape(Framework::Physics::ColliderShapeType::Sphere);
+	collider->SetCenterOffset(DX::Vector3(0.0f, 0.0f, 5.0f));
+	collider->SetisTrigger(true);
+
+	rigidbody = sphere->AddComponent<Framework::Physics::Rigidbody3D>();
+	rigidbody->SetObjectLayer(Framework::Physics::PhysicsLayer::Enemy);
+	rigidbody->SetMotionTypeKinematic();
+	rigidbody->SetUseGravity(true);
+
+	sphere->AddComponent<ColliderDebugRenderer>();
+
+	//// トリガー用球体オブジェクト
+	//auto sphereTrigger = this->gameObjectManager.Instantiate("SphereTrigger");
+	//sphereTrigger->SetParent(player);
+	//collider = sphereTrigger->AddComponent<Framework::Physics::Collider3DComponent>();
+	//collider->SetShape(Framework::Physics::ColliderShapeType::Sphere);
+	//collider->SetCenterOffset(DX::Vector3(0.0f, 0.0f, 5.0f));
+	//collider->SetisTrigger(true);
+
+	////rigidbody = sphereTrigger->AddComponent<Framework::Physics::Rigidbody3D>();
+	////rigidbody->SetObjectLayer(Framework::Physics::PhysicsLayer::Enemy);
+	////sphereTrigger->AddComponent<ColliderDebugRenderer>();
+
+	//rigidbody = sphere->AddComponent<Framework::Physics::Rigidbody3D>();
+	//rigidbody->SetObjectLayer(Framework::Physics::PhysicsLayer::Enemy);
+	//rigidbody->SetMotionTypeKinematic();
+	//rigidbody->SetUseGravity(true);
+	//collider = sphere->AddComponent<Framework::Physics::Collider3DComponent>();
+	//collider->SetShape(Framework::Physics::ColliderShapeType::Sphere);
+	//sphere->AddComponent<ColliderDebugRenderer>();
+
 
 	// 平面オブジェクト
-	auto obj_4 = this->gameObjectManager.Instantiate("obj_4");
-	obj_4->transform->SetLocalPosition(DX::Vector3(0.0f, -20.0f, 0.0f));
-	obj_4->transform->SetLocalScale(DX::Vector3(500.0f, 1.0f, 500.0f));
-	meshComp = obj_4->AddComponent<MeshComponent>();
-	meshComp->SetMesh(meshManager.Get("Plane"));
-	obj_4->AddComponent<MeshRenderer>();
-	coll3D = obj_4->AddComponent<Framework::Physics::Collider3DComponent>();
-	coll3D->SetShape(Framework::Physics::ColliderShapeType::Box);
-	rigidbody3D = obj_4->AddComponent<Framework::Physics::Rigidbody3D>();
-	rigidbody3D->SetMotionTypeStatic();
+	auto ground = this->gameObjectManager.Instantiate("obj_4");
+	ground->transform->SetLocalPosition(DX::Vector3(0.0f, -20.0f, 0.0f));
+	ground->transform->SetLocalScale(DX::Vector3(500.0f, 1.0f, 500.0f));
+	meshComponent = ground->AddComponent<MeshComponent>();
+	meshComponent->SetMesh(meshManager.Get("Plane"));
+	ground->AddComponent<MeshRenderer>();
+	collider = ground->AddComponent<Framework::Physics::Collider3DComponent>();
+	collider->SetShape(Framework::Physics::ColliderShapeType::Box);
+	rigidbody = ground->AddComponent<Framework::Physics::Rigidbody3D>();
+	rigidbody->SetMotionTypeStatic();
 }

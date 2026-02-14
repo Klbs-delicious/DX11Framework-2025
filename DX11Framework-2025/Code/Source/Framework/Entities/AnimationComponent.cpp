@@ -24,7 +24,11 @@ static_assert(ShaderCommon::MaxBones == 128, "HLSL BoneBuffer boneMatrices[128] 
 // AnimationComponent Methods
 //-----------------------------------------------------------------------------
 AnimationComponent::AnimationComponent(GameObject* _owner, bool _isActive)
-	: Component(_owner, _isActive)
+	: Component(_owner, _isActive),
+	boneCB(nullptr),
+	meshComponent(nullptr),
+	skeletonCache(nullptr),
+	isSkeletonCached(false)
 {
 }
 

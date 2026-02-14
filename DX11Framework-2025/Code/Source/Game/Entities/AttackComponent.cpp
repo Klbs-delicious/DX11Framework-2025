@@ -26,27 +26,55 @@ AttackComponent::AttackComponent(GameObject* _owner, bool _isActive) :
 	isAttacking(false),
 	currentAttackDef{},
 	clipEventWatcher{},
-	passedEvents{}
+	passedEvents{},
+	attackObj(nullptr),
+	dodgeComponent(nullptr),
+	timeScaleGroup(nullptr),
+	slowDuration(0.5f),
+	slowRemainingRawSec(0.0f),
+	isSlowing(false),
+	timeProvider(nullptr)
 {
 }
 
 /// @brief 初期化処理
 void AttackComponent::Initialize()
 {
-	// アニメーションコンポーネントを取得
 	this->animationComponent = this->Owner()->GetComponent<AnimationComponent>();
-
-	// アニメーションクリップ管理を取得
-	// Services() の実体が EngineServices を想定（既存運用に合わせる）
 	this->animClipManager = this->Services()->animationClips;
+
+	this->timeScaleGroup = this->Owner()->GetComponent<TimeScaleGroup>();
+
+	// rawDelta を取る
+	this->timeProvider = &SystemLocator::Get<ITimeProvider>();
+
+	this->isAttacking = false;
+	this->isSlowing = false;
+	this->slowRemainingRawSec = 0.0f;
 }
 
 /// @brief 終了処理
 void AttackComponent::Dispose()
 {
+	// スローを終了して復帰（安全側）
+	if (this->timeScaleGroup)
+	{
+		this->timeScaleGroup->SetGroupScale("DodgeSlow", 1.0f);
+	}
+
 	this->animationComponent = nullptr;
 	this->animClipManager = nullptr;
+
+	this->attackObj = nullptr;
+	this->dodgeComponent = nullptr;
+
+	this->timeScaleGroup = nullptr;
+	this->timeProvider = nullptr;
+
 	this->isAttacking = false;
+	this->isSlowing = false;
+	this->slowRemainingRawSec = 0.0f;
+
 	this->passedEvents.clear();
 }
 
@@ -74,9 +102,33 @@ void AttackComponent::EndAttack()
 {
 	this->isAttacking = false;
 
-	// 次回 StartAttack で Reset(now) する前提だが、
 	// 防御的に監視状態を初期化しておく
 	this->clipEventWatcher.Reset(0.0f);
+}
+
+void AttackComponent::OnTriggerEnter(Framework::Physics::Collider3DComponent* _self, Framework::Physics::Collider3DComponent* _other)
+{
+	(void)_self;
+
+	if (!_other) { return; }
+	if (!_other->Owner()) { return; }
+
+	this->attackObj = _other->Owner();
+	this->dodgeComponent = this->attackObj->GetComponent<DodgeComponent>();
+}
+
+void AttackComponent::OnTriggerExit(Framework::Physics::Collider3DComponent* _self, Framework::Physics::Collider3DComponent* _other)
+{
+	(void)_self;
+
+	if (!_other) { return; }
+	if (!_other->Owner()) { return; }
+
+	if (this->attackObj == _other->Owner())
+	{
+		this->attackObj = nullptr;
+		this->dodgeComponent = nullptr;
+	}
 }
 
 /** @brief 毎フレーム更新
@@ -84,54 +136,128 @@ void AttackComponent::EndAttack()
  */
 void AttackComponent::Update(float _deltaTime)
 {
-	if (!this->isAttacking) { return; }
-	if (!this->animationComponent) { return; }
-	if (!this->animClipManager) { return; }
+	(void)_deltaTime;
 
-	this->passedEvents.clear();
-
-	// 現在再生中のクリップを取得（正規化時間と必ず同じ参照元にする）
-	const Graphics::Import::AnimationClip* currentClip = this->animationComponent->GetCurrentClip();
-	if (!currentClip) { return; }
-
-	// 攻撃定義の clipKey と、現在再生中クリップが一致しているかを確認する
-	// ここで一致しない場合に攻撃を即終了させるとクロスフェード等で壊れやすいので、
-	// 「このフレームは監視しない」に留めて watcher を同期する
-	if (currentClip->keyName != this->currentAttackDef.attackClip)
+	//-----------------------------------------------------------------------------
+	// 攻撃処理（攻撃中のみ）
+	// 先に「今フレームの JustSuccess」を確定させてから、
+	// 後段でスロー残り時間を減算する（ログ順も直感通りになる）
+	//-----------------------------------------------------------------------------
+	if (this->isAttacking && this->animationComponent && this->animClipManager)
 	{
-		// 一致しない理由を追えるようにデバッグ出力しておく
-		std::cout << "[AttackComponent] clip mismatch cur=" << currentClip->keyName << " def=" << this->currentAttackDef.attackClip << std::endl;
+		this->passedEvents.clear();
 
-		// 監視状態を現在時間でリセットして同期させる
-		this->clipEventWatcher.Reset(this->animationComponent->GetNormalizedTime());
-		return;
+		const Graphics::Import::AnimationClip* currentClip = this->animationComponent->GetCurrentClip();
+		if (currentClip)
+		{
+			if (currentClip->keyName != this->currentAttackDef.attackClip)
+			{
+				std::cout << "[AttackComponent] clip mismatch cur=" << currentClip->keyName
+					<< " def=" << this->currentAttackDef.attackClip << "\n";
+
+				this->clipEventWatcher.Reset(this->animationComponent->GetNormalizedTime());
+			}
+			else
+			{
+				const Graphics::Import::ClipEventTable* eventTable = currentClip->GetEventTable();
+				const float nowNormalizedTime = this->animationComponent->GetNormalizedTime();
+				this->clipEventWatcher.Update(eventTable, nowNormalizedTime, this->passedEvents);
+
+				for (const auto& eventId : this->passedEvents)
+				{
+					if (eventId != Graphics::Import::ClipEventId::HitOn) { continue; }
+
+					std::cout << "-------------------------------------------------------------------------------\n";
+					std::cout << "[AttackComponent][" << this->Owner()->GetName() << "][" << this << "] "
+						<< "Hit On! Damage: " << this->currentAttackDef.damage << "\n";
+
+					if (!this->attackObj)
+					{
+						std::cout << "[AttackComponent][" << this->Owner()->GetName() << "][" << this << "] "
+							<< "Hit On! Object: (null)\n";
+						continue;
+					}
+
+					std::cout << "[AttackComponent][" << this->Owner()->GetName() << "][" << this << "] "
+						<< "Hit On! Object: " << this->attackObj->GetName() << "\n";
+
+					DodgeComponent* dodge = this->dodgeComponent;
+					if (!dodge)
+					{
+						dodge = this->attackObj->GetComponent<DodgeComponent>();
+						this->dodgeComponent = dodge;
+					}
+
+					if (!dodge)
+					{
+						std::cout << "[AttackComponent][" << this->Owner()->GetName() << "][" << this << "] "
+							<< "Target has no DodgeComponent.\n";
+						continue;
+					}
+
+					const bool isDodging = dodge->IsDodging();
+					const bool timingValid = dodge->IsDodgeTimingValid();
+					const bool just = (isDodging && timingValid);
+
+					std::cout << "[AttackComponent][" << this->Owner()->GetName() << "][" << this << "] "
+						<< "Target has DodgeComponent. IsDodging: " << isDodging << "\n";
+					std::cout << "[AttackComponent][" << this->Owner()->GetName() << "][" << this << "] "
+						<< "Target Dodge Timing Valid: " << timingValid << "\n";
+
+					if (!just) { continue; }
+
+					std::cout << "[AttackComponent][" << this->Owner()->GetName() << "][" << this << "] "
+						<< "JustSuccess! remain(before set)=" << this->slowRemainingRawSec
+						<< " duration=" << this->slowDuration << "\n";
+
+					// 再成立は常に延長（上書き）
+					this->slowRemainingRawSec = this->slowDuration;
+
+					// 開始時だけ適用（延長で毎回 Set しない）
+					if (!this->isSlowing)
+					{
+						this->isSlowing = true;
+
+						if (this->timeScaleGroup)
+						{
+							this->timeScaleGroup->SetGroupScale("DodgeSlow", 0.3f);
+						}
+					}
+				}
+			}
+		}
 	}
 
-	// クリップのイベントテーブルを取得（無ければ nullptr）
-	const Graphics::Import::ClipEventTable* eventTable = currentClip->GetEventTable();
-
-	// 現在の正規化時間（0.0～1.0）
-	const float nowNormalizedTime = this->animationComponent->GetNormalizedTime();
-
-	// クリップイベントの更新を行う
-	// （通過したイベントIDが passedEvents に格納される）
-	this->clipEventWatcher.Update(eventTable, nowNormalizedTime, this->passedEvents);
-
 	//-----------------------------------------------------------------------------
-	// 通過したイベントに応じた処理
+	// スロー更新（rawDeltaで残り時間を減らす）
+	// 攻撃状態に依存させない：攻撃が止まってもスローが正しく終わる
 	//-----------------------------------------------------------------------------
-	for (const auto& eventId : this->passedEvents)
+	if (!this->isSlowing) { return; }
+	if (!this->timeProvider) { return; }
+
+	const float rawDt = this->timeProvider->RawDelta();
+
+	std::cout << "[AttackComponent][" << this->Owner()->GetName() << "][" << this << "] "
+		<< "SlowTick rawDt=" << rawDt
+		<< " remaining(before)=" << this->slowRemainingRawSec
+		<< " duration=" << this->slowDuration << "\n";
+
+	this->slowRemainingRawSec -= rawDt;
+
+	std::cout << "[AttackComponent][" << this->Owner()->GetName() << "][" << this << "] "
+		<< "SlowTick remaining(after)=" << this->slowRemainingRawSec << "\n";
+
+	if (this->slowRemainingRawSec <= 0.0f)
 	{
-		if (eventId == Graphics::Import::ClipEventId::HitOn)
+		this->slowRemainingRawSec = 0.0f;  
+		this->isSlowing = false;
+
+		if (this->timeScaleGroup)
 		{
-			// ヒット判定ON処理
-			// ここで「当たり判定成立＋回避中＋ジャスト窓＋監視対象＋未成立」を同フレームで判定する
-			std::cout << "[AttackComponent] Hit On! Damage: " << this->currentAttackDef.damage << std::endl;
+			this->timeScaleGroup->SetGroupScale("DodgeSlow", 1.0f);
 		}
-		else if (eventId == Graphics::Import::ClipEventId::HitOff)
-		{
-			// ヒット判定OFF処理
-			std::cout << "[AttackComponent] Hit Off!" << std::endl;
-		}
+
+		std::cout << "[AttackComponent][" << this->Owner()->GetName() << "][" << this << "] "
+			<< "Slow effect ended.\n";
 	}
 }

@@ -38,8 +38,8 @@ AnimationClipManager::AnimationClipManager()
 		"Punch",
 		std::vector<Graphics::Import::ClipEvent>
 	{
-		{ 0.32f, Graphics::Import::ClipEventId::HitOn },
-		{ 0.36f, Graphics::Import::ClipEventId::HitOff }
+		{ 0.25f, Graphics::Import::ClipEventId::HitOn },
+		{ 0.30f, Graphics::Import::ClipEventId::HitOff }
 	});
 }
 

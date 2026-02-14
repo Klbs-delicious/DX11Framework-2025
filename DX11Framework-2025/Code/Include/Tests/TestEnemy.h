@@ -1,6 +1,6 @@
 ﻿/** @file   TestEnemy.h
- *  @brief  テスト用エネミー挙動コンポーネント
- *  @date   2026/01/18
+ *  @brief  一定間隔で攻撃を出し続けるテスト用コンポーネント
+ *  @date   2026/02/14
  */
 #pragma once
 
@@ -11,15 +11,15 @@
 #include "Include/Framework/Entities/PhaseInterfaces.h"
 
 //-----------------------------------------------------------------------------
-// Forward Declarations
+// TestEnemy class
 //-----------------------------------------------------------------------------
-class GameObject;
 
-/** @class TestEnemy
- *  @brief 固定更新で簡易的な敵挙動を行うテスト用コンポーネント
- *  @details 攻撃タイミングや状態遷移のみを扱い、演出やダメージ処理は別責務とする
+class AttackComponent;
+
+/** @class  TestEnemy
+ *  @brief  クールタイム毎に AttackComponent を呼び出すだけの最小構成
  */
-class TestEnemy : public Component, public IFixedUpdatable
+class TestEnemy : public Component, public IUpdatable
 {
 public:
 	/// @brief エネミーのアニメーション状態
@@ -32,27 +32,30 @@ public:
 	};
 
 	/** @brief コンストラクタ
-	 *  @param _owner このコンポーネントがアタッチされるオブジェクト
-	 *  @param _isActive コンポーネントの有効/無効
+	 *  @param _owner 所有オブジェクト
+	 *  @param _isActive 有効/無効
 	 */
 	TestEnemy(GameObject* _owner, bool _isActive = true);
 
 	/// @brief デストラクタ
 	~TestEnemy() override = default;
 
-	/// @brief 初期化処理
+	/// @brief 初期化
 	void Initialize() override;
 
 	/// @brief 終了処理
 	void Dispose() override;
 
-	/** @brief 固定更新処理
-	 *  @param _deltaTime 前フレームからの経過時間（秒）
+	/** @brief 毎フレーム更新
+	 *  @param _deltaTime 経過時間
 	 */
-	void FixedUpdate(float _deltaTime) override;
+	void Update(float _deltaTime) override;
 
 private:
-	bool isAttacking;	///< 攻撃中か
-	float attackTimer;	///< 攻撃タイマー
-};
+	AttackComponent* attackComponent; ///< 所有オブジェクトのAttackComponent
 
+	float cooldownTimer;              ///< クールタイム経過
+	float cooldownDuration;           ///< 攻撃間隔
+
+	float attackDuration;             ///< 1回の攻撃時間
+};

@@ -3,9 +3,9 @@
  *  @date   2025/11/12
  */
 
- //-----------------------------------------------------------------------------
- // Includes
- //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+// Includes
+//-----------------------------------------------------------------------------
 #include "Include/Game/Entities/CharacterController.h"
 #include "Include/Framework/Entities/GameObject.h"
 #include "Include/Framework/Entities/GameObjectManager.h"
@@ -26,10 +26,15 @@
 CharacterController::CharacterController(GameObject* _owner, bool _active)
 	: Component(_owner, _active), 
 	inputSystem(SystemLocator::Get<InputSystem>()), 
+    animationComponent(nullptr),
+    attackComponent(nullptr),
 	cameraTransform(nullptr),
 	rigidbody(nullptr),
 	moveSpeed(10.0f),
-	turnSpeed(15.0f)
+	turnSpeed(15.0f),
+	currentState(PlayerState::Idle),
+	previousState(PlayerState::Idle),
+	currentAttackDef()
 {}
 
 /// @brief 初期化処理
@@ -57,6 +62,17 @@ void CharacterController::Initialize()
 		std::cout << "[CharacterController] Rigidbody3D component not found on owner.\n";
 		return;
 	}
+	this->attackComponent = this->Owner()->GetComponent<AttackComponent>();
+    if (!this->attackComponent) 
+    {
+		std::cout << "[CharacterController] AttackComponent not found on owner.\n";
+    }
+	this->animationComponent = this->Owner()->GetComponent<AnimationComponent>();
+    if (!this->animationComponent)
+    {
+        std::cout << "[CharacterController] AnimationComponent not found on owner.\n";
+        return;
+	}
 
 	// ------------------------------------------------------
 	// キーバインドの登録
@@ -65,6 +81,17 @@ void CharacterController::Initialize()
 	this->inputSystem.RegisterKeyBinding("MoveBackward", static_cast<int>(DirectInputDevice::KeyboardKey::S));
 	this->inputSystem.RegisterKeyBinding("MoveLeft", static_cast<int>(DirectInputDevice::KeyboardKey::A));
 	this->inputSystem.RegisterKeyBinding("MoveRight", static_cast<int>(DirectInputDevice::KeyboardKey::D));
+
+    this->inputSystem.RegisterKeyBinding("Punch", static_cast<int>(DirectInputDevice::MouseButton::Left));
+    this->inputSystem.RegisterKeyBinding("Dodge", static_cast<int>(DirectInputDevice::MouseButton::Right));
+
+	//------------------------------------------------------
+	// 攻撃定義の登録（テスト用）
+	//------------------------------------------------------
+	this->currentAttackDef.attackClip = "Punch";
+	this->currentAttackDef.attackType = AttackType::Melee;
+	this->currentAttackDef.damage = 10.0f;
+
 }
 
  /** @brief 更新処理
@@ -84,6 +111,16 @@ void CharacterController::Update(float _deltaTime)
     if (this->inputSystem.IsActionPressed("MoveBackward")) { inputZ -= 1.0f; }
     if (this->inputSystem.IsActionPressed("MoveLeft")) { inputX -= 1.0f; }
     if (this->inputSystem.IsActionPressed("MoveRight")) { inputX += 1.0f; }
+
+    // 攻撃テスト
+    if (this->inputSystem.IsActionTriggered("Punch")) 
+    {
+        if (this->attackComponent)
+        {
+            this->attackComponent->StartAttack(this->currentAttackDef);
+			std::cout << "[CharacterController] Punch action triggered.\n";
+        }
+    }
 
     // 現在の物理速度を取得（Y成分は重力などの物理によるものを保持する）
     DX::Vector3 currentVel = this->rigidbody->GetLinearVelocity();
@@ -169,4 +206,16 @@ void CharacterController::Update(float _deltaTime)
     // Y成分は重力による既存の速度を維持して、水平成分のみ上書き
     desiredVel.y = currentVel.y;
     this->rigidbody->SetLinearVelocity(desiredVel);
+}
+
+void CharacterController::StateEnter()
+{
+}
+
+void CharacterController::StateUpdate(float _deltaTime)
+{
+}
+
+void CharacterController::StateExit()
+{
 }

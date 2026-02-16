@@ -150,12 +150,13 @@ void MoveComponent::ApplyToRigidbody(float _deltaTime)
 	// 回転と移動の計算
 	//----------------------------------------
 	const DX::Vector3 moveDir = this->pendingDirWorld;
+	const DX::Vector3 facingDir = -moveDir;
 
 	// 回転の更新（進行方向へ向ける）
 	DX::Quaternion currentRot = this->rigidbody->GetLogicalRotation();
 
 	DX::Quaternion targetRot = DX::Quaternion::CreateFromRotationMatrix(
-		DX::CreateWorldLH(DX::Vector3::Zero, moveDir, DX::Vector3::UnitY)
+		DX::CreateWorldLH(DX::Vector3::Zero, facingDir, DX::Vector3::UnitY)
 	);
 
 	//---------------------------------------

@@ -11,7 +11,6 @@
 #include "Include/Framework/Entities/PhaseInterfaces.h"
 #include "Include/Framework/Entities/AnimationComponent.h"
 #include "Include/Framework/Entities/Collider3DComponent.h"
-#include "Include/Framework/Entities/TimeScaleGroup.h"
 
 #include "Include/Framework/Graphics/AnimationClipManager.h"
 #include "Include/Framework/Graphics/ClipEventWatcher.h"
@@ -20,6 +19,7 @@
 
 #include "Include/Framework/Core/ITimeProvider.h"
 #include "Include/Framework/Core/SystemLocator.h"
+#include "Include/Framework/Core/TimeScaleSystem.h"
 
 #include <string>
 #include <vector>
@@ -100,11 +100,10 @@ private:
 	GameObject* attackObj;			///< 攻撃を受けるオブジェクト
 	DodgeComponent* dodgeComponent;	///< 攻撃対象の回避コンポーネント参照
 
-	TimeScaleGroup* timeScaleGroup = nullptr;	///< 時間スケールグループ参照
-
 	float slowDuration = 1.0f;					///< スロー持続（秒・raw）
 	float slowRemainingRawSec = 0.0f;			///< スロー残り時間（秒・raw）
 	bool isSlowing = false;						///< 現在スロー中か
 
-	ITimeProvider* timeProvider = nullptr;		///< rawDelta取得元（Initializeで取得）
+	ITimeProvider* timeProvider = nullptr;			///< rawDelta取得元（Initializeで取得）
+	TimeScaleSystem* timeScaleSystem = nullptr;		///< TimeScaleSystem 参照（Initializeで SystemLocator から取得）
 };

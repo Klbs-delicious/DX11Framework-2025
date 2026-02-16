@@ -129,26 +129,22 @@ void ModelTest::SetupObjects()
 	// オブジェクトの生成
 	//--------------------------------------------------------------
 
-	// 時間制御グループオブジェクトを生成する
-	//auto timeScaleGroupObject = this->gameObjectManager.Instantiate("TimeScaleGroup");
-	//auto timeGroup = timeScaleGroupObject->AddComponent<TimeScaleGroup>();
-
 	// プレイヤーと敵のオブジェクトを生成する
 	auto player = this->gameObjectManager.Instantiate("Player", GameTags::Tag::Player);
 	auto enemy = this->gameObjectManager.Instantiate("Enemy", GameTags::Tag::Enemy);
-	auto timeGroup = enemy->AddComponent<TimeScaleGroup>();
+
+	// 時間制御グループに所属させる
+	player->TimeScale()->SetGroupName("TestGroup");
+	enemy->TimeScale()->SetGroupName("TestGroup");
 
 	// プレイヤー
 	player->transform->SetLocalPosition(DX::Vector3(0.0f, -10.0f, 0.0f));
 	player->transform->SetLocalScale(DX::Vector3(0.1f, 0.1f, 0.1f));
 
-	auto timeScale = player->AddComponent<TimeScaleTestComponent>();
-	timeScale->SetTimeScaleGroup(timeGroup);
-	timeGroup->AddGroup("DodgeSlow", player->GetComponent<TimeScaleComponent>());
-
 	auto meshComponent = player->AddComponent<MeshComponent>();
 	meshComponent->SetMesh(modelData->mesh);
 	auto materialComponent = player->AddComponent<MaterialComponent>();
+	materialComponent->SetMaterial(modelData->material);
 	materialComponent->SetMaterial(modelData->material);
 	auto animationComponent = player->AddComponent<AnimationComponent>();
 	animationComponent->SetSkeletonCache(modelData->GetSkeletonCache());
@@ -165,6 +161,7 @@ void ModelTest::SetupObjects()
 
 	// キャラクターコントローラーを追加する
 	auto characterController = player->AddComponent<CharacterController>();
+	player->AddComponent<AttackComponent>();
 	player->AddComponent<DodgeComponent>();
 
 	auto collider = player->AddComponent<Framework::Physics::Collider3DComponent>();
@@ -208,7 +205,6 @@ void ModelTest::SetupObjects()
 	materialComponent->SetMaterial(modelData->material);
 	animationComponent = enemy->AddComponent<AnimationComponent>();
 	animationComponent->SetSkeletonCache(modelData->GetSkeletonCache());
-	timeGroup->AddGroup("DodgeSlow", enemy->GetComponent<TimeScaleComponent>());
 
 	// アニメーターの設定
 	std::unique_ptr<Animator<TestEnemy::EnemyAnimState>> enemyAnimator = std::make_unique<Animator<TestEnemy::EnemyAnimState>>();

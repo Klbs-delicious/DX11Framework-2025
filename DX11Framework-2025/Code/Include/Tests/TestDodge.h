@@ -60,7 +60,6 @@ public:
 private:
 	InputSystem& inputSystem;			///< 入力処理を管理している
 	AnimationComponent* animComponent;	///< アニメーションコンポーネント
-	TimeScaleGroup* timeScaleGroup;		///< タイムスケールグループ
 	Framework::Physics::Rigidbody3D* rigidbody;		///< 自身のRigidbody3Dコンポーネント
 
 	DodgeComponent* dodgeComponent;	///< 回避コンポーネント

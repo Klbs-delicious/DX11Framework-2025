@@ -78,9 +78,9 @@ float TimeScaleComponent::GetFinalScale() const
 
     // group
     float groupScale = 1.0f;
-    if (!this->ignoreGroup && this->groupInfo)
+    if (!this->ignoreGroup)
     {
-        groupScale = this->groupInfo->timeScale;
+        groupScale = this->timeScaleSystem.GetGroupScale(this->groupName);
     }
     scale *= groupScale;
 
@@ -115,9 +115,4 @@ float TimeScaleComponent::ApplyTimeScale(float _baseDelta) const
 	float finalScale = this->GetFinalScale();
 
     return _baseDelta * finalScale;
-}
-
-const ScaleGroupInfo* TimeScaleComponent::GetGroupInfo() const
-{
-    return this->groupInfo;
 }

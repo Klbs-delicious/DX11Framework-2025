@@ -285,9 +285,6 @@
     <ClInclude Include="Code\Include\Framework\Entities\TimeScaleComponent.h">
       <Filter>ヘッダー ファイル\Framework\Entities</Filter>
     </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Entities\TimeScaleGroup.h">
-      <Filter>ヘッダー ファイル\Framework\Entities</Filter>
-    </ClInclude>
     <ClInclude Include="Code\Include\Framework\Core\PhysicsSystem.h">
       <Filter>ヘッダー ファイル\Framework\Core</Filter>
     </ClInclude>
@@ -519,9 +516,6 @@
       <Filter>ソース ファイル\Test</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Entities\TimeScaleComponent.cpp">
-      <Filter>ソース ファイル\Framework\Entities</Filter>
-    </ClCompile>
-    <ClCompile Include="Code\Source\Framework\Entities\TimeScaleGroup.cpp">
       <Filter>ソース ファイル\Framework\Entities</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Framework\Graphics\TextureFactory.cpp">

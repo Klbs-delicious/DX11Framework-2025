@@ -87,8 +87,7 @@ void TestScene::SetupObjects()
 
 	// 時間制御グループオブジェクトを生成する
 	auto timeScaleGroup = this->gameObjectManager.Instantiate("TimeScaleGroup");
-	auto timeGroup = timeScaleGroup->AddComponent<TimeScaleGroup>();
-
+\
 	//// 球体オブジェクト
 	//auto obj_2 = this->gameObjectManager.Instantiate("obj_2");
 	//obj_2->transform->SetLocalPosition(DX::Vector3(0.0f, 0.0f, 10.0f));
@@ -111,9 +110,7 @@ void TestScene::SetupObjects()
 	auto rigidbody3D = player->AddComponent<Framework::Physics::Rigidbody3D>();
 	//rigidbody3D->SetUseGravity(true);
 	auto testComp = player->AddComponent<TimeScaleTestComponent>();
-	testComp->SetTimeScaleGroup(timeGroup);
 	//charaController->SetTurnSpeed(10.0f);
-	timeGroup->AddGroup("PlayerGroup", player->GetComponent<TimeScaleComponent>());
 
 	//// 立方体オブジェクト（親子テスト）
 	//auto child = this->gameObjectManager.Instantiate("Child");
@@ -240,7 +237,6 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 	auto& gameObjectManager = this->gameObjectManager;
 
 	auto timeScaleGroup = gameObjectManager.GetFindObjectByName("TimeScaleGroup");
-	auto timeGroup = timeScaleGroup->GetComponent<TimeScaleGroup>();
 
 	std::array<DX::Color, 3> colors = {
 		DX::Color(1,0,0,1),
@@ -302,8 +298,6 @@ void TestScene::SpawnManyBoxes(const int _countX, const int _countZ, const float
 			auto tex = TextureFactory::CreateSolidColorTexture(device, colors[groupId - 1]);
 			TextureResource* raw = tex.release();
 			matComp->SetTexture(raw);
-
-			timeGroup->AddGroup(groupName, obj->GetComponent<TimeScaleComponent>());
 
 			index++;
 		}

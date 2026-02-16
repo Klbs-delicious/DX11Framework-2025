@@ -153,6 +153,9 @@ void GameLoop::Update()
     float delta = this->timeSystem->RawDelta();
     float fixedDelta = this->timeSystem->FixedDelta();
 
+    // TimeScaleイベント更新
+    this->timeScaleSystem->Update(delta);
+
 //#ifdef _DEBUG
 //    // 瞬間FPS
 //    std::cout << "可変FPS: " << 1.0f / delta << std::endl;

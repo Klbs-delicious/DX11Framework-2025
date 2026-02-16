@@ -23,7 +23,6 @@ TestDodge::TestDodge(GameObject* _owner, bool _isActive)
 	: Component(_owner, _isActive),
 	dodgeComponent(nullptr),
 	animComponent(nullptr),
-	timeScaleGroup(nullptr),
 	inputSystem(SystemLocator::Get<InputSystem>()),
 	rigidbody(nullptr),
 	prevIsDodging(false),
@@ -37,7 +36,6 @@ void TestDodge::Initialize()
 	// 必要なコンポーネントの取得
 	//------------------------------------------------------
 	this->animComponent = this->Owner()->GetComponent<AnimationComponent>();
-	this->timeScaleGroup = this->Owner()->GetComponent<TimeScaleGroup>();
 	this->rigidbody = this->Owner()->GetComponent<Framework::Physics::Rigidbody3D>();
 	this->dodgeComponent = this->Owner()->GetComponent<DodgeComponent>();
 

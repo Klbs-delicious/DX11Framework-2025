@@ -89,7 +89,6 @@ void PhysicsTest::SetupObjects()
 
 	// 時間制御グループオブジェクトを生成する
 	auto timeScaleGroup = this->gameObjectManager.Instantiate("TimeScaleGroup");
-	auto timeGroup = timeScaleGroup->AddComponent<TimeScaleGroup>();
 
 	//// スプライトオブジェクト
 	//auto obj_1 = this->gameObjectManager.Instantiate("obj_1");

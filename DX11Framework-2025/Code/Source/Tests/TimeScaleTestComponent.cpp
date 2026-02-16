@@ -24,8 +24,7 @@
 TimeScaleTestComponent::TimeScaleTestComponent(GameObject* _owner, bool _active)
 	: Component(_owner, _active),
 	inputSystem(SystemLocator::Get<InputSystem>()),
-	timeScaleSystem(SystemLocator::Get<TimeScaleSystem>()),
-	timeScaleGroup(nullptr)
+	timeScaleSystem(SystemLocator::Get<TimeScaleSystem>())
 {}
 
 /// @brief 初期化処理
@@ -56,8 +55,6 @@ void TimeScaleTestComponent::Update(float _deltaTime)
 	}
 	else { this->timeScaleSystem.SetGlobalScale(1.0f); }
 
-	if (!this->timeScaleGroup) { return; }
-
 	// 1～3キーで各ゲームオブジェクトのタイムスケールを0.1に変更する
 	for (int i = 1; i <= 3; i++)
 	{
@@ -66,11 +63,11 @@ void TimeScaleTestComponent::Update(float _deltaTime)
 
 		if (this->inputSystem.IsActionTriggered(actionName))
 		{
-			this->timeScaleGroup->SetGroupScale(groupName, 0.3f);
+			this->timeScaleSystem.RequestEvent(TimeScaleEventId::JustDodge);
 		}
 		if (this->inputSystem.isActionReleased(actionName))
 		{
-			this->timeScaleGroup->SetGroupScale(groupName, 1.0f);
+			this->timeScaleSystem.RequestEvent(TimeScaleEventId::JustDodge);
 		}
 	}
 }

@@ -60,6 +60,11 @@ public:
 	[[nodiscard]] TimeScaleLayer GetTimeScaleLayer() const { return this->timeScaleLayer; }
 
 	/**@brief グループ名を設定する
+	 * @param _groupName グループ名
+	 */
+	void SetGroupName(const std::string& _groupName) { this->groupName = _groupName; }
+
+	/**@brief グループ名を取得する
 	 * @return グループ名
 	 */
 	[[nodiscard]] const std::string& GetGroupName() const { return this->groupName; }
@@ -73,24 +78,12 @@ public:
 	[[nodiscard]] bool IsIgnoreGroup() const { return this->ignoreGroup; }
 	[[nodiscard]] bool IsIgnoreLayer() const { return this->ignoreLayer; }
 	[[nodiscard]] bool IsIgnoreGlobal() const { return this->ignoreGlobal; }
-
-	/**@brief 所属するグループ情報を設定・取得する
-	 * @param _groupInfo グループ情報へのポインタ
-	 */
-	void SetGroupInfo(ScaleGroupInfo* _groupInfo) { this->groupInfo = _groupInfo; }
-
-	/**@brief 所属するグループ情報を取得する
-	 * @return グループ情報へのポインタ
-	 */
-	[[nodiscard]] const ScaleGroupInfo* GetGroupInfo() const;
-
 private:
 	TimeScaleSystem& timeScaleSystem;	///< 時間スケール管理システムの参照
 
 	float timeScale;					///< オブジェクト固有の時間倍率
 	TimeScaleLayer timeScaleLayer;		///< オブジェクトの時間スケールレイヤー
 	std::string groupName;              ///< 所属するグループ名
-	ScaleGroupInfo* groupInfo = nullptr;///< 所属するグループ情報へのポインタ
 
 	bool ignoreGroup;					///< グループの時間スケールを無視するかどうか
 	bool ignoreLayer;					///< レイヤーの時間スケールを無視するかどうか

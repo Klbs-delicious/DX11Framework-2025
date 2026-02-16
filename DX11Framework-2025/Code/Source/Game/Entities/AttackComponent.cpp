@@ -136,8 +136,8 @@ void AttackComponent::Update(float _deltaTime)
 		if (this->timeScaleSystem)
 		{
 			this->timeScaleSystem->RequestEvent(TimeScaleEventId::TestDodge);
-			//std::cout << "[JustDodge] group=" << this->attackObj->TimeScale()->GetGroupName()
-			//	<< " scale=" << this->attackObj->TimeScale()->GetFinalScale() << "\n";
+			std::cout << "[JustDodge] group=" << this->attackObj->TimeScale()->GetGroupName()
+				<< " scale=" << this->attackObj->TimeScale()->GetFinalScale() << "\n";
 		}
 	}
 }

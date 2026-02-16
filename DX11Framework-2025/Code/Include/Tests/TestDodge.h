@@ -11,7 +11,6 @@
 #include "Include/Framework/Entities/PhaseInterfaces.h"
 
 #include "Include/Framework/Entities/AnimationComponent.h"
-#include "Include/Framework/Entities/TimeScaleGroup.h"
 #include "Include/Framework/Entities/Rigidbody3D.h"
 
 #include "Include/Framework/Core/InputSystem.h"

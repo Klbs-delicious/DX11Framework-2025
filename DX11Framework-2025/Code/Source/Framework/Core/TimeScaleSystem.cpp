@@ -9,7 +9,7 @@
 #include "Include/Framework/Core/TimeScaleSystem.h"
 
 #include <algorithm>
-
+#include <iostream>
 //-----------------------------------------------------------------------------
 // TimeScaleSystem class
 //-----------------------------------------------------------------------------
@@ -71,13 +71,9 @@ TimeScaleSystem::TimeScaleSystem() :
  */
 void TimeScaleSystem::Update(float _rawDeltaSec)
 {
-	if (_rawDeltaSec <= 0.0f)
-	{
-		return;
-	}
+	if (_rawDeltaSec <= 0.0f){ return; }
 
 	bool anyChanged = false;
-
 	for (auto it = this->activeEvents.begin(); it != this->activeEvents.end();)
 	{
 		ActiveEvent& e = it->second;
@@ -85,6 +81,7 @@ void TimeScaleSystem::Update(float _rawDeltaSec)
 
 		if (e.remainingRawSec <= 0.0f)
 		{
+			// イベント時間切れ
 			it = this->activeEvents.erase(it);
 			anyChanged = true;
 			continue;
@@ -95,6 +92,7 @@ void TimeScaleSystem::Update(float _rawDeltaSec)
 
 	if (anyChanged)
 	{
+		// イベントの適用値が変わったので、グループ倍率を再構築する
 		this->RebuildAppliedGroupScales();
 	}
 }
@@ -159,18 +157,21 @@ void TimeScaleSystem::SetGroupBaseScale(const std::string& _groupName, float _sc
  */
 float TimeScaleSystem::GetGroupScale(const std::string& _groupName) const
 {
+	// まず適用値を探す（イベントで上書きされている場合があるため）
 	auto it = this->groupAppliedScales.find(_groupName);
 	if (it != this->groupAppliedScales.end())
 	{
 		return it->second;
 	}
 
+	// 適用値が見つからない場合は基準値を探す
 	auto itBase = this->groupBaseScales.find(_groupName);
 	if (itBase != this->groupBaseScales.end())
 	{
 		return itBase->second;
 	}
 
+	// どちらも見つからない場合は 1.0f を返す
 	return 1.0f;
 }
 
@@ -179,16 +180,17 @@ float TimeScaleSystem::GetGroupScale(const std::string& _groupName) const
  */
 void TimeScaleSystem::RequestEvent(TimeScaleEventId _eventId)
 {
+	// イベントIDから定義を取得する
 	const TimeScaleEventDef* def = this->FindEventDef(_eventId);
-	if (def == nullptr)
-	{
-		return;
-	}
+	if (def == nullptr){ return; }
 
 	EventKey key{};
 	key.id = def->id;
 	key.groupName = def->targetGroupName;
 
+	//------------------------------------------
+	// すでに同一イベントが存在するか確認する
+	//------------------------------------------
 	auto it = this->activeEvents.find(key);
 	if (it != this->activeEvents.end())
 	{
@@ -196,10 +198,13 @@ void TimeScaleSystem::RequestEvent(TimeScaleEventId _eventId)
 
 		if (def->stackPolicy == TimeScaleStackPolicy::Extend)
 		{
+			// すでに同一イベントが存在する場合、残り時間を延長する
+			// （重ね掛けはしない）
 			active.remainingRawSec = std::max(active.remainingRawSec, 0.0f) + def->durationRawSec;
 		}
 		else
 		{
+			// すでに同一イベントが存在する場合、残り時間を上書きする
 			active.remainingRawSec = def->durationRawSec;
 		}
 
@@ -208,11 +213,13 @@ void TimeScaleSystem::RequestEvent(TimeScaleEventId _eventId)
 		return;
 	}
 
+	// 同一イベントが存在しない場合、新規に追加する
 	ActiveEvent active{};
 	active.def = *def;
 	active.remainingRawSec = def->durationRawSec;
 	this->activeEvents.emplace(key, active);
 
+	// イベントを適用する
 	this->RebuildAppliedGroupScales();
 }
 
@@ -269,29 +276,37 @@ void TimeScaleSystem::RebuildAppliedGroupScales()
 	// 同一 group で priority が同じ場合は現状「後勝ち」
 	std::unordered_map<std::string, const TimeScaleEventDef*> bestByGroup;
 
+	//----------------------------------------------------------	
+	// 実行中の操作して、グループごとの最適なイベントを見つける
+	//----------------------------------------------------------
 	for (const auto& pair : this->activeEvents)
 	{
-		const ActiveEvent& e = pair.second;
-		const std::string& groupName = e.def.targetGroupName;
+		const ActiveEvent& activeEvent = pair.second;
+		const std::string& groupName = activeEvent.def.targetGroupName;
 
+		// この group のこれまでのイベントと比較する
 		auto itBest = bestByGroup.find(groupName);
 		if (itBest == bestByGroup.end())
 		{
-			bestByGroup[groupName] = &e.def;
+			bestByGroup[groupName] = &activeEvent.def;
 			continue;
 		}
-
+		
+		// 同一 group で優先度を比較する
 		const TimeScaleEventDef* currentBest = itBest->second;
-		if (e.def.priority > currentBest->priority)
+		if (activeEvent.def.priority > currentBest->priority)
 		{
-			bestByGroup[groupName] = &e.def;
+			bestByGroup[groupName] = &activeEvent.def;
 		}
-		else if (e.def.priority == currentBest->priority)
+		else if (activeEvent.def.priority == currentBest->priority)
 		{
-			bestByGroup[groupName] = &e.def;
+			bestByGroup[groupName] = &activeEvent.def;
 		}
 	}
-
+	
+	//---------------------------------------------------------
+	// グループごとの優先度最大イベントを適用する
+	//---------------------------------------------------------
 	for (const auto& pair : bestByGroup)
 	{
 		const TimeScaleEventDef* def = pair.second;

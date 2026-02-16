@@ -7,7 +7,6 @@
  // Includes
  //-----------------------------------------------------------------------------
 #include "Include/Framework/Entities/TimeScaleComponent.h"
-#include "Include/Framework/Entities/TimeScaleGroup.h"
 #include "Include/Framework/Entities/GameObject.h"
 #include "Include/Framework/Core/SystemLocator.h"
 

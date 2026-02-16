@@ -15,7 +15,6 @@
 #include"Include/Framework/Entities/Camera3D.h"
 #include"Include/Framework/Entities/MeshComponent.h"
 #include"Include/Framework/Entities/TimeScaleComponent.h"
-#include"Include/Framework/Entities/TimeScaleGroup.h"
 #include"Include/Framework/Entities/Rigidbody3D.h"
 #include"Include/Framework/Entities/Collider3DComponent.h"
 #include"Include/Framework/Entities/ColliderDebugRenderer.h"

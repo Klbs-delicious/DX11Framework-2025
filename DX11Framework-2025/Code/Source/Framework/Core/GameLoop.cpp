@@ -16,6 +16,7 @@
 #include "Include/Scenes/TitleScene.h"
 #include "Include/Scenes/PhysicsTest.h"
 #include "Include/Scenes/ModelTest.h"
+#include "Include/Scenes/GameScene.h"
 
 #include "Include/Framework/Entities/Rigidbody3D.h"
 
@@ -101,6 +102,9 @@ void GameLoop::Initialize()
     factory->Register(SceneType::ModelTest, [](GameObjectManager& manager) {
         return std::make_unique<ModelTest>(manager);
         });
+    factory->Register(SceneType::Gameplay, [](GameObjectManager& manager) {
+        return std::make_unique<GameScene>(manager);
+        });
 
     // シーン管理の作成
     this->sceneManager = std::make_unique<SceneManager>(std::move(factory));
@@ -140,7 +144,7 @@ void GameLoop::Initialize()
     this->inputSystem->RegisterKeyBinding("GameExit", static_cast<int>(DirectInputDevice::KeyboardKey::Escape));
 
     // シーンの変更
-    this->sceneManager->RequestSceneChange(SceneType::ModelTest);
+    this->sceneManager->RequestSceneChange(SceneType::Gameplay);
 }
 
 /// @brief		更新処理を行う

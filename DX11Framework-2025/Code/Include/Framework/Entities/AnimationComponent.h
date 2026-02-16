@@ -112,6 +112,16 @@ public:
 	 */
 	Graphics::Import::AnimationClip* GetCurrentClip() const;
 
+	/** @brief 現在のアニメーションクリップ長を秒で取得する
+	 *  @return クリップ長（秒）。取得できない場合は 0.0f
+	 */
+	float GetCurrentClipLengthSeconds() const;
+
+	/** @brief 再生中かを取得する
+	 *  @return 再生中なら true
+	 */
+	const bool IsPlaying() const;
+
 private:
 	/// @brief ボーン用定数バッファを更新する（Pose -> BoneBuffer）
 	void UpdateBoneBufferFromPose();

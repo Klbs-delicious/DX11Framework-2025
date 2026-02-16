@@ -215,6 +215,38 @@ Graphics::Import::AnimationClip* AnimationComponent::GetCurrentClip() const
 	return nullptr;
 }
 
+float AnimationComponent::GetCurrentClipLengthSeconds() const
+{
+	auto* clip = this->GetCurrentClip();
+	if (!clip)
+	{
+		return 0.0f;
+	}
+
+	const double tps = clip->ticksPerSecond;
+	if (tps <= 1.0e-6)
+	{
+		return 0.0f;
+	}
+
+	const double endTicks = clip->durationTicks;
+	if (endTicks <= 1.0e-6)
+	{
+		return 0.0f;
+	}
+
+	return static_cast<float>(endTicks / tps);
+}
+
+const bool AnimationComponent::IsPlaying() const
+{
+	if (this->animator)
+	{
+		return this->animator->IsPlaying();
+	}
+	return false;
+}
+
 void AnimationComponent::UpdateBoneBufferFromPose()
 {
 	if (!this->skeletonCache)

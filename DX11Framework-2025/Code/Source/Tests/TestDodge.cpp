@@ -42,7 +42,7 @@ void TestDodge::Initialize()
 	// ------------------------------------------------------
 	// キーバインドの登録
 	// ------------------------------------------------------
-	this->inputSystem.RegisterKeyBinding("Dodge", static_cast<int>(DirectInputDevice::KeyboardKey::B));	// 左クリックで回避
+	//this->inputSystem.RegisterKeyBinding("Dodge", static_cast<int>(DirectInputDevice::KeyboardKey::B));	// 左クリックで回避
 	this->inputSystem.RegisterKeyBinding("Idle", static_cast<int>(DirectInputDevice::KeyboardKey::V));	// 左クリックで回避
 	this->inputSystem.RegisterKeyBinding("Jump", static_cast<int>(DirectInputDevice::KeyboardKey::C));	// 左クリックで回避
 

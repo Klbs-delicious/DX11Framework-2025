@@ -17,10 +17,6 @@
 
 #include "Include/Game/Entities/DodgeComponent.h"
 
-#include "Include/Framework/Core/ITimeProvider.h"
-#include "Include/Framework/Core/SystemLocator.h"
-#include "Include/Framework/Core/TimeScaleSystem.h"
-
 #include <string>
 #include <vector>
 
@@ -34,42 +30,46 @@
 enum class AttackType
 {
 	Melee,      ///< 近接攻撃
-	Ranged      ///< 遠距離攻撃（投げ物など）
+	Ranged      ///< 遠距離攻撃
 };
 
 /** @struct AttackDef
- *  @brief  攻撃定義
+ *  @brief 攻撃定義
  */
 struct AttackDef
 {
-	std::string attackClip;		///< 攻撃アニメーションクリップ
-	AttackType attackType;		///< 攻撃タイプ
-	float damage;				///< 与えるダメージ量
+	std::string attackClip;   ///< 攻撃アニメーション名
+	AttackType attackType;    ///< 攻撃タイプ
+	float damage;             ///< ダメージ量
 };
 
-/** @class  AttackComponent
- *  @brief  攻撃中かどうかの状態と簡易的な攻撃時間管理を行う
+/** @class AttackComponent
+ *  @brief 攻撃状態とHitOn判定を管理する
  */
-class AttackComponent : public Component, public IUpdatable, public BaseColliderDispatcher3D
+class AttackComponent
+	: public Component
+	, public IUpdatable
+	, public BaseColliderDispatcher3D
 {
 public:
+
 	/** @brief コンストラクタ
-	 *  @param _owner このコンポーネントがアタッチされるオブジェクト
-	 *  @param _isActive コンポーネントの有効/無効
+	 *  @param _owner 所有オブジェクト
+	 *  @param _isActive 有効状態
 	 */
 	AttackComponent(GameObject* _owner, bool _isActive = true);
 
 	/// @brief デストラクタ
 	~AttackComponent() override = default;
 
-	/// @brief 初期化処理
+	/// @brief 初期化
 	void Initialize() override;
 
-	/// @brief 終了処理
+	/// @brief 解放
 	void Dispose() override;
 
-	/** @brief 毎フレーム更新
-	 *  @param _deltaTime フレーム間の経過時間
+	/** @brief 更新処理
+	 *  @param _deltaTime 経過時間
 	 */
 	void Update(float _deltaTime) override;
 
@@ -81,29 +81,30 @@ public:
 	/// @brief 攻撃終了
 	void EndAttack();
 
-	/// @brief 現在攻撃中か
-	bool IsAttacking() const { return isAttacking; }
+	/// @brief 攻撃中か
+	bool IsAttacking() const { return this->isAttacking; }
 
-	void OnTriggerEnter(Framework::Physics::Collider3DComponent* _self, Framework::Physics::Collider3DComponent* _other)override;
+	void OnTriggerEnter(
+		Framework::Physics::Collider3DComponent* _self,
+		Framework::Physics::Collider3DComponent* _other) override;
 
-	void OnTriggerExit(Framework::Physics::Collider3DComponent* _self, Framework::Physics::Collider3DComponent* _other)override;
+	void OnTriggerExit(
+		Framework::Physics::Collider3DComponent* _self,
+		Framework::Physics::Collider3DComponent* _other) override;
 
 private:
-	AnimationClipManager* animClipManager;		///< アニメーションクリップ管理参照
-	AnimationComponent* animationComponent;		///< アニメーションコンポーネント参照
-	bool  isAttacking;							///< 攻撃中かどうか
 
-	AttackDef currentAttackDef;								 ///< 現在の攻撃定義
-	Graphics::Import::ClipEventWatcher clipEventWatcher;	 ///< 攻撃のクリップイベント監視を行う
-	std::vector<Graphics::Import::ClipEventId> passedEvents; ///< 通過したイベントID一時保管用
+	AnimationClipManager* animClipManager;      ///< クリップ管理
+	AnimationComponent* animationComponent;     ///< アニメーション参照
 
-	GameObject* attackObj;			///< 攻撃を受けるオブジェクト
-	DodgeComponent* dodgeComponent;	///< 攻撃対象の回避コンポーネント参照
+	bool isAttacking;                            ///< 攻撃中フラグ
+	bool justTriggered;                          ///< 同一攻撃での成立ガード
 
-	float slowDuration = 1.0f;					///< スロー持続（秒・raw）
-	float slowRemainingRawSec = 0.0f;			///< スロー残り時間（秒・raw）
-	bool isSlowing = false;						///< 現在スロー中か
+	AttackDef currentAttackDef;                  ///< 現在の攻撃定義
 
-	ITimeProvider* timeProvider = nullptr;			///< rawDelta取得元（Initializeで取得）
-	TimeScaleSystem* timeScaleSystem = nullptr;		///< TimeScaleSystem 参照（Initializeで SystemLocator から取得）
+	Graphics::Import::ClipEventWatcher clipEventWatcher; ///< イベント監視
+	std::vector<Graphics::Import::ClipEventId> passedEvents; ///< 通過イベント
+
+	GameObject* attackObj;                       ///< 攻撃対象
+	DodgeComponent* dodgeComponent;              ///< 回避参照
 };

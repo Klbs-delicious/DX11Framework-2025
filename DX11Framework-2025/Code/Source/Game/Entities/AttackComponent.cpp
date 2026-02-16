@@ -7,14 +7,13 @@
  // Includes
  //-----------------------------------------------------------------------------
 #include "Include/Game/Entities/AttackComponent.h"
+#include "Include/Game/Entities/CharacterController.h"
 #include "Include/Framework/Entities/GameObject.h"
-#include "Include/Framework/Core/SystemLocator.h"
-#include "Include/Framework/Core/TimeScaleSystem.h"
 
 #include <iostream>
 
 //-----------------------------------------------------------------------------
-// AttackComponent class
+// AttackComponent
 //-----------------------------------------------------------------------------
 
 AttackComponent::AttackComponent(GameObject* _owner, bool _isActive) :
@@ -22,12 +21,12 @@ AttackComponent::AttackComponent(GameObject* _owner, bool _isActive) :
 	animClipManager(nullptr),
 	animationComponent(nullptr),
 	isAttacking(false),
+	justTriggered(false),
 	currentAttackDef{},
 	clipEventWatcher{},
 	passedEvents{},
 	attackObj(nullptr),
-	dodgeComponent(nullptr),
-	timeScaleSystem(nullptr)
+	dodgeComponent(nullptr)
 {
 }
 
@@ -36,10 +35,8 @@ void AttackComponent::Initialize()
 	this->animationComponent = this->Owner()->GetComponent<AnimationComponent>();
 	this->animClipManager = this->Services()->animationClips;
 
-	// TimeScaleSystem を取得
-	this->timeScaleSystem = &SystemLocator::Get<TimeScaleSystem>();
-
 	this->isAttacking = false;
+	this->justTriggered = false;
 }
 
 void AttackComponent::Dispose()
@@ -48,9 +45,10 @@ void AttackComponent::Dispose()
 	this->animClipManager = nullptr;
 	this->attackObj = nullptr;
 	this->dodgeComponent = nullptr;
-	this->timeScaleSystem = nullptr;
 
 	this->isAttacking = false;
+	this->justTriggered = false;
+
 	this->passedEvents.clear();
 }
 
@@ -58,13 +56,12 @@ void AttackComponent::StartAttack(AttackDef _attackDef)
 {
 	this->currentAttackDef = _attackDef;
 	this->isAttacking = true;
+	this->justTriggered = false;
 
-	//------------------------------
-	// 監視状態を初期化
-	//------------------------------
 	if (this->animationComponent)
 	{
-		this->clipEventWatcher.Reset(this->animationComponent->GetNormalizedTime());
+		this->clipEventWatcher.Reset(
+			this->animationComponent->GetNormalizedTime());
 	}
 	else
 	{
@@ -80,81 +77,99 @@ void AttackComponent::EndAttack()
 
 void AttackComponent::Update(float _deltaTime)
 {
+	(void)_deltaTime;
+
 	if (!this->isAttacking) { return; }
 	if (!this->animationComponent) { return; }
 	if (!this->animClipManager) { return; }
 
-	//------------------------------
-	// 現在のクリップのイベントを監視して、通過したイベントIDを列挙する
-	//------------------------------
 	this->passedEvents.clear();
-	const Graphics::Import::AnimationClip* currentClip = this->animationComponent->GetCurrentClip();
+
+	const Graphics::Import::AnimationClip* currentClip =
+		this->animationComponent->GetCurrentClip();
 	if (!currentClip) { return; }
 
 	if (currentClip->keyName != this->currentAttackDef.attackClip)
 	{
-		// 攻撃定義のクリップと再生中のクリップが違うなら、イベント監視をリセットして無視する
-		this->clipEventWatcher.Reset(this->animationComponent->GetNormalizedTime());
+		this->clipEventWatcher.Reset(
+			this->animationComponent->GetNormalizedTime());
 		return;
 	}
 
-	//------------------------------
-	// 攻撃定義のクリップと再生中のクリップが同じなら、イベント監視を行う
-	//------------------------------
-	const Graphics::Import::ClipEventTable* eventTable = currentClip->GetEventTable();
-	const float nowNormalizedTime = this->animationComponent->GetNormalizedTime();
-	this->clipEventWatcher.Update(eventTable, nowNormalizedTime, this->passedEvents);
+	const Graphics::Import::ClipEventTable* eventTable =
+		currentClip->GetEventTable();
+
+	const float nowNormalizedTime =
+		this->animationComponent->GetNormalizedTime();
+
+	this->clipEventWatcher.Update(
+		eventTable,
+		nowNormalizedTime,
+		this->passedEvents);
 
 	for (const auto& eventId : this->passedEvents)
 	{
-		// HitOnイベントでジャスト回避判定を行う
 		if (eventId != Graphics::Import::ClipEventId::HitOn) { continue; }
 		if (!this->attackObj) { continue; }
+		if (this->justTriggered) { continue; }
 
 		DodgeComponent* dodge = this->dodgeComponent;
 		if (!dodge)
 		{
-			// 攻撃対象のオブジェクトからDodgeComponentを取得してみる
-			// （OnTriggerEnterで取得できていない場合に備えて）
 			dodge = this->attackObj->GetComponent<DodgeComponent>();
 			this->dodgeComponent = dodge;
 		}
 		if (!dodge) { continue; }
 
-		// ------------------------------
-		// ジャスト回避判定
-		// ------------------------------
 		const bool isDodging = dodge->IsDodging();
 		const bool timingValid = dodge->IsDodgeTimingValid();
 		const bool just = (isDodging && timingValid);
 
 		if (!just) { continue; }
 
-		// ------------------------------
-		// Just回避成立
-		// ------------------------------
-		if (this->timeScaleSystem)
+		this->justTriggered = true;
+
+		auto controller =
+			this->attackObj->GetComponent<CharacterController>();
+
+		if (controller)
 		{
-			this->timeScaleSystem->RequestEvent(TimeScaleEventId::TestDodge);
-			std::cout << "[JustDodge] group=" << this->attackObj->TimeScale()->GetGroupName()
-				<< " scale=" << this->attackObj->TimeScale()->GetFinalScale() << "\n";
+			controller->OnJustDodgeSuccess(
+				this->Owner(),
+				this->currentAttackDef.attackType);
 		}
+	}
+
+	//-----------------------------------------------------------------------------
+	// 攻撃終了判定
+	//-----------------------------------------------------------------------------
+
+	// だいたい最後に近い値
+	const float endThreshold = 0.98f; 
+	if (nowNormalizedTime >= endThreshold)
+	{
+		this->EndAttack();
+		return;
 	}
 }
 
-void AttackComponent::OnTriggerEnter(Framework::Physics::Collider3DComponent* _self, Framework::Physics::Collider3DComponent* _other)
+void AttackComponent::OnTriggerEnter(
+	Framework::Physics::Collider3DComponent* _self,
+	Framework::Physics::Collider3DComponent* _other)
 {
 	(void)_self;
 
 	if (!_other) { return; }
 	if (!_other->Owner()) { return; }
 
-	// 攻撃対象のオブジェクトとDodgeComponentを取得して保持する
 	this->attackObj = _other->Owner();
-	this->dodgeComponent = this->attackObj->GetComponent<DodgeComponent>();
+	this->dodgeComponent =
+		this->attackObj->GetComponent<DodgeComponent>();
 }
 
-void AttackComponent::OnTriggerExit(Framework::Physics::Collider3DComponent* _self, Framework::Physics::Collider3DComponent* _other)
+void AttackComponent::OnTriggerExit(
+	Framework::Physics::Collider3DComponent* _self,
+	Framework::Physics::Collider3DComponent* _other)
 {
 	(void)_self;
 
@@ -163,7 +178,6 @@ void AttackComponent::OnTriggerExit(Framework::Physics::Collider3DComponent* _se
 
 	if (this->attackObj == _other->Owner())
 	{
-		// 攻撃対象のオブジェクトが範囲から出たら、攻撃対象とDodgeComponentの参照をクリアする
 		this->attackObj = nullptr;
 		this->dodgeComponent = nullptr;
 	}

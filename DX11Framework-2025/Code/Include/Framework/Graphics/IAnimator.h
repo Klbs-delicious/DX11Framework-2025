@@ -43,4 +43,9 @@ public:
 	 *  @return アニメーションクリップ（無ければ nullptr）
 	 */
 	virtual Graphics::Import::AnimationClip* GetCurrentClip() const = 0;
+
+	/** @brief 再生中かを取得する
+	 *  @return 再生中なら true
+	 */
+	virtual bool IsPlaying() const = 0;
 };

@@ -235,6 +235,11 @@ private:
 		const Graphics::Import::NodeTrack& _track,
 		Graphics::Animation::LocalPose& _outPose);
 
+	/** @brief 現在の状態をクロスフェード中か
+	 *  @return クロスフェード中なら true
+	 */
+	bool IsPlaying() const;
+
 	/** @brief キー位置キャッシュ付きで Vec3 を補間する
 	 *  @param _keys キー配列
 	 *  @param _ticks 補間位置（ティック）
@@ -1121,4 +1126,24 @@ void Animator<StateId>::UpdateLocalMatrixFromKeysToPose(
 		DirectX::XMMatrixTranslationFromVector(XMLoadFloat3(&posFloat));
 
 	_outPose.localMatrices[_nodeIdx] = DX::StoreDXMatrix(finalMatrix);
+}
+
+template<typename StateId>
+bool Animator<StateId>::IsPlaying() const
+{
+	if (this->isPaused) { return false; }
+
+	// クロスフェード中は再生中扱い
+	if (this->crossFadeData.isActive) { return true; }
+
+	if (!this->stateTable) { return false; }
+
+	const auto* curDef = this->stateTable->Find(this->currentState);
+	if (!curDef || !curDef->clip) { return false; }
+
+	// ループは終了概念がないので再生中
+	if (curDef->isLoop) { return true; }
+
+	// 非ループは終了していたら再生中ではない
+	return !this->isFinished;
 }

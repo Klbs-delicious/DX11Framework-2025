@@ -35,15 +35,27 @@ bool RenderSystem::Initialize()
     ID3D11Device* device = this->d3d11->GetDevice();
     ID3D11DeviceContext* context = this->d3d11->GetContext();
 
-    // レンダーターゲットの作成
-    ComPtr<ID3D11Texture2D> renderTarget;
-    hr = this->d3d11->GetSwapChain()->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(renderTarget.GetAddressOf()));
-    if (SUCCEEDED(hr) && renderTarget)
+    // バックバッファの取得
+    ComPtr<ID3D11Texture2D> backBuffer;
+    hr = this->d3d11->GetSwapChain()->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
+
+    if (FAILED(hr) || !backBuffer)
     {
-        device->CreateRenderTargetView(renderTarget.Get(), nullptr, this->renderTargetView.GetAddressOf());
-    }
-    else {
         throw std::runtime_error("Failed to retrieve render target buffer.");
+        return false;
+    }
+
+    // バックバッファの作成
+    this->renderTargetViews[static_cast<size_t>(RenderTargetType::DefaultBackBuffer)].Attach(backBuffer.Get(), device);
+
+    // シーン用RTの作成
+    D3D11_TEXTURE2D_DESC bbDesc;
+    backBuffer->GetDesc(&bbDesc);
+    bool success = this->renderTargetViews[static_cast<size_t>(RenderTargetType::SceneRT)].CreateRenderTarget(device, bbDesc.Width, bbDesc.Height);
+
+    if (!success)
+    {
+        throw std::runtime_error("Failed to create SceneRT.");
         return false;
     }
 
@@ -78,13 +90,15 @@ bool RenderSystem::Initialize()
         return false;
     }
 
-    // レンダーターゲットの設定
-    context->OMSetRenderTargets(1, this->renderTargetView.GetAddressOf(), this->depthStencilView.Get());
+    // 初期状態の描き込み先にシーン用RTを設定する
+    auto& sceneRT = this->renderTargetViews[static_cast<size_t>(RenderTargetType::SceneRT)].renderTargetView;
+    auto& dsv = this->depthStencilView; // 既存の深度バッファ
+    context->OMSetRenderTargets(1, sceneRT.GetAddressOf(), dsv.Get());
 
-    // シンプルなビューポートを作成
+    // シンプルなビューポートを作成（SceneRTに合わせる）
     D3D11_VIEWPORT viewport;
-    viewport.Width = static_cast<FLOAT>(this->window->GetWidth());
-    viewport.Height = static_cast<FLOAT>(this->window->GetHeight());
+    viewport.Width = static_cast<FLOAT>(bbDesc.Width);
+    viewport.Height = static_cast<FLOAT>(bbDesc.Height);
     viewport.MinDepth = 0.0f;
     viewport.MaxDepth = 1.0f;
     viewport.TopLeftX = 0;
@@ -191,7 +205,10 @@ bool RenderSystem::Initialize()
 void RenderSystem::Finalize()
 {
     // ブレンドステート（他のリソースに依存しない）
-    for (auto& bs : this->blendState) { bs.Reset(); }
+    for (auto& bs : this->blendState)
+    { 
+        bs.Reset();
+    }
     this->blendStateATC.Reset();
 
     // 深度ステンシルステート（depthStencilViewが生きてても問題なし）
@@ -205,16 +222,19 @@ void RenderSystem::Finalize()
 
     // 描画対象（最後）
     this->depthStencilView.Reset();
-    this->renderTargetView.Reset();
+
+	for (auto& rtv : this->renderTargetViews)
+    {
+        rtv.Release(); 
+    }
 }
 
 /// @brief  描画開始時の処理
 void RenderSystem::BeginRender()
 {
-    float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     auto context = this->d3d11->GetContext();
-    context->OMSetRenderTargets(1, this->renderTargetView.GetAddressOf(), this->depthStencilView.Get());
-    context->ClearRenderTargetView(this->renderTargetView.Get(), clearColor);
+    context->OMSetRenderTargets(1, this->renderTargetViews[static_cast<size_t>(RenderTargetType::DefaultBackBuffer)].renderTargetView.GetAddressOf(), this->depthStencilView.Get());
+    this->renderTargetViews[static_cast<size_t>(RenderTargetType::DefaultBackBuffer)].Clear(context, 0.0f, 0.0f, 0.0f, 1.0f);
     context->ClearDepthStencilView(this->depthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 }
 

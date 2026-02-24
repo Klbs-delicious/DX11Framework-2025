@@ -13,11 +13,6 @@
  */ 
 struct TextureResource
 {
-    DX::ComPtr<ID3D11ShaderResourceView> texture; ///< テクスチャSRV
-    int width = 0;   ///< 幅
-    int height = 0;  ///< 高さ
-    int bpp = 0;     ///< ピクセルあたりのビット数
-
     TextureResource() = default;
     ~TextureResource()
     {
@@ -50,4 +45,10 @@ struct TextureResource
         ID3D11ShaderResourceView* nullSRV[1] = { nullptr };
         context->PSSetShaderResources(slot, 1, nullSRV);
     }
+
+public:
+    DX::ComPtr<ID3D11ShaderResourceView> texture; ///< テクスチャSRV
+    int width = 0;   ///< 幅
+    int height = 0;  ///< 高さ
+    int bpp = 0;     ///< ピクセルあたりのビット数
 };

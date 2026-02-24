@@ -7,6 +7,8 @@
 #include"Include/Framework/Graphics/ConstantBuffer.h"
 #include"Include/Framework/Utils/CommonTypes.h"
 
+#include"Include/Framework/Graphics/RenderTargetResource.h"
+
 #include <memory>
 //#include<vector>
 #include<array>
@@ -35,12 +37,27 @@ enum class SamplerType {
     Max
 };
 
+/** @enum RasterizerType
+ *  @brief ラスタライザステートの種類
+ */
 enum class RasterizerType
 {
     SolidCullBack,      ///< 塗りつぶし、裏面カリング
     WireframeCullBack,  ///< ワイヤーフレーム、裏面カリング
     SolidCullNone,      ///< 塗りつぶし、カリング無し
     WireframeCullNone,  ///< ワイヤーフレーム、カリング無し
+    Max
+};
+
+/** @enum RenderTargetType
+ *  @brief レンダーターゲットの種類
+ */
+enum class RenderTargetType
+{
+    DefaultBackBuffer,  ///< デフォルトのバックバッファ
+    SceneRT,            ///< シーン描画用のレンダーターゲット
+
+    Num = SceneRT,
     Max
 };
 
@@ -158,7 +175,9 @@ private:
     WindowSystem* window;   ///< ウィンドウ作成等を行うクラスの参照
 
     //std::vector<D3D11_VIEWPORT>       viewportList;       ///< ビューポートのリスト
-    DX::ComPtr<ID3D11RenderTargetView>  renderTargetView;       ///< 描画ターゲット
+    //DX::ComPtr<ID3D11RenderTargetView>  renderTargetView;       ///< 描画ターゲット
+	std::array<RenderTargetResource, static_cast<size_t>(RenderTargetType::Max) > renderTargetViews; ///< 各種描画ターゲットを保持する配列
+
     DX::ComPtr<ID3D11DepthStencilView>  depthStencilView;       ///< 深度、ステンシル用のバッファ
 
     std::unique_ptr<ConstantBuffer<DX::Matrix4x4>>  worldBuffer;        ///< ワールド変換行列を保持するバッファ

@@ -8,6 +8,7 @@
  //-----------------------------------------------------------------------------
 #include "Include/Game/Entities/AttackComponent.h"
 #include "Include/Game/Entities/CharacterController.h"
+#include "Include/Game/Entities/HitComponent.h"
 #include "Include/Framework/Entities/GameObject.h"
 
 #include <iostream>
@@ -119,25 +120,51 @@ void AttackComponent::Update(float _deltaTime)
 			dodge = this->attackObj->GetComponent<DodgeComponent>();
 			this->dodgeComponent = dodge;
 		}
-		if (!dodge) { continue; }
 
-		const bool isDodging = dodge->IsDodging();
-		const bool timingValid = dodge->IsDodgeTimingValid();
-		const bool just = (isDodging && timingValid);
-
-		if (!just) { continue; }
-
-		this->justTriggered = true;
-
-		auto controller =
-			this->attackObj->GetComponent<CharacterController>();
-
-		if (controller)
+		// 回避コンポーネントがあれば回避状態とタイミングを確認
+		if (dodge)
 		{
-			controller->OnJustDodgeSuccess(
-				this->Owner(),
-				this->currentAttackDef.attackType);
+			const bool isDodging = dodge->IsDodging();
+			const bool timingValid = dodge->IsDodgeTimingValid();
+			const bool just = (isDodging && timingValid);
+
+			// ジャスト回避成功なら攻撃成立させない＆攻撃側に通知
+			if (just)
+			{
+				this->justTriggered = true;
+
+				auto controller =
+					this->attackObj->GetComponent<CharacterController>();
+
+				if (controller)
+				{
+					controller->OnJustDodgeSuccess(
+						this->Owner(),
+						this->currentAttackDef.attackType);
+				}
+				continue;
+			}
 		}
+
+		auto hit = this->attackObj->GetComponent<HitComponent>();
+		if (!hit) { continue; }
+
+		DX::Vector3 attackerPos = this->Owner()->transform->GetWorldPosition();
+		DX::Vector3 targetPos = this->attackObj->transform->GetWorldPosition();
+
+		DX::Vector3 dir = targetPos - attackerPos;
+		dir.y = 0.0f;
+		if (dir.LengthSquared() > 1.0e-6f) { dir.Normalize(); }
+
+		HitInfo info{};
+		info.attacker = this->Owner();
+		info.attackType = this->currentAttackDef.attackType;
+		info.damage = this->currentAttackDef.damage;
+		info.hitDirWorld = dir;
+		info.knockback = 15.0f;
+
+		hit->OnHit(info);
+		this->justTriggered = true;
 	}
 
 	//-----------------------------------------------------------------------------

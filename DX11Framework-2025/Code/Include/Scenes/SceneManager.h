@@ -50,6 +50,11 @@ public:
 	 */
 	void NotifyTransitionReady(SceneType _nextSceneType);
 
+	/** @brief 現在のシーンタイプを取得する
+	 *  @return SceneType 現在のシーンタイプ
+	 */
+	SceneType GetCurrentSceneType() { return currentSceneType; }
+
 private:
 	/**	@brief	遷移開始処理を行う
 	 *	@param	SceneType _nextSceneType	次のシーンタイプ
@@ -61,6 +66,8 @@ private:
 
 	/// @brief 終了処理
 	void Dispose();
+
+
 private:
 	std::unique_ptr<SceneFactory> sceneFactory;							///< シーン生成を行うファクトリクラス
 	std::unique_ptr<BaseScene>	currentScene;							///< 現在のシーン

@@ -197,7 +197,7 @@ void SkinnedMeshRenderer::Draw()
 
 
 	//-------------------------------------------------------------
-	// 1つ目のログ：Draw 直前で subset の indexCount/indexStart を出す
+	// subset の indexCount/indexStart を出す
 	//-------------------------------------------------------------
 	const auto& subsets = mesh->GetSubsets();
 

@@ -372,6 +372,21 @@
     <ClInclude Include="Code\Include\Framework\Core\ITimeProvider.h">
       <Filter>ヘッダー ファイル\Framework\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Include\Game\Entities\AttackDef.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Game\Entities\HitComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Game\Entities\MoveComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Scenes\GameScene.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Game\Entities\DebugSceneChanger.h">
+      <Filter>ソース ファイル\Game\Entities</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Code\Source\Framework\main.cpp">
@@ -599,11 +614,24 @@
     <ClCompile Include="Code\Source\Game\Entities\AttackComponent.cpp">
       <Filter>ソース ファイル\Game\Entities</Filter>
     </ClCompile>
+    <ClCompile Include="Code\Source\Game\Entities\HitComponent.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Game\Entities\MoveComponent.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Scenes\GameScene.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Game\Entities\DebugSceneChanger.cpp">
+      <Filter>ソース ファイル\Game\Entities</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Code\Shaders\Common.hlsli">
       <Filter>リソース ファイル</Filter>
     </None>
+    <None Include=".github\copilot-instructions.md" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="Code\Shaders\PixelShader\PS_Test.hlsl">

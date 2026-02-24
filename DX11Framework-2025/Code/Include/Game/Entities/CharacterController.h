@@ -35,8 +35,8 @@ public:
 	enum class PlayerAnimState
 	{
 		Idle,		///< 待機
-		Walk,		///< 歩行
-		Run,		///< 走行
+		Walking,	///< 歩行
+		Running,	///< 走行
 		Dodging,	///< 回避
 		Jumping,	///< ジャンプ
 		Punching,	///< パンチ

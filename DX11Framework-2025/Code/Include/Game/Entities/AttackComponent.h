@@ -16,6 +16,7 @@
 #include "Include/Framework/Graphics/ClipEventWatcher.h"
 
 #include "Include/Game/Entities/DodgeComponent.h"
+#include "Include/Game/Entities/AttackDef.h"
 
 #include <string>
 #include <vector>
@@ -23,25 +24,6 @@
 //-----------------------------------------------------------------------------
 // AttackComponent class
 //-----------------------------------------------------------------------------
-
-/** @enum AttackType
- *  @brief 攻撃タイプ
- */
-enum class AttackType
-{
-	Melee,      ///< 近接攻撃
-	Ranged      ///< 遠距離攻撃
-};
-
-/** @struct AttackDef
- *  @brief 攻撃定義
- */
-struct AttackDef
-{
-	std::string attackClip;   ///< 攻撃アニメーション名
-	AttackType attackType;    ///< 攻撃タイプ
-	float damage;             ///< ダメージ量
-};
 
 /** @class AttackComponent
  *  @brief 攻撃状態とHitOn判定を管理する

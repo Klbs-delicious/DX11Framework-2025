@@ -32,6 +32,7 @@
 // ゲームコンポーネント
 #include"Include/Game/Entities/FogComponent.h"
 #include"Include/Game/Entities/CharacterController.h"
+#include"Include/Game/Entities/DebugSceneChanger.h"
 
 #include<iostream>
 
@@ -77,6 +78,9 @@ void TitleScene::SetupObjects()
 	//--------------------------------------------------------------
 	// オブジェクトの生成
 	//--------------------------------------------------------------
+
+	auto debugSceneChanger = this->gameObjectManager.Instantiate("DebugSceneChanger");
+	auto debugSceneChangerComp = debugSceneChanger->AddComponent<DebugSceneChanger>();
 
 	// 疑似フォグ用の板ポリ
 	auto fogPlane = this->gameObjectManager.Instantiate("FogPlane");

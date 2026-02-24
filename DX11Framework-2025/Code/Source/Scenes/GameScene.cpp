@@ -27,6 +27,8 @@
 #include"Include/Game/Entities/CameraLookComponent.h"
 #include"Include/Game/Entities/DodgeComponent.h"
 #include"Include/Game/Entities/MoveComponent.h"
+#include"Include/Game/Entities/HitComponent.h"
+#include"Include/Game/Entities/DebugSceneChanger.h"
 
 //#include"Include/Framework/Graphics/Mesh.h"
 #include"Include/Framework/Graphics/SpriteManager.h"
@@ -80,8 +82,8 @@ void GameScene::SetupObjects()
 	//--------------------------------------------------------------
 	// アニメーションクリップの登録
 	//--------------------------------------------------------------
-	//animationClipManager.Register("Walk");
-	//animationClipManager.Register("Run");
+	animationClipManager.Register("Walk");
+	animationClipManager.Register("Run");
 	animationClipManager.Register("Jump");
 	animationClipManager.Register("HeadHit");
 	animationClipManager.Register("Idle");
@@ -96,7 +98,6 @@ void GameScene::SetupObjects()
 
 	auto clip = animationClipManager.Get("Punch");
 	enemyStateTable->Set(TestEnemy::EnemyAnimState::Idle, { clip,1.0f, true, 0.2f });
-
 	playerStateTable->Set(CharacterController::PlayerAnimState::Punching, { clip,1.0f, false, 0.2f });
 
 	clip = animationClipManager.Get("Idle");
@@ -107,6 +108,12 @@ void GameScene::SetupObjects()
 
 	clip = animationClipManager.Get("Jump");
 	playerStateTable->Set(CharacterController::PlayerAnimState::Jumping, { clip,1.0f, false, 0.2f });
+
+	clip = animationClipManager.Get("Walk");
+	playerStateTable->Set(CharacterController::PlayerAnimState::Walking, { clip,1.0f, true, 0.2f });
+
+	clip = animationClipManager.Get("Run");
+	playerStateTable->Set(CharacterController::PlayerAnimState::Running, { clip,1.0f, true, 0.2f });
 
 	//--------------------------------------------------------------
 	// カメラの生成
@@ -129,6 +136,9 @@ void GameScene::SetupObjects()
 	//--------------------------------------------------------------
 	// オブジェクトの生成
 	//--------------------------------------------------------------
+
+	auto debugSceneChanger = this->gameObjectManager.Instantiate("DebugSceneChanger");
+	auto debugSceneChangerComp = debugSceneChanger->AddComponent<DebugSceneChanger>();
 
 	// プレイヤーと敵のオブジェクトを生成する
 	auto player = this->gameObjectManager.Instantiate("Player", GameTags::Tag::Player);
@@ -166,6 +176,7 @@ void GameScene::SetupObjects()
 	player->AddComponent<AttackComponent>();
 	player->AddComponent<DodgeComponent>();
 	player->AddComponent<MoveComponent>();
+	player->AddComponent<HitComponent>();
 
 	auto collider = player->AddComponent<Framework::Physics::Collider3DComponent>();
 	collider->SetShape(Framework::Physics::ColliderShapeType::Capsule);
@@ -238,49 +249,7 @@ void GameScene::SetupObjects()
 
 	enemy->AddComponent<TestEnemy>();
 	enemy->AddComponent<AttackComponent>();
-
-	// 球体オブジェクト
-	auto sphere = this->gameObjectManager.Instantiate("Sphere");
-	sphere->transform->SetLocalPosition(DX::Vector3(0.0f, -10.0f, 10.0f));
-	sphere->transform->SetLocalScale(DX::Vector3(2.0f, 2.0f, 2.0f));
-	meshComponent = sphere->AddComponent<MeshComponent>();
-	meshComponent->SetMesh(meshManager.Get("Sphere"));
-	sphere->AddComponent<MeshRenderer>();
-
-	collider = sphere->AddComponent<Framework::Physics::Collider3DComponent>();
-	collider->SetShape(Framework::Physics::ColliderShapeType::Sphere);
-
-	collider = sphere->AddComponent<Framework::Physics::Collider3DComponent>();
-	collider->SetShape(Framework::Physics::ColliderShapeType::Sphere);
-	collider->SetCenterOffset(DX::Vector3(0.0f, 0.0f, 5.0f));
-	collider->SetisTrigger(true);
-
-	rigidbody = sphere->AddComponent<Framework::Physics::Rigidbody3D>();
-	rigidbody->SetObjectLayer(Framework::Physics::PhysicsLayer::Enemy);
-	rigidbody->SetMotionTypeKinematic();
-	rigidbody->SetUseGravity(true);
-
-	sphere->AddComponent<ColliderDebugRenderer>();
-
-	//// トリガー用球体オブジェクト
-	//auto sphereTrigger = this->gameObjectManager.Instantiate("SphereTrigger");
-	//sphereTrigger->SetParent(player);
-	//collider = sphereTrigger->AddComponent<Framework::Physics::Collider3DComponent>();
-	//collider->SetShape(Framework::Physics::ColliderShapeType::Sphere);
-	//collider->SetCenterOffset(DX::Vector3(0.0f, 0.0f, 5.0f));
-	//collider->SetisTrigger(true);
-
-	////rigidbody = sphereTrigger->AddComponent<Framework::Physics::Rigidbody3D>();
-	////rigidbody->SetObjectLayer(Framework::Physics::PhysicsLayer::Enemy);
-	////sphereTrigger->AddComponent<ColliderDebugRenderer>();
-
-	//rigidbody = sphere->AddComponent<Framework::Physics::Rigidbody3D>();
-	//rigidbody->SetObjectLayer(Framework::Physics::PhysicsLayer::Enemy);
-	//rigidbody->SetMotionTypeKinematic();
-	//rigidbody->SetUseGravity(true);
-	//collider = sphere->AddComponent<Framework::Physics::Collider3DComponent>();
-	//collider->SetShape(Framework::Physics::ColliderShapeType::Sphere);
-	//sphere->AddComponent<ColliderDebugRenderer>();
+	enemy->AddComponent<HitComponent>();
 
 
 	// 平面オブジェクト

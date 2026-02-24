@@ -26,6 +26,7 @@
 #include"Include/Game/Entities/CharacterController.h"
 #include"Include/Game/Entities/CameraLookComponent.h"
 #include"Include/Game/Entities/DodgeComponent.h"
+#include"Include/Game/Entities/HitComponent.h"
 
 //#include"Include/Framework/Graphics/Mesh.h"
 #include"Include/Framework/Graphics/SpriteManager.h"
@@ -162,6 +163,7 @@ void ModelTest::SetupObjects()
 	auto characterController = player->AddComponent<CharacterController>();
 	player->AddComponent<AttackComponent>();
 	player->AddComponent<DodgeComponent>();
+	player->AddComponent<HitComponent>();
 
 	auto collider = player->AddComponent<Framework::Physics::Collider3DComponent>();
 	collider->SetShape(Framework::Physics::ColliderShapeType::Capsule);
@@ -234,6 +236,7 @@ void ModelTest::SetupObjects()
 
 	enemy->AddComponent<TestEnemy>();
 	enemy->AddComponent<AttackComponent>();
+	enemy->AddComponent<HitComponent>();
 
 	// 球体オブジェクト
 	auto sphere = this->gameObjectManager.Instantiate("Sphere");

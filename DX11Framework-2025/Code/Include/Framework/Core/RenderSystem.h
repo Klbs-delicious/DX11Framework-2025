@@ -166,9 +166,9 @@ public:
     void SetDepthAllwaysWrite();
 
     /** @brief 深度テストの有効/無効を切り替える
-     *  @param bool enable true: 深度テスト有効 / false: 無効
+     *  @param bool _enable true: 深度テスト有効 / false: 無効
      */
-    void SetDepthEnable(bool enable);
+    void SetDepthEnable(bool _enable);
 
 private:
     D3D11System* d3d11;     ///< DirectX11のデバイス関連の参照

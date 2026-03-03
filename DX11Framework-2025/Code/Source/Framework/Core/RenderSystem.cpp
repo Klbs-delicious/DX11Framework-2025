@@ -233,14 +233,27 @@ void RenderSystem::Finalize()
 void RenderSystem::BeginRender()
 {
     auto context = this->d3d11->GetContext();
-    context->OMSetRenderTargets(1, this->renderTargetViews[static_cast<size_t>(RenderTargetType::DefaultBackBuffer)].renderTargetView.GetAddressOf(), this->depthStencilView.Get());
-    this->renderTargetViews[static_cast<size_t>(RenderTargetType::DefaultBackBuffer)].Clear(context, 0.0f, 0.0f, 0.0f, 1.0f);
+
+    // backBufferRTの描画
+	auto& backBufferRT = this->renderTargetViews[static_cast<size_t>(RenderTargetType::DefaultBackBuffer)];
+    context->OMSetRenderTargets(1, backBufferRT.renderTargetView.GetAddressOf(), this->depthStencilView.Get());
+    backBufferRT.Clear(context, 0.0f, 0.0f, 0.0f, 1.0f);
     context->ClearDepthStencilView(this->depthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 }
 
 /// @brief  描画終了時の処理
 void RenderSystem::EndRender()
 {
+    auto context = this->d3d11->GetContext();
+
+	//// デフォルトのバックバッファに描画
+	//auto& backBufferRT = this->renderTargetViews[static_cast<size_t>(RenderTargetType::DefaultBackBuffer)];
+
+ //   context->OMSetRenderTargets(1, this->renderTargetViews[static_cast<size_t>(RenderTargetType::DefaultBackBuffer)].renderTargetView.GetAddressOf(), this->depthStencilView.Get());
+ //   this->renderTargetViews[static_cast<size_t>(RenderTargetType::DefaultBackBuffer)].Clear(context, 0.0f, 0.0f, 0.0f, 1.0f);
+ //   context->ClearDepthStencilView(this->depthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+
     // バックバッファとフロントバッファを入れ替えて画面に表示
     // 可変フレームレートで処理を行いたいためフラグを 0 に設定してVSyncをoffにしている
     HRESULT hr = this->d3d11->GetSwapChain()->Present(0, 0);
@@ -454,17 +467,18 @@ void RenderSystem::SetDepthAllwaysWrite()
     }
 }
 
-void RenderSystem::SetDepthEnable(bool enable)
+void RenderSystem::SetDepthEnable(bool _enable)
 {
     D3D11_DEPTH_STENCIL_DESC desc{};
-    desc.DepthEnable = enable ? TRUE : FALSE;
-    desc.DepthFunc = enable ? D3D11_COMPARISON_LESS_EQUAL : D3D11_COMPARISON_ALWAYS;
-    desc.DepthWriteMask = enable ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
+    desc.DepthEnable = _enable ? TRUE : FALSE;
+    desc.DepthFunc = _enable ? D3D11_COMPARISON_LESS_EQUAL : D3D11_COMPARISON_ALWAYS;
+    desc.DepthWriteMask = _enable ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
     desc.StencilEnable = FALSE;
 
     ComPtr<ID3D11DepthStencilState> state;
     HRESULT hr = this->d3d11->GetDevice()->CreateDepthStencilState(&desc, state.GetAddressOf());
-    if (SUCCEEDED(hr)) {
+    if (SUCCEEDED(hr))
+    {
         this->d3d11->GetContext()->OMSetDepthStencilState(state.Get(), 0);
     }
 }

@@ -170,6 +170,17 @@ public:
      */
     void SetDepthEnable(bool _enable);
 
+    /** @brief 指定したレンダーターゲットをクリアする
+      *  @param _type クリアするレンダーターゲットの種類
+      *  @param _color クリアに使用する色（RGBAの順で4要素）
+	  */
+    void ClearRenderTarget(RenderTargetType _type, const float _color[4]);
+
+	/** @brief 指定したレンダーターゲットを描画対象に設定する
+	 *  @param _renderTargetType 設定するレンダーターゲットの種類
+	 */
+	void SetRenderTarget(RenderTargetType _renderTargetType);
+
 private:
     D3D11System* d3d11;     ///< DirectX11のデバイス関連の参照
     WindowSystem* window;   ///< ウィンドウ作成等を行うクラスの参照

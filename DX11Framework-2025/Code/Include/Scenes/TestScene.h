@@ -12,8 +12,9 @@ class TestScene :public BaseScene
 public:
 	/**	@brief コンストラクタ
 	 *	@param GameObjectManager&	_gameObjectManager	ゲームオブジェクトの管理
+	 *	@param RenderSystem&	_renderSystem	レンダリングシステム
 	 */
-	TestScene(GameObjectManager& _gameObjectManager);
+	TestScene(GameObjectManager& _gameObjectManager, RenderSystem& _renderSystem);
 
 	/// @brief	デストラクタ
 	~TestScene()override;

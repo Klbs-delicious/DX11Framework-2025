@@ -52,8 +52,9 @@
 
 /**	@brief コンストラクタ
  *	@param GameObjectManager&	_gameObjectManager	ゲームオブジェクトの管理
+ *	@param RenderSystem&	_renderSystem	レンダリングシステム
  */
-GameScene::GameScene(GameObjectManager& _gameObjectManager) :BaseScene(_gameObjectManager) {}
+GameScene::GameScene(GameObjectManager& _gameObjectManager, RenderSystem& _renderSystem) :BaseScene(_gameObjectManager, _renderSystem) {}
 
 /// @brief	デストラクタ
 GameScene::~GameScene() {}

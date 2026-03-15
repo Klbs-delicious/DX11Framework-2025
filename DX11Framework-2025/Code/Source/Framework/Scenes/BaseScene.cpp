@@ -7,7 +7,6 @@
 //-----------------------------------------------------------------------------
 #include"Include/Framework/Scenes/BaseScene.h"
 
-#include"Include/Framework/Core/SystemLocator.h"
 #include"Include/Framework/Core/InputSystem.h"
 #include"Include/Scenes/SceneManager.h"
 
@@ -20,7 +19,8 @@
 /** @brief コンストラクタ
  *  @param GameObjectManager&	_gameObjectManager	ゲームオブジェクトの管理
  */
-BaseScene::BaseScene(GameObjectManager& _gameObjectManager) :gameObjectManager(_gameObjectManager) {}
+BaseScene::BaseScene(GameObjectManager& _gameObjectManager, RenderSystem& _renderSystem)
+	: gameObjectManager(_gameObjectManager), renderSystem(_renderSystem) {}
 
 /// @brief	デストラクタ
 BaseScene::~BaseScene() {}
@@ -53,7 +53,9 @@ void BaseScene::Update(float _deltaTime)
  */
 void BaseScene::Draw()
 {
-    this->gameObjectManager.RenderAll();  // 一括描画
+    // シーン用RTを描画対象に設定
+	this->renderSystem.SetRenderTarget(RenderTargetType::SceneRT);  
+	this->gameObjectManager.RenderWithLayer(GameTags::Layer::Default);
 }
 
 /**	@brief		終了処理を行う

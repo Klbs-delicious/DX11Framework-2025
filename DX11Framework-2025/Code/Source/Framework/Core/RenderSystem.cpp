@@ -90,20 +90,21 @@ bool RenderSystem::Initialize()
         return false;
     }
 
-    // 初期状態の描き込み先にシーン用RTを設定する
-    auto& sceneRT = this->renderTargetViews[static_cast<size_t>(RenderTargetType::SceneRT)].renderTargetView;
-    auto& dsv = this->depthStencilView; // 既存の深度バッファ
-    context->OMSetRenderTargets(1, sceneRT.GetAddressOf(), dsv.Get());
+	// レンダーターゲットの作成
+    for (auto& rt : this->renderTargetViews)
+    {
+        // すでにRTがあるならスキップ
+        if (rt.renderTargetView) { continue; }
 
-    // シンプルなビューポートを作成（SceneRTに合わせる）
-    D3D11_VIEWPORT viewport;
-    viewport.Width = static_cast<FLOAT>(bbDesc.Width);
-    viewport.Height = static_cast<FLOAT>(bbDesc.Height);
-    viewport.MinDepth = 0.0f;
-    viewport.MaxDepth = 1.0f;
-    viewport.TopLeftX = 0;
-    viewport.TopLeftY = 0;
-    context->RSSetViewports(1, &viewport);
+        if (!rt.CreateRenderTarget(device, bbDesc.Width, bbDesc.Height))
+        {
+            throw std::runtime_error("Failed to create render target.");
+            return false;
+        }
+    }
+
+	// シーン用RTの作成RTを設定
+	this->SetRenderTarget(RenderTargetType::SceneRT);
 
     // ラスタライザステート設定
 	this->SetRasterizerState(RasterizerType::SolidCullBack);
@@ -234,10 +235,10 @@ void RenderSystem::BeginRender()
 {
     auto context = this->d3d11->GetContext();
 
-    // backBufferRTの描画
-	auto& backBufferRT = this->renderTargetViews[static_cast<size_t>(RenderTargetType::DefaultBackBuffer)];
-    context->OMSetRenderTargets(1, backBufferRT.renderTargetView.GetAddressOf(), this->depthStencilView.Get());
-    backBufferRT.Clear(context, 0.0f, 0.0f, 0.0f, 1.0f);
+	// デフォルトのSceneRTを描画ターゲットに設定しておく
+    float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    this->SetRenderTarget(RenderTargetType::SceneRT);
+    this->ClearRenderTarget(RenderTargetType::SceneRT, clearColor);
     context->ClearDepthStencilView(this->depthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 }
 
@@ -245,14 +246,6 @@ void RenderSystem::BeginRender()
 void RenderSystem::EndRender()
 {
     auto context = this->d3d11->GetContext();
-
-	//// デフォルトのバックバッファに描画
-	//auto& backBufferRT = this->renderTargetViews[static_cast<size_t>(RenderTargetType::DefaultBackBuffer)];
-
- //   context->OMSetRenderTargets(1, this->renderTargetViews[static_cast<size_t>(RenderTargetType::DefaultBackBuffer)].renderTargetView.GetAddressOf(), this->depthStencilView.Get());
- //   this->renderTargetViews[static_cast<size_t>(RenderTargetType::DefaultBackBuffer)].Clear(context, 0.0f, 0.0f, 0.0f, 1.0f);
- //   context->ClearDepthStencilView(this->depthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
-
 
     // バックバッファとフロントバッファを入れ替えて画面に表示
     // 可変フレームレートで処理を行いたいためフラグを 0 に設定してVSyncをoffにしている
@@ -483,32 +476,23 @@ void RenderSystem::SetDepthEnable(bool _enable)
     }
 }
 
-/////**   @brief  ビューポートを追加
-//// *    @param  const D3D11_VIEWPORT& _viewport 追加するビューポート
-//// */
-//void RenderSystem::AddViewport(const D3D11_VIEWPORT& _viewport)
-//{
-//    this->viewportList.push_back(_viewport);
-//}
-//
-/////**   @brief  指定のビューポートを削除
-//// *    @param  const int _viewportType ビューポートの番号
-//// */
-//void RenderSystem::RemoveViewport(const int _viewportType)
-//{
-//    if (_viewportType >= 0 && _viewportType < static_cast<int>(this->viewportList.size()))
-//    {
-//        this->viewportList.erase(this->viewportList.begin() + _viewportType);
-//    }
-//}
-//
-/////**   @brief  指定のビューポートを
-//// *    @param  const int _viewportType ビューポートの番号
-//// */
-//void RenderSystem::RemoveViewport(const int _viewportType)
-//{
-//    if (_viewportType >= 0 && _viewportType < static_cast<int>(this->viewportList.size()))
-//    {
-//        this->viewportList.erase(this->viewportList.begin() + _viewportType);
-//    }
-//}
+void RenderSystem::ClearRenderTarget(RenderTargetType _type, const float _color[4])
+{
+    auto& rt = this->renderTargetViews[static_cast<size_t>(_type)];
+    this->d3d11->GetContext()->ClearRenderTargetView(rt.renderTargetView.Get(), _color);
+}
+
+void RenderSystem::SetRenderTarget(RenderTargetType _renderTargetType)
+{
+    ID3D11DeviceContext* context = this->d3d11->GetContext();
+
+    auto& rt = this->renderTargetViews[static_cast<size_t>(_renderTargetType)];
+
+    this->d3d11->GetContext()->RSSetViewports(1, &rt.viewport);
+
+    this->d3d11->GetContext()->OMSetRenderTargets(
+        1,
+        rt.renderTargetView.GetAddressOf(),
+        this->depthStencilView.Get()
+    );
+}

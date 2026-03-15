@@ -41,8 +41,9 @@
 
 /**	@brief コンストラクタ
  *	@param GameObjectManager&	_gameObjectManager	ゲームオブジェクトの管理
+ *	@param RenderSystem&	_renderSystem	レンダリングシステム
  */
-TitleScene::TitleScene(GameObjectManager& _gameObjectManager) :BaseScene(_gameObjectManager) {}
+TitleScene::TitleScene(GameObjectManager& _gameObjectManager, RenderSystem& _renderSystem) :BaseScene(_gameObjectManager, _renderSystem) {}
 
 /// @brief	デストラクタ
 TitleScene::~TitleScene() {}

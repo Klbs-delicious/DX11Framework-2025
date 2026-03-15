@@ -5,6 +5,8 @@
 #include"Include/Framework/Utils/NonCopyable.h"
 #include"Include/Framework/Event/GameObjectEvent.h"
 
+#include"Include/Game/Common/GameTags.h"
+
 #include"Include/Framework/Entities/GameObject.h"
 #include"Include/Framework/Entities/Component.h"
 #include"Include/Framework/Entities/PhaseInterfaces.h"

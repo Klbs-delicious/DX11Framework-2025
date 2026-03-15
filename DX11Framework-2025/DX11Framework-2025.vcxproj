@@ -92,6 +92,7 @@
     <ClInclude Include="Code\Include\Framework\Utils\DebugHooks.h" />
     <ClInclude Include="Code\Include\Framework\Utils\NonCopyable.h" />
     <ClInclude Include="Code\Include\Framework\Utils\TreeNode.h" />
+    <ClInclude Include="Code\Include\Game\Common\GameTags.h" />
     <ClInclude Include="Code\Include\Game\Entities\AttackComponent.h" />
     <ClInclude Include="Code\Include\Game\Entities\CameraLookComponent.h" />
     <ClInclude Include="Code\Include\Game\Entities\CharacterController.h" />

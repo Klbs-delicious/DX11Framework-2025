@@ -7,6 +7,7 @@
 // Test
 //-----------------------------------------------------------------------------
 #include"Include/Framework/Entities/GameObjectManager.h"
+#include"Include/Framework/Core/RenderSystem.h"
 
 //-----------------------------------------------------------------------------
 
@@ -23,8 +24,9 @@ public:
 
 	/**	@brief コンストラクタ
 	 *	@param GameObjectManager&	_gameObjectManager	ゲームオブジェクトの管理
+	 *	@param RenderSystem&	_renderSystem		レンダリングシステムの管理
 	 */
-	BaseScene(GameObjectManager& _gameObjectManager);
+	BaseScene(GameObjectManager& _gameObjectManager, RenderSystem& _renderSystem);
 
 	/// @brief	デストラクタ
 	virtual ~BaseScene();
@@ -58,4 +60,5 @@ public:
 
 protected:
 	GameObjectManager& gameObjectManager;	///< ゲームオブジェクトの管理
+	RenderSystem& renderSystem;				///< レンダリングシステムの管理
 };

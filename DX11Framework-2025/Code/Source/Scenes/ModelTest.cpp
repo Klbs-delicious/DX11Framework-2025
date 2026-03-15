@@ -53,7 +53,7 @@
 /** @brief コンストラクタ
  *	@param GameObjectManager&	_gameObjectManager	ゲームオブジェクトの管理
  */
-ModelTest::ModelTest(GameObjectManager& _gameObjectManager) :BaseScene(_gameObjectManager) {}
+ModelTest::ModelTest(GameObjectManager& _gameObjectManager, RenderSystem& _renderSystem) :BaseScene(_gameObjectManager,_renderSystem) {}
 
 /// @brief	デストラクタ
 ModelTest::~ModelTest() {}

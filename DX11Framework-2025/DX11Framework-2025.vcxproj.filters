@@ -97,6 +97,9 @@
     <Filter Include="ソース ファイル\Game\Entities">
       <UniqueIdentifier>{41ffed4d-7ec4-497c-82c0-17396bc8f31e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ヘッダー ファイル\Game\Common">
+      <UniqueIdentifier>{e736b3c0-1290-4921-8952-7286fc3fcfd4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Code\Include\Framework\Core\Application.h">
@@ -372,6 +375,18 @@
     <ClInclude Include="Code\Include\Framework\Core\ITimeProvider.h">
       <Filter>ヘッダー ファイル\Framework\Core</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\RenderTargetResource.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Game\Entities\MoveComponent.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Scenes\GameScene.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Game\Common\GameTags.h">
+      <Filter>ヘッダー ファイル\Game\Common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Code\Source\Framework\main.cpp">
@@ -598,6 +613,15 @@
     </ClCompile>
     <ClCompile Include="Code\Source\Game\Entities\AttackComponent.cpp">
       <Filter>ソース ファイル\Game\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\RenderTargetResource.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Game\Entities\MoveComponent.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Scenes\GameScene.cpp">
+      <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

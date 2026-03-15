@@ -46,8 +46,9 @@
 
 /** @brief コンストラクタ
  *	@param GameObjectManager&	_gameObjectManager	ゲームオブジェクトの管理
+ *	@param RenderSystem&	_renderSystem	レンダリングシステム
  */
-PhysicsTest::PhysicsTest(GameObjectManager& _gameObjectManager) :BaseScene(_gameObjectManager) {}
+PhysicsTest::PhysicsTest(GameObjectManager& _gameObjectManager, RenderSystem& _renderSystem) :BaseScene(_gameObjectManager, _renderSystem) {}
 
 /// @brief	デストラクタ
 PhysicsTest::~PhysicsTest() {}

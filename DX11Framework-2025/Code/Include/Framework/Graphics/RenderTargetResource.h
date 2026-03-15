@@ -45,4 +45,5 @@ struct RenderTargetResource : public TextureResource
 
 	DX::ComPtr<ID3D11RenderTargetView> renderTargetView;	///< 書き込み用ビュー
 	DX::ComPtr<ID3D11Texture2D> texture2D;					///< テクスチャ本体
+	D3D11_VIEWPORT viewport = {};							///< ビューポート
 };

@@ -9,41 +9,11 @@
 
 #include"Include/Framework/Event/GameObjectEvent.h"
 
+#include"Include/Game/Common/GameTags.h"
+
 #include<string>
 #include<vector>
 #include<memory>
-
- /** @namespace GameTags
-  *  @brief     ゲームオブジェクトの識別に使用するタグやレイヤーを定義する名前空間
-  */
-
-namespace GameTags
-{
-	/** @enum Tag
-	 *  @brief ゲームオブジェクトの分類に使用するタグ
-	 */
-	enum class Tag
-	{
-		None = 0,
-		Camera,
-		Player,
-		Enemy,
-		UI,
-		Environment,
-	};
-
-	/** @enum Layer
-	 *  @brief 描画や衝突判定などに使用するレイヤー定義
-	 */
-	enum class Layer
-	{
-		Default = 0,
-		TransparentFX,
-		UI,
-		IgnoreRaycast,
-		Background,
-	};
-}
 
  /** @class	GameObject
   *	@brief	ゲーム内の振る舞いや構造を構成する基本単位

@@ -68,6 +68,14 @@ bool RenderTargetResource::CreateRenderTarget(ID3D11Device* _device,
 	hr = _device->CreateShaderResourceView(this->texture2D.Get(), nullptr, this->texture.GetAddressOf());
 	if (FAILED(hr)){ return false; }
 
+	// ビューポートの設定
+	this->viewport.TopLeftX = 0.0f;
+	this->viewport.TopLeftY = 0.0f;
+	this->viewport.Width = static_cast<float>(_width);
+	this->viewport.Height = static_cast<float>(_height);
+	this->viewport.MinDepth = 0.0f;
+	this->viewport.MaxDepth = 1.0f;
+
 	return true;
 }
 
@@ -85,6 +93,13 @@ bool RenderTargetResource::Attach(ID3D11Texture2D* _existingTexture, ID3D11Devic
 	_existingTexture->GetDesc(&desc);
 	this->width = desc.Width;
 	this->height = desc.Height;
+
+	this->viewport.TopLeftX = 0.0f;
+	this->viewport.TopLeftY = 0.0f;
+	this->viewport.Width = static_cast<float>(desc.Width);
+	this->viewport.Height = static_cast<float>(desc.Height);
+	this->viewport.MinDepth = 0.0f;
+	this->viewport.MaxDepth = 1.0f;
 
 	// RTVの作成
 	return SUCCEEDED(_device->CreateRenderTargetView(_existingTexture, nullptr, &this->renderTargetView));

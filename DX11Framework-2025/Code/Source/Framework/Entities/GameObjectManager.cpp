@@ -22,7 +22,7 @@
 GameObjectManager::GameObjectManager(const EngineServices* _services) :
 	gameObjects(), services(_services),
 	pendingInits(), updates(), fixedUpdates(), destroyQueue(),
-	renderes(), rigidbodies(), transforms(), 
+	layerRenderers(), rigidbodies(), transforms(),
 	nameMap(),tagMap()
 {}
 
@@ -56,7 +56,7 @@ void GameObjectManager::Dispose()
 	this->pendingInits.clear();
 	this->updates.clear();
 	this->fixedUpdates.clear();
-	this->renderes.clear();
+	this->layerRenderers.clear();
 	this->rigidbodies.clear();
 	this->transforms.clear();
 
@@ -169,22 +169,42 @@ void GameObjectManager::EndPhysics(float _deltaTime)
 /// @brief 一括描画
 void GameObjectManager::RenderAll()
 {
-	for (auto& render : this->renderes)
+	for (auto& pair : this->layerRenderers)
 	{
-		if (render){ render->Draw(); }
+		for (auto& render : pair.second)
+		{
+			if (render) { render->Draw(); }
+		}
+	}
+}
+
+/** @brief レイヤー指定描画
+ *  @param _layer 描画するレイヤー
+ */
+void GameObjectManager::RenderWithLayer(GameTags::Layer _layer)
+{
+	// 指定されたレイヤーのリストが存在するか確認して描画する
+	auto it = this->layerRenderers.find(_layer);
+	if (it != this->layerRenderers.end())
+	{
+		for (auto& render : it->second)
+		{
+			if (render) { render->Draw(); }
+		}
 	}
 }
 
 /** @brief ゲームオブジェクトの作成
  *  @param const std::string& _name オブジェクトの名前
  *  @param const GameTags::Tag& _tag = GameTags::Tag::None オブジェクトのタグ名
+ *  @param const GameTags::Layer _layer = GameTags::Layer::Default オブジェクトのレイヤー
  *  @param const bool _isActive = true オブジェクトの有効状態
  *  @return GameObject* 生成したゲームオブジェクト
  */
-GameObject* GameObjectManager::Instantiate(const std::string& _name, const GameTags::Tag& _tag, const bool _isActive) 
+GameObject* GameObjectManager::Instantiate(const std::string& _name, const GameTags::Tag& _tag, const GameTags::Layer _layer, const bool _isActive) 
 {
 	// GameObject を生成
-	auto newObject = std::make_unique<GameObject>(*this, _name, _tag, _isActive);
+	auto newObject = std::make_unique<GameObject>(*this, _name, _tag, _layer, _isActive);
 	GameObject* rawPtr = newObject.get();
 
 	// リソース関連の参照を設定
@@ -351,7 +371,9 @@ void GameObjectManager::RegisterComponentToPhases(Component* _component)
 	// 描画
 	if (auto dUI = dynamic_cast<IDrawable*>(_component))
 	{
-		PushUnique(this->renderes, dUI);
+		// レイヤーごとに登録する
+		GameTags::Layer layer = _component->Owner()->GetLayer();
+		PushUnique(this->layerRenderers[layer], dUI);
 	}
 
 	// Rigidbody3D
@@ -386,7 +408,11 @@ void GameObjectManager::UnregisterComponentFromPhases(Component* _component)
 	// 描画
 	if (auto dUI = dynamic_cast<IDrawable*>(_component))
 	{
-		EraseOne(this->renderes, dUI);
+		// 全レイヤーのリストから探して消去
+		for (auto& pair : this->layerRenderers)
+		{
+			EraseOne(pair.second, dUI);
+		}
 	}
 
 	// Rigidbody3D

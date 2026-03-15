@@ -58,9 +58,16 @@ public:
 	*	@param	IGameObjectObserver&		_gameobjctObs					GameObjectの状態を通知する
 	*	@param	const std::string&			_name							オブジェクトの名前
 	*	@param	const GameTags::Tag			_tag = GameTags::Tag::None		オブジェクトのタグ名
+	*	@param	const GameTags::Layer		_layer = GameTags::Layer::Default	オブジェクトのレイヤー名
 	*	@param	const bool					_isActive = true				オブジェクトの有効状態
 	*/
-	GameObject(IGameObjectObserver& _gameobjctObs, const std::string& _name, const GameTags::Tag _tag = GameTags::Tag::None, const bool _isActive = true);
+	GameObject(
+		IGameObjectObserver& _gameobjctObs,
+		const std::string& _name,
+		const GameTags::Tag _tag = GameTags::Tag::None, 
+		const GameTags::Layer _layer = GameTags::Layer::Default, 
+		const bool _isActive = true
+	);
 
 	/// @brief	デストラクタ
 	~GameObject();
@@ -112,6 +119,11 @@ public:
 	 *  @return const GameTags::Tag& オブジェクトを識別するタグ（読み取り専用）
 	 */
 	const GameTags::Tag& GetTag()const { return this->tag; }
+
+	/** @brief  ゲームオブジェクトのレイヤーを取得する
+	 *  @return const GameTags::Layer& オブジェクトのレイヤー（読み取り専用）
+	 */
+	const GameTags::Layer& GetLayer()const { return this->layer; }
 
 	/// @brief	オブジェクトの削除申請を行う
 	void OnDestroy();
@@ -274,6 +286,9 @@ public:
 		return this->timeScaleComponent;
 	}
 
+	/**	@brief	位置、回転、スケール情報を取得
+	 *	@return	Transform*
+	 */
 	[[nodiscard]] Transform* GetTransform()
 	{
 		if (this->transform) { return this->transform; }
@@ -298,9 +313,10 @@ private:
 	bool isPendingDestroy;	///< オブジェクトの削除フラグ
 	bool isActive;			///< オブジェクトの有効/無効フラグ
 
-	GameObject* parent;	///< 親オブジェクト
-	std::string name;	///< オブジェクト名
-	GameTags::Tag tag;	///< タグ名
+	GameObject* parent;		///< 親オブジェクト
+	std::string name;		///< オブジェクト名
+	GameTags::Tag tag;		///< タグ名
+	GameTags::Layer layer;	///< レイヤー名
 
 	std::vector<GameObject*> children;						///< 子オブジェクトのリスト
 	std::vector<std::unique_ptr<Component>>	components;		///< コンポーネントのリスト

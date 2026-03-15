@@ -66,13 +66,19 @@ public:
 	/// @brief 一括描画
 	void RenderAll();
 
+	/** @brief レイヤー指定描画
+	 *  @param _layer 描画するレイヤー
+	 */
+	void RenderWithLayer(GameTags::Layer _layer);
+
 	/**	@brief	ゲームオブジェクトの作成
 	 *	@param	const std::string& _name						オブジェクトの名前
 	 *	@param	const GameTags::Tag& _tag = GameTags::Tag::None	オブジェクトのタグ名
+	 *	@param	const GameTags::Layer _layer = GameTags::Layer::Default	オブジェクトのレイヤー
 	 *	@param	const bool _isActive = true						オブジェクトの有効状態
 	 *	@return GameObject*										生成したゲームオブジェクト
 	 */
-	GameObject* Instantiate(const std::string& _name, const GameTags::Tag& _tag = GameTags::Tag::None, const bool _isActive = true);
+	GameObject* Instantiate(const std::string& _name, const GameTags::Tag& _tag = GameTags::Tag::None, const GameTags::Layer _layer = GameTags::Layer::Default, const bool _isActive = true);
 
 	/**	@brief	ゲームオブジェクトを名前検索で取得する
 	 *	@param	const std::string& _name	オブジェクトの名前
@@ -143,12 +149,13 @@ private:
 	std::vector <IFixedUpdatable*> fixedUpdates;	///< 固定更新を持つオブジェクトの配列
 
 	// 内部コンポーネント管理用配列
-	std::vector<IDrawable*> renderes;							///< 描画を持つコンポーネントの配列
+	//std::vector<IDrawable*> renderes;												///< 描画を持つコンポーネントの配列
+	std::unordered_map<GameTags::Layer, std::vector<IDrawable*>> layerRenderers;	///< レイヤーごとの描画コンポーネントのマップ
+
 	std::vector<Framework::Physics::Rigidbody3D*> rigidbodies;	///< 物理コンポーネントの配列
 	std::vector<Transform*> transforms;							///< Transformコンポーネントの配列
 
 	// 検索用マップ
 	std::unordered_map<std::string, GameObject*> nameMap;				///< 名前検索用マップ
 	std::unordered_map<GameTags::Tag, std::vector<GameObject*>> tagMap;	///< タグ検索用マップ
-
 };

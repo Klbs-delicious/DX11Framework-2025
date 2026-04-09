@@ -8,9 +8,9 @@
 #include"Include/Framework/Utils/CommonTypes.h"
 
 #include"Include/Framework/Graphics/RenderTargetResource.h"
+#include"Include/Framework/Graphics/PostProcess/PostProcessPipeline.h"
 
 #include <memory>
-//#include<vector>
 #include<array>
 
 /** @enum BlendStateType
@@ -90,6 +90,11 @@ public:
 
     /// @brief  描画終了時の処理
     void EndRender();
+
+    /** @brief  ポストプロセスパイプラインの取得
+     *  @return  ポストプロセスパイプラインのポインタ
+	 */
+    PostProcessPipeline* GetPostProcessPipeline();
 
     /** @brief サンプラーの作成
      *  @return HRESULT 作成に成功したら true
@@ -186,8 +191,9 @@ private:
     WindowSystem* window;   ///< ウィンドウ作成等を行うクラスの参照
 
     //std::vector<D3D11_VIEWPORT>       viewportList;       ///< ビューポートのリスト
-    //DX::ComPtr<ID3D11RenderTargetView>  renderTargetView;       ///< 描画ターゲット
-	std::array<RenderTargetResource, static_cast<size_t>(RenderTargetType::Max) > renderTargetViews; ///< 各種描画ターゲットを保持する配列
+
+	std::array<RenderTargetResource, static_cast<size_t>(RenderTargetType::Max) > renderTargetViews;    ///< 各種描画ターゲットを保持する配列
+	std::unique_ptr<PostProcessPipeline> postProcessPipeline;                                           ///< ポストエフェクト処理をまとめたクラスのインスタンス
 
     DX::ComPtr<ID3D11DepthStencilView>  depthStencilView;       ///< 深度、ステンシル用のバッファ
 

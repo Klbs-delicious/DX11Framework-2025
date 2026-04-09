@@ -20,7 +20,7 @@
  *  @param GameObjectManager&	_gameObjectManager	ゲームオブジェクトの管理
  */
 BaseScene::BaseScene(GameObjectManager& _gameObjectManager, RenderSystem& _renderSystem)
-	: gameObjectManager(_gameObjectManager), renderSystem(_renderSystem) {}
+	: gameObjectManager(_gameObjectManager), renderSystem(_renderSystem), postProcessPipeline(_renderSystem.GetPostProcessPipeline()) {}
 
 /// @brief	デストラクタ
 BaseScene::~BaseScene() {}
@@ -56,6 +56,12 @@ void BaseScene::Draw()
     // シーン用RTを描画対象に設定
 	this->renderSystem.SetRenderTarget(RenderTargetType::SceneRT);  
 	this->gameObjectManager.RenderWithLayer(GameTags::Layer::Default);
+
+    // ポストプロセスの実行
+    if (this->postProcessPipeline)
+    {
+        this->postProcessPipeline->Execute(this->renderSystem);
+	}
 }
 
 /**	@brief		終了処理を行う
@@ -65,4 +71,10 @@ void BaseScene::Finalize()
 {
     // オブジェクトを削除
     this->gameObjectManager.Dispose();
+
+    // ポストプロセスパスをクリア
+    if (this->postProcessPipeline)
+    {
+        this->postProcessPipeline->ClearPasses();
+    }
 }

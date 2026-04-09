@@ -103,6 +103,10 @@ bool RenderSystem::Initialize()
         }
     }
 
+	// ポストプロセスパイプラインの初期化
+	this->postProcessPipeline = std::make_unique<PostProcessPipeline>();
+	this->postProcessPipeline->Initialize(device, bbDesc.Width, bbDesc.Height);
+
 	// シーン用RTの作成RTを設定
 	this->SetRenderTarget(RenderTargetType::SceneRT);
 
@@ -216,6 +220,11 @@ void RenderSystem::Finalize()
     this->depthStateEnable.Reset();
     this->depthStateDisable.Reset();
 
+    // ポストプロセスパイプラインの終了処理
+    if (this->postProcessPipeline) {
+        this->postProcessPipeline.reset();
+    }
+
     // 定数バッファ（描画ターゲットが参照する可能性がある）
     this->worldBuffer.reset();
     this->viewBuffer.reset();
@@ -251,6 +260,14 @@ void RenderSystem::EndRender()
     // 可変フレームレートで処理を行いたいためフラグを 0 に設定してVSyncをoffにしている
     HRESULT hr = this->d3d11->GetSwapChain()->Present(0, 0);
     if (FAILED(hr)) { OutputDebugString(L"Present failed!\n"); }
+}
+
+/** @brief  ポストプロセスパイプラインの取得
+ *  @return  ポストプロセスパイプラインのポインタ
+ */
+PostProcessPipeline* RenderSystem::GetPostProcessPipeline()
+{
+    return this->postProcessPipeline.get();
 }
 
 /** @brief サンプラーの作成

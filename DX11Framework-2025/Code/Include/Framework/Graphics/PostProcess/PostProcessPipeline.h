@@ -37,6 +37,8 @@ public:
 	 */
 	void AddPass(std::unique_ptr<IPostProcessPass> _pass);
 
+	/// @brief	ポストプロセスパスを全てクリアする
+	void ClearPasses() { this->passes.clear(); }
 private:
 	std::vector<std::unique_ptr<IPostProcessPass>> passes;	///< ポストプロセスパスのリスト
 	std::unique_ptr<RenderTargetResource> workRtA;			///< パス間の入出力に使用するレンダーターゲットA

@@ -5,6 +5,7 @@
 
 #include"Include/Framework/Entities/GameObjectManager.h"
 #include"Include/Framework/Core/RenderSystem.h"
+#include"Include/Framework/Graphics/PostProcess/PostProcessPipeline.h"
 
 /**	@class		BaseScene
  *	@brief		シーン基底クラス
@@ -54,6 +55,7 @@ public:
 	[[nodiscard]] GameObjectManager& GetGameObjectManager() { return this->gameObjectManager;; }
 
 protected:
-	GameObjectManager& gameObjectManager;	///< ゲームオブジェクトの管理
-	RenderSystem& renderSystem;				///< レンダリングシステムの管理
+	GameObjectManager& gameObjectManager;			///< ゲームオブジェクトの管理
+	RenderSystem& renderSystem;						///< レンダリングシステムの管理
+	PostProcessPipeline* postProcessPipeline;		///< ポスト処理の管理
 };

@@ -5,22 +5,21 @@
 #include"Include/Framework/Core/D3D11System.h"
 
 #include"Include/Framework/Graphics/PostProcess/IPostProcessPass.h"
-#include"Include/Framework/Graphics/PostProcess/ICondition.h"
+#include"Include/Framework/Graphics/PostProcess/IEffectRequest.h"
 
 #include"Include/Framework/Shaders/ShaderCommon.h"
 #include"Include/Framework/Shaders/ShaderManager.h"
 
-/**	@class		SepiaPassCondition
+/**	@class		SepiaEffectRequest
  *	@brief		SepiaEffectPassが有効になる条件を定義するクラス
  *	@details
  *		- ここでは単純に回避状態かどうかを判定する
  */
-class SepiaPassCondition :public ICondition
+class SepiaEffectRequest :public IEffectRequest
 {
 public:
-	SepiaPassCondition() :isDodge(false) {}
-	~SepiaPassCondition() = default;
-
+	SepiaEffectRequest() :isDodge(false) {}
+	~SepiaEffectRequest() = default;
 	/**	@brief	条件を評価する
 	 *	@return	bool 条件が満たされている場合は true、そうでない場合は false
 	 */
@@ -69,9 +68,9 @@ public:
 	/**	@brief	SepiaPassConditionを設定する
 	 *	@param	_condition 設定する条件
 	 */
-	void SetCondition(std::unique_ptr<ICondition> _condition) { this->sepiaPassCondition = std::move(_condition); }
+	void SetCondition(std::unique_ptr<IEffectRequest> _condition) { this->sepiaPassCondition = std::move(_condition); }
 
 private:
 	ShaderCommon::ShaderProgram* sepiaShaderProgram;	///< セピア調のシェーダープログラム
-	std::unique_ptr<ICondition> sepiaPassCondition;		///< SepiaEffectPassの条件クラス
+	std::unique_ptr<IEffectRequest> sepiaPassCondition;		///< SepiaEffectPassの条件クラス
 };

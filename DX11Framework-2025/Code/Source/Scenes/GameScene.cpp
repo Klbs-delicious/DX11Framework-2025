@@ -81,9 +81,9 @@ void GameScene::SetupObjects()
 	std::unique_ptr<SepiaEffectPass> sepiaEffect = std::make_unique<SepiaEffectPass>(&shaderManager);
 
 	// 条件の設定
-	auto sepiaCondition = std::make_unique<SepiaPassCondition>();
+	auto sepiaCondition = std::make_unique<SepiaEffectRequest>();
 	SepiaEffectPass* sepiaEffectPtr = sepiaEffect.get(); 
-	SepiaPassCondition* sepiaConditionPtr = sepiaCondition.get();
+	SepiaEffectRequest* sepiaConditionPtr = sepiaCondition.get();
 
 	sepiaEffectPtr->SetCondition(std::move(sepiaCondition));
 

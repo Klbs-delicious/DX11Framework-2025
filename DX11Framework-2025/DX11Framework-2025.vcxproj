@@ -73,7 +73,7 @@
     <ClInclude Include="Code\Include\Framework\Graphics\ModelData.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\ModelImporter.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\ModelManager.h" />
-    <ClInclude Include="Code\Include\Framework\Graphics\PostProcess\ICondition.h" />
+    <ClInclude Include="Code\Include\Framework\Graphics\PostProcess\IEffectRequest.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\PostProcess\IPostProcessPass.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\PostProcess\PostProcessPipeline.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\PrimitiveMeshData.h" />

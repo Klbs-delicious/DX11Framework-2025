@@ -103,7 +103,7 @@ public:
 	/** @brief セピア調ポストプロセスの条件オブジェクトを設定する
 	 *  @param _condition セピア調ポストプロセスの条件オブジェクトへの参照
 	 */
-	void SetConditionSepia(SepiaPassCondition* _condition) { this->sepiaEffectCondition = _condition; }
+	void SetConditionSepia(SepiaEffectRequest* _condition) { this->sepiaEffectCondition = _condition; }
 
 private:
 	/// @brief 回避状態の終了判定（DodgeComponent のみ）
@@ -118,7 +118,7 @@ private:
 	MoveComponent* moveComponent = nullptr;				///< 移動処理
 	DodgeComponent* dodgeComponent = nullptr;			///< 回避処理
 
-	SepiaPassCondition* sepiaEffectCondition;			///< セピア調ポストプロセスの条件オブジェクトへの参照
+	SepiaEffectRequest* sepiaEffectCondition;			///< セピア調ポストプロセスの条件オブジェクトへの参照
 	bool isJustDodgeSlowFxActive = false;				///< ジャスト回避スロー演出の有効状態
 
 	Transform* cameraTransform = nullptr;				///< カメラの座標系

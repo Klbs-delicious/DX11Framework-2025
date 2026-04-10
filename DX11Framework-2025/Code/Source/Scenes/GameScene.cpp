@@ -79,6 +79,15 @@ void GameScene::SetupObjects()
 	// ポストプロセスの登録
 	//--------------------------------------------------------------
 	std::unique_ptr<SepiaEffectPass> sepiaEffect = std::make_unique<SepiaEffectPass>(&shaderManager);
+
+	// 条件の設定
+	auto sepiaCondition = std::make_unique<SepiaPassCondition>();
+	SepiaEffectPass* sepiaEffectPtr = sepiaEffect.get(); 
+	SepiaPassCondition* sepiaConditionPtr = sepiaCondition.get();
+
+	sepiaEffectPtr->SetCondition(std::move(sepiaCondition));
+
+	// パスの登録
 	this->postProcessPipeline->AddPass(std::move(sepiaEffect));
 
 	//--------------------------------------------------------------
@@ -173,6 +182,8 @@ void GameScene::SetupObjects()
 
 	// キャラクターコントローラーを追加する
 	auto characterController = player->AddComponent<CharacterController>();
+	characterController->SetConditionSepia(sepiaConditionPtr);
+
 	player->AddComponent<AttackComponent>();
 	player->AddComponent<DodgeComponent>();
 	player->AddComponent<MoveComponent>();

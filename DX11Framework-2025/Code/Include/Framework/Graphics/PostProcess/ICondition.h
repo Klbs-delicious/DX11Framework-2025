@@ -14,5 +14,5 @@ public:
 	/**	@brief	条件を評価する
 	 *	@return	bool 条件が満たされている場合は true、そうでない場合は false
 	 */
-	virtual bool Check() = 0;
+	virtual [[nodiscard]] bool Check()const = 0;
 };

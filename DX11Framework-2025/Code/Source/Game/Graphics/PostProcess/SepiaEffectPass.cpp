@@ -70,6 +70,5 @@ void SepiaEffectPass::Execute(
  */
 const bool SepiaEffectPass::IsActive()
 {
-	// テスト的に常に有効にしておく
-	return true;
+	return this->sepiaPassCondition && this->sepiaPassCondition->Check();
 }

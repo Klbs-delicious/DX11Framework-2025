@@ -100,6 +100,12 @@
     <Filter Include="ヘッダー ファイル\Game\Common">
       <UniqueIdentifier>{e736b3c0-1290-4921-8952-7286fc3fcfd4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\Framework\Graphics\PostProcess">
+      <UniqueIdentifier>{8000b747-b7fc-4ed5-9a68-4bf6e791cdcf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Framework\Graphics\PostProcess">
+      <UniqueIdentifier>{109e2482-fc78-4b1a-affe-98d425274018}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Code\Include\Framework\Core\Application.h">
@@ -387,6 +393,18 @@
     <ClInclude Include="Code\Include\Game\Common\GameTags.h">
       <Filter>ヘッダー ファイル\Game\Common</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\PostProcess\IPostProcessPass.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\PostProcess\PostProcessPipeline.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\PostProcess\ICondition.h">
+      <Filter>ヘッダー ファイル\Framework\Graphics\PostProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Game\Graphics\PostProcess\SepiaEffectPass.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Code\Source\Framework\main.cpp">
@@ -621,6 +639,12 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Scenes\GameScene.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Framework\Graphics\PostProcess\PostProcessPipeline.cpp">
+      <Filter>ソース ファイル\Framework\Graphics\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Game\Graphics\PostProcess\SepiaEffectPass.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,4 +1,4 @@
-/**	@file	PostProcessPipeline.cpp
+﻿/**	@file	PostProcessPipeline.cpp
 *	@date	2026/04/10
 */
 
@@ -6,6 +6,7 @@
 // Includes
 //-----------------------------------------------------------------------------
 #include"Include/Framework/Graphics/PostProcess/PostProcessPipeline.h"
+#include"Include/Framework/Core/RenderSystem.h"
 
 #include <stdexcept>
 //-----------------------------------------------------------------------------
@@ -49,23 +50,52 @@ bool PostProcessPipeline::Initialize(ID3D11Device* _device, UINT _width, UINT _h
  */
 void PostProcessPipeline::Execute(RenderSystem& _renderSystem)
 {
-	// パスがない場合は何もしない
-	if (this->passes.empty()) { return; }
+	// パスがない場合はデフォルトの SceneRT をそのまま最終出力
+	ID3D11DeviceContext* context = _renderSystem.GetD3D11System()->GetContext();
+	if (!context) { return; }
+
+	// バックバッファとシーン描画用RTのリソースを取得
+	const RenderTargetResource& backBuffer = _renderSystem.GetRenderTarget(RenderTargetType::DefaultBackBuffer);
+	const RenderTargetResource& sceneRt = _renderSystem.GetRenderTarget(RenderTargetType::SceneRT);
+
+	if (!backBuffer.texture2D || !sceneRt.texture2D) { return; }
+
+	if (this->passes.empty())
+	{
+		context->CopyResource(backBuffer.texture2D.Get(), sceneRt.texture2D.Get());
+		return;
+	}
+
+	bool executedAnyPass = false;
 
 	for (auto& pass : this->passes)
 	{
 		// パスが有効な場合のみ実行する
-		if (!pass->IsActive()) { continue; }
+		if (!pass || !pass->IsActive()) { continue; }
 
-		// 入力と出力のレンダーターゲットを切り替える
+		// SceneRT直参照を許容する方針なので inputRT はワークRTのまま
 		RenderTargetResource* inputRT = this->workRtA.get();
 		RenderTargetResource* outputRT = this->workRtB.get();
+		if (!inputRT || !outputRT) { continue; }
 
-		// ポスト処理を実行する
 		pass->Execute(_renderSystem, inputRT, outputRT);
 
-		// 入力と出力を入れ替える
-		std::swap(this->workRtA, this->workRtB);
+		// 実行結果を workRtA 側に寄せる
+		std::swap(this->workRtA, this->workRtB); 
+		executedAnyPass = true;
+	}
+
+	if (!executedAnyPass)
+	{
+		// 1つも実行されなかった場合は SceneRT をそのまま出す
+		context->CopyResource(backBuffer.texture2D.Get(), sceneRt.texture2D.Get());
+		return;
+	}
+
+	if (this->workRtA && this->workRtA->texture2D)
+	{
+		// 最終結果(workRtA)をバックバッファへ転送する
+		context->CopyResource(backBuffer.texture2D.Get(), this->workRtA->texture2D.Get());
 	}
 }
 

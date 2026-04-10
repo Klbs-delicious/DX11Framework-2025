@@ -1,9 +1,10 @@
-/**	@file	IPostProcessPass.h
+﻿/**	@file	IPostProcessPass.h
 *	@date	2026/04/10
 */
 #pragma once
-#include"Include/Framework/Core/RenderSystem.h"
 #include"Include/Framework/Graphics/RenderTargetResource.h"
+
+class RenderSystem;
 
 /**	@class		IPostProcessPass
  *	@brief		ポストプロセスパスのインターフェース
@@ -24,7 +25,7 @@ public:
 	) = 0;
 
 	/**	@brief	このポストプロセスパスが有効かどうかを返す
-	 *	@return	bool 有効な場合は true、無効な場合は false
+	 *	@return	const bool 有効な場合は true、無効な場合は false
 	 */
-	virtual bool IsActive() = 0;
+	virtual const bool IsActive() = 0;
 };

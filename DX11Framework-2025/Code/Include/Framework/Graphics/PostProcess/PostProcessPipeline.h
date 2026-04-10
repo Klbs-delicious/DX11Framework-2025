@@ -1,14 +1,14 @@
-/**	@file	PostProcessPipeline.h
+﻿/**	@file	PostProcessPipeline.h
 *	@date	2026/04/10
 */
 #pragma once
-#include"Include/Framework/Core/RenderSystem.h"
-
 #include"Include/Framework/Graphics/PostProcess/IPostProcessPass.h"
 #include"Include/Framework/Graphics/RenderTargetResource.h"
 
 #include<memory>
 #include<vector>
+
+class RenderSystem;
 
 /**	@class		PostProcessPipeline
  *	@brief		ポストプロセスの進行を管理するクラス

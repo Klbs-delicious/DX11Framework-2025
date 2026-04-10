@@ -186,6 +186,16 @@ public:
 	 */
 	void SetRenderTarget(RenderTargetType _renderTargetType);
 
+	/** @brief 指定したレンダーターゲットを描画対象から外す
+     *  @param _renderTargetType 外すレンダーターゲットの種類
+	 */
+    const RenderTargetResource& GetRenderTarget(RenderTargetType _type) const;
+
+    /** @brief D3D11Systemの参照を取得する
+     *  @return D3D11Systemのポインタ
+	 */
+    D3D11System* GetD3D11System() const;
+
 private:
     D3D11System* d3d11;     ///< DirectX11のデバイス関連の参照
     WindowSystem* window;   ///< ウィンドウ作成等を行うクラスの参照

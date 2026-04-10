@@ -28,6 +28,8 @@
 #include"Include/Game/Entities/DodgeComponent.h"
 #include"Include/Game/Entities/MoveComponent.h"
 
+#include"Include/Game/Graphics/PostProcess/SepiaEffectPass.h"
+
 //#include"Include/Framework/Graphics/Mesh.h"
 #include"Include/Framework/Graphics/SpriteManager.h"
 #include"Include/Framework/Graphics/MeshManager.h"
@@ -71,6 +73,13 @@ void GameScene::SetupObjects()
 	auto& meshManager = ResourceHub::Get<MeshManager>();
 	auto& modelManager = ResourceHub::Get<ModelManager>();
 	auto& animationClipManager = ResourceHub::Get<AnimationClipManager>();
+	auto& shaderManager = ResourceHub::Get<ShaderManager>();
+
+	//--------------------------------------------------------------
+	// ポストプロセスの登録
+	//--------------------------------------------------------------
+	std::unique_ptr<SepiaEffectPass> sepiaEffect = std::make_unique<SepiaEffectPass>(&shaderManager);
+	this->postProcessPipeline->AddPass(std::move(sepiaEffect));
 
 	//--------------------------------------------------------------
 	// モデルデータの取得

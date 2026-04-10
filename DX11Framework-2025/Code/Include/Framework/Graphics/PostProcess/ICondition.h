@@ -1,4 +1,4 @@
-/**	@file	ICondition.h
+﻿/**	@file	ICondition.h
 *	@date	2026/04/10
 */
 #pragma once

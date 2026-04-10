@@ -35,6 +35,8 @@
 #include"Include/Framework/Graphics/AnimationClipManager.h"
 #include"Include/Framework/Graphics/Animator.h"
 
+#include"Include/Game/Graphics/PostProcess/SepiaEffectPass.h"
+
 #include"Include/Tests/TestMoveComponent.h"
 #include"Include/Tests/TimeScaleTestComponent.h"
 #include"Include/Tests/FreeMoveTestComponent.h"

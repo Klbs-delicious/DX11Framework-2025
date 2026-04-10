@@ -513,3 +513,13 @@ void RenderSystem::SetRenderTarget(RenderTargetType _renderTargetType)
         this->depthStencilView.Get()
     );
 }
+
+const RenderTargetResource& RenderSystem::GetRenderTarget(RenderTargetType _type) const
+{
+    return this->renderTargetViews[static_cast<size_t>(_type)];
+}
+
+D3D11System* RenderSystem::GetD3D11System() const
+{
+    return this->d3d11;
+}

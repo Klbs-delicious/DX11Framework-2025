@@ -59,6 +59,12 @@ bool VertexShader::CreateShader(ID3D11Device& _device, const ShaderInfo _shaderI
 		return false;
 	}
 
+	// ポストプロセスシェーダーの場合は入力レイアウトを作成しない
+	if (_shaderInfo.layoutType == ShaderCommon::LayoutType::PostProcess)
+	{
+		return true;
+	}
+
 	// 入力レイアウトの作成
 	hr = _device.CreateInputLayout(
 		ShaderCommon::LayoutDescs[static_cast<size_t>(_shaderInfo.layoutType)].data(),
@@ -69,5 +75,5 @@ bool VertexShader::CreateShader(ID3D11Device& _device, const ShaderInfo _shaderI
 	);
 	if (FAILED(hr)) { return false; }
 
-	return true;
+	return SUCCEEDED(hr);
 }

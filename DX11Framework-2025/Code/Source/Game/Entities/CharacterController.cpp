@@ -194,6 +194,24 @@ void CharacterController::Update(float _deltaTime)
 		this->StateEnter();
 		this->previousState = this->currentState;
 	}
+
+	//-----------------------------------------------------------------------------
+	// ポストプロ演出（セピア）の毎フレーム更新
+	//-----------------------------------------------------------------------------
+	if (this->sepiaEffectCondition)
+	{
+		// TimeScaleSystemから「現在のスローの進捗」を取得
+		// ※ IDは OnJustDodgeSuccess で要求したものと同じ TestDodge
+		TimeScaleEffectContext context = this->timeScaleSystem.GetEffectContext(TimeScaleEventId::TestDodge);
+
+		// Requestに最新の状態をコピーして渡す
+		this->sepiaEffectCondition->SetJustDodgeContext(context);
+
+		// 回避中かどうかのフラグを同期
+		// ※ smoothIntensityによるフェードがあるため、スローが始まった瞬間に SetDodgeState(true) になればOK
+		bool isDodging = (this->currentState == PlayerState::Dodging);
+		this->sepiaEffectCondition->SetDodgeState(isDodging);
+	}
 }
 
 void CharacterController::StateEnter()
@@ -244,22 +262,6 @@ void CharacterController::StateEnter()
 
 	default:
 		break;
-	}
-
-	// ジャスト回避成功後に開始したスローの終了を監視してOFFする
-	if (this->isJustDodgeSlowFxActive && this->sepiaEffectCondition)
-	{
-		bool isSlowActive = false;
-		if (this->Owner() && this->Owner()->TimeScale())
-		{
-			isSlowActive = (this->Owner()->TimeScale()->GetFinalScale() < 1.0f);
-		}
-
-		if (!isSlowActive)
-		{
-			this->sepiaEffectCondition->SetDodgeState(false);
-			this->isJustDodgeSlowFxActive = false;
-		}
 	}
 }
 
@@ -414,13 +416,12 @@ void CharacterController::OnJustDodgeSuccess(GameObject* _attacker, AttackType _
 	//-----------------------------------------------------------------------------
 	this->timeScaleSystem.RequestEvent(TimeScaleEventId::TestDodge);
 
-	// ジャスト回避成功時にセピアON
+	// 回避フラグを立てる
+	// （次のUpdateでContextがRequestに送られる）
 	if (this->sepiaEffectCondition)
 	{
 		this->sepiaEffectCondition->SetDodgeState(true);
-		this->isJustDodgeSlowFxActive = true;
 	}
-
 	//-----------------------------------------------------------------------------
 	// 回避を強制終了しない
 	//-----------------------------------------------------------------------------

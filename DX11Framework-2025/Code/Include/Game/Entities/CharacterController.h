@@ -19,8 +19,6 @@
 #include "Include/Game/Entities/MoveComponent.h"
 #include "Include/Game/Entities/DodgeComponent.h"
 
-#include "Include/Game/Graphics/PostProcess/SepiaEffectPass.h"
-
 //-----------------------------------------------------------------------------
 // CharacterController class
 //-----------------------------------------------------------------------------
@@ -100,11 +98,6 @@ public:
 	 */
 	void SetTurnSpeed(float _speed) { this->turnSpeed = _speed; }
 
-	/** @brief セピア調ポストプロセスの条件オブジェクトを設定する
-	 *  @param _condition セピア調ポストプロセスの条件オブジェクトへの参照
-	 */
-	void SetConditionSepia(SepiaEffectRequest* _condition) { this->sepiaEffectCondition = _condition; }
-
 private:
 	/// @brief 回避状態の終了判定（DodgeComponent のみ）
 	bool IsDodgeFinished() const;
@@ -117,9 +110,6 @@ private:
 	AttackComponent* attackComponent = nullptr;			///< 攻撃処理
 	MoveComponent* moveComponent = nullptr;				///< 移動処理
 	DodgeComponent* dodgeComponent = nullptr;			///< 回避処理
-
-	SepiaEffectRequest* sepiaEffectCondition;			///< セピア調ポストプロセスの条件オブジェクトへの参照
-	bool isJustDodgeSlowFxActive = false;				///< ジャスト回避スロー演出の有効状態
 
 	Transform* cameraTransform = nullptr;				///< カメラの座標系
 

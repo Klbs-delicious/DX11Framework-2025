@@ -9,9 +9,8 @@
  * @param _shaderManager シェーダーマネージャーのポインタ
  */
 SepiaEffectPass::SepiaEffectPass(ShaderManager* _shaderManager) :
-	timeProvider(SystemLocator::Get<ITimeProvider>()), 
 	sepiaShaderProgram(nullptr),
-	smoothIntensity(0.0f),
+	intensity(0.0f),
 	sepiaConstantBuffer(std::make_unique<DynamicConstantBuffer<ShaderCommon::SepiaBuffer>>())
 {
 	// セピア表現のシェーダープログラムを読み込む
@@ -48,23 +47,7 @@ void SepiaEffectPass::Execute(
 	RenderTargetResource* _inputRT, 
 	RenderTargetResource* _outputRT)
 {
-	float dt = this->timeProvider.RawDelta();
-
-	// フェード処理用パラメータの計算
-	auto justDodgeContext = this->sepiaPassCondition->GetSetJustDodgeContext();
-	if (justDodgeContext.isActive)
-	{
-		// スロー中は常にセピア効果を最大にする
-		this->smoothIntensity = 1.0f;
-	}
-	else
-	{
-		// スローが終わった後の余韻をフェードで表現 (0.5秒でフェードアウト)
-		this->smoothIntensity -= dt * 5.0f;
-		if (this->smoothIntensity < 0.0f) this->smoothIntensity = 0.0f;
-	}
-
-	if (this->smoothIntensity <= 0.0f) { return; }
+	if (this->intensity <= 0.0f) { return; }
 	if (!this->sepiaShaderProgram || !_inputRT || !_outputRT) { return; }
 	if (!_inputRT->IsValid() || !_outputRT->renderTargetView) { return; }
 
@@ -78,11 +61,11 @@ void SepiaEffectPass::Execute(
 	// ポスプロ向け設定
 	_renderSystem.SetDepthEnable(false);
 	_renderSystem.SetSampler(SamplerType::LinearClamp);
-	
+
 	// セピアの適用度を更新
-	this->sepiaBufferData.intensity = this->smoothIntensity;
+	this->sepiaBufferData.intensity = this->intensity;
 	this->sepiaConstantBuffer->Update(context, this->sepiaBufferData);
-	
+
 	// セピアシェーダー、定数バッファをセット
 	_renderSystem.GetRenderTarget(RenderTargetType::SceneRT).Bind(context, 0);
 	this->sepiaShaderProgram->Bind(*context);
@@ -102,11 +85,10 @@ void SepiaEffectPass::Execute(
  */
 const bool SepiaEffectPass::IsActive()
 {
-	// 条件（スロー中か）をチェック
-	bool isRequestActive = this->sepiaPassCondition && this->sepiaPassCondition->Check();
+	return this->intensity > 0.0f;
+}
 
-	// まだフェードアウト中（色が残っている）か
-	bool isFadingOut = this->smoothIntensity > 0.0f;
-
-	return isRequestActive || isFadingOut;
+void SepiaEffectPass::SetIntensity(float _intensity)
+{
+	this->intensity = _intensity;
 }

@@ -28,6 +28,7 @@
 #include"Include/Game/Entities/DodgeComponent.h"
 #include"Include/Game/Entities/MoveComponent.h"
 
+#include"Include/Game/Graphics/PostProcess/PostEffectController.h"
 #include"Include/Game/Graphics/PostProcess/SepiaEffectPass.h"
 
 //#include"Include/Framework/Graphics/Mesh.h"
@@ -79,16 +80,13 @@ void GameScene::SetupObjects()
 	// ポストプロセスの登録
 	//--------------------------------------------------------------
 	std::unique_ptr<SepiaEffectPass> sepiaEffect = std::make_unique<SepiaEffectPass>(&shaderManager);
-
-	// 条件の設定
-	auto sepiaCondition = std::make_unique<SepiaEffectRequest>();
-	SepiaEffectPass* sepiaEffectPtr = sepiaEffect.get(); 
-	SepiaEffectRequest* sepiaConditionPtr = sepiaCondition.get();
-
-	sepiaEffectPtr->SetCondition(std::move(sepiaCondition));
-
-	// パスの登録
+	SepiaEffectPass* sepiaEffectPtr = sepiaEffect.get();
 	this->postProcessPipeline->AddPass(std::move(sepiaEffect));
+
+	// ポストエフェクトコントローラーのセットアップ
+	auto postEffectControllerObject = this->gameObjectManager.Instantiate("PostEffectController");
+	auto postEffectController = postEffectControllerObject->AddComponent<PostEffectController>();
+	postEffectController->SetSepiaEffectPass(sepiaEffectPtr);
 
 	//--------------------------------------------------------------
 	// モデルデータの取得
@@ -182,7 +180,6 @@ void GameScene::SetupObjects()
 
 	// キャラクターコントローラーを追加する
 	auto characterController = player->AddComponent<CharacterController>();
-	characterController->SetConditionSepia(sepiaConditionPtr);
 
 	player->AddComponent<AttackComponent>();
 	player->AddComponent<DodgeComponent>();

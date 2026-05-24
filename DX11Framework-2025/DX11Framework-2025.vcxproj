@@ -104,6 +104,7 @@
     <ClInclude Include="Code\Include\Game\Entities\FollowCamera.h" />
     <ClInclude Include="Code\Include\Game\Entities\DebugFreeMoveComponent.h" />
     <ClInclude Include="Code\Include\Game\Entities\MoveComponent.h" />
+    <ClInclude Include="Code\Include\Game\Graphics\PostProcess\PostEffectController.h" />
     <ClInclude Include="Code\Include\Game\Graphics\PostProcess\SepiaEffectPass.h" />
     <ClInclude Include="Code\Include\Scenes\GameScene.h" />
     <ClInclude Include="Code\Include\Scenes\ModelTest.h" />
@@ -186,6 +187,7 @@
     <ClCompile Include="Code\Source\Game\Entities\FollowCamera.cpp" />
     <ClCompile Include="Code\Source\Game\Entities\DebugFreeMoveComponent.cpp" />
     <ClCompile Include="Code\Source\Game\Entities\MoveComponent.cpp" />
+    <ClCompile Include="Code\Source\Game\Graphics\PostProcess\PostEffectController.cpp" />
     <ClCompile Include="Code\Source\Game\Graphics\PostProcess\SepiaEffectPass.cpp" />
     <ClCompile Include="Code\Source\Scenes\GameScene.cpp" />
     <ClCompile Include="Code\Source\Scenes\ModelTest.cpp" />

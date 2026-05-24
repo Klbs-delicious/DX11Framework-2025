@@ -399,10 +399,13 @@
     <ClInclude Include="Code\Include\Framework\Graphics\PostProcess\PostProcessPipeline.h">
       <Filter>ヘッダー ファイル\Framework\Graphics\PostProcess</Filter>
     </ClInclude>
-    <ClInclude Include="Code\Include\Framework\Graphics\PostProcess\ICondition.h">
-      <Filter>ヘッダー ファイル\Framework\Graphics\PostProcess</Filter>
-    </ClInclude>
     <ClInclude Include="Code\Include\Game\Graphics\PostProcess\SepiaEffectPass.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Framework\Graphics\PostProcess\IEffectRequest.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Game\Graphics\PostProcess\PostEffectController.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
@@ -647,6 +650,9 @@
     <ClCompile Include="Code\Source\Game\Graphics\PostProcess\SepiaEffectPass.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Code\Source\Game\Graphics\PostProcess\PostEffectController.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Code\Shaders\Common.hlsli">
@@ -687,5 +693,7 @@
     <FxCompile Include="Code\Shaders\VertexShader\VS_BackgroundFog3D.hlsl">
       <Filter>リソース ファイル\VertexShader</Filter>
     </FxCompile>
+    <FxCompile Include="Code\Shaders\PixelShader\PS_Sepia.hlsl" />
+    <FxCompile Include="Code\Shaders\VertexShader\VS_PostProcess.hlsl" />
   </ItemGroup>
 </Project>

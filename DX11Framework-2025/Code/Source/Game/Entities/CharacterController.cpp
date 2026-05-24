@@ -26,9 +26,8 @@
 CharacterController::CharacterController(GameObject* _owner, bool _active) :
 	Component(_owner, _active),
 	inputSystem(SystemLocator::Get<InputSystem>()),
-	timeScaleSystem(SystemLocator::Get<TimeScaleSystem>()),
-	sepiaEffectCondition(nullptr),
-	isJustDodgeSlowFxActive(false)
+	timeScaleSystem(SystemLocator::Get<TimeScaleSystem>())
+	
 {
 }
 
@@ -76,21 +75,6 @@ void CharacterController::Initialize()
 	if (!this->dodgeComponent)
 	{
 		std::cout << "[CharacterController] DodgeComponent not found on owner.\n";
-	}
-
-
-	if (!this->sepiaEffectCondition)
-	{
-		// 条件オブジェクトが存在しない場合は警告を出す
-		std::cout << "[DodgeComponent] Warning: SepiaPassConditionの参照が設定されていません。セピア効果が反映されません。\n";
-		return;
-	}
-
-	// 初期状態ではジャスト回避スロー演出は無効にしておく
-	this->isJustDodgeSlowFxActive = false;
-	if (this->sepiaEffectCondition)
-	{
-		this->sepiaEffectCondition->SetDodgeState(false);
 	}
 
 	//-----------------------------------------------------------------------------
@@ -193,24 +177,6 @@ void CharacterController::Update(float _deltaTime)
 
 		this->StateEnter();
 		this->previousState = this->currentState;
-	}
-
-	//-----------------------------------------------------------------------------
-	// ポストプロ演出（セピア）の毎フレーム更新
-	//-----------------------------------------------------------------------------
-	if (this->sepiaEffectCondition)
-	{
-		// TimeScaleSystemから「現在のスローの進捗」を取得
-		// ※ IDは OnJustDodgeSuccess で要求したものと同じ TestDodge
-		TimeScaleEffectContext context = this->timeScaleSystem.GetEffectContext(TimeScaleEventId::TestDodge);
-
-		// Requestに最新の状態をコピーして渡す
-		this->sepiaEffectCondition->SetJustDodgeContext(context);
-
-		// 回避中かどうかのフラグを同期
-		// ※ smoothIntensityによるフェードがあるため、スローが始まった瞬間に SetDodgeState(true) になればOK
-		bool isDodging = (this->currentState == PlayerState::Dodging);
-		this->sepiaEffectCondition->SetDodgeState(isDodging);
 	}
 }
 
@@ -416,12 +382,6 @@ void CharacterController::OnJustDodgeSuccess(GameObject* _attacker, AttackType _
 	//-----------------------------------------------------------------------------
 	this->timeScaleSystem.RequestEvent(TimeScaleEventId::TestDodge);
 
-	// 回避フラグを立てる
-	// （次のUpdateでContextがRequestに送られる）
-	if (this->sepiaEffectCondition)
-	{
-		this->sepiaEffectCondition->SetDodgeState(true);
-	}
 	//-----------------------------------------------------------------------------
 	// 回避を強制終了しない
 	//-----------------------------------------------------------------------------

@@ -13,7 +13,7 @@
 #include "Include/Framework/Entities/Component.h"
 #include "Include/Framework/Entities/PhaseInterfaces.h"
 #include "Include/Framework/Entities/Camera3D.h"
-#include "Include/Framework/Entities/AnimationComponent.h"
+#include "Include/Framework/Entities/AnimationStateMachine.h"
 
 #include "Include/Game/Entities/AttackComponent.h"
 #include "Include/Game/Entities/MoveComponent.h"
@@ -106,7 +106,7 @@ private:
 	InputSystem& inputSystem;					///< 入力処理を管理している
 	TimeScaleSystem& timeScaleSystem;			///< タイムスケール処理を管理している
 
-	AnimationComponent* animationComponent = nullptr;	///< アニメーション
+	AnimationStateMachine<PlayerAnimState>* animStateMachine = nullptr;	///< アニメーション状態管理
 	AttackComponent* attackComponent = nullptr;			///< 攻撃処理
 	MoveComponent* moveComponent = nullptr;				///< 移動処理
 	DodgeComponent* dodgeComponent = nullptr;			///< 回避処理

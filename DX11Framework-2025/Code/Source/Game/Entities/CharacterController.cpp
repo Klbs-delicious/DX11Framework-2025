@@ -55,10 +55,10 @@ void CharacterController::Initialize()
 		std::cout << "[CharacterController] AttackComponent not found on owner.\n";
 	}
 
-	this->animationComponent = this->Owner()->GetComponent<AnimationComponent>();
-	if (!this->animationComponent)
+	this->animStateMachine = this->Owner()->GetComponent<AnimationStateMachine<CharacterController::PlayerAnimState>>();
+	if (!this->animStateMachine)
 	{
-		std::cout << "[CharacterController] AnimationComponent not found on owner.\n";
+		std::cout << "[CharacterController] AnimationStateMachine<PlayerAnimState> not found on owner.\n";
 	}
 
 	this->moveComponent = this->Owner()->GetComponent<MoveComponent>();
@@ -87,6 +87,33 @@ void CharacterController::Initialize()
 
 	this->inputSystem.RegisterKeyBinding("Punch", static_cast<int>(DirectInputDevice::MouseButton::Left));
 	this->inputSystem.RegisterKeyBinding("Dodge", static_cast<int>(DirectInputDevice::MouseButton::Right));
+
+	//-----------------------------------------------------------------------------
+	// アニメーション状態の登録（暫定）
+	//-----------------------------------------------------------------------------
+	using State = PlayerAnimState;
+	using Rule = TransitionRule<State>;
+
+	if (this->animStateMachine)
+	{
+		this->animStateMachine->AddTransition(
+			Rule{ State::Idle, State::Punching, 0.2f, 0, false });
+
+		this->animStateMachine->AddTransition(
+			Rule{ State::Punching, State::Idle, 0.2f, 0, false });
+
+		this->animStateMachine->AddTransition(
+			Rule{ State::Idle, State::Dodging, 0.1f, 0, false });
+
+		this->animStateMachine->AddTransition(
+			Rule{ State::Dodging, State::Idle, 0.2f, 0, false });
+
+		this->animStateMachine->AddTransition(
+			Rule{ State::Idle, State::Jumping, 0.1f, 0, false });
+
+		this->animStateMachine->AddTransition(
+			Rule{ State::Jumping, State::Idle, 0.2f, 0, false });
+	}
 
 	//-----------------------------------------------------------------------------
 	// 攻撃定義（テスト用）
@@ -185,16 +212,16 @@ void CharacterController::StateEnter()
 	switch (this->currentState)
 	{
 	case CharacterController::PlayerState::Normal:
-		if (this->animationComponent)
+		if (this->animStateMachine)
 		{
-			this->animationComponent->RequestState(PlayerAnimState::Idle, 0.2f);
+			this->animStateMachine->RequestAnimation(PlayerAnimState::Idle);
 		}
 		break;
 
 	case CharacterController::PlayerState::Attacking:
-		if (this->animationComponent)
+		if (this->animStateMachine)
 		{
-			this->animationComponent->RequestState(PlayerAnimState::Punching, 0.2f);
+			this->animStateMachine->RequestAnimation(PlayerAnimState::Punching);
 		}
 		if (this->attackComponent)
 		{
@@ -203,9 +230,9 @@ void CharacterController::StateEnter()
 		break;
 
 	case CharacterController::PlayerState::Dodging:
-		if (this->animationComponent)
+		if (this->animStateMachine)
 		{
-			this->animationComponent->RequestState(PlayerAnimState::Dodging, 0.10f);
+			this->animStateMachine->RequestAnimation(PlayerAnimState::Dodging);
 		}
 
 		if (this->dodgeComponent)
@@ -220,9 +247,9 @@ void CharacterController::StateEnter()
 	case CharacterController::PlayerState::Countering:
 		this->counterRemainingSec = this->counterTimeoutSec;
 
-		if (this->animationComponent)
+		if (this->animStateMachine)
 		{
-			this->animationComponent->RequestState(PlayerAnimState::Idle, 0.2f);
+			this->animStateMachine->RequestAnimation(PlayerAnimState::Idle);
 		}
 		break;
 

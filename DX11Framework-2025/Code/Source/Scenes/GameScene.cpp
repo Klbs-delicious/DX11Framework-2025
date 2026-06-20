@@ -176,8 +176,10 @@ void GameScene::SetupObjects()
 	animationComponent->SetAnimator(std::move(playerAnimator));
 
 	player->AddComponent<SkinnedMeshRenderer>();
-	player->AddComponent<TestDodge>();
+	//player->AddComponent<TestDodge>();
 
+	player->AddComponent<AnimationStateMachine<CharacterController::PlayerAnimState>>();
+		
 	// キャラクターコントローラーを追加する
 	auto characterController = player->AddComponent<CharacterController>();
 

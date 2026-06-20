@@ -5,11 +5,13 @@
 
 #include "Include/Framework/Entities/Component.h"
 #include "Include/Framework/Entities/PhaseInterfaces.h"
+#include "Include/Framework/Entities/GameObject.h"
 
 #include "Include/Framework/Entities/AnimationComponent.h"
 
 #include<list>
 #include <optional>
+#include <iostream>
 
 /** @struct TransitionRule
  * @brief アニメーション状態遷移のルールを定義する構造体
@@ -65,8 +67,13 @@ public:
 			return;
 		}
 
+		if (!this->animationComponent)
+		{
+			return;
+		}
+
 		// アニメーション再生中は遷移を待機する
-		if (this->animationComponent && this->animationComponent->IsPlaying())
+		if (this->animationComponent->IsPlaying())
 		{
 			return;
 		}
@@ -106,14 +113,6 @@ public:
 			return;
 		}
 
-		// 遷移ルールを検索する
-		const auto* rule = this->FindTransitionRule(this->currentState, _nextState);
-		if (!rule)
-		{
-			std::cout << "[AnimationStateMachine] この状態への遷移ルールが見つかりません。:" << static_cast<int>(_nextState) << ".\n";
-			return;
-		}
-
 		// 要求された遷移が現在の状態と同じ場合は無視する
 		if (this->currentState == _nextState)
 		{
@@ -121,10 +120,11 @@ public:
 			return;
 		}
 
-		// 要求された遷移が現在の状態からのものでない場合は無視する
-		if (rule->toState != _nextState)
+		// 遷移ルールを検索する
+		const auto* rule = this->FindTransitionRule(this->currentState, _nextState);
+		if (!rule)
 		{
-			std::cout << "[AnimationStateMachine] 現在の状態からの遷移ルールではありません。遷移要求を無視します。:" << static_cast<int>(_nextState) << ".\n";
+			std::cout << "[AnimationStateMachine] この状態への遷移ルールが見つかりません。:" << static_cast<int>(_nextState) << ".\n";
 			return;
 		}
 
@@ -158,20 +158,6 @@ public:
 				}
 			}
 			return nullptr;
-		}
-
-		/** @brief 遷移元の状態が終了しているかを判定する
-		 *  @param _state 判定する状態
-		 *  @return 遷移元の状態が終了していれば true
-		 */
-		const bool RequiresExitTime(TState _state) const
-		{
-			const auto* rule = this->FindTransitionRule(_state);
-			if (!rule)
-			{
-				return false;
-			}
-			return rule->requiresExitTime;
 		}
 
 	private:

@@ -36,6 +36,7 @@
     <ClInclude Include="Code\Include\Framework\Core\TimeSystem.h" />
     <ClInclude Include="Code\Include\Framework\Core\WindowSystem.h" />
     <ClInclude Include="Code\Include\Framework\Entities\AnimationComponent.h" />
+    <ClInclude Include="Code\Include\Framework\Entities\AnimationStateMachine.h" />
     <ClInclude Include="Code\Include\Framework\Entities\Camera2D.h" />
     <ClInclude Include="Code\Include\Framework\Entities\Camera3D.h" />
     <ClInclude Include="Code\Include\Framework\Entities\Collider3DComponent.h" />

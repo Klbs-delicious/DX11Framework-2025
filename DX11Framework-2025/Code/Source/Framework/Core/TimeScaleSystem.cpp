@@ -316,3 +316,25 @@ void TimeScaleSystem::RebuildAppliedGroupScales()
 		}
 	}
 }
+
+/** @brief 指定されたイベントIDの実行中コンテキストを取得する
+ *  @param _eventId イベントID
+ *  @return 実行中コンテキスト（未実行の場合は nullptr）
+ */
+TimeScaleEffectContext TimeScaleSystem::GetEffectContext(TimeScaleEventId _eventId) const {
+	TimeScaleEffectContext ctx;
+
+	// 現在実行中のイベントから、指定されたIDのものを探す
+	for (const auto& [key, active] : this->activeEvents) {
+		if (key.id == _eventId) {
+			ctx.isActive = true;
+			ctx.currentScale = active.def.scale;
+			// 進捗計算 (残り時間 / 全時間)
+			if (active.def.durationRawSec > 0.0f) {
+				ctx.progress = std::clamp(active.remainingRawSec / active.def.durationRawSec, 0.0f, 1.0f);
+			}
+			return ctx; // 見つかったら即返す
+		}
+	}
+	return ctx; // 見つからなければデフォルト値
+}

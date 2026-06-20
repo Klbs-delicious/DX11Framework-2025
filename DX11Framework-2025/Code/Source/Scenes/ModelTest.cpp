@@ -35,6 +35,8 @@
 #include"Include/Framework/Graphics/AnimationClipManager.h"
 #include"Include/Framework/Graphics/Animator.h"
 
+#include"Include/Game/Graphics/PostProcess/SepiaEffectPass.h"
+
 #include"Include/Tests/TestMoveComponent.h"
 #include"Include/Tests/TimeScaleTestComponent.h"
 #include"Include/Tests/FreeMoveTestComponent.h"
@@ -53,7 +55,7 @@
 /** @brief コンストラクタ
  *	@param GameObjectManager&	_gameObjectManager	ゲームオブジェクトの管理
  */
-ModelTest::ModelTest(GameObjectManager& _gameObjectManager) :BaseScene(_gameObjectManager) {}
+ModelTest::ModelTest(GameObjectManager& _gameObjectManager, RenderSystem& _renderSystem) :BaseScene(_gameObjectManager,_renderSystem) {}
 
 /// @brief	デストラクタ
 ModelTest::~ModelTest() {}

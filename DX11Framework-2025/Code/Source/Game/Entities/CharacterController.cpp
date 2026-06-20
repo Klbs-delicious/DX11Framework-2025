@@ -23,10 +23,11 @@
  *  @param _owner このコンポーネントがアタッチされるオブジェクト
  *  @param _active コンポーネントの有効/無効
  */
-CharacterController::CharacterController(GameObject* _owner, bool _active)
-	: Component(_owner, _active)
-	, inputSystem(SystemLocator::Get<InputSystem>())
-	, timeScaleSystem(SystemLocator::Get<TimeScaleSystem>())
+CharacterController::CharacterController(GameObject* _owner, bool _active) :
+	Component(_owner, _active),
+	inputSystem(SystemLocator::Get<InputSystem>()),
+	timeScaleSystem(SystemLocator::Get<TimeScaleSystem>())
+	
 {
 }
 

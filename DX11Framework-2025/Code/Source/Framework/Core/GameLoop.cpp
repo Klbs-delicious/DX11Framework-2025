@@ -9,6 +9,7 @@
 
 #include"Include/Framework/Core/GameLoop.h"
 #include"Include/Framework/Core/SystemLocator.h"
+#include"Include/Framework/Core/RenderSystem.h"
 #include"Include/Framework/Core/DirectInputDevice.h"
 #include"Include/Framework/Core/ResourceHub.h"
 
@@ -90,20 +91,20 @@ void GameLoop::Initialize()
 
     // シーン構成の初期化
     auto factory = std::make_unique<SceneFactory>();
-    factory->Register(SceneType::Test, [](GameObjectManager& manager) {
-        return std::make_unique<TestScene>(manager);
+    factory->Register(SceneType::Test, [](GameObjectManager& manager, RenderSystem& renderSystem) {
+        return std::make_unique<TestScene>(manager, renderSystem);
         });
-    factory->Register(SceneType::Title, [](GameObjectManager& manager) {
-        return std::make_unique<TitleScene>(manager);
+    factory->Register(SceneType::Title, [](GameObjectManager& manager, RenderSystem& renderSystem) {
+        return std::make_unique<TitleScene>(manager, renderSystem);
         });
-    factory->Register(SceneType::PhysicsTest, [](GameObjectManager& manager) {
-        return std::make_unique<PhysicsTest>(manager);
+    factory->Register(SceneType::PhysicsTest, [](GameObjectManager& manager, RenderSystem& renderSystem) {
+        return std::make_unique<PhysicsTest>(manager, renderSystem);
         });
-    factory->Register(SceneType::ModelTest, [](GameObjectManager& manager) {
-        return std::make_unique<ModelTest>(manager);
+    factory->Register(SceneType::ModelTest, [](GameObjectManager& manager, RenderSystem& renderSystem) {
+        return std::make_unique<ModelTest>(manager, renderSystem);
         });
-    factory->Register(SceneType::Gameplay, [](GameObjectManager& manager) {
-        return std::make_unique<GameScene>(manager);
+    factory->Register(SceneType::Gameplay, [](GameObjectManager& manager, RenderSystem& renderSystem) {
+        return std::make_unique<GameScene>(manager, renderSystem);
         });
 
     // シーン管理の作成

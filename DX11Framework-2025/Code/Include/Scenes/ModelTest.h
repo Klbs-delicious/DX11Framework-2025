@@ -12,8 +12,9 @@ class ModelTest :public BaseScene
 public:
 	/**	@brief コンストラクタ
 	 *	@param GameObjectManager&	_gameObjectManager	ゲームオブジェクトの管理
+	 *	@param RenderSystem&	_renderSystem	レンダリングシステム
 	 */
-	ModelTest(GameObjectManager& _gameObjectManager);
+	ModelTest(GameObjectManager& _gameObjectManager, RenderSystem& _renderSystem);
 
 	/// @brief	デストラクタ
 	~ModelTest()override;

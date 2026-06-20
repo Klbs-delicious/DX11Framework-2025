@@ -7,8 +7,10 @@
 #include"Include/Framework/Graphics/ConstantBuffer.h"
 #include"Include/Framework/Utils/CommonTypes.h"
 
+#include"Include/Framework/Graphics/RenderTargetResource.h"
+#include"Include/Framework/Graphics/PostProcess/PostProcessPipeline.h"
+
 #include <memory>
-//#include<vector>
 #include<array>
 
 /** @enum BlendStateType
@@ -35,12 +37,27 @@ enum class SamplerType {
     Max
 };
 
+/** @enum RasterizerType
+ *  @brief ラスタライザステートの種類
+ */
 enum class RasterizerType
 {
     SolidCullBack,      ///< 塗りつぶし、裏面カリング
     WireframeCullBack,  ///< ワイヤーフレーム、裏面カリング
     SolidCullNone,      ///< 塗りつぶし、カリング無し
     WireframeCullNone,  ///< ワイヤーフレーム、カリング無し
+    Max
+};
+
+/** @enum RenderTargetType
+ *  @brief レンダーターゲットの種類
+ */
+enum class RenderTargetType
+{
+    DefaultBackBuffer,  ///< デフォルトのバックバッファ
+    SceneRT,            ///< シーン描画用のレンダーターゲット
+
+    Num = SceneRT,
     Max
 };
 
@@ -73,6 +90,11 @@ public:
 
     /// @brief  描画終了時の処理
     void EndRender();
+
+    /** @brief  ポストプロセスパイプラインの取得
+     *  @return  ポストプロセスパイプラインのポインタ
+	 */
+    PostProcessPipeline* GetPostProcessPipeline();
 
     /** @brief サンプラーの作成
      *  @return HRESULT 作成に成功したら true
@@ -149,16 +171,40 @@ public:
     void SetDepthAllwaysWrite();
 
     /** @brief 深度テストの有効/無効を切り替える
-     *  @param bool enable true: 深度テスト有効 / false: 無効
+     *  @param bool _enable true: 深度テスト有効 / false: 無効
      */
-    void SetDepthEnable(bool enable);
+    void SetDepthEnable(bool _enable);
+
+    /** @brief 指定したレンダーターゲットをクリアする
+      *  @param _type クリアするレンダーターゲットの種類
+      *  @param _color クリアに使用する色（RGBAの順で4要素）
+	  */
+    void ClearRenderTarget(RenderTargetType _type, const float _color[4]);
+
+	/** @brief 指定したレンダーターゲットを描画対象に設定する
+	 *  @param _renderTargetType 設定するレンダーターゲットの種類
+	 */
+	void SetRenderTarget(RenderTargetType _renderTargetType);
+
+	/** @brief 指定したレンダーターゲットを描画対象から外す
+     *  @param _renderTargetType 外すレンダーターゲットの種類
+	 */
+    const RenderTargetResource& GetRenderTarget(RenderTargetType _type) const;
+
+    /** @brief D3D11Systemの参照を取得する
+     *  @return D3D11Systemのポインタ
+	 */
+    D3D11System* GetD3D11System() const;
 
 private:
     D3D11System* d3d11;     ///< DirectX11のデバイス関連の参照
     WindowSystem* window;   ///< ウィンドウ作成等を行うクラスの参照
 
     //std::vector<D3D11_VIEWPORT>       viewportList;       ///< ビューポートのリスト
-    DX::ComPtr<ID3D11RenderTargetView>  renderTargetView;       ///< 描画ターゲット
+
+	std::array<RenderTargetResource, static_cast<size_t>(RenderTargetType::Max) > renderTargetViews;    ///< 各種描画ターゲットを保持する配列
+	std::unique_ptr<PostProcessPipeline> postProcessPipeline;                                           ///< ポストエフェクト処理をまとめたクラスのインスタンス
+
     DX::ComPtr<ID3D11DepthStencilView>  depthStencilView;       ///< 深度、ステンシル用のバッファ
 
     std::unique_ptr<ConstantBuffer<DX::Matrix4x4>>  worldBuffer;        ///< ワールド変換行列を保持するバッファ

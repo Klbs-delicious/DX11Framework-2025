@@ -12,8 +12,9 @@ class PhysicsTest :public BaseScene
 public:
 	/**	@brief コンストラクタ
 	 *	@param GameObjectManager&	_gameObjectManager	ゲームオブジェクトの管理
+	 *	@param RenderSystem&	_renderSystem	レンダリングシステム
 	 */
-	PhysicsTest(GameObjectManager& _gameObjectManager);
+	PhysicsTest(GameObjectManager& _gameObjectManager, RenderSystem& _renderSystem);
 
 	/// @brief	デストラクタ
 	~PhysicsTest()override;

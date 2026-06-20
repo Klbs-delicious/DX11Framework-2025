@@ -141,16 +141,16 @@ void AnimationComponent::Update(float _deltaTime)
 	{
 		this->animator->Update(_deltaTime);
 
-		{
-			char buf[256];
-			sprintf_s(buf, "[AnimAfterUpdate] owner=%p this=%p animator=%p nrm=%.3f fin=%d\n",
-				this->Owner(),
-				this,
-				this->animator.get(),
-				this->animator->GetNormalizedTime(),
-				this->animator->IsFinished() ? 1 : 0);
-			OutputDebugStringA(buf);
-		}
+		//{
+		//	char buf[256];
+		//	sprintf_s(buf, "[AnimAfterUpdate] owner=%p this=%p animator=%p nrm=%.3f fin=%d\n",
+		//		this->Owner(),
+		//		this,
+		//		this->animator.get(),
+		//		this->animator->GetNormalizedTime(),
+		//		this->animator->IsFinished() ? 1 : 0);
+		//	OutputDebugStringA(buf);
+		//}
 
 		this->currentPose.BuildFromLocalPose(*this->skeletonCache, this->animator->GetLocalPose());
 	}
@@ -286,12 +286,12 @@ void AnimationComponent::BindBoneCBVS(ID3D11DeviceContext* _context, UINT _slot)
 	ID3D11Buffer* buffer = this->boneCB->GetBuffer();
 	if (!buffer) { return; }
 
-	{
-		char buf[256];
-		sprintf_s(buf, "[BindBoneCBVS] owner=%p this=%p animator=%p boneCB=%p slot=%u\n",
-			this->Owner(), this, this->animator.get(), buffer, _slot);
-		OutputDebugStringA(buf);
-	}
+	//{
+	//	char buf[256];
+	//	sprintf_s(buf, "[BindBoneCBVS] owner=%p this=%p animator=%p boneCB=%p slot=%u\n",
+	//		this->Owner(), this, this->animator.get(), buffer, _slot);
+	//	OutputDebugStringA(buf);
+	//}
 
 	_context->VSSetConstantBuffers(_slot, 1, &buffer);
 }

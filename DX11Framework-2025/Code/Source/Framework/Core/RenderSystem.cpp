@@ -35,15 +35,27 @@ bool RenderSystem::Initialize()
     ID3D11Device* device = this->d3d11->GetDevice();
     ID3D11DeviceContext* context = this->d3d11->GetContext();
 
-    // レンダーターゲットの作成
-    ComPtr<ID3D11Texture2D> renderTarget;
-    hr = this->d3d11->GetSwapChain()->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(renderTarget.GetAddressOf()));
-    if (SUCCEEDED(hr) && renderTarget)
+    // バックバッファの取得
+    ComPtr<ID3D11Texture2D> backBuffer;
+    hr = this->d3d11->GetSwapChain()->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
+
+    if (FAILED(hr) || !backBuffer)
     {
-        device->CreateRenderTargetView(renderTarget.Get(), nullptr, this->renderTargetView.GetAddressOf());
-    }
-    else {
         throw std::runtime_error("Failed to retrieve render target buffer.");
+        return false;
+    }
+
+    // バックバッファの作成
+    this->renderTargetViews[static_cast<size_t>(RenderTargetType::DefaultBackBuffer)].Attach(backBuffer.Get(), device);
+
+    // シーン用RTの作成
+    D3D11_TEXTURE2D_DESC bbDesc;
+    backBuffer->GetDesc(&bbDesc);
+    bool success = this->renderTargetViews[static_cast<size_t>(RenderTargetType::SceneRT)].CreateRenderTarget(device, bbDesc.Width, bbDesc.Height);
+
+    if (!success)
+    {
+        throw std::runtime_error("Failed to create SceneRT.");
         return false;
     }
 
@@ -78,18 +90,25 @@ bool RenderSystem::Initialize()
         return false;
     }
 
-    // レンダーターゲットの設定
-    context->OMSetRenderTargets(1, this->renderTargetView.GetAddressOf(), this->depthStencilView.Get());
+	// レンダーターゲットの作成
+    for (auto& rt : this->renderTargetViews)
+    {
+        // すでにRTがあるならスキップ
+        if (rt.renderTargetView) { continue; }
 
-    // シンプルなビューポートを作成
-    D3D11_VIEWPORT viewport;
-    viewport.Width = static_cast<FLOAT>(this->window->GetWidth());
-    viewport.Height = static_cast<FLOAT>(this->window->GetHeight());
-    viewport.MinDepth = 0.0f;
-    viewport.MaxDepth = 1.0f;
-    viewport.TopLeftX = 0;
-    viewport.TopLeftY = 0;
-    context->RSSetViewports(1, &viewport);
+        if (!rt.CreateRenderTarget(device, bbDesc.Width, bbDesc.Height))
+        {
+            throw std::runtime_error("Failed to create render target.");
+            return false;
+        }
+    }
+
+	// ポストプロセスパイプラインの初期化
+	this->postProcessPipeline = std::make_unique<PostProcessPipeline>();
+	this->postProcessPipeline->Initialize(device, bbDesc.Width, bbDesc.Height);
+
+	// シーン用RTの作成RTを設定
+	this->SetRenderTarget(RenderTargetType::SceneRT);
 
     // ラスタライザステート設定
 	this->SetRasterizerState(RasterizerType::SolidCullBack);
@@ -191,12 +210,20 @@ bool RenderSystem::Initialize()
 void RenderSystem::Finalize()
 {
     // ブレンドステート（他のリソースに依存しない）
-    for (auto& bs : this->blendState) { bs.Reset(); }
+    for (auto& bs : this->blendState)
+    { 
+        bs.Reset();
+    }
     this->blendStateATC.Reset();
 
     // 深度ステンシルステート（depthStencilViewが生きてても問題なし）
     this->depthStateEnable.Reset();
     this->depthStateDisable.Reset();
+
+    // ポストプロセスパイプラインの終了処理
+    if (this->postProcessPipeline) {
+        this->postProcessPipeline.reset();
+    }
 
     // 定数バッファ（描画ターゲットが参照する可能性がある）
     this->worldBuffer.reset();
@@ -205,26 +232,42 @@ void RenderSystem::Finalize()
 
     // 描画対象（最後）
     this->depthStencilView.Reset();
-    this->renderTargetView.Reset();
+
+	for (auto& rtv : this->renderTargetViews)
+    {
+        rtv.Release(); 
+    }
 }
 
 /// @brief  描画開始時の処理
 void RenderSystem::BeginRender()
 {
-    float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
     auto context = this->d3d11->GetContext();
-    context->OMSetRenderTargets(1, this->renderTargetView.GetAddressOf(), this->depthStencilView.Get());
-    context->ClearRenderTargetView(this->renderTargetView.Get(), clearColor);
+
+	// デフォルトのSceneRTを描画ターゲットに設定しておく
+    float clearColor[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    this->SetRenderTarget(RenderTargetType::SceneRT);
+    this->ClearRenderTarget(RenderTargetType::SceneRT, clearColor);
     context->ClearDepthStencilView(this->depthStencilView.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 }
 
 /// @brief  描画終了時の処理
 void RenderSystem::EndRender()
 {
+    auto context = this->d3d11->GetContext();
+
     // バックバッファとフロントバッファを入れ替えて画面に表示
     // 可変フレームレートで処理を行いたいためフラグを 0 に設定してVSyncをoffにしている
     HRESULT hr = this->d3d11->GetSwapChain()->Present(0, 0);
     if (FAILED(hr)) { OutputDebugString(L"Present failed!\n"); }
+}
+
+/** @brief  ポストプロセスパイプラインの取得
+ *  @return  ポストプロセスパイプラインのポインタ
+ */
+PostProcessPipeline* RenderSystem::GetPostProcessPipeline()
+{
+    return this->postProcessPipeline.get();
 }
 
 /** @brief サンプラーの作成
@@ -434,47 +477,49 @@ void RenderSystem::SetDepthAllwaysWrite()
     }
 }
 
-void RenderSystem::SetDepthEnable(bool enable)
+void RenderSystem::SetDepthEnable(bool _enable)
 {
     D3D11_DEPTH_STENCIL_DESC desc{};
-    desc.DepthEnable = enable ? TRUE : FALSE;
-    desc.DepthFunc = enable ? D3D11_COMPARISON_LESS_EQUAL : D3D11_COMPARISON_ALWAYS;
-    desc.DepthWriteMask = enable ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
+    desc.DepthEnable = _enable ? TRUE : FALSE;
+    desc.DepthFunc = _enable ? D3D11_COMPARISON_LESS_EQUAL : D3D11_COMPARISON_ALWAYS;
+    desc.DepthWriteMask = _enable ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
     desc.StencilEnable = FALSE;
 
     ComPtr<ID3D11DepthStencilState> state;
     HRESULT hr = this->d3d11->GetDevice()->CreateDepthStencilState(&desc, state.GetAddressOf());
-    if (SUCCEEDED(hr)) {
+    if (SUCCEEDED(hr))
+    {
         this->d3d11->GetContext()->OMSetDepthStencilState(state.Get(), 0);
     }
 }
 
-/////**   @brief  ビューポートを追加
-//// *    @param  const D3D11_VIEWPORT& _viewport 追加するビューポート
-//// */
-//void RenderSystem::AddViewport(const D3D11_VIEWPORT& _viewport)
-//{
-//    this->viewportList.push_back(_viewport);
-//}
-//
-/////**   @brief  指定のビューポートを削除
-//// *    @param  const int _viewportType ビューポートの番号
-//// */
-//void RenderSystem::RemoveViewport(const int _viewportType)
-//{
-//    if (_viewportType >= 0 && _viewportType < static_cast<int>(this->viewportList.size()))
-//    {
-//        this->viewportList.erase(this->viewportList.begin() + _viewportType);
-//    }
-//}
-//
-/////**   @brief  指定のビューポートを
-//// *    @param  const int _viewportType ビューポートの番号
-//// */
-//void RenderSystem::RemoveViewport(const int _viewportType)
-//{
-//    if (_viewportType >= 0 && _viewportType < static_cast<int>(this->viewportList.size()))
-//    {
-//        this->viewportList.erase(this->viewportList.begin() + _viewportType);
-//    }
-//}
+void RenderSystem::ClearRenderTarget(RenderTargetType _type, const float _color[4])
+{
+    auto& rt = this->renderTargetViews[static_cast<size_t>(_type)];
+    this->d3d11->GetContext()->ClearRenderTargetView(rt.renderTargetView.Get(), _color);
+}
+
+void RenderSystem::SetRenderTarget(RenderTargetType _renderTargetType)
+{
+    ID3D11DeviceContext* context = this->d3d11->GetContext();
+
+    auto& rt = this->renderTargetViews[static_cast<size_t>(_renderTargetType)];
+
+    this->d3d11->GetContext()->RSSetViewports(1, &rt.viewport);
+
+    this->d3d11->GetContext()->OMSetRenderTargets(
+        1,
+        rt.renderTargetView.GetAddressOf(),
+        this->depthStencilView.Get()
+    );
+}
+
+const RenderTargetResource& RenderSystem::GetRenderTarget(RenderTargetType _type) const
+{
+    return this->renderTargetViews[static_cast<size_t>(_type)];
+}
+
+D3D11System* RenderSystem::GetD3D11System() const
+{
+    return this->d3d11;
+}

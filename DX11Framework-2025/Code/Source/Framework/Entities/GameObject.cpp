@@ -17,10 +17,19 @@
 *	@param	IGameObjectObserver&	    _gameobjctObs					GameObjectの状態を通知する
 *	@param	const std::string&			_name							オブジェクトの名前
 *	@param	const GameTags::Tag			_tag = GameTags::Tag::None		オブジェクトのタグ名
+* 	@param	const GameTags::Layer		_layer = GameTags::Layer::Default	オブジェクトのレイヤー名
 *	@param	const bool					_isActive = true				オブジェクトの有効状態
 */
-GameObject::GameObject(IGameObjectObserver& _gameobjctObs, const std::string& _name, const GameTags::Tag _tag, const bool _isActive)
-    : gameObjectObs(_gameobjctObs), transform(nullptr), timeScaleComponent(nullptr) , isPendingDestroy(false), isActive(_isActive), parent(nullptr), name(_name), tag(_tag)
+GameObject::GameObject(IGameObjectObserver& _gameobjctObs, const std::string& _name, const GameTags::Tag _tag,const GameTags::Layer _layer, const bool _isActive)
+    : gameObjectObs(_gameobjctObs), 
+    transform(nullptr), 
+    timeScaleComponent(nullptr) , 
+    isPendingDestroy(false),
+    isActive(_isActive),
+    parent(nullptr), 
+    name(_name),
+    tag(_tag),
+    layer(_layer)
 {};
 
 /// @brief	デストラクタ

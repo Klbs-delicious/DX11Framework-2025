@@ -73,7 +73,11 @@
     <ClInclude Include="Code\Include\Framework\Graphics\ModelData.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\ModelImporter.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\ModelManager.h" />
+    <ClInclude Include="Code\Include\Framework\Graphics\PostProcess\IEffectRequest.h" />
+    <ClInclude Include="Code\Include\Framework\Graphics\PostProcess\IPostProcessPass.h" />
+    <ClInclude Include="Code\Include\Framework\Graphics\PostProcess\PostProcessPipeline.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\PrimitiveMeshData.h" />
+    <ClInclude Include="Code\Include\Framework\Graphics\RenderTargetResource.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\SpriteManager.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\TextureFactory.h" />
     <ClInclude Include="Code\Include\Framework\Graphics\TextureLoader.h" />
@@ -91,6 +95,7 @@
     <ClInclude Include="Code\Include\Framework\Utils\DebugHooks.h" />
     <ClInclude Include="Code\Include\Framework\Utils\NonCopyable.h" />
     <ClInclude Include="Code\Include\Framework\Utils\TreeNode.h" />
+    <ClInclude Include="Code\Include\Game\Common\GameTags.h" />
     <ClInclude Include="Code\Include\Game\Entities\AttackComponent.h" />
     <ClInclude Include="Code\Include\Game\Entities\CameraLookComponent.h" />
     <ClInclude Include="Code\Include\Game\Entities\CharacterController.h" />
@@ -99,6 +104,8 @@
     <ClInclude Include="Code\Include\Game\Entities\FollowCamera.h" />
     <ClInclude Include="Code\Include\Game\Entities\DebugFreeMoveComponent.h" />
     <ClInclude Include="Code\Include\Game\Entities\MoveComponent.h" />
+    <ClInclude Include="Code\Include\Game\Graphics\PostProcess\PostEffectController.h" />
+    <ClInclude Include="Code\Include\Game\Graphics\PostProcess\SepiaEffectPass.h" />
     <ClInclude Include="Code\Include\Scenes\GameScene.h" />
     <ClInclude Include="Code\Include\Scenes\ModelTest.h" />
     <ClInclude Include="Code\Include\Scenes\PhysicsTest.h" />
@@ -154,6 +161,8 @@
     <ClCompile Include="Code\Source\Framework\Graphics\MeshManager.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\ModelImporter.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\ModelManager.cpp" />
+    <ClCompile Include="Code\Source\Framework\Graphics\PostProcess\PostProcessPipeline.cpp" />
+    <ClCompile Include="Code\Source\Framework\Graphics\RenderTargetResource.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\SpriteManager.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\TextureFactory.cpp" />
     <ClCompile Include="Code\Source\Framework\Graphics\TextureLoader.cpp" />
@@ -178,6 +187,8 @@
     <ClCompile Include="Code\Source\Game\Entities\FollowCamera.cpp" />
     <ClCompile Include="Code\Source\Game\Entities\DebugFreeMoveComponent.cpp" />
     <ClCompile Include="Code\Source\Game\Entities\MoveComponent.cpp" />
+    <ClCompile Include="Code\Source\Game\Graphics\PostProcess\PostEffectController.cpp" />
+    <ClCompile Include="Code\Source\Game\Graphics\PostProcess\SepiaEffectPass.cpp" />
     <ClCompile Include="Code\Source\Scenes\GameScene.cpp" />
     <ClCompile Include="Code\Source\Scenes\ModelTest.cpp" />
     <ClCompile Include="Code\Source\Scenes\PhysicsTest.cpp" />
@@ -223,11 +234,18 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
     </FxCompile>
+    <FxCompile Include="Code\Shaders\PixelShader\PS_Sepia.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+    </FxCompile>
     <FxCompile Include="Code\Shaders\PixelShader\PS_Test.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="Code\Shaders\VertexShader\VS_PostProcess.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
     </FxCompile>
     <FxCompile Include="Code\Shaders\VertexShader\VS_SkinnedModel.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>

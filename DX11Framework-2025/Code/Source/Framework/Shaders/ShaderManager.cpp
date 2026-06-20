@@ -27,7 +27,9 @@ ShaderManager::ShaderManager() :
 	defaultShader(),
 	defaultProgram()
 {
+	//-------------------------------------------------------------
 	// シェーダー情報の事前登録
+	//-------------------------------------------------------------
 	this->PreRegisterShaderInfo("TestVS", ShaderInfo(ShaderType::VertexShader, L"VertexShader/VS_Test"));
 	this->PreRegisterShaderInfo("TestPS", ShaderInfo(ShaderType::PixelShader, L"PixelShader/PS_Test"));
 
@@ -47,7 +49,17 @@ ShaderManager::ShaderManager() :
 	// スキニング用
 	this->PreRegisterShaderInfo("VS_SkinnedModel", ShaderInfo(ShaderType::VertexShader, L"VertexShader/VS_SkinnedModel", LayoutType::Skinned));
 
+	//-------------------------------------------------------------
+	// ポストプロセス用のシェーダー
+	//-------------------------------------------------------------
+	this->PreRegisterShaderInfo("VS_PostProcess", ShaderInfo(ShaderType::VertexShader, L"VertexShader/VS_PostProcess", LayoutType::PostProcess));
+	
+	// セピア
+	this->PreRegisterShaderInfo("PS_Sepia", ShaderInfo(ShaderType::PixelShader, L"PixelShader/PS_Sepia", LayoutType::PostProcess));
+
+	//-------------------------------------------------------------
 	// シェーダープログラムの登録
+	//-------------------------------------------------------------
 	this->CreateShaderProgram("Default", { "TestVS","TestPS","","","" });
 	this->CreateShaderProgram("ModelTest", { "VS_TestModel","PS_TestModel","","","" });
 
@@ -56,11 +68,16 @@ ShaderManager::ShaderManager() :
 	this->CreateShaderProgram("Fog", { "VS_Fog","PS_Fog","","","" });
 	this->CreateShaderProgram("SkinnedModel", { "VS_SkinnedModel","PS_Model","","","" });
 
-	// デフォルト設定のシェーダーリソースを登録
+	//-------------------------------------------------------------
+	// ポストプロセス用のシェーダープログラムの登録
+	//-------------------------------------------------------------
+	this->CreateShaderProgram("Sepia", { "VS_PostProcess","PS_Sepia","","","" });
+
+	//-------------------------------------------------------------
+	//デフォルト設定
+	//-------------------------------------------------------------
 	this->defaultShadersMap[ShaderType::VertexShader] = this->Get("TestVS");
 	this->defaultShadersMap[ShaderType::PixelShader] = this->Get("TestPS");
-
-	// デフォルト設定のシェーダープログラムを登録
 	this->defaultProgram = this->GetShaderProgram("Default");
 }
 

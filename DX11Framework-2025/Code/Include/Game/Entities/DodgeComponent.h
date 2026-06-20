@@ -70,5 +70,5 @@ private:
 	float currentDodgeDuration;		///< 今回の回避に使用する持続時間
 	float justDodgeWindowDuration;	///< ジャスト回避判定猶予の持続時間（0.15）
 
-	ITimeProvider& timeSystem;		///< 時間情報提供システム
+	ITimeProvider& timeSystem;					///< 時間情報提供システム
 };

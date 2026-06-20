@@ -12,8 +12,9 @@ class TitleScene :public BaseScene
 public:
 	/**	@brief コンストラクタ
 	 *	@param GameObjectManager&	_gameObjectManager	ゲームオブジェクトの管理
+	 *	@param RenderSystem&	_renderSystem	レンダリングシステム
 	 */
-	TitleScene(GameObjectManager& _gameObjectManager);
+	TitleScene(GameObjectManager& _gameObjectManager, RenderSystem& _renderSystem);
 
 	/// @brief	デストラクタ
 	~TitleScene()override;

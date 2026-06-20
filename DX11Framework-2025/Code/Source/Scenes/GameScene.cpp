@@ -28,6 +28,9 @@
 #include"Include/Game/Entities/DodgeComponent.h"
 #include"Include/Game/Entities/MoveComponent.h"
 
+#include"Include/Game/Graphics/PostProcess/PostEffectController.h"
+#include"Include/Game/Graphics/PostProcess/SepiaEffectPass.h"
+
 //#include"Include/Framework/Graphics/Mesh.h"
 #include"Include/Framework/Graphics/SpriteManager.h"
 #include"Include/Framework/Graphics/MeshManager.h"
@@ -52,8 +55,9 @@
 
 /**	@brief コンストラクタ
  *	@param GameObjectManager&	_gameObjectManager	ゲームオブジェクトの管理
+ *	@param RenderSystem&	_renderSystem	レンダリングシステム
  */
-GameScene::GameScene(GameObjectManager& _gameObjectManager) :BaseScene(_gameObjectManager) {}
+GameScene::GameScene(GameObjectManager& _gameObjectManager, RenderSystem& _renderSystem) :BaseScene(_gameObjectManager, _renderSystem) {}
 
 /// @brief	デストラクタ
 GameScene::~GameScene() {}
@@ -70,6 +74,19 @@ void GameScene::SetupObjects()
 	auto& meshManager = ResourceHub::Get<MeshManager>();
 	auto& modelManager = ResourceHub::Get<ModelManager>();
 	auto& animationClipManager = ResourceHub::Get<AnimationClipManager>();
+	auto& shaderManager = ResourceHub::Get<ShaderManager>();
+
+	//--------------------------------------------------------------
+	// ポストプロセスの登録
+	//--------------------------------------------------------------
+	std::unique_ptr<SepiaEffectPass> sepiaEffect = std::make_unique<SepiaEffectPass>(&shaderManager);
+	SepiaEffectPass* sepiaEffectPtr = sepiaEffect.get();
+	this->postProcessPipeline->AddPass(std::move(sepiaEffect));
+
+	// ポストエフェクトコントローラーのセットアップ
+	auto postEffectControllerObject = this->gameObjectManager.Instantiate("PostEffectController");
+	auto postEffectController = postEffectControllerObject->AddComponent<PostEffectController>();
+	postEffectController->SetSepiaEffectPass(sepiaEffectPtr);
 
 	//--------------------------------------------------------------
 	// モデルデータの取得
@@ -163,6 +180,7 @@ void GameScene::SetupObjects()
 
 	// キャラクターコントローラーを追加する
 	auto characterController = player->AddComponent<CharacterController>();
+
 	player->AddComponent<AttackComponent>();
 	player->AddComponent<DodgeComponent>();
 	player->AddComponent<MoveComponent>();

@@ -58,6 +58,15 @@ struct TimeScaleEventDef
 	TimeScaleStackPolicy stackPolicy = TimeScaleStackPolicy::Extend;	///< 再成立時挙動
 };
 
+/** @struct TimeScaleEffectContext
+ *  @brief TimeScale イベントの実行中コンテキスト
+ */
+struct TimeScaleEffectContext {
+	float progress = 0.0f;		///< 1.0(開始) -> 0.0(終了)
+	float currentScale = 1.0f;  ///< 現在のタイムスケール値 (0.25 等)
+	bool  isActive = false;		///< イベントが実行中か
+};
+
 //-----------------------------------------------------------------------------
 // TimeScaleSystem class
 //-----------------------------------------------------------------------------
@@ -132,6 +141,12 @@ public:
 	 */
 	void SetEventDef(const TimeScaleEventDef& _def);
 
+	/** @brief 指定されたイベントIDの実行中コンテキストを取得する
+	 *  @param _eventId イベントID
+	 *  @return 実行中コンテキスト（未実行の場合は nullptr）
+	 */
+	[[nodiscard]] TimeScaleEffectContext GetEffectContext(TimeScaleEventId _eventId) const;
+
 private:
 	struct EventKey
 	{
@@ -162,6 +177,10 @@ private:
 	void ApplyEventToGroup(const TimeScaleEventDef& _def);
 	void RebuildAppliedGroupScales();
 
+	/** @brief 指定されたイベントIDの定義を取得する
+	 *	@param _eventId イベントID
+	 *	@return 定義（未登録の場合は nullptr）
+	 */
 	[[nodiscard]] const TimeScaleEventDef* FindEventDef(TimeScaleEventId _eventId) const;
 
 private:

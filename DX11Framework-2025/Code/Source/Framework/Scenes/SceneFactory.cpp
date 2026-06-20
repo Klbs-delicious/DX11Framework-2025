@@ -37,7 +37,8 @@ std::unique_ptr<BaseScene> SceneFactory::Create(SceneType _type) const
     {
         // ゲームオブジェクトの管理クラスを注入してシーンを生成
         GameObjectManager& gameObjectmanager = SystemLocator::Get<GameObjectManager>();
-        return it->second(gameObjectmanager);
+		RenderSystem& renderSystem = SystemLocator::Get<RenderSystem>();
+        return it->second(gameObjectmanager, renderSystem);
     }
 
     // 未登録のシーンタイプなら null を返す

@@ -170,7 +170,7 @@ namespace Graphics::Import
         std::vector<int> boneIndexToNodeIndex{};    ///< boneIndex -> nodeIndex（不変）
 
         int meshRootNodeIndex = -1;                             ///< メッシュ基準ノード（不変）
-        DX::Matrix4x4 globalInverse = DX::Matrix4x4::Identity;  ///< inverse(bindGlobal(meshRoot))（不変）
+        DX::Matrix4x4 globalInverse = DX::Matrix4x4::Identity;  ///< バインド姿勢のスキン行列を正規化する基準逆行列（不変）
     };
 
     /** @struct Pose

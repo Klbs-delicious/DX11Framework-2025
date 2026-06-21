@@ -208,7 +208,7 @@ namespace
 			const DX::Matrix4x4 globalInv = ::TransposeIfNeeded(_globalInverseMeshRoot, transposeGlobalInv);
 			const DX::Matrix4x4 offset = ::TransposeIfNeeded(_boneOffset, transposeOffset);
 
-			// row vector 前提：skin = offset * bindGlobal(bone) * globalInverse(meshRoot)
+			// row vector 前提：skin = offset * bindGlobal(bone) * globalInverse
 			const DX::Matrix4x4 skin = offset * bindGlobal * globalInv;
 
 			const float error = ::MaxAbsDiffFromIdentity(skin);
@@ -1320,7 +1320,7 @@ namespace Graphics::Import
 			const int meshRootNodeIndex = _outSkeletonCache.meshRootNodeIndex;
 			if (meshRootNodeIndex >= 0 && meshRootNodeIndex < nodeCount)
 			{
-				// skin の基準として meshRoot の inverse を使う
+				// ボーンのバインド基準を解決できないモデル向けのフォールバック
 				_outSkeletonCache.globalInverse = DX::InverseMatrix(bindGlobalMatrices[meshRootNodeIndex]);
 			}
 		}
@@ -1354,6 +1354,49 @@ namespace Graphics::Import
 				::ConvertAiMatrixToDxMatrix_Transpose(bone.offsetMatrix);
 		}
 
+		// バインド姿勢でスキン行列が単位行列になるよう、基準逆行列を導出する
+		// row vector 前提：offset * bindGlobal * globalInverse = Identity
+		// FBX のメッシュノードには aiBone::mOffsetMatrix に含まれない
+		// GeometricTransform 由来の回転が残る場合があるため、meshRoot の逆行列を直接基準にしない
+		int globalInverseReferenceBoneIndex = -1;
+		int globalInverseReferenceNodeIndex = -1;
+
+		for (const auto& kv : _modelData.boneDictionary)
+		{
+			const Bone& bone = kv.second;
+			if (bone.index < 0 || bone.index >= boneCount)
+			{
+				continue;
+			}
+
+			const auto nodeIt = nodeNameToIndex.find(bone.boneName);
+			if (nodeIt == nodeNameToIndex.end())
+			{
+				continue;
+			}
+
+			const int nodeIndex = nodeIt->second;
+			if (nodeIndex < 0 || nodeIndex >= nodeCount)
+			{
+				continue;
+			}
+
+			if (globalInverseReferenceBoneIndex < 0 || bone.index < globalInverseReferenceBoneIndex)
+			{
+				globalInverseReferenceBoneIndex = bone.index;
+				globalInverseReferenceNodeIndex = nodeIndex;
+			}
+		}
+
+		if (globalInverseReferenceBoneIndex >= 0 && globalInverseReferenceNodeIndex >= 0)
+		{
+			const DX::Matrix4x4 bindSkinBasis =
+				_outSkeletonCache.boneOffset[static_cast<size_t>(globalInverseReferenceBoneIndex)] *
+				bindGlobalMatrices[static_cast<size_t>(globalInverseReferenceNodeIndex)];
+
+			_outSkeletonCache.globalInverse = DX::InverseMatrix(bindSkinBasis);
+		}
+
 		// Minimal Log: 基準行列（meshRoot / globalInverse）
 		if (EnableSkinningDebugLog)
 		{
@@ -1377,7 +1420,7 @@ namespace Graphics::Import
 				::PrintMatrix4x4("[SkinBase] bindGlobal(meshRoot)", bindGlobalMatrices[static_cast<size_t>(meshRootNodeIndex)]);
 			}
 
-			::PrintMatrix4x4("[SkinBase] globalInverse(inverse(bindGlobal(meshRoot)))", _outSkeletonCache.globalInverse);
+			::PrintMatrix4x4("[SkinBase] globalInverse", _outSkeletonCache.globalInverse);
 		}
 
 		//-----------------------------------------------------------------------------
@@ -1426,7 +1469,7 @@ namespace Graphics::Import
 
 			if (baseNodeIndex >= 0 && baseNodeIndex < nodeCount)
 			{
-				// row vector 前提：skin = offset * bindGlobal(node) * globalInverse(meshRoot)
+				// row vector 前提：skin = offset * bindGlobal(node) * globalInverse
 				const DX::Matrix4x4 skin =
 					_outSkeletonCache.boneOffset[static_cast<size_t>(boneIndex)] *
 					bindGlobalMatrices[static_cast<size_t>(baseNodeIndex)] *

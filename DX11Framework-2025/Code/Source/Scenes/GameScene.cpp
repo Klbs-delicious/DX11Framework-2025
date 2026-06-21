@@ -197,11 +197,13 @@ void GameScene::SetupObjects()
 	auto collider = player->AddComponent<Framework::Physics::Collider3DComponent>();
 	collider->SetShape(Framework::Physics::ColliderShapeType::Capsule);
 	collider->SetCapsule(10.0f, 16.0f);
+	collider->SetCenterOffset(DX::Vector3(0.0f, 2.6f, 0.0f));
 	collider->SetisTrigger(true);
 
 	collider = player->AddComponent<Framework::Physics::Collider3DComponent>();
 	collider->SetShape(Framework::Physics::ColliderShapeType::Capsule);
 	collider->SetCapsule(10.0f, 16.0f);
+	collider->SetCenterOffset(DX::Vector3(0.0f, 2.6f, 0.0f));
 
 	auto rigidbody = player->AddComponent<Framework::Physics::Rigidbody3D>();
 	rigidbody->SetObjectLayer(Framework::Physics::PhysicsLayer::Enemy);
@@ -249,13 +251,14 @@ void GameScene::SetupObjects()
 	// 敵のコライダー・リジッドボディ
 	auto enemyTriggerCollider = enemy->AddComponent<Framework::Physics::Collider3DComponent>();
 	enemyTriggerCollider->SetShape(Framework::Physics::ColliderShapeType::Box);
-	enemyTriggerCollider->SetCenterOffset(DX::Vector3(0.0f, 0.0f, -5.0f));
+	enemyTriggerCollider->SetCenterOffset(DX::Vector3(0.0f, 2.6f, -5.0f));
 	enemyTriggerCollider->SetisTrigger(true);
 	enemyTriggerCollider->SetBoxHalfExtent(DX::Vector3(20.0f, 20.0f, 20.0f));
 
 	collider = enemy->AddComponent<Framework::Physics::Collider3DComponent>();
 	collider->SetShape(Framework::Physics::ColliderShapeType::Capsule);
 	collider->SetCapsule(10.0f, 16.0f);
+	collider->SetCenterOffset(DX::Vector3(0.0f, 2.6f, 0.0f));
 	colliderDebugRenderer = enemy->AddComponent<ColliderDebugRenderer>();
 
 	rigidbody = enemy->AddComponent<Framework::Physics::Rigidbody3D>();

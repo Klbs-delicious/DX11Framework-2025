@@ -508,7 +508,7 @@ namespace Graphics::Import
 
 		// ファイルの単位（cmなど）に関わらず、強制的に特定のスケールに合わせる設定
 		// これにより、Assimpがアニメーションキーも一括でスケーリングします
-		importer.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, 1.0f);
+		importer.SetPropertyFloat(AI_CONFIG_GLOBAL_SCALE_FACTOR_KEY, 100.0f);
 
 		// フラグに aiProcess_GlobalScale を追加する
 		const aiScene* scene = importer.ReadFile(_filename,

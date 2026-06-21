@@ -98,6 +98,11 @@ public:
 	 */
 	void SetTurnSpeed(float _speed) { this->turnSpeed = _speed; }
 
+	/** @brief アニメーション状態の遷移を要求
+	 *  @param _next 遷移先のアニメーション状態
+	 */
+	void RequestIfChanged(PlayerAnimState _next);
+
 private:
 	/// @brief 回避状態の終了判定（DodgeComponent のみ）
 	bool IsDodgeFinished() const;

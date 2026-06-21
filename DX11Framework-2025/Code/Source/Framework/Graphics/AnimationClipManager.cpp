@@ -21,9 +21,9 @@ AnimationClipManager::AnimationClipManager()
 	//---------------------------------------------------------
 	// クリップ情報の事前登録
 	//---------------------------------------------------------
-	this->AddClipInfo("Walk", "Assets/Animations/Wheelbarrow Walk Turn.fbx");
+	this->AddClipInfo("Walk", "Assets/Animations/Walking.fbx");
 	this->AddClipInfo("Punch", "Assets/Animations/Zombie Punching.fbx");
-	this->AddClipInfo("Run", "Assets/Animations/Fast Run.fbx");
+	//this->AddClipInfo("Run", "Assets/Animations/Fast Run.fbx");
 	this->AddClipInfo("Jump", "Assets/Animations/Jumping.fbx");
 	this->AddClipInfo("Fight", "Assets/Animations/Fighting.fbx");
 	this->AddClipInfo("Dance", "Assets/Animations/dance.fbx");

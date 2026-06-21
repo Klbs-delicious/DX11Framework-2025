@@ -88,6 +88,8 @@ void CharacterController::Initialize()
 	this->inputSystem.RegisterKeyBinding("Punch", static_cast<int>(DirectInputDevice::MouseButton::Left));
 	this->inputSystem.RegisterKeyBinding("Dodge", static_cast<int>(DirectInputDevice::MouseButton::Right));
 
+	this->inputSystem.RegisterKeyBinding("Run", static_cast<int>(DirectInputDevice::KeyboardKey::LShift));
+
 	//-----------------------------------------------------------------------------
 	// アニメーション状態の登録（暫定）
 	//-----------------------------------------------------------------------------
@@ -113,6 +115,24 @@ void CharacterController::Initialize()
 
 		this->animStateMachine->AddTransition(
 			Rule{ State::Jumping, State::Idle, 0.2f, 0, false });
+
+		this->animStateMachine->AddTransition(
+			Rule{ State::Idle, State::Walk, 0.1f, 0, false });
+
+		this->animStateMachine->AddTransition(
+			Rule{ State::Walk, State::Idle, 0.1f, 0, false });
+
+		this->animStateMachine->AddTransition(
+			Rule{ State::Idle, State::Run, 0.1f, 0, false });
+
+		this->animStateMachine->AddTransition(
+			Rule{ State::Run, State::Idle, 0.1f, 0, false });
+
+		this->animStateMachine->AddTransition(
+			Rule{ State::Walk, State::Run, 0.1f, 0, false });
+
+		this->animStateMachine->AddTransition(
+			Rule{ State::Run, State::Walk, 0.1f, 0, false });
 	}
 
 	//-----------------------------------------------------------------------------
@@ -154,6 +174,9 @@ void CharacterController::Update(float _deltaTime)
 	if (this->inputSystem.IsActionPressed("MoveLeft")) { inputX -= 1.0f; }
 	if (this->inputSystem.IsActionPressed("MoveRight")) { inputX += 1.0f; }
 
+	const bool isMoving = inputX != 0.0f || inputZ != 0.0f;
+	const bool isRunning = isMoving && this->inputSystem.IsActionPressed("Run");
+
 	//-----------------------------------------------------------------------------
 	// 移動指示（毎フレーム適用）
 	//-----------------------------------------------------------------------------
@@ -179,8 +202,11 @@ void CharacterController::Update(float _deltaTime)
 
 				if (moveDir.LengthSquared() > 1.0e-6f)
 				{
+					// 走るか歩くか
+					const float speedScale = isRunning ? 1.5f : 1.0f;
+
 					moveDir.Normalize();
-					this->moveComponent->SetMoveIntentWorld(moveDir, 1.0f);
+					this->moveComponent->SetMoveIntentWorld(moveDir, speedScale);
 				}
 			}
 		}
@@ -205,6 +231,25 @@ void CharacterController::Update(float _deltaTime)
 		this->StateEnter();
 		this->previousState = this->currentState;
 	}
+
+	//-----------------------------------------------------------------------------
+	// アニメーション状態の更新（移動状態に応じて切り替え）
+	//-----------------------------------------------------------------------------
+	if (this->currentState == PlayerState::Normal)
+	{
+		if (isRunning)
+		{
+			RequestIfChanged(PlayerAnimState::Run);
+		}
+		else if (isMoving)
+		{
+			RequestIfChanged(PlayerAnimState::Walk);
+		}
+		else
+		{
+			RequestIfChanged(PlayerAnimState::Idle);
+		}
+	}
 }
 
 void CharacterController::StateEnter()
@@ -212,17 +257,9 @@ void CharacterController::StateEnter()
 	switch (this->currentState)
 	{
 	case CharacterController::PlayerState::Normal:
-		if (this->animStateMachine)
-		{
-			this->animStateMachine->RequestAnimation(PlayerAnimState::Idle);
-		}
 		break;
 
 	case CharacterController::PlayerState::Attacking:
-		if (this->animStateMachine)
-		{
-			this->animStateMachine->RequestAnimation(PlayerAnimState::Punching);
-		}
 		if (this->attackComponent)
 		{
 			this->attackComponent->StartAttack(this->currentAttackDef);
@@ -230,11 +267,6 @@ void CharacterController::StateEnter()
 		break;
 
 	case CharacterController::PlayerState::Dodging:
-		if (this->animStateMachine)
-		{
-			this->animStateMachine->RequestAnimation(PlayerAnimState::Dodging);
-		}
-
 		if (this->dodgeComponent)
 		{
 			this->dodgeComponent->StartDodge(1.0f);
@@ -424,4 +456,19 @@ bool CharacterController::IsDodgeFinished() const
 {
 	if (!this->dodgeComponent) { return true; }
 	return !this->dodgeComponent->IsDodging();
+}
+
+void CharacterController::RequestIfChanged(PlayerAnimState _next)
+{
+	if (!this->animStateMachine)
+	{
+		return;
+	}
+
+	if (this->animStateMachine->GetCurrentState() == _next)
+	{
+		return;
+	}
+
+	this->animStateMachine->RequestAnimation(_next);
 }

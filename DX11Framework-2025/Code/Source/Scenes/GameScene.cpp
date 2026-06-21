@@ -97,8 +97,8 @@ void GameScene::SetupObjects()
 	//--------------------------------------------------------------
 	// アニメーションクリップの登録
 	//--------------------------------------------------------------
-	//animationClipManager.Register("Walk");
-	//animationClipManager.Register("Run");
+	animationClipManager.Register("Walk");
+	animationClipManager.Register("Run");
 	animationClipManager.Register("Jump");
 	animationClipManager.Register("HeadHit");
 	animationClipManager.Register("Idle");
@@ -124,6 +124,13 @@ void GameScene::SetupObjects()
 
 	clip = animationClipManager.Get("Jump");
 	playerStateTable->Set(CharacterController::PlayerAnimState::Jumping, { clip,1.0f, false, 0.2f });
+
+	clip = animationClipManager.Get("Walk");
+	playerStateTable->Set(CharacterController::PlayerAnimState::Walk, { clip,1.0f, true, 0.2f });
+	
+	// FIX: Runアニメーションが未登録のため、仮でJumpアニメーションを使用
+	clip = animationClipManager.Get("Jump");
+	playerStateTable->Set(CharacterController::PlayerAnimState::Run, { clip,1.0f, true, 0.2f });
 
 	//--------------------------------------------------------------
 	// カメラの生成

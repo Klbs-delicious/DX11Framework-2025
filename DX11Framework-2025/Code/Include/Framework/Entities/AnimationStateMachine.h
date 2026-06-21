@@ -142,6 +142,14 @@ public:
 		}
 	}
 
+	/** @brief 現在の状態を取得する
+	 *  @return 現在の状態
+	 */
+	TState GetCurrentState() const
+	{
+		return this->currentState;
+	}
+
 	private:
 		/** @brief 指定された状態に対応する遷移ルールを検索する
 		 *  @param _currentState 現在の状態

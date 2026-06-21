@@ -105,6 +105,18 @@ void CharacterController::Initialize()
 			Rule{ State::Punching, State::Idle, 0.2f, 0, false });
 
 		this->animStateMachine->AddTransition(
+			Rule{ State::Walk, State::Punching, 0.2f, 0, false });
+
+		this->animStateMachine->AddTransition(
+			Rule{ State::Punching, State::Walk, 0.2f, 0, false });
+
+		this->animStateMachine->AddTransition(
+			Rule{ State::Run, State::Punching, 0.2f, 0, false });
+
+		this->animStateMachine->AddTransition(
+			Rule{ State::Punching, State::Run, 0.2f, 0, false });
+
+		this->animStateMachine->AddTransition(
 			Rule{ State::Idle, State::Dodging, 0.1f, 0, false });
 
 		this->animStateMachine->AddTransition(
@@ -133,6 +145,18 @@ void CharacterController::Initialize()
 
 		this->animStateMachine->AddTransition(
 			Rule{ State::Run, State::Walk, 0.1f, 0, false });
+
+		this->animStateMachine->AddTransition(
+			Rule{ State::Run, State::Dodging, 0.1f, 0, false });
+
+		this->animStateMachine->AddTransition(
+			Rule{ State::Walk, State::Dodging, 0.1f, 0, false });
+
+		this->animStateMachine->AddTransition(
+			Rule{ State::Dodging, State::Run, 0.1f, 0, false });
+
+		this->animStateMachine->AddTransition(
+			Rule{ State::Dodging, State::Walk, 0.1f, 0, false });
 	}
 
 	//-----------------------------------------------------------------------------
@@ -263,6 +287,7 @@ void CharacterController::StateEnter()
 		if (this->attackComponent)
 		{
 			this->attackComponent->StartAttack(this->currentAttackDef);
+			RequestIfChanged(PlayerAnimState::Punching);
 		}
 		break;
 
@@ -270,6 +295,7 @@ void CharacterController::StateEnter()
 		if (this->dodgeComponent)
 		{
 			this->dodgeComponent->StartDodge(1.0f);
+			RequestIfChanged(PlayerAnimState::Dodging);
 		}
 		break;
 

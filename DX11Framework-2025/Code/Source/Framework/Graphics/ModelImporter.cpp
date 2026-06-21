@@ -24,6 +24,7 @@
 #include <cmath>
 #include <cfloat>
 #include <cstring>
+#include <filesystem>
 #include <iostream>
 #include <optional>
 #include <string>
@@ -255,10 +256,10 @@ namespace
 			return "";
 		}
 
-		// 絶対パス（Windows）かを判定
-		if (_texPath.size() >= 2 && _texPath[1] == ':')
+		const std::filesystem::path texturePath(_texPath);
+		if (texturePath.is_absolute() && std::filesystem::exists(texturePath))
 		{
-			return _texPath;
+			return texturePath.string();
 		}
 
 		if (_textureDir.empty())
@@ -266,13 +267,17 @@ namespace
 			return _texPath;
 		}
 
-		const char last = _textureDir.back();
-		if (last == '/' || last == '\\')
+		if (!texturePath.is_absolute())
 		{
-			return _textureDir + _texPath;
+			const std::filesystem::path relativePath = std::filesystem::path(_textureDir) / texturePath;
+			if (std::filesystem::exists(relativePath))
+			{
+				return relativePath.string();
+			}
 		}
 
-		return _textureDir + "/" + _texPath;
+		// 古い絶対参照はテクスチャフォルダから探す
+		return (std::filesystem::path(_textureDir) / texturePath.filename()).string();
 	}
 
 	/// @brief マテリアル名を取得する

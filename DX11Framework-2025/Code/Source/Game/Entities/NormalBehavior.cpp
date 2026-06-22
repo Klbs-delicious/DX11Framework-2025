@@ -27,6 +27,8 @@ void NormalBehavior::Initialize()
 	{
 		std::cout << "[NormalBehavior] ターゲットのプレイヤーが見つかりません\n";
 	}
+
+	this->Think();
 }
 
 void NormalBehavior::Dispose()
@@ -34,38 +36,87 @@ void NormalBehavior::Dispose()
 	this->target = nullptr;
 }
 
+void NormalBehavior::Update(float _deltaTime)
+{
+	this->thinkTimer += _deltaTime;
+
+	// 一定時間ごとに行動を更新
+	if (this->thinkTimer >= this->thinkDuration)
+	{
+		this->Think();
+		this->thinkTimer = 0.0f;
+	}
+}
+
 EnemyDecision NormalBehavior::GetDecision() const
 {
 	EnemyDecision decision;
+	decision.type = EnemyDecisionType::None;
+
 	if (!this->target)
 	{
-		decision.type = EnemyDecisionType::None;
 		return decision;
 	}
 
-	// プレイヤーに近かったら攻撃
-	const DX::Vector3 toTarget = target->GetTransform()->GetWorldPosition() - this->Owner()->GetTransform()->GetWorldPosition();
-	const float distance = toTarget.Length();
+	if (this->currentState == EnemyDecisionType::None)
+	{
+		return decision;
+	}
 
-	if (distance < this->attackRange)
+	if (this->currentState == EnemyDecisionType::Attack)
 	{
 		decision.type = EnemyDecisionType::Attack;
 		return decision;
 	}
 
-	// TODO: 追跡不可の場合待機
-	//if (!this->CanChase())
-	//{
-	//	decision.type = EnemyDecisionType::Stay;
-	//	return decision;
-	//}
+	// プレイヤーから離れていたら近づく
+	if(this->currentState == EnemyDecisionType::Chase)
+	{
+		decision.type = EnemyDecisionType::Chase;
+		DX::Vector3 dir = this->target->GetTransform()->GetWorldPosition() - this->Owner()->GetTransform()->GetWorldPosition();
+
+		dir.Normalize();
+		decision.direction = dir;
+		return decision;
+	}	
+
+	// 追跡不可の場合待機
+	if (this->currentState == EnemyDecisionType::Stay)
+	{
+		return decision;
+	}
+
+	// 現状 Stay / None は入力なし
+	return decision;
+}
+
+void NormalBehavior::Think()
+{
+	if (!this->target)
+	{
+		this->currentState = EnemyDecisionType::None;
+		return;
+	}
+
+	// プレイヤーに近かったら攻撃
+	const DX::Vector3 toTarget = this->target->GetTransform()->GetWorldPosition() - this->Owner()->GetTransform()->GetWorldPosition();
+	const float distance = toTarget.Length();
+
+	if (distance < this->attackRange)
+	{
+		this->currentState = EnemyDecisionType::Attack;
+		return;
+	}
+
+	// 追跡不可の場合待機
+	if (!this->CanChase())
+	{
+		this->currentState = EnemyDecisionType::Stay;
+		return;
+	}
 
 	// プレイヤーから離れていたら近づく
-	decision.type = EnemyDecisionType::Chase;
-	DX::Vector3 dir = toTarget;
-	dir.Normalize();					
-	decision.direction = dir;
-	return decision;
+	this->currentState = EnemyDecisionType::Chase;
 }
 
 bool NormalBehavior::CanChase() const

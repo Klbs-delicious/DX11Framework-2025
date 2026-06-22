@@ -3,7 +3,11 @@
  */
 #pragma once
 #include"Include/Framework/Utils/CommonTypes.h"
+
 #include "Include/Framework/Entities/Component.h"
+#include "Include/Framework/Entities/PhaseInterfaces.h"
+
+ //-----------------------------------------------------------------------------
 
  /** @brief 敵AIの行動の種類を定義する列挙型
  */
@@ -26,7 +30,7 @@ struct EnemyDecision
  /** @class  IAIBehavior
  *  @brief  敵AIの行動を定義するインターフェース
  */
-class IAIBehavior:public Component
+class IAIBehavior :public Component, public IUpdatable
 {
 public:
 	IAIBehavior(GameObject* _owner, bool _isActive = true) :Component(_owner, _isActive){}
@@ -36,4 +40,8 @@ public:
 	 *  @return 敵AIの行動を表すEnemyDecision構造体
 	 */
 	virtual EnemyDecision GetDecision() const = 0;	
+
+private:
+	/// @brief 敵AIの行動を更新する
+	virtual void Think() = 0;
 };

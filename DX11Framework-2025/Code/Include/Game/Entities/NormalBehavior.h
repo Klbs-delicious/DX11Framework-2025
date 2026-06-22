@@ -1,10 +1,7 @@
-/**@file NormalBehavior.h
+﻿/**@file NormalBehavior.h
  * @date 2026/06/22
  */
 #pragma once
-
-#include "Include/Framework/Entities/Component.h"
-#include "Include/Framework/Entities/PhaseInterfaces.h"
 #include "Include/Framework/Entities/GameObject.h"
 
 #include "Include/Game/Entities/IAIBehavior.h"
@@ -13,7 +10,7 @@
 
 /** @brief 通常の敵AIの行動を定義するクラス
  */
-class NormalBehavior : public Component, public IAIBehavior
+class NormalBehavior : public IAIBehavior
 {
 public:
 	NormalBehavior(GameObject* _owner, bool _isActive = true);

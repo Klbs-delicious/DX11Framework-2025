@@ -1,4 +1,4 @@
-/**@file NormalBehavior.cpp
+﻿/**@file NormalBehavior.cpp
  * @date 2026/06/22
  */
 #include "Include/Game/Entities/NormalBehavior.h"
@@ -11,7 +11,7 @@
  //-----------------------------------------------------------------------------
 
 NormalBehavior::NormalBehavior(GameObject* _owner, bool _isActive) :
-	Component(_owner, _isActive),
+	IAIBehavior(_owner, _isActive),
 	target(nullptr),
 	currentState(EnemyDecisionType::None)
 {}

@@ -411,6 +411,15 @@
     <ClInclude Include="Code\Include\Framework\Graphics\PostProcess\IEffectRequest.h">
       <Filter>ヘッダー ファイル\Framework\Graphics\PostProcess</Filter>
     </ClInclude>
+    <ClInclude Include="Code\Include\Game\Entities\IAIBehavior.h">
+      <Filter>ヘッダー ファイル\Game\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Game\Entities\NormalBehavior.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Game\Entities\InputAdapterAI.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Code\Source\Framework\main.cpp">
@@ -655,6 +664,12 @@
     </ClCompile>
     <ClCompile Include="Code\Source\Game\Graphics\PostProcess\SepiaEffectPass.cpp">
       <Filter>ソース ファイル\Framework\Graphics\PostProcess</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Game\Entities\NormalBehavior.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Game\Entities\InputAdapterAI.cpp">
+      <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

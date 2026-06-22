@@ -1,8 +1,9 @@
-/** @file   IAIBehavior.h
+﻿/** @file   IAIBehavior.h
  *  @date   2026/06/22
  */
 #pragma once
 #include"Include/Framework/Utils/CommonTypes.h"
+#include "Include/Framework/Entities/Component.h"
 
  /** @brief 敵AIの行動の種類を定義する列挙型
  */
@@ -25,9 +26,12 @@ struct EnemyDecision
  /** @class  IAIBehavior
  *  @brief  敵AIの行動を定義するインターフェース
  */
-class IAIBehavior
+class IAIBehavior:public Component
 {
 public:
+	IAIBehavior(GameObject* _owner, bool _isActive = true) :Component(_owner, _isActive){}
+	virtual ~IAIBehavior() override = default;
+
 	/** @brief 敵AIの行動を取得する
 	 *  @return 敵AIの行動を表すEnemyDecision構造体
 	 */

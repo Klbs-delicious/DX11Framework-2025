@@ -40,8 +40,8 @@ public:
 	InputAdapterAI(GameObject* _owner, bool _isActive = true);
 	virtual ~InputAdapterAI() override = default;
 
-	virtual void Initialize() = 0;
-	virtual void Dispose() = 0;
+	virtual void Initialize()override;
+	virtual void Dispose()override;
 
 	/** @brief	AIの入力コマンドを取得する
 	 *  @return	入力コマンド情報

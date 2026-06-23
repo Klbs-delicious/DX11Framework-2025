@@ -13,7 +13,10 @@
 NormalBehavior::NormalBehavior(GameObject* _owner, bool _isActive) :
 	IAIBehavior(_owner, _isActive),
 	target(nullptr),
-	currentState(EnemyDecisionType::None)
+	currentState(EnemyDecisionType::None),
+	thinkDuration(1.0f),
+	thinkTimer(0.0f),
+	attackRange(2.0f)
 {}
 
 void NormalBehavior::Initialize()

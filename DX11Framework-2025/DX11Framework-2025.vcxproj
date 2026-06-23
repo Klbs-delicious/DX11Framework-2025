@@ -101,6 +101,7 @@
     <ClInclude Include="Code\Include\Game\Entities\CameraLookComponent.h" />
     <ClInclude Include="Code\Include\Game\Entities\CharacterController.h" />
     <ClInclude Include="Code\Include\Game\Entities\DodgeComponent.h" />
+    <ClInclude Include="Code\Include\Game\Entities\EnemyController.h" />
     <ClInclude Include="Code\Include\Game\Entities\FogComponent.h" />
     <ClInclude Include="Code\Include\Game\Entities\FollowCamera.h" />
     <ClInclude Include="Code\Include\Game\Entities\DebugFreeMoveComponent.h" />
@@ -187,6 +188,7 @@
     <ClCompile Include="Code\Source\Game\Entities\CameraLookComponent.cpp" />
     <ClCompile Include="Code\Source\Game\Entities\CharacterController.cpp" />
     <ClCompile Include="Code\Source\Game\Entities\DodgeComponent.cpp" />
+    <ClCompile Include="Code\Source\Game\Entities\EnemyController.cpp" />
     <ClCompile Include="Code\Source\Game\Entities\FogComponent.cpp" />
     <ClCompile Include="Code\Source\Game\Entities\FollowCamera.cpp" />
     <ClCompile Include="Code\Source\Game\Entities\DebugFreeMoveComponent.cpp" />

@@ -37,8 +37,8 @@ private:
 	GameObject* target;					///< ターゲットのプレイヤーオブジェクト
 	EnemyDecisionType currentState;		///< 敵AIの現在の状態
 
-	float attackRange = 2.0f;			///< 攻撃範囲
-	float thinkDuration = 3.0f;			///< 思考間隔（秒）
+	float attackRange;			///< 攻撃範囲
+	float thinkDuration;		///< 思考間隔（秒）
 
-	float thinkTimer = 0.0f;			///< 思考タイマー
+	float thinkTimer ;			///< 思考タイマー
 };

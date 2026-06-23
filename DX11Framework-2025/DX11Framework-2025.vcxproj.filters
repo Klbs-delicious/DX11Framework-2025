@@ -195,9 +195,6 @@
     <ClInclude Include="Code\Include\Framework\Entities\TestRenderer.h">
       <Filter>ヘッダー ファイル\Test</Filter>
     </ClInclude>
-    <ClInclude Include="Code\Include\Scenes\TestScene.h">
-      <Filter>ヘッダー ファイル\Test</Filter>
-    </ClInclude>
     <ClInclude Include="Code\Include\Framework\Entities\Transform.h">
       <Filter>ヘッダー ファイル\Framework\Entities</Filter>
     </ClInclude>
@@ -422,6 +419,12 @@
     </ClInclude>
     <ClInclude Include="Code\Include\Game\Entities\EnemyController.h">
       <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Scenes\TestScene.h">
+      <Filter>ヘッダー ファイル\Test</Filter>
+    </ClInclude>
+    <ClInclude Include="Code\Include\Scenes\EnemyTestScene.h">
+      <Filter>ヘッダー ファイル\Scenes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -675,6 +678,9 @@
       <Filter>ソース ファイル</Filter>
     </ClCompile>
     <ClCompile Include="Code\Source\Game\Entities\EnemyController.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="Code\Source\Scenes\EnemyTestScene.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>

@@ -111,6 +111,7 @@
     <ClInclude Include="Code\Include\Game\Entities\NormalBehavior.h" />
     <ClInclude Include="Code\Include\Game\Graphics\PostProcess\PostEffectController.h" />
     <ClInclude Include="Code\Include\Game\Graphics\PostProcess\SepiaEffectPass.h" />
+    <ClInclude Include="Code\Include\Scenes\EnemyTestScene.h" />
     <ClInclude Include="Code\Include\Scenes\GameScene.h" />
     <ClInclude Include="Code\Include\Scenes\ModelTest.h" />
     <ClInclude Include="Code\Include\Scenes\PhysicsTest.h" />
@@ -197,6 +198,7 @@
     <ClCompile Include="Code\Source\Game\Entities\NormalBehavior.cpp" />
     <ClCompile Include="Code\Source\Game\Graphics\PostProcess\PostEffectController.cpp" />
     <ClCompile Include="Code\Source\Game\Graphics\PostProcess\SepiaEffectPass.cpp" />
+    <ClCompile Include="Code\Source\Scenes\EnemyTestScene.cpp" />
     <ClCompile Include="Code\Source\Scenes\GameScene.cpp" />
     <ClCompile Include="Code\Source\Scenes\ModelTest.cpp" />
     <ClCompile Include="Code\Source\Scenes\PhysicsTest.cpp" />

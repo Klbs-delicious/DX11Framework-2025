@@ -14,6 +14,7 @@ enum class SceneType
     Test,
 	PhysicsTest,
 	ModelTest,
+	EnemyTest,
 
     Max,
 };

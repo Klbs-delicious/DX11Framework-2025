@@ -13,7 +13,7 @@ EnemyController::EnemyController(GameObject* _owner, bool _isActive) :
 	moveComponent(nullptr),
 	animationComponent(nullptr),
 	animStateMachine(nullptr),
-	walkSpeed(3.0f)
+	walkSpeed(2.0f)
 {
 }
 

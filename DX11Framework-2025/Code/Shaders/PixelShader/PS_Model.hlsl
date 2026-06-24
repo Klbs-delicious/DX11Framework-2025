@@ -36,10 +36,6 @@ float4 main(PS_IN_MODEL input) : SV_TARGET
     if (TextureEnable)
     {
         texColor *= tex.Sample(samp, input.tex);
-        if (dot(texColor.rgb, texColor.rgb) < 1e-5)
-        {
-            texColor = float4(1, 0, 1, 1);
-        }
     }
 
     // ŠÂ‹«ŒõEŠgŽUE‹¾–Ê‚ð‡¬

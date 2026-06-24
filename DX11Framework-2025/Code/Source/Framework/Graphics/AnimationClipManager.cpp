@@ -21,15 +21,34 @@ AnimationClipManager::AnimationClipManager()
 	//---------------------------------------------------------
 	// クリップ情報の事前登録
 	//---------------------------------------------------------
-	this->AddClipInfo("Walk", "Assets/Animations/Wheelbarrow Walk.fbx");
-	this->AddClipInfo("Punch", "Assets/Animations/Cross Punch.fbx");
-	//this->AddClipInfo("Run", "Assets/Animations/Fast Run.fbx");
-	this->AddClipInfo("Jump", "Assets/Animations/Jumping.fbx");
-	this->AddClipInfo("Fight", "Assets/Animations/Fighting.fbx");
-	this->AddClipInfo("Dance", "Assets/Animations/dance.fbx");
-	this->AddClipInfo("Idle", "Assets/Animations/Idle.fbx");
-	this->AddClipInfo("HeadHit", "Assets/Animations/Head Hit.fbx");
-	this->AddClipInfo("Dodge", "Assets/Animations/Dodging Right.fbx");
+
+	// プレイヤー
+	this->AddClipInfo("Player_Idle", "Assets/Animations/Player/Idle.fbx");
+	this->AddClipInfo("Player_Walk", "Assets/Animations/Player/Wheelbarrow Walk.fbx");
+	this->AddClipInfo("Player_Run", "Assets/Animations/Player/Running.fbx");
+	this->AddClipInfo("Player_Jump", "Assets/Animations/Player/Jumping.fbx");
+	this->AddClipInfo("Player_Punch", "Assets/Animations/Player/Cross Punch.fbx");
+	this->AddClipInfo("Player_Dodge", "Assets/Animations/Player/Dodging Right.fbx");
+
+	// 敵_男
+	this->AddClipInfo("Enemy_Man_Idle", "Assets/Animations/Enemy/Man/Idle.fbx");
+	this->AddClipInfo("Enemy_Man_Walk", "Assets/Animations/Enemy/Man/Holding Walk.fbx");
+	this->AddClipInfo("Enemy_Man_Run", "Assets/Animations/Enemy/Man/Run Forward.fbx");
+	this->AddClipInfo("Enemy_Man_Jump", "Assets/Animations/Enemy/Man/Jump.fbx");
+	this->AddClipInfo("Enemy_Man_Punch", "Assets/Animations/Enemy/Man/Zombie Punching.fbx");
+	//this->AddClipInfo("Enemy_Man_Dodge", "Assets/Animations/Enemy/Man/Dodge.fbx");
+	this->AddClipInfo("Enemy_Man_Death", "Assets/Animations/Enemy/Man/Stunned.fbx");
+	this->AddClipInfo("Enemy_Man_Damage", "Assets/Animations/Enemy/Man/Big Hit To Head.fbx");
+
+	// 敵_女
+	this->AddClipInfo("Enemy_Woman_Idle", "Assets/Animations/Enemy/Woman/Orc Idle.fbx");
+	this->AddClipInfo("Enemy_Woman_Walk", "Assets/Animations/Enemy/Woman/Holding Walk.fbx");
+	this->AddClipInfo("Enemy_Woman_Run", "Assets/Animations/Enemy/Woman/Run Forward.fbx");
+	this->AddClipInfo("Enemy_Woman_Jump", "Assets/Animations/Enemy/Woman/Jump.fbx");
+	this->AddClipInfo("Enemy_Woman_Punch", "Assets/Animations/Enemy/Woman/Zombie Punching.fbx");
+	//this->AddClipInfo("Enemy_Woman_Dodge", "Assets/Animations/Enemy/Woman/Dodge.fbx");
+	this->AddClipInfo("Enemy_Woman_Death", "Assets/Animations/Enemy/Woman/Stunned.fbx");
+	this->AddClipInfo("Enemy_Woman_Damage", "Assets/Animations/Enemy/Woman/Head Hit.fbx");
 
 	//---------------------------------------------------------
 	// イベントテーブル構築

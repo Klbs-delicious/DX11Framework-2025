@@ -33,14 +33,13 @@ ModelManager::ModelManager() : modelImporter()
 	     "Player",
 		 Graphics::ModelInfo{ "Assets/Models/Stickman/source/T-Pose.fbx", "Assets/Models/Stickman/textures" }
 	 );
-	 //this->modelInfoTable.emplace(
-	 //    "Player",
-		// Graphics::ModelInfo{ "Assets/Models/Stickman/source/Head Hit.fbx", "Assets/Models/Stickman/textures" }
-	 //);
-
 	 this->modelInfoTable.emplace(
-		 "Woman",
-		 Graphics::ModelInfo{ "Assets/Models/Woman/woman.fbx", "Assets/Models/Woman" }
+	     "Enemy_Man",
+		 Graphics::ModelInfo{ "Assets/Models/Enemy/Man/source/Enemy_Man_T_Pose.fbx", "Assets/Models/Enemy/Man/textures" }
+	 );
+	 this->modelInfoTable.emplace(
+		 "Enemy_Woman",
+		 Graphics::ModelInfo{ "Assets/Models/Enemy/Woman/source/Enemy_Woman_T_Pose.fbx", "Assets/Models/Enemy/Woman/textures" }
 	 );
 
 	this->defaultModel = nullptr;

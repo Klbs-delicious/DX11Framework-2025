@@ -45,42 +45,66 @@ void EnemyTestScene::SetupObjects()
 {
 	std::cout << "[EnemyTestScene] Setup\n";
 
+	// リソースマネージャの取得
 	auto& meshManager = ResourceHub::Get<MeshManager>();
 	auto& modelManager = ResourceHub::Get<ModelManager>();
 	auto& animationClipManager = ResourceHub::Get<AnimationClipManager>();
 
+	// モデルの登録
 	modelManager.Register("Player");
 	auto modelData = modelManager.Get("Player");
 
-	animationClipManager.Register("Walk");
-	animationClipManager.Register("Run");
-	animationClipManager.Register("Jump");
-	animationClipManager.Register("Idle");
-	animationClipManager.Register("Dodge");
-	animationClipManager.Register("Punch");
+	animationClipManager.Register("Player_Walk");
+	animationClipManager.Register("Player_Run");
+	animationClipManager.Register("Player_Jump");
+	animationClipManager.Register("Player_Idle");
+	animationClipManager.Register("Player_Dodge");
+	animationClipManager.Register("Player_Punch");
 
+	modelManager.Register("Enemy_Man");
+	auto enemyModelData = modelManager.Get("Enemy_Man");
+
+	animationClipManager.Register("Enemy_Man_Walk");
+	animationClipManager.Register("Enemy_Man_Run");
+	animationClipManager.Register("Enemy_Man_Jump");
+	animationClipManager.Register("Enemy_Man_Idle");
+	animationClipManager.Register("Enemy_Man_Punch");
+
+	modelManager.Register("Enemy_Woman");
+	auto enemyWomanModelData = modelManager.Get("Enemy_Woman");
+
+	animationClipManager.Register("Enemy_Woman_Walk");
+	animationClipManager.Register("Enemy_Woman_Run");
+	animationClipManager.Register("Enemy_Woman_Jump");
+	animationClipManager.Register("Enemy_Woman_Idle");
+	animationClipManager.Register("Enemy_Woman_Punch");
+
+	// アニメーションステートテーブルの設定
 	using PlayerAnimState = CharacterController::PlayerAnimState;
 	using EnemyAnimState = EnemyController::EnemyAnimState;
 
 	static Graphics::Animation::StateTable<PlayerAnimState> playerStateTable;
 	static Graphics::Animation::StateTable<EnemyAnimState> enemyStateTable;
 
-	auto clip = animationClipManager.Get("Idle");
+	auto clip = animationClipManager.Get("Player_Idle");
 	playerStateTable.Set(PlayerAnimState::Idle, { clip, 1.0f, true, 0.15f });
+	clip = animationClipManager.Get("Enemy_Man_Idle");
 	enemyStateTable.Set(EnemyAnimState::Idle, { clip, 1.0f, true, 0.15f });
 
-	clip = animationClipManager.Get("Walk");
+	clip = animationClipManager.Get("Player_Walk");
 	playerStateTable.Set(PlayerAnimState::Walk, { clip, 1.0f, true, 0.15f });
+	clip = animationClipManager.Get("Enemy_Man_Walk");
 	enemyStateTable.Set(EnemyAnimState::Walk, { clip, 1.0f, true, 0.15f });
 
-	clip = animationClipManager.Get("Punch");
+	clip = animationClipManager.Get("Player_Punch");
 	playerStateTable.Set(PlayerAnimState::Punching, { clip, 1.0f, false, 0.10f });
+	clip = animationClipManager.Get("Enemy_Man_Punch");
 	enemyStateTable.Set(EnemyAnimState::Attack, { clip, 1.0f, false, 0.10f });
 
-	clip = animationClipManager.Get("Dodge");
+	clip = animationClipManager.Get("Player_Dodge");
 	playerStateTable.Set(PlayerAnimState::Dodging, { clip, 1.0f, false, 0.10f });
 
-	clip = animationClipManager.Get("Jump");
+	clip = animationClipManager.Get("Player_Jump");
 	playerStateTable.Set(PlayerAnimState::Jumping, { clip, 1.0f, false, 0.10f });
 	playerStateTable.Set(PlayerAnimState::Run, { clip, 1.0f, true, 0.15f });
 
@@ -130,18 +154,18 @@ void EnemyTestScene::SetupObjects()
 	// 敵のアニメーションステートマシンの初期化
 	auto enemy = this->gameObjectManager.Instantiate("Enemy", GameTags::Tag::Enemy);
 	enemy->transform->SetLocalPosition(DX::Vector3(12.0f, -10.0f, 0.0f));
-	enemy->transform->SetLocalScale(DX::Vector3(0.1f, 0.1f, 0.1f));
+	enemy->transform->SetLocalScale(DX::Vector3(0.01f, 0.01f, 0.01f));
 	enemy->TimeScale()->SetGroupName("EnemyTest");
 
 	meshComponent = enemy->AddComponent<MeshComponent>();
-	meshComponent->SetMesh(modelData->mesh);
+	meshComponent->SetMesh(enemyModelData->mesh);
 	materialComponent = enemy->AddComponent<MaterialComponent>();
-	materialComponent->SetMaterial(modelData->material);
+	materialComponent->SetMaterial(enemyModelData->material);
 	animationComponent = enemy->AddComponent<AnimationComponent>();
-	animationComponent->SetSkeletonCache(modelData->GetSkeletonCache());
+	animationComponent->SetSkeletonCache(enemyModelData->GetSkeletonCache());
 
 	auto enemyAnimator = std::make_unique<Animator<EnemyAnimState>>();
-	enemyAnimator->Initialize(modelData->GetSkeletonCache(), &enemyStateTable, EnemyAnimState::Idle);
+	enemyAnimator->Initialize(enemyModelData->GetSkeletonCache(), &enemyStateTable, EnemyAnimState::Idle);
 	animationComponent->SetAnimator(std::move(enemyAnimator));
 
 	enemy->AddComponent<SkinnedMeshRenderer>();

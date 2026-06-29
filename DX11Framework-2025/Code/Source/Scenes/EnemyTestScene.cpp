@@ -144,7 +144,7 @@ void EnemyTestScene::SetupObjects()
 	auto collider = player->AddComponent<Framework::Physics::Collider3DComponent>();
 	collider->SetShape(Framework::Physics::ColliderShapeType::Capsule);
 	collider->SetCapsule(1.0f, 2.0f);
-	collider->SetCenterOffset(DX::Vector3(0.0f, 3.5f, 0.0f));
+	collider->SetCenterOffset(DX::Vector3(0.0f, 0.9f, 0.0f));
 
 	auto rigidbody = player->AddComponent<Framework::Physics::Rigidbody3D>();
 	rigidbody->SetObjectLayer(Framework::Physics::PhysicsLayer::Player);
@@ -180,7 +180,7 @@ void EnemyTestScene::SetupObjects()
 	collider = enemy->AddComponent<Framework::Physics::Collider3DComponent>();
 	collider->SetShape(Framework::Physics::ColliderShapeType::Capsule);
 	collider->SetCapsule(1.0f, 2.0f);
-	collider->SetCenterOffset(DX::Vector3(0.0f, 0.0f, 0.0f));
+	collider->SetCenterOffset(DX::Vector3(0.0f, 3.0f, 0.0f));
 
 	auto attackTrigger = enemy->AddComponent<Framework::Physics::Collider3DComponent>();
 	attackTrigger->SetShape(Framework::Physics::ColliderShapeType::Box);

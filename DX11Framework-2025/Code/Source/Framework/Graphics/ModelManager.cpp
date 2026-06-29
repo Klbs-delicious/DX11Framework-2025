@@ -39,7 +39,7 @@ ModelManager::ModelManager() : modelImporter()
 	 );
 	 this->modelInfoTable.emplace(
 		 "Enemy_Woman",
-		 Graphics::ModelInfo{ "Assets/Models/Enemy/Woman/source/Enemy_Woman_T_Pose.fbx", "Assets/Models/Enemy/Woman/textures" }
+		 Graphics::ModelInfo{ "Assets/Models/Enemy/Woman/source/T-Pose.fbx", "Assets/Models/Enemy/Woman/textures" }
 	 );
 
 	this->defaultModel = nullptr;

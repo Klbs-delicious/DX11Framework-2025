@@ -60,6 +60,9 @@ public:
 	/// @brief 描画処理
 	void Draw() override;
 
+	/// @brief Set a uniform visual-only scale that does not affect physics.
+	void SetModelScale(float _scale) { this->modelScale = _scale; }
+
 	// 簡易ライト設定
 	struct LightBuffer
 	{
@@ -76,6 +79,7 @@ private:
 	MeshComponent* meshComponent;          ///< メッシュ情報
 	MaterialComponent* materialComponent;   ///< マテリアル情報
 
+	float modelScale; ///< Uniform visual-only scale.
 	LightBuffer light = {};
 	std::unique_ptr<DynamicConstantBuffer<LightBuffer>> lightBuffer; ///< ライト用バッファ
 };

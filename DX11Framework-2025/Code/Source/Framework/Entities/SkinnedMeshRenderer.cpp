@@ -33,6 +33,7 @@ SkinnedMeshRenderer::SkinnedMeshRenderer(GameObject* _owner, bool _isActive)
 	meshComponent(nullptr),
 	materialComponent(nullptr),
 	animationComponent(nullptr),
+	modelScale(1.0f),
 	lightBuffer(nullptr)
 {
 }
@@ -150,7 +151,8 @@ void SkinnedMeshRenderer::Draw()
 	//-------------------------------------------------------------
 	// 変換行列を送る
 	//-------------------------------------------------------------
-	Matrix world = this->transform ? this->transform->GetWorldMatrix() : Matrix::Identity;
+	Matrix world = Matrix::CreateScale(this->modelScale) *
+		(this->transform ? this->transform->GetWorldMatrix() : Matrix::Identity);
 	Matrix view = camera->GetViewMatrix();
 	Matrix proj = camera->GetProjectionMatrix();
 

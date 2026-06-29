@@ -118,7 +118,7 @@ void EnemyTestScene::SetupObjects()
 	// プレイヤーのアニメーションステートマシンの初期化
 	auto player = this->gameObjectManager.Instantiate("Player", GameTags::Tag::Player);
 	player->transform->SetLocalPosition(DX::Vector3(0.0f, -10.0f, 0.0f));
-	player->transform->SetLocalScale(DX::Vector3(0.1f, 0.1f, 0.1f));
+
 	player->TimeScale()->SetGroupName("EnemyTest");
 
 	// プレイヤーのコンポーネントを追加
@@ -133,7 +133,8 @@ void EnemyTestScene::SetupObjects()
 	playerAnimator->Initialize(modelData->GetSkeletonCache(), &playerStateTable, PlayerAnimState::Idle);
 	animationComponent->SetAnimator(std::move(playerAnimator));
 
-	player->AddComponent<SkinnedMeshRenderer>();
+	auto skinnedMeshRenderer = player->AddComponent<SkinnedMeshRenderer>();
+	skinnedMeshRenderer->SetModelScale(0.1f);
 	player->AddComponent<AnimationStateMachine<PlayerAnimState>>();
 	player->AddComponent<CharacterController>();
 	player->AddComponent<AttackComponent>();
@@ -142,8 +143,8 @@ void EnemyTestScene::SetupObjects()
 
 	auto collider = player->AddComponent<Framework::Physics::Collider3DComponent>();
 	collider->SetShape(Framework::Physics::ColliderShapeType::Capsule);
-	collider->SetCapsule(10.0f, 16.0f);
-	collider->SetCenterOffset(DX::Vector3(0.0f, 2.6f, 0.0f));
+	collider->SetCapsule(1.0f, 2.0f);
+	collider->SetCenterOffset(DX::Vector3(0.0f, 3.5f, 0.0f));
 
 	auto rigidbody = player->AddComponent<Framework::Physics::Rigidbody3D>();
 	rigidbody->SetObjectLayer(Framework::Physics::PhysicsLayer::Player);
@@ -154,7 +155,6 @@ void EnemyTestScene::SetupObjects()
 	// 敵のアニメーションステートマシンの初期化
 	auto enemy = this->gameObjectManager.Instantiate("Enemy", GameTags::Tag::Enemy);
 	enemy->transform->SetLocalPosition(DX::Vector3(12.0f, -10.0f, 0.0f));
-	enemy->transform->SetLocalScale(DX::Vector3(0.01f, 0.01f, 0.01f));
 	enemy->TimeScale()->SetGroupName("EnemyTest");
 
 	meshComponent = enemy->AddComponent<MeshComponent>();
@@ -168,7 +168,8 @@ void EnemyTestScene::SetupObjects()
 	enemyAnimator->Initialize(enemyModelData->GetSkeletonCache(), &enemyStateTable, EnemyAnimState::Idle);
 	animationComponent->SetAnimator(std::move(enemyAnimator));
 
-	enemy->AddComponent<SkinnedMeshRenderer>();
+	skinnedMeshRenderer = enemy->AddComponent<SkinnedMeshRenderer>();
+	skinnedMeshRenderer->SetModelScale(0.1f);
 	enemy->AddComponent<AnimationStateMachine<EnemyAnimState>>();
 	enemy->AddComponent<NormalBehavior>();
 	enemy->AddComponent<InputAdapterAI>();
@@ -176,16 +177,16 @@ void EnemyTestScene::SetupObjects()
 	enemy->AddComponent<AttackComponent>();
 	enemy->AddComponent<MoveComponent>();
 
-	auto attackTrigger = enemy->AddComponent<Framework::Physics::Collider3DComponent>();
-	attackTrigger->SetShape(Framework::Physics::ColliderShapeType::Box);
-	attackTrigger->SetCenterOffset(DX::Vector3(0.0f, 2.6f, -5.0f));
-	attackTrigger->SetBoxHalfExtent(DX::Vector3(20.0f, 20.0f, 20.0f));
-	attackTrigger->SetisTrigger(true);
-
 	collider = enemy->AddComponent<Framework::Physics::Collider3DComponent>();
 	collider->SetShape(Framework::Physics::ColliderShapeType::Capsule);
-	collider->SetCapsule(10.0f, 16.0f);
-	collider->SetCenterOffset(DX::Vector3(0.0f, 2.6f, 0.0f));
+	collider->SetCapsule(1.0f, 2.0f);
+	collider->SetCenterOffset(DX::Vector3(0.0f, 0.0f, 0.0f));
+
+	auto attackTrigger = enemy->AddComponent<Framework::Physics::Collider3DComponent>();
+	attackTrigger->SetShape(Framework::Physics::ColliderShapeType::Box);
+	attackTrigger->SetCenterOffset(DX::Vector3(0.0f, 0.0f, -5.0f));
+	attackTrigger->SetBoxHalfExtent(DX::Vector3(2.0f, 2.0f, 2.0f));
+	attackTrigger->SetisTrigger(true);
 
 	rigidbody = enemy->AddComponent<Framework::Physics::Rigidbody3D>();
 	rigidbody->SetObjectLayer(Framework::Physics::PhysicsLayer::Enemy);

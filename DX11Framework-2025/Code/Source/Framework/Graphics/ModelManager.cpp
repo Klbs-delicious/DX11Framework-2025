@@ -35,7 +35,7 @@ ModelManager::ModelManager() : modelImporter()
 	 );
 	 this->modelInfoTable.emplace(
 	     "Enemy_Man",
-		 Graphics::ModelInfo{ "Assets/Models/Enemy/Man/source/Enemy_Man_T_Pose.fbx", "Assets/Models/Enemy/Man/textures" }
+		 Graphics::ModelInfo{ "Assets/Models/Enemy/Man/source/T-Pose.fbx", "Assets/Models/Enemy/Man/textures" }
 	 );
 	 this->modelInfoTable.emplace(
 		 "Enemy_Woman",

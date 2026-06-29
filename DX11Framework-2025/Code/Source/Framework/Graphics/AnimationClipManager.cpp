@@ -32,7 +32,7 @@ AnimationClipManager::AnimationClipManager()
 
 	// 敵_男
 	this->AddClipInfo("Enemy_Man_Idle", "Assets/Animations/Enemy/Man/Idle.fbx");
-	this->AddClipInfo("Enemy_Man_Walk", "Assets/Animations/Enemy/Man/Holding Walk.fbx");
+	this->AddClipInfo("Enemy_Man_Walk", "Assets/Animations/Enemy/Man/Dwarf Walk.fbx");
 	this->AddClipInfo("Enemy_Man_Run", "Assets/Animations/Enemy/Man/Run Forward.fbx");
 	this->AddClipInfo("Enemy_Man_Jump", "Assets/Animations/Enemy/Man/Jump.fbx");
 	this->AddClipInfo("Enemy_Man_Punch", "Assets/Animations/Enemy/Man/Zombie Punching.fbx");

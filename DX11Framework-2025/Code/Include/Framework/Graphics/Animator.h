@@ -1103,7 +1103,11 @@ void Animator<StateId>::UpdateLocalMatrixFromKeysToPose(
 
 	if (_track.hasPosition)
 	{
-		finalPos = this->InterpolateVec3Cached(_track.positionKeys, _ticks, finalPos, cursor.posLeftIndex);
+		const DX::Vector3 animatedPos =
+			this->InterpolateVec3Cached(_track.positionKeys, _ticks, finalPos, cursor.posLeftIndex);
+		const DX::Vector3 initialAnimatedPos = _track.positionKeys.front().value;
+
+		finalPos += (animatedPos - initialAnimatedPos);
 	}
 
 	if (_track.hasRotation)

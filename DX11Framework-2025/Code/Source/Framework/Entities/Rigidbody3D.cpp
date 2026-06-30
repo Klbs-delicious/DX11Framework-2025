@@ -175,7 +175,7 @@ namespace Framework::Physics
 		}
 
 		// 衝突解決（CastShape 押し戻し）
-		this->ResolveCastShape(_deltaTime);
+		this->ResolveCastShape(scaledDelta);
 
 		// visual に反映させる
 		this->SyncToVisual();

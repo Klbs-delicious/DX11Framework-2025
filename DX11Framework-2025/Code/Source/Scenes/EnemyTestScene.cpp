@@ -106,6 +106,7 @@ void EnemyTestScene::SetupObjects()
 
 	clip = animationClipManager.Get("Player_Jump");
 	playerStateTable.Set(PlayerAnimState::Jumping, { clip, 1.0f, false, 0.10f });
+	clip = animationClipManager.Get("Player_Run");
 	playerStateTable.Set(PlayerAnimState::Run, { clip, 1.0f, true, 0.15f });
 
 	// カメラ

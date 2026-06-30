@@ -91,7 +91,7 @@ void EnemyController::Update(float _deltaTime)
 			}
 
 			AttackDef attackDef = {
-				.attackClip = "Punch",
+				.attackClip = "Enemy_Man_Punch",
 				.attackType = AttackType::Melee,
 				.damage = 10.0f
 			};

@@ -53,13 +53,24 @@ AnimationClipManager::AnimationClipManager()
 	//---------------------------------------------------------
 	// イベントテーブル構築
 	//---------------------------------------------------------
-	this->eventDefMap.emplace(
-		"Punch",
-		std::vector<Graphics::Import::ClipEvent>
+	const std::vector<Graphics::Import::ClipEvent> punchEvents
 	{
 		{ 0.25f, Graphics::Import::ClipEventId::HitOn },
 		{ 0.30f, Graphics::Import::ClipEventId::HitOff }
-	});
+	};
+
+	this->eventDefMap.emplace(
+		"Punch",
+		punchEvents);
+	this->eventDefMap.emplace(
+		"Player_Punch",
+		punchEvents);
+	this->eventDefMap.emplace(
+		"Enemy_Man_Punch",
+		punchEvents);
+	this->eventDefMap.emplace(
+		"Enemy_Woman_Punch",
+		punchEvents);
 }
 
 AnimationClipManager::~AnimationClipManager()

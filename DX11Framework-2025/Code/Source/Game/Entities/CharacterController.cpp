@@ -162,7 +162,7 @@ void CharacterController::Initialize()
 	//-----------------------------------------------------------------------------
 	// 攻撃定義（テスト用）
 	//-----------------------------------------------------------------------------
-	this->currentAttackDef.attackClip = "Punch";
+	this->currentAttackDef.attackClip = "Player_Punch";
 	this->currentAttackDef.attackType = AttackType::Melee;
 	this->currentAttackDef.damage = 10.0f;
 

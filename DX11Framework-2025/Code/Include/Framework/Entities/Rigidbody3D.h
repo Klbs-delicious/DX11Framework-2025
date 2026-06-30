@@ -72,10 +72,8 @@ namespace Framework::Physics
 		/// @brief 貫通解決
 		void ResolvePenetration();
 
-		/** @brief CastShape による押し戻し解決
-		 *  @param _deltaTime 経過時間
-		 */
-		void ResolveCastShape(float _deltaTime);
+		/// @brief CastShape による押し戻し解決
+		void ResolveCastShape();
 
 		/// @brief 論理位置取得
 		DX::Vector3 GetLogicalPosition() const;

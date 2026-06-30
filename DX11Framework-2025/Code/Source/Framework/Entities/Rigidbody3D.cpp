@@ -175,7 +175,7 @@ namespace Framework::Physics
 		}
 
 		// 衝突解決（CastShape 押し戻し）
-		this->ResolveCastShape(scaledDelta);
+		this->ResolveCastShape();
 
 		// visual に反映させる
 		this->SyncToVisual();
@@ -399,6 +399,7 @@ namespace Framework::Physics
 		float vn = this->linearVelocity.x * bestNormal.x + this->linearVelocity.y * bestNormal.y + this->linearVelocity.z * bestNormal.z;
 		if (vn > 0.0f)
 		{
+			// 法線成分の速度を削減（面に沿わせる）
 			this->linearVelocity -= bestNormal * vn;
 		}
 
@@ -406,20 +407,18 @@ namespace Framework::Physics
 	}
 
 	//-----------------------------------------------------------------------------
-	// CastShape 押し戻し解決（移動方向に対するヒットを使って押し戻す）
+	// CastShape 押し戻し解決（ヒット手前まで進めて、残りを滑らせる）
 	//-----------------------------------------------------------------------------
-	void Rigidbody3D::ResolveCastShape(float _deltaTime)
+	void Rigidbody3D::ResolveCastShape()
 	{
 		if (!this->hasBody || !this->staged || !this->stagedPrev) { return; }
 		if (this->bodies.empty()) { return; }
 
 		this->isGrounded = false;
 
-		DX::Vector3 move = this->linearVelocity * _deltaTime;
-		if (move.LengthSquared() <= 0.0f) { return; }
-
-		float moveLen = move.Length();
-		DX::Vector3 moveDir = move / moveLen;
+		// 移動量がほぼゼロなら押し戻しは行わない
+		DX::Vector3 remainingMove = this->staged->position - this->stagedPrev->position;
+		if (remainingMove.LengthSquared() <= 0.0f) { return; }
 
 		DX::Quaternion rot = this->staged->rotation;
 
@@ -427,112 +426,152 @@ namespace Framework::Physics
 		const auto& broad = this->physicsSystem.GetBroadPhaseLayerFilter(this->objectLayer);
 		const auto& obj = this->physicsSystem.GetObjectLayerFilter(this->objectLayer);
 
-		float bestCorrection = 0.0f;
-		DX::Vector3 bestCandidate = this->staged->position;
-		DX::Vector3 bestNormal = DX::Vector3::Zero;
-		bool hasHit = false;
+		DX::Vector3 currentPos = this->stagedPrev->position;
+		bool hitAny = false;	// true: 1回でもヒットした
 
-		for (const auto& body : this->bodies)
+		static constexpr int slideIterations = 3;		// スライド解決の反復回数
+		static constexpr float minMoveSq = 1.0e-8f;
+
+		// スライド解決の反復
+		for (int iteration = 0; iteration < slideIterations; ++iteration)
 		{
-			if (!body.collider) { continue; }
+			// 移動量がほぼゼロなら終了
+			float moveLen = remainingMove.Length();
+			if (moveLen <= 0.0f || remainingMove.LengthSquared() <= minMoveSq) { break; }
 
-			const Shape* shape = nullptr;
+			DX::Vector3 moveDir = remainingMove / moveLen;
+
+			float bestFraction = 1.0f;
+			float bestAdvance = 0.0f;
+			DX::Vector3 bestNormal = DX::Vector3::Zero;
+			bool hasHit = false;
+
+			for (const auto& body : this->bodies)
 			{
-				BodyLockRead lock(this->physicsSystem.GetBodyLockInterface(), body.id);
-				if (!lock.Succeeded()) { continue; }
+				if (!body.collider) { continue; }
 
-				shape = lock.GetBody().GetShape();
-			}
+				const Shape* shape = nullptr;
+				{
+					// ここで shape を取得する
+					BodyLockRead lock(this->physicsSystem.GetBodyLockInterface(), body.id);
+					if (!lock.Succeeded()) { continue; }
 
-			if (!shape) { continue; }
+					shape = lock.GetBody().GetShape();
+				}
 
-			DX::Vector3 offset = this->ComputeColliderOffset(body.collider, rot);
-			DX::Vector3 comStart = this->stagedPrev->position + offset;
+				if (!shape) { continue; }
 
-			RShapeCast cast(
-				shape,
-				Vec3::sOne(),
-				RMat44::sRotationTranslation(
-					Quat(rot.x, rot.y, rot.z, rot.w),
-					RVec3(comStart.x, comStart.y, comStart.z)
-				),
-				Vec3(move.x, move.y, move.z)
-			);
+				// コライダーの centerOffset を回転適用してワールド座標系での COM 位置を計算
+				DX::Vector3 offset = this->ComputeColliderOffset(body.collider, rot);
+				DX::Vector3 comStart = currentPos + offset;
 
-			ShapeCastSettings settings;
-			settings.mReturnDeepestPoint = false;
-			settings.mBackFaceModeTriangles = EBackFaceMode::IgnoreBackFaces;
-			settings.mBackFaceModeConvex = EBackFaceMode::IgnoreBackFaces;
+				// CastShape に渡すためのリクエストを作成
+				RShapeCast cast(
+					shape,																										// コライダーの形状
+					Vec3::sOne(),																								// Shape 作成済みのスケールをそのまま使う
+					RMat44::sRotationTranslation(Quat(rot.x, rot.y, rot.z, rot.w), RVec3(comStart.x, comStart.y, comStart.z)),	// 開始姿勢
+					Vec3(remainingMove.x, remainingMove.y, remainingMove.z)														// 移動量
+				);
+				
+				ShapeCastSettings settings;
+				settings.mReturnDeepestPoint = false;								// 貫通している場合は最深点を返さない（Fraction=0.0 で返す）
+				settings.mBackFaceModeTriangles = EBackFaceMode::IgnoreBackFaces;	// 三角形の裏面は無視する
+				settings.mBackFaceModeConvex = EBackFaceMode::IgnoreBackFaces;		// 凸形状の裏面は無視する
 
-			ClosestShapeCastCollector col;
+				ClosestShapeCastCollector col;
 
-			//// 衝突判定を行うかどうかのフィルタ設定
-			//// Triggerになっている場合には衝突判定を行わない
-			SelfTriggerShapeFilter selfFilter(this->physicsSystem, body.id);
-			IgnoreBodiesAndTriggersFilter bodyFilter(this->physicsSystem, body.id);
+				// 衝突判定を行うかどうかのフィルタ設定
+				// Triggerになっている場合には衝突判定を行わない
+				SelfTriggerShapeFilter selfFilter(this->physicsSystem, body.id);
+				IgnoreBodiesAndTriggersFilter bodyFilter(this->physicsSystem, body.id);
 
-			npq.CastShape(
-				cast,
-				settings,
-				RVec3::sZero(),
-				col,
-				broad,
-				obj,
-				bodyFilter,
-				selfFilter
-			);
-			if (!col.hasHit) { continue; }
+				// CastShape で remainingMove の途中にある最初の衝突を探す
+				npq.CastShape(
+					cast,
+					settings,
+					RVec3::sZero(),
+					col,
+					broad,
+					obj,
+					bodyFilter,
+					selfFilter
+				);
+				if (!col.hasHit) { continue; }
 
-			// まず自分側がトリガーなら押し戻しをしない
-			{
-				auto* selfCol = this->physicsSystem.GetCollider3D(body.id);
-				if (selfCol && selfCol->IsTrigger()) { continue; }
-			}
+				// まず自分側がトリガーなら押し戻しをしない
+				{
+					auto* selfCol = this->physicsSystem.GetCollider3D(body.id);
+					if (selfCol && selfCol->IsTrigger()) { continue; }
+				}
 
-			// ヒットした相手がトリガーなら無視する
-			auto other = this->physicsSystem.GetCollider3D(col.hit.mBodyID2);
-			if (!other || other->IsTrigger()) { continue; }
+				// ヒットした相手がトリガーなら無視する
+				auto other = this->physicsSystem.GetCollider3D(col.hit.mBodyID2);
+				if (!other || other->IsTrigger()) { continue; }
 
-			float f = std::clamp(col.hit.mFraction, 0.0f, 1.0f);
-			float adv = std::max(0.0f, moveLen * f - skinWidth);
+				// ヒットした fraction が既に見つかっている fraction より大きい場合は無視する
+				float f = std::clamp(col.hit.mFraction, 0.0f, 1.0f);
+				if (hasHit && f >= bestFraction) { continue; }
 
-			DX::Vector3 newCom = comStart + moveDir * adv;
+				// 法線ベクトルを取得し、長さがほぼゼロなら無視する
+				DX::Vector3 normal(
+					col.hit.mPenetrationAxis.GetX(),
+					col.hit.mPenetrationAxis.GetY(),
+					col.hit.mPenetrationAxis.GetZ()
+				);
+				if (normal.LengthSquared() <= minMoveSq) { continue; }
+				normal.Normalize();
 
-			DX::Vector3 normal(
-				col.hit.mPenetrationAxis.GetX(),
-				col.hit.mPenetrationAxis.GetY(),
-				col.hit.mPenetrationAxis.GetZ()
-			);
-			normal.Normalize();
-			if (adv > 0.0f)
-			{
-				newCom += normal * skinWidth;
-			}
-
-			DX::Vector3 candidate = newCom - offset;
-			DX::Vector3 correction = this->staged->position - candidate;
-			float correctionLen = correction.LengthSquared();
-			if (correctionLen > bestCorrection)
-			{
-				bestCorrection = correctionLen;
-				bestCandidate = candidate;
+				// ヒット位置の少し手前まで進める距離を計算（skinWidth 分だけ手前で止める）
+				bestFraction = f;
+				bestAdvance = std::max(0.0f, moveLen * f - skinWidth);
 				bestNormal = normal;
 				hasHit = true;
 			}
+
+			if (!hasHit)
+			{
+				// ヒットがなければ残り移動量をそのまま適用して終了
+				currentPos += remainingMove;
+				remainingMove = DX::Vector3::Zero;
+				break;
+			}
+
+			// ヒット手前まで進める
+			DX::Vector3 advancedMove = moveDir * bestAdvance;
+			currentPos += advancedMove;
+			if (bestAdvance > 0.0f)
+			{
+				currentPos += bestNormal * skinWidth;
+			}
+
+			remainingMove -= advancedMove;
+
+			// 残り移動量から法線方向の成分を削り、面に沿う移動だけを残す
+			float moveIntoSurface =
+				remainingMove.x * bestNormal.x +
+				remainingMove.y * bestNormal.y +
+				remainingMove.z * bestNormal.z;
+			if (moveIntoSurface > 0.0f)
+			{
+				remainingMove -= bestNormal * moveIntoSurface;
+			}
+
+			// 法線方向の速度成分を削る（面に沿わせる）
+			float vn = this->linearVelocity.x * bestNormal.x + this->linearVelocity.y * bestNormal.y + this->linearVelocity.z * bestNormal.z;
+			if (vn > 0.0f)
+			{
+				this->linearVelocity -= bestNormal * vn;
+			}
+
+			hitAny = true;
 		}
 
-		if (!hasHit) { return; }
+		this->staged->position = currentPos;
 
-		this->staged->position = bestCandidate;
-
-		// 法線成分の速度を削減（面に沿わせる）
-		float vn = this->linearVelocity.x * bestNormal.x + this->linearVelocity.y * bestNormal.y + this->linearVelocity.z * bestNormal.z;
-		if (vn > 0.0f)
+		if (hitAny)
 		{
-			this->linearVelocity -= bestNormal * vn;
+			this->CheckGrounded();
 		}
-
-		this->CheckGrounded();
 	}
 
 	//-----------------------------------------------------------------------------

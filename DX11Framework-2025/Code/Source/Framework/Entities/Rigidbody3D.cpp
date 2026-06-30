@@ -27,6 +27,7 @@
 #include <cmath>
 #include <cfloat>
 #include <iostream>
+#include <vector>
 
 namespace Framework::Physics
 {
@@ -51,6 +52,43 @@ namespace Framework::Physics
 	private:
 		PhysicsSystem* mPhys;
 		JPH::BodyID mBody;
+	};
+
+	//-----------------------------------------------------------------------------
+	// 自身のボディとトリガーを無視する BodyFilter
+	//-----------------------------------------------------------------------------
+	class IgnoreBodiesAndTriggersFilter final : public JPH::BodyFilter
+	{
+	public:
+		IgnoreBodiesAndTriggersFilter(PhysicsSystem& _phys)
+			: mPhys(&_phys), mIgnoredBodies() {}
+
+		IgnoreBodiesAndTriggersFilter(PhysicsSystem& _phys, JPH::BodyID _id)
+			: IgnoreBodiesAndTriggersFilter(_phys)
+		{
+			this->AddIgnoredBody(_id);
+		}
+
+		void AddIgnoredBody(JPH::BodyID _id)
+		{
+			this->mIgnoredBodies.push_back(_id);
+		}
+
+		bool ShouldCollide(const JPH::BodyID& _bodyID) const override
+		{
+			for (const auto& ignored : this->mIgnoredBodies)
+			{
+				if (_bodyID == ignored) { return false; }
+			}
+
+			// トリガーは無視する
+			auto* collider = this->mPhys->GetCollider3D(_bodyID);
+			return !(collider && collider->IsTrigger());
+		}
+
+	private:
+		PhysicsSystem* mPhys;
+		std::vector<JPH::BodyID> mIgnoredBodies;
 	};
 
 	//-----------------------------------------------------------------------------
@@ -306,10 +344,10 @@ namespace Framework::Physics
 			settings.mMaxSeparationDistance = 0.0f;
 
 			ClosestHitCollisionCollector<CollideShapeCollector> collector;
-			IgnoreSelfBodyFilter bodyFilter(body.id);
+			IgnoreBodiesAndTriggersFilter bodyFilter(this->physicsSystem, body.id);
 
-			//// 衝突判定を行うかどうかのフィルタ設定
-			//// Triggerになっている場合には衝突判定を行わない
+			// 衝突判定を行うかどうかのフィルタ設定
+			// Triggerになっている場合には衝突判定を行わない
 			SelfTriggerShapeFilter selfFilter(this->physicsSystem, body.id);
 
 			npq.CollideShape(
@@ -431,6 +469,7 @@ namespace Framework::Physics
 			//// 衝突判定を行うかどうかのフィルタ設定
 			//// Triggerになっている場合には衝突判定を行わない
 			SelfTriggerShapeFilter selfFilter(this->physicsSystem, body.id);
+			IgnoreBodiesAndTriggersFilter bodyFilter(this->physicsSystem, body.id);
 
 			npq.CastShape(
 				cast,
@@ -439,7 +478,7 @@ namespace Framework::Physics
 				col,
 				broad,
 				obj,
-				IgnoreSelfBodyFilter(body.id),
+				bodyFilter,
 				selfFilter
 			);
 			if (!col.hasHit) { continue; }
@@ -553,8 +592,13 @@ namespace Framework::Physics
 
 		RRayCast ray(from, to - from);
 		RayCastResult hit;
+		IgnoreBodiesAndTriggersFilter bodyFilter(this->physicsSystem);
+		for (const auto& body : this->bodies)
+		{
+			bodyFilter.AddIgnoredBody(body.id);
+		}
 
-		if (this->physicsSystem.GetNarrowPhaseQuery().CastRay(ray, hit))
+		if (this->physicsSystem.GetNarrowPhaseQuery().CastRay(ray, hit, {}, {}, bodyFilter))
 		{
 			this->isGrounded = true;
 		}
